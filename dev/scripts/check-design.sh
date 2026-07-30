@@ -6,12 +6,12 @@
 #  visuelle. Elles sont faciles à respecter et faciles à oublier : la CI est le
 #  seul endroit où l'oubli se voit encore dans six mois.
 #
-#  Usage : bash scripts/check-design.sh
+#  Usage : bash dev/scripts/check-design.sh
 #  Sortie : 0 si tout va bien, 1 sinon (avec le détail des infractions).
 # =========================================================================
 
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 FAILED=0
 

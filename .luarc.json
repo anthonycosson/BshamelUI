@@ -5,10 +5,8 @@
     "hooksecurefunc": "require"
   },
   "workspace.ignoreDir": [
-    ".release",
-    ".claude",
-    "docs",
-    "scripts"
+    "dev",
+    ".claude"
   ],
   "diagnostics.globals": [
     "BshamelUI",

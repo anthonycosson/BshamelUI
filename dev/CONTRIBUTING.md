@@ -16,12 +16,12 @@ ne peut pas être accepté, quelle que soit sa licence :
 
 En revanche, lire d'autres addons pour comprendre **quelle API** résout un
 problème est parfaitement légitime : notez la trouvaille dans
-`docs/API_NOTES.md` et écrivez l'implémentation.
+`dev/docs/API_NOTES.md` et écrivez l'implémentation.
 
 ## Avant d'ouvrir une merge request
 
 1. `luacheck .` passe.
-2. `bash scripts/check-design.sh` passe.
+2. `bash dev/scripts/check-design.sh` passe.
 3. Testé en jeu, aucune erreur Lua.
 4. Les règles de [CLAUDE.md](CLAUDE.md) sont respectées — en particulier :
    pas de `CreateFrame` hors `UI/Widgets/`, pas de valeur d'apparence en dur,

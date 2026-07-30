@@ -150,6 +150,6 @@ par Blizzard Entertainment, Inc.
 ## À faire avant de soumettre
 
 - [ ] Un logo (400×400 minimum). C'est bloquant pour la modération.
-- [ ] Le premier zip, produit par `bash .release/release.sh -d -o`.
+- [ ] Le premier zip, produit par `bash dev/packager/release.sh -d -o -r "$PWD/dev/build"`.
 - [ ] Une capture d'écran de la fenêtre d'options — c'est ce qui décide un
       visiteur, bien plus que le texte.

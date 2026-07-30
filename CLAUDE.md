@@ -5,7 +5,7 @@ Licence *all rights reserved*. Distribution : CurseForge via GitLab CI.
 
 Ce fichier n'est pas un guide de style : c'est la liste des règles dont la
 violation doit faire échouer une relecture. Le job `lint` de la CI en vérifie
-mécaniquement une partie (`scripts/check-design.sh`).
+mécaniquement une partie (`dev/scripts/check-design.sh`).
 
 ---
 
@@ -100,7 +100,7 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   incompatible avec notre licence fermée.
 - Autorisé et encouragé : lire d'autres addons pour identifier **quels
   événements et quelles fonctions d'API** résolvent un problème, puis écrire
-  notre implémentation. Consigner la trouvaille dans `docs/API_NOTES.md`.
+  notre implémentation. Consigner la trouvaille dans `dev/docs/API_NOTES.md`.
 - Toute bibliothèque tierce embarquée exige une licence permissive vérifiée
   (MIT/BSD/zlib), son fichier de licence conservé, et une mention dans
   `README.md`.
@@ -116,7 +116,7 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
 ## 10. Vérification avant de dire « c'est fait »
 
 1. `luacheck .` passe.
-2. `bash scripts/check-design.sh` passe.
+2. `bash dev/scripts/check-design.sh` passe.
 3. `/reload` en jeu, aucune erreur dans BugSack.
 4. Le réglage survit à un `/reload` (vérifiable dans
    `_retail_/WTF/Account/<compte>/SavedVariables/BshamelUI.lua`).
@@ -133,7 +133,7 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
 | Ajouter une catégorie de menu | `BUI.CATEGORIES` dans `Core/Module.lua` |
 | Ajouter un événement global | `BUI:RegisterEvent` dans `Core/Init.lua` |
 | Migrer un format de réglage | `DB:RunMigrations` dans `Core/DB.lua` |
-| Piège d'API rencontré | le noter dans `docs/API_NOTES.md` |
+| Piège d'API rencontré | le noter dans `dev/docs/API_NOTES.md` |
 
 ## Environnement de développement
 
@@ -144,5 +144,14 @@ C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI
   -> C:\Users\Cosso\dev\BshamelUI
 ```
 
-Éditer le dépôt, `/reload` en jeu, c'est tout. Les fichiers de développement
-(`docs/`, `scripts/`, `CLAUDE.md`…) sont exclus du zip par `.pkgmeta`.
+Éditer le dépôt, `/reload` en jeu, c'est tout.
+
+**Règle de rangement :** tout ce qui ne part pas chez le joueur vit sous
+`dev/` — documentation, scripts, packager, sorties de build. Les seules
+exceptions sont les fichiers de configuration que leurs outils exigent à la
+racine (`.pkgmeta`, `.gitlab-ci.yml`, `.luacheckrc`, `.luarc.json`,
+`CLAUDE.md`, `README.md`…). Ajouter un fichier de développement ailleurs que
+sous `dev/` oblige à l'ajouter aussi dans la liste `ignore` de `.pkgmeta`,
+sous peine de le livrer aux joueurs.
+
+Voir `README.md` pour le détail de ce qui est publié ou non.

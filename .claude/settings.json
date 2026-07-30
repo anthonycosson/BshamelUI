@@ -2,7 +2,7 @@
   "permissions": {
     "allow": [
       "Bash(luacheck:*)",
-      "Bash(bash scripts/check-design.sh)",
+      "Bash(bash dev/scripts/check-design.sh)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",

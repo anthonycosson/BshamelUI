@@ -14,7 +14,7 @@ max_line_length = 120
 codes = true
 
 exclude_files = {
-    ".release/",
+    "dev/",
 }
 
 ignore = {

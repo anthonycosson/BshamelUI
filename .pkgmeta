@@ -12,21 +12,22 @@ package-as: BshamelUI
 enable-nolib-creation: no
 enable-toc-creation: no
 
+# Tout ce qui ne part pas chez le joueur.
+# `dev` couvre la documentation, les scripts et le packager d'un seul coup :
+# c'est tout l'intérêt de les avoir regroupés. Le reste est constitué de
+# fichiers de configuration que leurs outils exigent à la racine.
 ignore:
+  - dev
+  - .claude
+  - .vscode
   - .editorconfig
   - .gitattributes
   - .gitignore
   - .gitlab-ci.yml
   - .luacheckrc
   - .luarc.json
-  - .release
-  - .claude
-  - .vscode
   - CLAUDE.md
-  - CONTRIBUTING.md
   - README.md
-  - docs
-  - scripts
 
 manual-changelog:
   filename: CHANGELOG.md

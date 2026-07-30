@@ -11,11 +11,11 @@
 #  un compilateur C sous Windows. Il tourne dans la CI, où l'image Alpine en a
 #  un. lua-language-server couvre le même besoin sans compilation.
 #
-#  Usage : bash scripts/lint-local.sh
+#  Usage : bash dev/scripts/lint-local.sh
 # =========================================================================
 
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 
 LUAC="${LUAC:-$LOCALAPPDATA/Programs/Lua/bin/luac.exe}"
 LLS="${LLS:-$LOCALAPPDATA/Microsoft/WinGet/Packages/LuaLS.lua-language-server_Microsoft.Winget.Source_8wekyb3d8bbwe/bin/lua-language-server.exe}"
@@ -58,6 +58,6 @@ fi
 
 echo
 echo "== garde-fous de design =="
-bash scripts/check-design.sh || FAILED=1
+bash dev/scripts/check-design.sh || FAILED=1
 
 exit $FAILED

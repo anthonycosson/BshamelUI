@@ -5,7 +5,7 @@
 #    lint    — à chaque push et à chaque merge request
 #    release — uniquement sur un tag `v*` protégé
 #
-#  Le packager BigWigs (`.release/release.sh`) est du bash autonome : ses seuls
+#  Le packager BigWigs (`dev/packager/release.sh`) est du bash autonome : ses seuls
 #  blocs spécifiques à GitHub sont conditionnés par $GITHUB_ACTIONS, absent ici.
 #  Les envois vers CurseForge sont de simples appels HTTP, GitLab suffit.
 # =========================================================================
@@ -29,7 +29,7 @@ lint:
     - luarocks-5.1 install luacheck
   script:
     - luacheck .
-    - bash scripts/check-design.sh
+    - bash dev/scripts/check-design.sh
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -51,13 +51,13 @@ release:
     - |
       if [ -z "${CF_API_KEY:-}" ]; then
         echo "CF_API_KEY absent — packaging à blanc, aucun envoi."
-        bash .release/release.sh -d -o
+        bash dev/packager/release.sh -d -o -r "$PWD/dev/build"
       else
-        bash .release/release.sh
+        bash dev/packager/release.sh -r "$PWD/dev/build"
       fi
   artifacts:
     paths:
-      - .release/*.zip
+      - dev/build/*.zip
     expire_in: 30 days
   rules:
     # Uniquement sur un tag : les variables protégées (CF_API_KEY) ne sont

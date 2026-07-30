@@ -1,6 +1,5 @@
-# Sorties du packager
-.release/*
-!.release/release.sh
+# Sorties du packager (dev/packager/release.sh est versionné, lui)
+dev/build/
 *.zip
 
 # Environnement local — ne doit jamais être commité (contient CF_API_KEY)

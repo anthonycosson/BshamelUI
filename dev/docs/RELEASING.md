@@ -16,9 +16,9 @@ Cette partie est donc manuelle et se fait une fois pour toutes.
    description, un logo **et un premier fichier** pour passer en modération.
 3. Produire ce premier zip localement :
    ```bash
-   bash .release/release.sh -d -o
+   bash dev/packager/release.sh -d -o -r "$PWD/dev/build"
    ```
-   Le zip apparaît dans `.release/`. L'uploader à la main sur le projet.
+   Le zip apparaît dans `dev/build/`. L'uploader à la main sur le projet.
 4. Attendre la modération (de quelques minutes à trois jours ouvrés, 8 h – 15 h
    CET).
 5. Une fois le projet approuvé, relever son **ID numérique** (il est dans l'URL
@@ -47,7 +47,7 @@ branche ou de merge request.
 commits, puis :
 
 ```bash
-bash scripts/tag-release.sh 0.2.0
+bash dev/scripts/tag-release.sh 0.2.0
 ```
 
 Le script vérifie que l'arbre est propre, lance le lint et les garde-fous,
@@ -62,7 +62,7 @@ git push origin HEAD && git push origin v0.2.0
 Ou en une fois, si tu n'as pas besoin de relire l'aperçu :
 
 ```bash
-bash scripts/tag-release.sh 0.2.0 --push
+bash dev/scripts/tag-release.sh 0.2.0 --push
 ```
 
 La pipeline `release` prend le relais : elle construit le zip et l'envoie sur
@@ -74,7 +74,7 @@ contient `@project-version@`, que le packager remplace par le tag.
 ## Vérifier avant de taguer
 
 ```bash
-bash .release/release.sh -d -o
+bash dev/packager/release.sh -d -o -r "$PWD/dev/build"
 ```
 
 `-d` désactive tout envoi, `-o` garde le dossier décompressé à côté du zip.
@@ -87,11 +87,11 @@ Vérifier dans ce dossier que :
 
 ## Mettre à jour le packager
 
-`.release/release.sh` est vendu avec le dépôt, épinglé à une version connue —
+`dev/packager/release.sh` est vendu avec le dépôt, épinglé à une version connue —
 pas récupéré depuis `master` à chaque build. Pour le mettre à jour :
 
 ```bash
-curl -sL https://raw.githubusercontent.com/BigWigsMods/packager/v2.5.1/release.sh -o .release/release.sh
+curl -sL https://raw.githubusercontent.com/BigWigsMods/packager/v2.5.1/release.sh -o dev/packager/release.sh
 ```
 
 Lire le diff avant de commiter : ce script s'exécute avec le jeton CurseForge

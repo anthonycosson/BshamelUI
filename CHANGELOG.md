@@ -41,6 +41,6 @@ l'instant, les suivants s'appuieront dessus.
 - Module **Quête** : acceptation et rendu automatiques, filtre sur les quêtes
   triviales, touche de contournement configurable.
 - Garde-fous de design vérifiés en intégration continue
-  (`scripts/check-design.sh`).
+  (`dev/scripts/check-design.sh`).
 - Pipeline GitLab : `luacheck` et garde-fous à chaque push, packaging et envoi
   CurseForge sur tag.
