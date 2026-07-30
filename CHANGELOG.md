@@ -1,6 +1,9 @@
 # Journal des modifications
 
-## Non publié
+## 0.1.0 — 2026-07-30
+
+Première version. Les fondations sont posées ; un seul module fonctionnel pour
+l'instant, les suivants s'appuieront dessus.
 
 ### Ajouté
 - Socle de l'addon : namespace, répartiteur d'événements, bus de messages
