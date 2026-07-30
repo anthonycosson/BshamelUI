@@ -1,6 +1,6 @@
 Custom License for: Bshamel UI (BshamelUI)
 
-Copyright (c) 2026 bshamel. All rights reserved.
+Copyright (c) 2026 Bshamel. All rights reserved.
 
 The contents of this addon, excluding third-party resources, are copyrighted to
 their authors with all rights reserved.
