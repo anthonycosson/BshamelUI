@@ -8,6 +8,21 @@ Format : **symptôme → cause → ce qu'on fait**.
 
 ---
 
+## Le packager saute l'envoi sans échouer
+
+**Symptôme** — le job `release` construit le zip, affiche « Packaging complete »
+puis sort en erreur, sans que rien n'arrive sur CurseForge.
+
+**Cause** — `Skipping upload because "jq" was not found`. Le packager a besoin
+de `jq` pour l'API CurseForge. Absent, il n'interrompt pas le build : il
+construit l'archive et se contente d'un avertissement noyé dans le log.
+
+**Ce qu'on fait** — `jq` est installé dans le `before_script`, et
+`jq --version` est appelé juste après pour que son absence devienne une erreur
+franche au lieu d'un avertissement.
+
+---
+
 ## `xpcall` avec arguments
 
 **Symptôme** — l'analyse statique signale « expects a maximum of 2 arguments »
