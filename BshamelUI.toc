@@ -6,7 +6,10 @@
 ## Version: @project-version@
 ## SavedVariables: BshamelUIDB
 ## SavedVariablesPerCharacter: BshamelUICharDB
-## IconTexture: Interface\AddOns\BshamelUI\media\logo
+# Icône provisoire : une icône du client, garantie présente. À remplacer par
+# media\logo.tga quand le logo existera (l'entrée du compartiment d'addons a
+# besoin d'une texture valide pour être visible).
+## IconTexture: Interface\Icons\INV_Misc_QuestionMark
 ## AddonCompartmentFunc: BshamelUI_OnAddonCompartmentClick
 ## X-License: All Rights Reserved
 # ## X-Curse-Project-ID: <à renseigner après création du projet CurseForge>
