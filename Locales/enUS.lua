@@ -48,7 +48,8 @@ BUI:RegisterLocale("enUS", {
     -- Module General
     ["General"]                        = "General",
     ["Auto-repair"]                    = "Auto-repair",
-    ["Auto-repair tip"]                = "Repairs at every merchant, from guild funds first and from your own money second.",
+    ["Auto-repair tip"] =
+        "Repairs at every merchant, from guild funds first and from your own money second.",
     ["Auction current expansion"]      = "Auction house: current expansion only",
     ["Auction current expansion tip"]  = "Restricts auction house browsing to items from the current expansion.",
     ["Announcements"]                  = "Announcements",
@@ -70,7 +71,8 @@ BUI:RegisterLocale("enUS", {
     ["Show upgrade level"]             = "Show upgrade level",
     ["Show upgrade level tip"]         = "Shows the upgrade track and rank on each equipped item.",
     ["Show enchants"]                  = "Show enchants",
-    ["Show enchants tip"]              = "Shows the enchant on every slot that can take one, and flags those that are missing it.",
+    ["Show enchants tip"] =
+        "Shows the enchant on every slot that can take one, and flags those that are missing it.",
     ["Show gems"]                      = "Show gems",
     ["Show gems tip"]                  = "Shows socketed gems, and flags empty sockets.",
     ["Show void core"]                 = "Show void core",
@@ -112,12 +114,15 @@ BUI:RegisterLocale("enUS", {
     ["Raid tools"]                     = "Raid tools",
     ["Combat"]                         = "Combat",
     ["Battle res tracker"]             = "Battle res tracker",
-    ["Battle res tracker tip"]         = "Shows how many battle resurrections are left and how long until the next one.",
+    ["Battle res tracker tip"] =
+        "Shows how many battle resurrections are left and how long until the next one.",
     ["Ready check buffs"]              = "Check buffs on ready check",
-    ["Ready check buffs tip"]          = "Reports who is missing food, flask or a raid buff when a ready check starts.",
+    ["Ready check buffs tip"] =
+        "Reports who is missing food, flask or a raid buff when a ready check starts.",
     ["World markers"]                  = "World marker panel",
     ["World markers tip"]              = "Opens a panel to place and clear world markers.",
     ["Logging"]                        = "Logging",
     ["Auto combat logging"]            = "Automatic combat logging",
-    ["Auto combat logging tip"]        = "Starts combat logging when you enter a raid or a mythic+ dungeon, and stops it when you leave.",
+    ["Auto combat logging tip"] =
+        "Starts combat logging when you enter a raid or a mythic+ dungeon, and stops it when you leave.",
 })

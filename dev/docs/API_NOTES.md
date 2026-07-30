@@ -23,6 +23,29 @@ franche au lieu d'un avertissement.
 
 ---
 
+## La vérification locale ne mesurait pas la longueur des lignes
+
+**Symptôme** — `dev/scripts/lint-local.sh` passe intégralement, la CI échoue
+aussitôt sur dix-sept `(W631) line is too long`. Rien dans la sortie locale ne
+laissait présager le problème.
+
+**Cause** — `luacheck` n'est pas installable en local (il dépend de
+luafilesystem, qui exige un compilateur C sous Windows). `lua-language-server`
+le remplace et couvre l'essentiel, **sauf `max_line_length`**. Un avertissement
+luacheck étant fatal dans la CI, une simple ligne trop longue suffit à mettre la
+pipeline au rouge sans aucun signal préalable.
+
+Le piège vient de la confiance : « le lint local passe » se lit comme « la CI
+passera », alors que les deux outils ne vérifient pas la même chose.
+
+**Ce qu'on fait** — `lint-local.sh` a une passe dédiée, qui lit son seuil dans
+`.luacheckrc` plutôt que de le recopier. Elle compte les **octets** là où
+luacheck compte les caractères : un accent valant deux octets en UTF-8, la
+mesure locale est toujours supérieure ou égale à la sienne. L'inégalité est dans
+le bon sens — ce qui passe en local passe forcément dans la CI.
+
+---
+
 ## Un masque posé sur une texture répétée est ignoré en silence
 
 **Symptôme** — `texture:AddMaskTexture(mask)` ne produit aucun effet. Pas

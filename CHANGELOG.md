@@ -47,6 +47,9 @@
   étant éteint par défaut, allumer celui qu'on veut suffit.
 
 ### Interne
+- `dev/scripts/lint-local.sh` vérifie la longueur des lignes, seule règle de
+  `luacheck` que `lua-language-server` ne couvrait pas. Sans elle, une ligne trop
+  longue passait en local et mettait la CI au rouge sans signal préalable.
 - Toutes les opacités de l'interface sont regroupées dans `T.ALPHA`
   (`UI/Theme.lua`) au lieu d'être écrites au fil des widgets.
 - Les polices se déclarent en candidats résolus au chargement, comme les
