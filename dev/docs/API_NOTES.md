@@ -23,6 +23,46 @@ franche au lieu d'un avertissement.
 
 ---
 
+## Un masque posé sur une texture répétée est ignoré en silence
+
+**Symptôme** — `texture:AddMaskTexture(mask)` ne produit aucun effet. Pas
+d'erreur, pas d'avertissement : la texture s'affiche entière, comme si le masque
+n'existait pas. On soupçonne donc le masque — fichier introuvable, format
+invalide — alors qu'il n'y est pour rien.
+
+**Cause** — la texture était en mode répétition. Les atlas du client dont le nom
+commence par `_` (répétition horizontale) ou `!` (verticale) l'imposent, et
+`SetAtlas` applique docilement ce mode. `SetHorizTile(true)` a le même effet sur
+une texture de fichier. Un masque et une répétition sont incompatibles : le
+premier est perdu.
+
+Le piège se referme d'autant mieux que le symptôme oriente vers le masque. Le
+signe qui détrompe : **si le masque était en cause, la texture masquée
+disparaîtrait** ; qu'elle reste entière prouve que le masque n'est pas appliqué
+du tout.
+
+**Ce qu'on fait** — rien : les bandeaux gardent leurs angles droits.
+
+La piste a été poursuivie jusqu'au bout et abandonnée. Ce qui a été vérifié, pour
+que personne ne le refasse :
+
+- `CreateMaskTexture` est disponible ; ce n'est pas une question de capacité.
+- Aucun atlas de masque **rectangulaire** n'existe sur un client à jour. Les
+  masques que Blizzard expose sont circulaires, et un masque circulaire sur un
+  bandeau de 230 × 30 l'écrase en ellipse au lieu de l'arrondir.
+- Un masque TGA fabriqué pour l'occasion (256 × 32, rayon 8, 32 bits non
+  compressé, testé dans les deux orientations, chemin avec et sans extension) n'a
+  pas davantage pris.
+- Reconstruire la texture d'atlas en mode `CLAMP` via `C_Texture.GetAtlasInfo`
+  pour supprimer la répétition n'a rien changé non plus.
+
+La conclusion probable est que le masquage ne prend pas sur cette texture
+d'atlas, quelle que soit la façon de la poser — mais elle n'a pas été prouvée. Y
+revenir demande de commencer par une bissection : masquer une texture de couleur
+unie, sans atlas, pour savoir si la chaîne fonctionne du tout sur cette surface.
+
+---
+
 ## `xpcall` avec arguments
 
 **Symptôme** — l'analyse statique signale « expects a maximum of 2 arguments »

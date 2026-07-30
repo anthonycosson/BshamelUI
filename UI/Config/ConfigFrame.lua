@@ -66,9 +66,16 @@ local function buildFrame()
     sidebarScroll:SetPoint("BOTTOMLEFT", sidebarPanel, "BOTTOMLEFT", S.PANEL_PAD, S.PANEL_PAD)
     sidebarScroll:SetWidth(S.SIDEBAR_W)
 
+    -- ----- séparateur -----
+    -- Il ne touche ni le haut ni le bas : son dégradé s'éteint aux deux bouts,
+    -- il suggère la limite au lieu de couper la fenêtre en deux.
+    local divider = W.VerticalDivider(frame)
+    divider:SetPoint("TOPLEFT", sidebarPanel, "TOPRIGHT", S.GUTTER, 0)
+    divider:SetPoint("BOTTOMLEFT", sidebarPanel, "BOTTOMRIGHT", S.GUTTER, 0)
+
     -- ----- titre de page -----
     pageTitle = W.PageTitle(frame)
-    pageTitle:SetPoint("TOPLEFT", sidebarPanel, "TOPRIGHT", S.GUTTER, 0)
+    pageTitle:SetPoint("TOPLEFT", divider, "TOPRIGHT", S.GUTTER, 0)
     pageTitle:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -S.CHROME_SIDE, -S.CHROME_TOP)
 
     -- ----- zone de contenu -----

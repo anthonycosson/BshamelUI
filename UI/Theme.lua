@@ -59,9 +59,12 @@ T.SIZE = {
     SIDEBAR_ITEM_H = 26,    -- entrée de module
     SIDEBAR_INDENT = 18,
 
+    DIVIDER_W       = 2,    -- séparateur vertical entre navigation et contenu
+
     ICON            = 16,
-    SCROLLBAR_W     = 24,   -- réservé à droite du contenu défilant
-    THUMB_MIN       = 20,   -- hauteur plancher du curseur d'ascenseur
+    SCROLLBAR_W     = 20,   -- réservé à droite du contenu défilant
+    THUMB_W         = 6,    -- largeur du curseur, une fois l'ascenseur dépouillé
+    THUMB_MIN       = 24,   -- hauteur plancher du curseur d'ascenseur
 
     EDGE_SHADE      = 64,   -- profondeur du voile sombre aux bords de la fenêtre
 
@@ -133,6 +136,23 @@ T.COLOR = {
     RED      = RED_FONT_COLOR,
     GREEN    = GREEN_FONT_COLOR,
     SHADE    = CreateColor(0.00, 0.00, 0.00),            -- voile des bords
+
+    -- Teinte du bandeau des en-têtes de catégorie. Un gris franc : la pierre du
+    -- client est une pierre chaude, brun-doré, et un bandeau doré derrière un
+    -- titre blanc se lit comme un surlignage, pas comme un en-tête. On la
+    -- désature puis on la multiplie par ce gris.
+    BAND     = CreateColor(0.42, 0.42, 0.45),
+
+    -- Teinte du fond de la fenêtre. C'est **cette couleur** qui décide si la
+    -- fenêtre est sombre, pas son opacité : le fond du template est une pierre
+    -- claire, la multiplier est le seul moyen de l'assombrir. Une pointe de bleu
+    -- pour éviter le gris mort.
+    WINDOW   = CreateColor(0.07, 0.07, 0.09),
+
+    -- Teinte du bandeau des en-têtes, appliquée par-dessus la texture de la
+    -- barre de titre. Presque noire : l'en-tête doit poser une plaque sombre
+    -- sous un titre blanc, pas éclaircir la colonne.
+    TITLE_BAND = CreateColor(0.13, 0.13, 0.16),
 }
 
 -- =========================================================================
@@ -144,50 +164,97 @@ T.COLOR = {
 -- donc elles se lisent au même endroit.
 
 T.ALPHA = {
-    WINDOW_BG      = 0.80,  -- fond de la fenêtre : le jeu transparaît derrière
+    -- Opacité du fond de la fenêtre : à quel point le jeu transparaît derrière.
+    -- Sa *clarté*, elle, ne se règle pas ici mais avec `T.COLOR.WINDOW`.
+    WINDOW_BG      = 0.88,
 
-    -- Zéro, et ce n'est pas un oubli : un panneau creusé pose sa bordure mais
-    -- pas de fond. Un second voile empilé sur celui de la fenêtre rendrait la
-    -- colonne de navigation plus sombre que la zone de contenu, alors que les
-    -- deux doivent se lire sur exactement la même teinte.
-    PANEL_BG       = 0.00,
+    EDGE_SHADE     = 0.65,  -- voile sombre au bord de la fenêtre,
+                            -- dégradé vers l'intérieur
 
-    EDGE_SHADE     = 0.55,  -- voile sombre au bord de la fenêtre, dégradé vers
-                            -- l'intérieur
-
-    SIDEBAR_BAND   = 0.16,  -- bandeau d'une catégorie de la navigation
-    SIDEBAR_RULE   = 0.35,  -- filets qui bordent ce bandeau
-    ROW_HOVER      = 0.10,  -- entrée de navigation survolée
-    ROW_SELECTED   = 0.30,  -- entrée de navigation sélectionnée
+    TITLE_BAND     = 1.00,  -- bandeau de catégorie portant la texture de la
+                            -- barre de titre : pleine, pour qu'un en-tête et la
+                            -- barre « Bshamel UI » se lisent identiques
+    SIDEBAR_BAND   = 0.85,  -- le même bandeau, quand on a dû se rabattre sur la
+                            -- pierre : gris et sombre, il peut être franc sans
+                            -- attirer l'œil
+    SIDEBAR_RULE   = 0.25,  -- filets qui bordent ce bandeau
+    -- Les deux seuls fonds que porte une entrée de navigation, et jamais
+    -- ensemble : opacité **au centre** du dégradé, qui s'estompe sur les deux
+    -- bords. Hors survol et hors sélection, une entrée ne porte aucune texture
+    -- — les bandeaux sont masqués, pas transparents.
+    ROW_HOVER      = 0.18,
+    ROW_SELECTED   = 0.32,
     ITEM_OFF       = 0.45,  -- entrée d'un module éteint
 
     RULE           = 0.35,  -- filet sous le titre de page
     SECTION_RULE   = 0.30,  -- filet d'un en-tête de section
+    DIVIDER        = 0.30,  -- séparateur vertical, au plus fort de son dégradé
+    THUMB          = 0.70,  -- curseur d'ascenseur
 
     CONTROL_OFF    = 0.50,  -- contrôle grisé
     GRIP           = 0.70,  -- poignée de redimensionnement au repos
     GRIP_HOVER     = 1.00,
 }
 
---- Applique un dégradé « voile sombre » à une texture : opaque du côté du bord
---- de la fenêtre, transparent de l'autre.
+--- Retire le fond d'un panneau, en lui laissant sa bordure.
+---
+--- Un panneau creusé du client peint son fond de deux façons possibles : une
+--- texture à lui, ou la pièce **centrale** de son nine-slice — laquelle est un
+--- enfant du cadre, pas une région du panneau. Baisser l'alpha des seules
+--- régions laisse donc le fond en place dans le second cas. On coupe les deux.
+---
+--- La bordure survit : ses huit autres pièces ne sont pas touchées. Le panneau
+--- délimite donc la colonne sans poser la moindre teinte par-dessus le fond de
+--- la fenêtre — les deux zones se lisent sur exactement la même surface.
+---@param frame table
+function T.ClearPanelBackground(frame)
+    for _, region in ipairs({ frame:GetRegions() }) do
+        if region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:Hide()
+        end
+    end
+
+    if frame.NineSlice and frame.NineSlice.Center then
+        frame.NineSlice.Center:Hide()
+    end
+end
+
+--- Teinte une texture d'un dégradé d'une seule couleur : pleine d'un côté,
+--- transparente de l'autre.
 ---
 --- Renvoie `false` si le client ne sait pas dégrader une texture — l'appelant
---- doit alors renoncer au voile plutôt que de laisser une bande noire pleine.
+--- doit alors se rabattre sur un aplat plutôt que de laisser une bande pleine
+--- là où on attendait un fondu.
 ---@param texture table
----@param orientation string  "HORIZONTAL" (min = gauche) ou "VERTICAL" (min = bas)
----@param edgeAtMax boolean   le bord est-il du côté « max » du dégradé ?
+---@param color ColorMixin
+---@param alpha number         opacité de l'extrémité pleine
+---@param orientation string   "HORIZONTAL" (min = gauche) ou "VERTICAL" (min = bas)
+---@param opaqueAtMax boolean  l'extrémité pleine est-elle du côté « max » ?
 ---@return boolean applied
-function T.ApplyShade(texture, orientation, edgeAtMax)
+function T.ApplyGradient(texture, color, alpha, orientation, opaqueAtMax)
+    if not texture.SetGradient then return false end
+    texture:SetColorTexture(color:GetRGB())
+    return T.FadeTexture(texture, color, alpha, orientation, opaqueAtMax)
+end
+
+--- Estompe une texture **existante** sans toucher à son image : la couleur de
+--- sommet multiplie ce qui est déjà dessiné. C'est ce qui permet de faire
+--- disparaître une texture de pierre à ses deux bouts sans la remplacer par un
+--- aplat.
+---@param texture table
+---@param color ColorMixin
+---@param alpha number
+---@param orientation string
+---@param opaqueAtMax boolean
+---@return boolean applied
+function T.FadeTexture(texture, color, alpha, orientation, opaqueAtMax)
     if not texture.SetGradient then return false end
 
-    local r, g, b = T.COLOR.SHADE:GetRGB()
-    texture:SetColorTexture(r, g, b)
-
-    local opaque = CreateColor(r, g, b, T.ALPHA.EDGE_SHADE)
+    local r, g, b = color:GetRGB()
+    local opaque = CreateColor(r, g, b, alpha)
     local clear  = CreateColor(r, g, b, 0)
 
-    if edgeAtMax then
+    if opaqueAtMax then
         texture:SetGradient(orientation, clear, opaque)
     else
         texture:SetGradient(orientation, opaque, clear)
@@ -195,25 +262,53 @@ function T.ApplyShade(texture, orientation, edgeAtMax)
     return true
 end
 
---- Rend un panneau translucide sans toucher à son contenu.
+--- Voile sombre, plein du côté du bord de la fenêtre.
+---@param texture table
+---@param orientation string
+---@param edgeAtMax boolean
+---@return boolean applied
+function T.ApplyShade(texture, orientation, edgeAtMax)
+    return T.ApplyGradient(texture, T.COLOR.SHADE, T.ALPHA.EDGE_SHADE, orientation, edgeAtMax)
+end
+
+--- Teinte et opacifie le fond d'un panneau, sans toucher à son contenu.
 ---
---- On ne baisse jamais l'alpha de la frame elle-même : cela ferait pâlir ses
---- enfants avec elle. On n'agit que sur les textures de fond. `Bg` est la clé
---- qu'exposent les templates du client ; le repli parcourt le calque
---- `BACKGROUND` pour les templates qui ne la publient pas — ce qui évite d'avoir
---- à connaître leur structure interne, susceptible de changer à tout patch.
+--- **On teinte la texture de fond, on ne pose rien par-dessus.** Le fond des
+--- templates du client est une pierre claire : baisser ou monter son alpha ne
+--- fait que doser sa propre clarté, jamais l'assombrir. Et un voile sombre posé
+--- au-dessus dépend de l'ordre des calques du template, qui ne nous appartient
+--- pas — si le template dessine son fond plus haut que notre voile, le voile ne
+--- se voit jamais. La multiplication par une couleur sombre, elle, agit sur la
+--- texture elle-même : elle marche quel que soit le calque.
+---
+--- On ne baisse jamais l'alpha de la frame elle-même, cela ferait pâlir ses
+--- enfants avec elle. Le fond se cherche à trois endroits, du plus explicite au
+--- plus général : la clé `Bg` que publient les templates, la pièce centrale du
+--- nine-slice, et à défaut les textures du calque `BACKGROUND`.
 ---@param frame table
+---@param color ColorMixin
 ---@param alpha number
-function T.SetPanelAlpha(frame, alpha)
-    if frame.Bg then
-        frame.Bg:SetAlpha(alpha)
-        return
+function T.SetPanelFill(frame, color, alpha)
+    local r, g, b = color:GetRGB()
+
+    local function paint(texture)
+        texture:SetVertexColor(r, g, b)
+        texture:SetAlpha(alpha)
     end
 
-    for _, region in ipairs({ frame:GetRegions() }) do
-        if region.GetDrawLayer and region:GetDrawLayer() == "BACKGROUND" then
-            region:SetAlpha(alpha)
+    if frame.Bg then
+        paint(frame.Bg)
+    else
+        for _, region in ipairs({ frame:GetRegions() }) do
+            if region.GetObjectType and region:GetObjectType() == "Texture"
+               and region:GetDrawLayer() == "BACKGROUND" then
+                paint(region)
+            end
         end
+    end
+
+    if frame.NineSlice and frame.NineSlice.Center then
+        paint(frame.NineSlice.Center)
     end
 end
 
@@ -247,7 +342,82 @@ T.ATLAS = {
 --- Toute nouvelle entrée passe par ici : aucun chemin littéral dans un widget.
 T.TEXTURE = {
     RESIZE_GRIP = "Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up",
+
+    -- Bandeau des en-têtes de catégorie. Une pierre tuilable du client, présente
+    -- depuis toujours et jamais retouchée : c'est ce grain-là qui distingue un
+    -- en-tête d'un aplat de couleur, et qui le rapproche du panneau Options.
+    -- Ne sert plus que de repli : les en-têtes portent d'abord la texture de la
+    -- barre de titre, relevée sur le cadre lui-même.
+    SIDEBAR_BAND = "Interface\\FrameGeneral\\UI-Background-Rock",
+    --
 }
+
+-- =========================================================================
+--  Barre de titre : on la relève, on ne la nomme pas
+-- =========================================================================
+-- Les en-têtes de catégorie de la navigation portent la même texture que la
+-- barre de titre de la fenêtre. On ne l'écrit nulle part : on la **copie** sur
+-- le cadre au moment où il est créé.
+--
+-- Nommer un atlas ou un fichier ici serait un pari sur la structure interne d'un
+-- template du client — celle-là même qui change d'une extension à l'autre.
+-- Copier ce que le template a réellement posé reste juste quel que soit le
+-- template retenu par `T.Template("WINDOW")`, et quel que soit le patch.
+
+--- Clés sous lesquelles les templates du client publient le fond de leur barre
+--- de titre, par ordre de préférence.
+local TITLE_BAR_KEYS = { "TitleBg", "TopTileStreaks", "TitleBar", "Header" }
+
+--- Apparence relevée, `nil` tant qu'aucune fenêtre n'a été construite.
+local titleBar = nil
+
+local function readTitleBar(region)
+    if not (region and region.GetTexture) then return nil end
+
+    if region.GetAtlas then
+        local atlas = region:GetAtlas()
+        if atlas then return { atlas = atlas } end
+    end
+
+    local file = region:GetTexture()
+    if type(file) == "string" then return { texture = file } end
+    return nil
+end
+
+--- Relève l'apparence de la barre de titre d'un cadre. Appelé une fois, par
+--- `W.Window`, avant que quoi que ce soit d'autre ne soit dessiné.
+---@param frame table
+function T.CaptureTitleBar(frame)
+    for i = 1, #TITLE_BAR_KEYS do
+        local key = TITLE_BAR_KEYS[i]
+
+        local look = readTitleBar(frame[key])
+        if not look and frame.TitleContainer then
+            look = readTitleBar(frame.TitleContainer[key])
+        end
+
+        if look then
+            titleBar = look
+            return
+        end
+    end
+end
+
+--- Applique cette apparence à une texture. Renvoie `false` si rien n'a été
+--- relevé — l'appelant doit alors se rabattre sur son propre fond.
+---@param texture table
+---@return boolean applied
+function T.ApplyTitleBar(texture)
+    if not titleBar then return false end
+
+    if titleBar.atlas then
+        return T.TrySetAtlas(texture, titleBar.atlas)
+    end
+
+    texture:SetTexture(titleBar.texture)
+    texture:SetHorizTile(true)
+    return true
+end
 
 --- Applique un atlas si le client le connaît. Renvoie `false` sinon, sans
 --- lever d'erreur : un atlas retiré à un patch ne casse pas l'interface.

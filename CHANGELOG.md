@@ -3,13 +3,19 @@
 ## Non publié
 
 ### Modifié
-- Fenêtre d'options translucide : le jeu reste visible derrière, les bordures
-  du cadre restent pleines, et un voile sombre en dégradé assombrit les quatre
+- Fenêtre d'options sombre et translucide : le jeu reste visible derrière, les
+  bordures du cadre restent pleines, et un voile en dégradé assombrit les quatre
   bords vers l'intérieur comme le panneau Options du client.
 - Le titre de page n'est plus encadré. Il s'affiche en grand et en blanc,
   souligné d'un filet, sur le modèle de ce même panneau.
 - L'encadrement passe à la colonne de navigation, et chaque en-tête de catégorie
-  reçoit un bandeau doré borné de deux filets.
+  reçoit un titre blanc sur un bandeau portant la texture de la barre de titre
+  de la fenêtre, borné de deux filets.
+- Survol et sélection d'une entrée de la colonne sont deux bandeaux dégradés,
+  forts au centre et estompés aux deux bouts. Hors survol et hors sélection, une
+  entrée ne porte aucune texture de fond : les bandeaux sont masqués, et non
+  rendus transparents — un alpha nul sur une texture dégradée laissait filtrer
+  un voile gris permanent sur toute la colonne.
 - Couleurs de texte alignées sur celles du client : le doré structure
   (catégories, en-têtes de section, entrées de module au repos), le blanc se lit
   (titre de page, libellés, entrée sélectionnée). L'accent bleu quitte le chrome
@@ -19,7 +25,13 @@
 - Les deux zones partagent exactement la même teinte de fond : le panneau creusé
   ne pose plus de second voile par-dessus celui de la fenêtre.
 - La colonne de navigation perd son ascenseur — la molette suffit. Celui de la
-  zone de contenu voit son curseur dimensionné au prorata de la page.
+  zone de contenu est dépouillé de ses boutons et de sa piste, son curseur est
+  dimensionné au prorata de la page, et il disparaît quand tout tient sur un
+  écran.
+- Un séparateur vertical texturé, estompé en haut et en bas, sépare la
+  navigation de la zone de contenu.
+- Les pages n'ont plus d'interrupteur « Activer ce module » : chaque réglage
+  étant éteint par défaut, allumer celui qu'on veut suffit.
 
 ### Interne
 - Toutes les opacités de l'interface sont regroupées dans `T.ALPHA`
@@ -30,6 +42,8 @@
 - `W.PageTitleBox` devient `W.PageTitle` ; `W.VerticalDivider` est remplacé par
   `W.Rule`, partagé par le titre de page, les en-têtes de section et les
   bandeaux de catégorie. Nouveau `W.EdgeShade`.
+- Nouveau drapeau de module `preview` : le core refuse d'activer le module et le
+  moteur de pages grise sa page entière.
 
 ## 0.1.2 — 2026-07-30
 

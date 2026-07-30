@@ -12,30 +12,77 @@ local BUI = ns.BUI
 local T    = BUI.Theme
 local W    = BUI.Widgets
 
---- Redimensionne le curseur de l'ascenseur au prorata de ce qui est visible :
---- sa hauteur dit alors quelle part de la page on a sous les yeux. Le template
---- du client, lui, donne un curseur de taille fixe, qui n'informe de rien.
+---@param bar table
+---@return table|nil
+local function thumbOf(bar)
+    return bar.ThumbTexture or bar.Thumb
+end
+
+--- Dépouille l'ascenseur du client : ni boutons de fin, ni fond de piste, ni
+--- cadre. Il ne reste qu'un curseur.
 ---
---- Écrit défensivement de bout en bout : la structure interne des ascenseurs de
---- Blizzard a déjà changé plusieurs fois. À la moindre pièce manquante on
---- renonce au calcul et on garde le curseur du client.
+--- Un ascenseur n'a qu'une chose à dire — où l'on est et quelle part on voit —
+--- et un curseur seul la dit entièrement. Les deux flèches ne servent qu'à
+--- défiler d'un cran, ce que la molette fait mieux.
+---
+--- Écrit défensivement : la structure interne des ascenseurs de Blizzard a déjà
+--- changé plusieurs fois. Toute pièce absente est simplement sautée.
+---@param bar table
+local function stripScrollBar(bar)
+    if bar.ScrollUpButton then bar.ScrollUpButton:Hide() end
+    if bar.ScrollDownButton then bar.ScrollDownButton:Hide() end
+
+    local thumb = thumbOf(bar)
+
+    -- Toutes les textures de la barre sauf le curseur : ce sont les pièces de
+    -- la piste. Le curseur en est une aussi, d'où l'exclusion explicite.
+    for _, region in ipairs({ bar:GetRegions() }) do
+        if region ~= thumb and region.GetObjectType and region:GetObjectType() == "Texture" then
+            region:Hide()
+        end
+    end
+
+    bar:SetWidth(T.SIZE.THUMB_W)
+
+    if thumb then
+        thumb:SetTexture(T.TEXTURE.SIDEBAR_BAND)
+        thumb:SetDesaturated(true)
+        thumb:SetVertexColor(T.COLOR.BAND:GetRGB())
+        thumb:SetAlpha(T.ALPHA.THUMB)
+        thumb:SetWidth(T.SIZE.THUMB_W)
+    end
+end
+
+--- Ajuste l'ascenseur à ce qu'il y a à montrer.
+---
+--- Deux choses à la fois, parce qu'elles répondent à la même question — quelle
+--- part de la page voit-on ?
+---
+--- 1. Rien à faire défiler : l'ascenseur disparaît. Une barre qui ne sert à rien
+---    est une barre qui ment.
+--- 2. Sinon, le curseur prend la hauteur de la part visible. Le template du
+---    client donne un curseur de taille fixe, qui n'informe de rien.
 ---@param scrollFrame table
 local function updateThumb(scrollFrame)
     local bar = scrollFrame.ScrollBar
     if not bar then return end
 
-    local thumb = bar.ThumbTexture or bar.Thumb
+    local visible = scrollFrame:GetHeight()
+    local range   = scrollFrame:GetVerticalScrollRange()
+
+    bar:SetShown(range > 0)
+    if range <= 0 then return end
+
+    local thumb = thumbOf(bar)
     if not (thumb and thumb.SetHeight) then return end
 
-    local visible = scrollFrame:GetHeight()
-    local total   = visible + scrollFrame:GetVerticalScrollRange()
+    local total = visible + range
     if visible <= 0 or total <= 0 then return end
 
-    -- La piste, c'est la barre moins ses deux boutons de fin quand elle en a.
+    -- La piste, c'est la barre elle-même : dans le template du client, les deux
+    -- boutons de fin sont ancrés **en dehors** du curseur, ils ne mangent pas
+    -- sa course.
     local track = bar:GetHeight()
-    if bar.ScrollUpButton and bar.ScrollDownButton then
-        track = track - bar.ScrollUpButton:GetHeight() - bar.ScrollDownButton:GetHeight()
-    end
     if track <= 0 then return end
 
     local height = track * (visible / total)
@@ -64,7 +111,11 @@ function W.ScrollPane(parent, hideBar)
             bar:Hide()
             bar.Show = bar.Hide
         else
+            stripScrollBar(bar)
+
             -- `OnScrollRangeChanged` appartient au template ; on s'y accroche.
+            -- Notre gestionnaire passe donc **après** le sien, et c'est le nôtre
+            -- qui décide en dernier si la barre se montre.
             -- `OnSizeChanged` est à nous, on l'écrit plus bas — un HookScript
             -- ici serait effacé par le SetScript qui suit.
             scrollFrame:HookScript("OnScrollRangeChanged", updateThumb)

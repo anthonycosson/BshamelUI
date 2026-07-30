@@ -68,16 +68,78 @@ function W.Container(parent)
     return CreateFrame("Frame", nil, parent)
 end
 
---- Panneau creusé, comme les zones de contenu de l'interface Blizzard.
---- Son fond est translucide : le panneau se lit comme un creux dans la fenêtre,
---- pas comme une plaque posée dessus.
+--- Panneau creusé, comme les zones de contenu de l'interface Blizzard, mais
+--- réduit à sa bordure : on lui retire son fond.
+---
+--- Il délimite sans teinter. Un fond de panneau, si pâle soit-il, s'ajoute à
+--- celui de la fenêtre et rend la zone encadrée plus claire que le reste — deux
+--- surfaces là où l'on n'en veut qu'une.
 ---@param parent table
 ---@return table
 function W.Inset(parent)
     local template = T.Template("INSET")
     local inset = CreateFrame("Frame", nil, parent, template)
-    T.SetPanelAlpha(inset, T.ALPHA.PANEL_BG)
+    T.ClearPanelBackground(inset)
     return inset
+end
+
+--- Bandeau lumineux fort au centre et éteint sur les deux bords.
+---
+--- Deux textures et non une : une texture ne porte qu'un dégradé à deux
+--- extrémités, il en faut donc une par moitié, chacune pleine du côté du
+--- centre. L'objet renvoyé les pilote ensemble — l'appelant n'a qu'un `SetAlpha`
+--- à connaître, comme pour une texture ordinaire.
+---
+--- Sans `SetGradient`, on retombe sur un aplat : moins joli, jamais cassé.
+---@param parent table
+---@param color ColorMixin
+---@param alpha number  opacité au centre
+---@param vertical? boolean  estompe en haut et en bas plutôt qu'à gauche et à droite
+---@return table
+function W.CenterGlow(parent, color, alpha, vertical)
+    local orientation = vertical and "VERTICAL" or "HORIZONTAL"
+
+    -- La moitié « première » est celle du haut ou de la gauche. Chacune est
+    -- pleine du côté du centre : pour un dégradé horizontal le centre est le
+    -- maximum de la moitié gauche, pour un vertical c'est le minimum de la
+    -- moitié haute (l'axe vertical part du bas).
+    local left = parent:CreateTexture(nil, "BACKGROUND")
+    left:SetPoint("TOPLEFT")
+    left:SetPoint("BOTTOMRIGHT", parent, vertical and "RIGHT" or "BOTTOM")
+
+    local right = parent:CreateTexture(nil, "BACKGROUND")
+    right:SetPoint("TOPLEFT", parent, vertical and "LEFT" or "TOP")
+    right:SetPoint("BOTTOMRIGHT")
+
+    local firstAtMax = not vertical
+
+    if T.ApplyGradient(left, color, alpha, orientation, firstAtMax) then
+        T.ApplyGradient(right, color, alpha, orientation, not firstAtMax)
+    else
+        left:SetColorTexture(color:GetRGB())
+        left:SetAlpha(alpha)
+        right:SetColorTexture(color:GetRGB())
+        right:SetAlpha(alpha)
+    end
+
+    local glow = { left = left, right = right }
+
+    --- Montre ou cache le bandeau.
+    ---
+    --- On **masque** les textures au lieu de leur poser un alpha nul, et ce
+    --- n'est pas une préférence de style : une texture dégradée porte son
+    --- opacité dans ses couleurs de sommet, et l'alpha d'objet vient s'empiler
+    --- par-dessus. Faire dépendre l'invisibilité de cette combinaison, c'est
+    --- accepter qu'un voile filtre en permanence si l'une des deux ne se
+    --- comporte pas comme prévu. `Hide` ne laisse rien filtrer, jamais.
+    ---@param shown boolean
+    function glow:SetShown(shown)
+        self.left:SetShown(shown)
+        self.right:SetShown(shown)
+    end
+
+    glow:SetShown(false)
+    return glow
 end
 
 --- Voile sombre aux quatre bords d'une frame, diffusé vers l'intérieur — le
@@ -109,6 +171,44 @@ function W.EdgeShade(frame)
     strip("BOTTOMLEFT", "BOTTOMRIGHT", "VERTICAL",  false)  -- min = bas
     strip("TOPLEFT",  "BOTTOMLEFT",   "HORIZONTAL", false)  -- min = gauche
     strip("TOPRIGHT", "BOTTOMRIGHT",  "HORIZONTAL", true)   -- max = droite
+end
+
+--- Séparateur vertical entre deux zones.
+---
+--- Une barre fine texturée, estompée en haut et en bas : un trait qui court d'un
+--- bord à l'autre couperait la fenêtre en deux, alors qu'on veut seulement
+--- suggérer la limite. C'est le même vocabulaire que les bandeaux de la
+--- navigation — fort au milieu, éteint aux extrémités.
+---
+--- La texture est celle de la pierre du client, désaturée, seulement estompée
+--- par le dégradé : `T.FadeTexture` multiplie ce qui est dessiné au lieu de le
+--- remplacer, le grain survit donc au fondu.
+---
+--- L'appelant l'ancre par le haut et par le bas ; la largeur vient du thème.
+---@param parent table
+---@return table
+function W.VerticalDivider(parent)
+    local bar = W.Container(parent)
+    bar:SetWidth(T.SIZE.DIVIDER_W)
+
+    local function half(from, fromRegion, to, toRegion, opaqueAtMax)
+        local tex = bar:CreateTexture(nil, "ARTWORK")
+        tex:SetPoint(from, bar, fromRegion)
+        tex:SetPoint(to, bar, toRegion)
+        tex:SetTexture(T.TEXTURE.SIDEBAR_BAND)
+        tex:SetDesaturated(true)
+        tex:SetVertTile(true)
+
+        if not T.FadeTexture(tex, T.COLOR.LABEL, T.ALPHA.DIVIDER, "VERTICAL", opaqueAtMax) then
+            tex:SetVertexColor(T.COLOR.LABEL:GetRGB())
+            tex:SetAlpha(T.ALPHA.DIVIDER)
+        end
+    end
+
+    half("TOPLEFT", "TOPLEFT", "BOTTOMRIGHT", "RIGHT", false)
+    half("TOPLEFT", "LEFT", "BOTTOMRIGHT", "BOTTOMRIGHT", true)
+
+    return bar
 end
 
 --- Filet de séparation horizontal.
