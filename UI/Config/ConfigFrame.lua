@@ -4,15 +4,20 @@
 --
 --      +---------------------------------------------------------+
 --      | Bshamel UI                                          [X] |
---      +--------------+------------------------------------------+
---      | GÉNÉRAL      | +--------------------------------------+ |
---      |   ...        | | Quête                                | |
---      | QOL          | +--------------------------------------+ |
---      |   Chat       |                                          |
---      | > Quête      |   Accepter automatiquement les quêtes  ☐ |
---      | MYTHIQUE+    |   Rendre automatiquement les quêtes    ☐ |
---      |   ...        |                                          |
---      +--------------+------------------------------------------+
+--      | +------------+                                          |
+--      | |▓ GÉNÉRAL ▓ |  Quête                                   |
+--      | |   ...      | ---------------------------------------- |
+--      | |▓ QOL     ▓ |                                          |
+--      | |   Chat     |   Accepter automatiquement les quêtes  ☐ |
+--      | | > Quête    |   Rendre automatiquement les quêtes    ☐ |
+--      | |   ...      |                                          |
+--      | +------------+                                          |
+--      +---------------------------------------------------------+
+--
+--  Un seul creux dans la fenêtre, à gauche, autour de la navigation. La zone de
+--  contenu est posée à même le fond translucide et n'est délimitée que par le
+--  filet sous le titre de page : deux panneaux encadrés côte à côte se
+--  disputeraient le regard.
 --
 --  Construction paresseuse : la fenêtre n'existe qu'au premier `/bui`. Se
 --  connecter sans ouvrir les options ne coûte donc aucune frame.
@@ -29,7 +34,7 @@ local Config = {}
 BUI.Config = Config
 
 local frame            --- fenêtre principale
-local titleBox         --- encadré du titre de page
+local pageTitle        --- bloc du titre de page
 local contentScroll    --- zone défilante de droite
 local contentHolder    --- frame de contenu de cette zone
 local currentModule    --- nom du module affiché
@@ -45,28 +50,30 @@ local function buildFrame()
     local S = T.SIZE
 
     -- ----- colonne de navigation -----
-    local sidebarScroll, sidebarContent = W.ScrollPane(frame)
-    sidebarScroll:SetPoint("TOPLEFT", frame, "TOPLEFT", S.CHROME_SIDE, -S.CHROME_TOP)
-    sidebarScroll:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", S.CHROME_SIDE, S.CHROME_BOTTOM)
+    -- Le panneau est créé avant sa zone défilante : à niveau de frame égal,
+    -- c'est l'ordre de création qui décide de l'empilement, et le creux doit
+    -- rester sous la liste.
+    local sidebarPanel = W.Inset(frame)
+    sidebarPanel:SetPoint("TOPLEFT", frame, "TOPLEFT", S.CHROME_SIDE, -S.CHROME_TOP)
+    sidebarPanel:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", S.CHROME_SIDE, S.CHROME_BOTTOM)
+    sidebarPanel:SetWidth(S.SIDEBAR_W + S.PANEL_PAD * 2)
+
+    -- Colonne sans ascenseur : la liste des modules est courte, une barre y
+    -- serait un rappel permanent d'un défilement qui n'a presque jamais lieu.
+    -- La molette continue de fonctionner, elle, ce qui suffit si elle déborde.
+    local sidebarScroll, sidebarContent = W.ScrollPane(frame, true)
+    sidebarScroll:SetPoint("TOPLEFT", sidebarPanel, "TOPLEFT", S.PANEL_PAD, -S.PANEL_PAD)
+    sidebarScroll:SetPoint("BOTTOMLEFT", sidebarPanel, "BOTTOMLEFT", S.PANEL_PAD, S.PANEL_PAD)
     sidebarScroll:SetWidth(S.SIDEBAR_W)
 
-    -- Séparateur vertical plutôt qu'un second panneau creusé : la maquette
-    -- sépare les deux zones par un simple trait.
-    -- L'écart vaut `SCROLLBAR_W + GUTTER` : la barre de défilement de la colonne
-    -- se pose à l'extérieur du ScrollFrame, il faut donc lui laisser la place
-    -- avant le trait.
-    local divider = W.VerticalDivider(frame)
-    divider:SetPoint("TOPLEFT", sidebarScroll, "TOPRIGHT", S.SCROLLBAR_W + S.GUTTER, 0)
-    divider:SetPoint("BOTTOMLEFT", sidebarScroll, "BOTTOMRIGHT", S.SCROLLBAR_W + S.GUTTER, 0)
-
-    -- ----- encadré du titre de page -----
-    titleBox = W.PageTitleBox(frame)
-    titleBox:SetPoint("TOPLEFT", divider, "TOPRIGHT", S.GUTTER, 0)
-    titleBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -S.CHROME_SIDE, -S.CHROME_TOP)
+    -- ----- titre de page -----
+    pageTitle = W.PageTitle(frame)
+    pageTitle:SetPoint("TOPLEFT", sidebarPanel, "TOPRIGHT", S.GUTTER, 0)
+    pageTitle:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -S.CHROME_SIDE, -S.CHROME_TOP)
 
     -- ----- zone de contenu -----
     contentScroll, contentHolder = W.ScrollPane(frame)
-    contentScroll:SetPoint("TOPLEFT", titleBox, "BOTTOMLEFT", 0, -S.GUTTER)
+    contentScroll:SetPoint("TOPLEFT", pageTitle, "BOTTOMLEFT", 0, -S.GUTTER)
     contentScroll:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT",
                            -S.CHROME_SIDE - S.SCROLLBAR_W, S.CHROME_BOTTOM)
 
@@ -109,7 +116,7 @@ function Config:SelectModule(moduleName)
     page:Show()
     page:Refresh()
 
-    titleBox:SetTitle(mod.title)
+    pageTitle:SetTitle(mod.title)
     BUI.Sidebar:SetSelected(moduleName)
     contentScroll:ResetScroll()
 end
@@ -128,7 +135,7 @@ function Config:Show()
     if target then
         self:SelectModule(target)
     else
-        titleBox:SetTitle(L["Bshamel UI"])
+        pageTitle:SetTitle(L["Bshamel UI"])
     end
 end
 

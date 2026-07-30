@@ -69,24 +69,60 @@ function W.Container(parent)
 end
 
 --- Panneau creusé, comme les zones de contenu de l'interface Blizzard.
+--- Son fond est translucide : le panneau se lit comme un creux dans la fenêtre,
+--- pas comme une plaque posée dessus.
 ---@param parent table
 ---@return table
 function W.Inset(parent)
     local template = T.Template("INSET")
     local inset = CreateFrame("Frame", nil, parent, template)
+    T.SetPanelAlpha(inset, T.ALPHA.PANEL_BG)
     return inset
 end
 
---- Séparateur vertical entre deux panneaux.
----@param parent table
----@return table
-function W.VerticalDivider(parent)
-    local line = parent:CreateTexture(nil, "ARTWORK")
-    line:SetWidth(1)
-    if not T.TrySetAtlas(line, T.ATLAS.DIVIDER_V) then
-        line:SetColorTexture(T.COLOR.DISABLED:GetRGB())
-        line:SetAlpha(0.4)
+--- Voile sombre aux quatre bords d'une frame, diffusé vers l'intérieur — le
+--- même assombrissement des bords que le panneau Options du client.
+---
+--- Les textures vivent sur le calque `BORDER` de la frame : elles assombrissent
+--- son fond sans toucher à ses frames enfants, qui se dessinent de toute façon
+--- au-dessus. Le voile porte donc sur la fenêtre, jamais sur ce qu'elle contient.
+---@param frame table
+function W.EdgeShade(frame)
+    local depth = T.SIZE.EDGE_SHADE
+
+    local function strip(from, to, orientation, edgeAtMax)
+        local tex = frame:CreateTexture(nil, "BORDER")
+        if not T.ApplyShade(tex, orientation, edgeAtMax) then
+            tex:Hide()
+            return
+        end
+        tex:SetPoint(from)
+        tex:SetPoint(to)
+        if orientation == "VERTICAL" then
+            tex:SetHeight(depth)
+        else
+            tex:SetWidth(depth)
+        end
     end
+
+    strip("TOPLEFT",  "TOPRIGHT",     "VERTICAL",   true)   -- max = haut
+    strip("BOTTOMLEFT", "BOTTOMRIGHT", "VERTICAL",  false)  -- min = bas
+    strip("TOPLEFT",  "BOTTOMLEFT",   "HORIZONTAL", false)  -- min = gauche
+    strip("TOPRIGHT", "BOTTOMRIGHT",  "HORIZONTAL", true)   -- max = droite
+end
+
+--- Filet de séparation horizontal.
+--- Une texture et non une frame : un trait n'a ni enfant ni script. L'appelant
+--- lui donne ses deux extrémités par ancrage, l'épaisseur vient du thème.
+---@param parent table
+---@param color ColorMixin
+---@param alpha number
+---@return table
+function W.Rule(parent, color, alpha)
+    local line = parent:CreateTexture(nil, "ARTWORK")
+    line:SetHeight(T.SIZE.RULE_H)
+    line:SetColorTexture(color:GetRGB())
+    line:SetAlpha(alpha)
     return line
 end
 
@@ -116,7 +152,7 @@ function W.SetEnabled(widget, enabled, reason)
         elseif control.Disable then
             control:Disable()
         end
-        control:SetAlpha(enabled and 1 or 0.5)
+        control:SetAlpha(enabled and 1 or T.ALPHA.CONTROL_OFF)
     end
 end
 

@@ -2,6 +2,35 @@
 
 ## Non publié
 
+### Modifié
+- Fenêtre d'options translucide : le jeu reste visible derrière, les bordures
+  du cadre restent pleines, et un voile sombre en dégradé assombrit les quatre
+  bords vers l'intérieur comme le panneau Options du client.
+- Le titre de page n'est plus encadré. Il s'affiche en grand et en blanc,
+  souligné d'un filet, sur le modèle de ce même panneau.
+- L'encadrement passe à la colonne de navigation, et chaque en-tête de catégorie
+  reçoit un bandeau doré borné de deux filets.
+- Couleurs de texte alignées sur celles du client : le doré structure
+  (catégories, en-têtes de section, entrées de module au repos), le blanc se lit
+  (titre de page, libellés, entrée sélectionnée). L'accent bleu quitte le chrome
+  de la fenêtre.
+- Textes et lignes agrandis des deux côtés, la colonne de navigation davantage
+  que la zone de contenu.
+- Les deux zones partagent exactement la même teinte de fond : le panneau creusé
+  ne pose plus de second voile par-dessus celui de la fenêtre.
+- La colonne de navigation perd son ascenseur — la molette suffit. Celui de la
+  zone de contenu voit son curseur dimensionné au prorata de la page.
+
+### Interne
+- Toutes les opacités de l'interface sont regroupées dans `T.ALPHA`
+  (`UI/Theme.lua`) au lieu d'être écrites au fil des widgets.
+- Les polices se déclarent en candidats résolus au chargement, comme les
+  templates : les variantes récentes (`…Medium`, `…Large2`) ne sont garanties
+  par aucun contrat et une police inconnue lève une erreur.
+- `W.PageTitleBox` devient `W.PageTitle` ; `W.VerticalDivider` est remplacé par
+  `W.Rule`, partagé par le titre de page, les en-têtes de section et les
+  bandeaux de catégorie. Nouveau `W.EdgeShade`.
+
 ## 0.1.2 — 2026-07-30
 
 ### Modifié

@@ -34,10 +34,10 @@ local function addResizeGrip(frame)
     local tex = grip:CreateTexture(nil, "OVERLAY")
     tex:SetAllPoints()
     tex:SetTexture(T.TEXTURE.RESIZE_GRIP)
-    tex:SetAlpha(0.7)
+    tex:SetAlpha(T.ALPHA.GRIP)
 
-    grip:SetScript("OnEnter", function() tex:SetAlpha(1) end)
-    grip:SetScript("OnLeave", function() tex:SetAlpha(0.7) end)
+    grip:SetScript("OnEnter", function() tex:SetAlpha(T.ALPHA.GRIP_HOVER) end)
+    grip:SetScript("OnLeave", function() tex:SetAlpha(T.ALPHA.GRIP) end)
     grip:SetScript("OnMouseDown", function()
         frame:StartSizing("BOTTOMRIGHT")
     end)
@@ -64,6 +64,12 @@ function W.Window(globalName, titleText, width, height)
     frame:SetFrameStrata("HIGH")
     frame:SetToplevel(true)
     frame:Hide()
+
+    -- Fond translucide, bordure laissée pleine : le jeu reste visible derrière
+    -- la fenêtre sans que le cadre perde son contour. Le voile des bords lui
+    -- redonne du poids là où il en faut, sans opacifier le centre.
+    T.SetPanelAlpha(frame, T.ALPHA.WINDOW_BG)
+    W.EdgeShade(frame)
 
     -- Déplacement par la barre de titre.
     frame:EnableMouse(true)

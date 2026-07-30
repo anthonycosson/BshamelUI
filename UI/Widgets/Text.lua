@@ -8,27 +8,37 @@ local BUI = ns.BUI
 local T    = BUI.Theme
 local W    = BUI.Widgets
 
---- Encadré du titre de page, en haut du panneau de contenu.
+--- Titre de la page affichée, en haut de la zone de contenu.
 --- C'est l'élément qui donne le repère visuel « je suis sur telle page ».
+---
+--- Pas d'encadré : le titre est posé à même la fenêtre, en grand et en blanc,
+--- souligné d'un filet qui court sur toute la largeur. L'encadrement est réservé
+--- à la colonne de navigation — un seul creux par fenêtre, sinon les deux zones
+--- se disputent le regard.
 ---@param parent table
 ---@return table
-function W.PageTitleBox(parent)
-    local box = W.Inset(parent)
-    box:SetHeight(T.SIZE.TITLEBOX_H)
+function W.PageTitle(parent)
+    local block = W.Container(parent)
+    block:SetHeight(T.SIZE.PAGE_TITLE_H)
 
-    local text = box:CreateFontString(nil, "ARTWORK", T.FONT.PAGE_TITLE)
-    text:SetPoint("LEFT", box, "LEFT", T.SIZE.PADDING, 0)
+    local text = block:CreateFontString(nil, "ARTWORK", T.FONT.PAGE_TITLE)
+    text:SetPoint("TOPLEFT", block, "TOPLEFT", T.SIZE.LABEL_INDENT, -T.SIZE.ROW_GAP)
     text:SetJustifyH("LEFT")
-    text:SetTextColor(T.COLOR.NORMAL:GetRGB())
 
-    box.text = text
-    box.SetTitle = function(self, value) self.text:SetText(value or "") end
-    return box
+    local rule = W.Rule(block, T.COLOR.LABEL, T.ALPHA.RULE)
+    rule:SetPoint("BOTTOMLEFT", block, "BOTTOMLEFT", 0, 0)
+    rule:SetPoint("BOTTOMRIGHT", block, "BOTTOMRIGHT", 0, 0)
+
+    block.text = text
+    block.SetTitle = function(self, value) self.text:SetText(value or "") end
+    return block
 end
 
 --- En-tête de section à l'intérieur d'une page (« AUTOMATISATION », « FILTRES »).
---- Rendu en majuscules et à la couleur d'accent : la hiérarchie visuelle vient
---- de la casse et de la couleur, pas d'une taille de police supplémentaire.
+--- Rendu en majuscules et en doré : la hiérarchie visuelle vient de la casse et
+--- de la couleur, pas d'une taille de police supplémentaire. Le doré est celui
+--- qui structure le panneau Options du client ; le titre de page, lui, reste
+--- blanc et garde donc le dessus.
 ---@param parent table
 ---@param label string
 ---@return table
@@ -39,15 +49,12 @@ function W.SectionHeader(parent, label)
     local text = frame:CreateFontString(nil, "ARTWORK", T.FONT.SECTION)
     text:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", T.SIZE.LABEL_INDENT, 2)
     text:SetJustifyH("LEFT")
-    text:SetTextColor(T.COLOR.ACCENT:GetRGB())
+    text:SetTextColor(T.COLOR.NORMAL:GetRGB())
     text:SetText(string.upper(label or ""))
 
-    local rule = frame:CreateTexture(nil, "ARTWORK")
-    rule:SetHeight(1)
-    rule:SetPoint("LEFT", text, "RIGHT", 8, 0)
+    local rule = W.Rule(frame, T.COLOR.NORMAL, T.ALPHA.SECTION_RULE)
+    rule:SetPoint("LEFT", text, "RIGHT", T.SIZE.GUTTER, 0)
     rule:SetPoint("RIGHT", frame, "RIGHT", -T.SIZE.LABEL_INDENT, 0)
-    rule:SetColorTexture(T.COLOR.ACCENT:GetRGB())
-    rule:SetAlpha(0.25)
 
     frame.text = text
     return frame

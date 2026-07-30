@@ -44,7 +44,7 @@ function W.SidebarItem(parent, label, indented)
 
     local selected = button:CreateTexture(nil, "BACKGROUND")
     selected:SetAllPoints()
-    selected:SetColorTexture(T.COLOR.ACCENT:GetRGB())
+    selected:SetColorTexture(T.COLOR.NORMAL:GetRGB())
     selected:SetAlpha(0)
     button.Selected = selected
 
@@ -58,13 +58,36 @@ function W.SidebarItem(parent, label, indented)
     button.text = text
 
     if indented then
+        -- Au repos, une entrée de module est dorée comme dans la liste du
+        -- panneau Options : c'est la sélection qui passera au blanc, et qui
+        -- ressort donc sur ses voisines.
+        text:SetTextColor(T.COLOR.NORMAL:GetRGB())
+
         button:SetScript("OnEnter", function(self)
-            if not self._selected then self.Highlight:SetAlpha(0.08) end
+            if not self._selected then self.Highlight:SetAlpha(T.ALPHA.ROW_HOVER) end
         end)
         button:SetScript("OnLeave", function(self)
             self.Highlight:SetAlpha(0)
         end)
     else
+        -- En-tête de catégorie : un bandeau doré, borné en haut et en bas d'un
+        -- filet. C'est la même construction que les intitulés « Jeu » ou
+        -- « Système » du client — la hiérarchie de la colonne se lit alors sans
+        -- avoir à comparer les indentations.
+        local band = button:CreateTexture(nil, "BACKGROUND")
+        band:SetAllPoints()
+        band:SetColorTexture(T.COLOR.NORMAL:GetRGB())
+        band:SetAlpha(T.ALPHA.SIDEBAR_BAND)
+        button.Band = band
+
+        local top = W.Rule(button, T.COLOR.NORMAL, T.ALPHA.SIDEBAR_RULE)
+        top:SetPoint("TOPLEFT")
+        top:SetPoint("TOPRIGHT")
+
+        local bottom = W.Rule(button, T.COLOR.NORMAL, T.ALPHA.SIDEBAR_RULE)
+        bottom:SetPoint("BOTTOMLEFT")
+        bottom:SetPoint("BOTTOMRIGHT")
+
         text:SetTextColor(T.COLOR.NORMAL:GetRGB())
         button:EnableMouse(false)
     end
@@ -73,9 +96,9 @@ function W.SidebarItem(parent, label, indented)
     ---@param value boolean
     function button:SetSelected(value)
         self._selected = value
-        self.Selected:SetAlpha(value and 0.22 or 0)
+        self.Selected:SetAlpha(value and T.ALPHA.ROW_SELECTED or 0)
         self.Highlight:SetAlpha(0)
-        local color = value and T.COLOR.ACCENT or T.COLOR.LABEL
+        local color = value and T.COLOR.LABEL or T.COLOR.NORMAL
         self.text:SetTextColor(color:GetRGB())
     end
 

@@ -35,30 +35,35 @@ T.SIZE = {
     WINDOW_MIN_W   = 760,
     WINDOW_MIN_H   = 480,
 
-    SIDEBAR_W      = 210,   -- colonne de navigation
+    SIDEBAR_W      = 230,   -- colonne de navigation
 
     PADDING        = 16,    -- marge intérieure d'un pane
     GUTTER         = 10,    -- écart entre deux panes
+    PANEL_PAD      = 6,     -- retrait du contenu à l'intérieur d'un panneau creusé
 
-    TITLEBOX_H     = 38,    -- encadré du titre de page
+    PAGE_TITLE_H   = 46,    -- bloc du titre de page : le texte et son filet
+    RULE_H         = 1,     -- épaisseur d'un filet de séparation
 
-    ROW_H          = 26,    -- hauteur d'une ligne d'option
+    ROW_H          = 30,    -- hauteur d'une ligne d'option
     ROW_GAP        = 6,     -- écart vertical entre deux lignes
-    SECTION_GAP    = 14,    -- écart avant un en-tête de section
-    SECTION_H      = 22,
+    SECTION_GAP    = 16,    -- écart avant un en-tête de section
+    SECTION_H      = 26,
 
-    CONTROL_X      = 330,   -- abscisse du contrôle dans une ligne : c'est ce
+    CONTROL_X      = 340,   -- abscisse du contrôle dans une ligne : c'est ce
                             -- nombre, et lui seul, qui aligne les cases à
                             -- cocher entre toutes les pages
     CONTROL_W      = 160,   -- largeur des dropdowns / sliders
-    LABEL_INDENT   = 6,
+    LABEL_INDENT   = 8,
 
-    SIDEBAR_CAT_H  = 24,    -- en-tête de catégorie
-    SIDEBAR_ITEM_H = 22,    -- entrée de module
-    SIDEBAR_INDENT = 14,
+    SIDEBAR_CAT_H  = 30,    -- bandeau d'en-tête de catégorie
+    SIDEBAR_ITEM_H = 26,    -- entrée de module
+    SIDEBAR_INDENT = 18,
 
     ICON            = 16,
     SCROLLBAR_W     = 24,   -- réservé à droite du contenu défilant
+    THUMB_MIN       = 20,   -- hauteur plancher du curseur d'ascenseur
+
+    EDGE_SHADE      = 64,   -- profondeur du voile sombre aux bords de la fenêtre
 
     -- Retraits imposés par le cadre du client : barre de titre en haut, bordure
     -- nine-slice sur les côtés. Mesurés une fois, réutilisés partout.
@@ -71,23 +76,53 @@ T.SIZE = {
 --  Polices
 -- =========================================================================
 -- Objets de police du client, jamais de chemin de fichier .ttf.
+--
+-- Comme pour les templates, on déclare des candidats par ordre de préférence.
+-- Les variantes `Medium` et `Large2` sont récentes et ne sont garanties par
+-- aucun contrat : une police inconnue passée à `CreateFontString` ne dégrade
+-- pas, elle lève une erreur. On résout donc une fois au chargement, et on se
+-- rabat sur la variante de base.
 
-T.FONT = {
-    WINDOW_TITLE = "GameFontNormal",
-    PAGE_TITLE   = "GameFontNormalLarge",
-    SECTION      = "GameFontNormal",
-    LABEL        = "GameFontHighlight",
-    LABEL_SMALL  = "GameFontHighlightSmall",
-    HINT         = "GameFontDisableSmall",
-    SIDEBAR_CAT  = "GameFontNormalSmall",
-    SIDEBAR_ITEM = "GameFontHighlightSmall",
+local FONT_CANDIDATES = {
+    WINDOW_TITLE = { "GameFontNormal" },
+
+    -- Titre de page en blanc et non en doré : c'est le repère principal de la
+    -- zone de droite, il doit primer sur les en-têtes de section.
+    PAGE_TITLE   = { "GameFontHighlightLarge2", "GameFontHighlightHuge", "GameFontHighlightLarge" },
+
+    SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
+    LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },
+    LABEL_SMALL  = { "GameFontHighlight", "GameFontHighlightSmall" },
+    HINT         = { "GameFontDisableSmall" },
+    SIDEBAR_CAT  = { "GameFontNormalMedium", "GameFontNormal" },
+    SIDEBAR_ITEM = { "GameFontHighlightMedium", "GameFontHighlight" },
 }
+
+T.FONT = {}
+for key, candidates in pairs(FONT_CANDIDATES) do
+    local resolved = candidates[#candidates]
+    for i = 1, #candidates do
+        if _G[candidates[i]] then
+            resolved = candidates[i]
+            break
+        end
+    end
+    T.FONT[key] = resolved
+end
 
 -- =========================================================================
 --  Couleurs
 -- =========================================================================
 -- On réutilise les couleurs du client pour tout ce qui est structurel, et on
 -- n'introduit qu'une seule couleur propre à l'addon : l'accent.
+
+-- Répartition, calquée sur le panneau Options du client :
+--   doré   → tout ce qui structure (catégories, en-têtes de section, entrées
+--            de navigation au repos) ;
+--   blanc  → ce qui est lu (titre de page, libellés d'options) et ce qui est
+--            sélectionné, qui ressort ainsi sur le doré ambiant.
+-- L'accent bleu reste la couleur de la marque — il vit dans le nom de l'addon,
+-- pas dans le chrome de la fenêtre, où il jurerait avec l'interface du jeu.
 
 T.COLOR = {
     ACCENT   = CreateColor(0.00, 0.68, 0.94),           -- le bleu de « Bshamel »
@@ -97,7 +132,90 @@ T.COLOR = {
     WHITE    = WHITE_FONT_COLOR,
     RED      = RED_FONT_COLOR,
     GREEN    = GREEN_FONT_COLOR,
+    SHADE    = CreateColor(0.00, 0.00, 0.00),            -- voile des bords
 }
+
+-- =========================================================================
+--  Opacités
+-- =========================================================================
+-- Une seule table pour toutes les transparences de l'interface. Elles se
+-- règlent les unes par rapport aux autres — le fond d'une fenêtre, la teinte
+-- d'une ligne survolée et celle d'une ligne sélectionnée forment une échelle —,
+-- donc elles se lisent au même endroit.
+
+T.ALPHA = {
+    WINDOW_BG      = 0.80,  -- fond de la fenêtre : le jeu transparaît derrière
+
+    -- Zéro, et ce n'est pas un oubli : un panneau creusé pose sa bordure mais
+    -- pas de fond. Un second voile empilé sur celui de la fenêtre rendrait la
+    -- colonne de navigation plus sombre que la zone de contenu, alors que les
+    -- deux doivent se lire sur exactement la même teinte.
+    PANEL_BG       = 0.00,
+
+    EDGE_SHADE     = 0.55,  -- voile sombre au bord de la fenêtre, dégradé vers
+                            -- l'intérieur
+
+    SIDEBAR_BAND   = 0.16,  -- bandeau d'une catégorie de la navigation
+    SIDEBAR_RULE   = 0.35,  -- filets qui bordent ce bandeau
+    ROW_HOVER      = 0.10,  -- entrée de navigation survolée
+    ROW_SELECTED   = 0.30,  -- entrée de navigation sélectionnée
+    ITEM_OFF       = 0.45,  -- entrée d'un module éteint
+
+    RULE           = 0.35,  -- filet sous le titre de page
+    SECTION_RULE   = 0.30,  -- filet d'un en-tête de section
+
+    CONTROL_OFF    = 0.50,  -- contrôle grisé
+    GRIP           = 0.70,  -- poignée de redimensionnement au repos
+    GRIP_HOVER     = 1.00,
+}
+
+--- Applique un dégradé « voile sombre » à une texture : opaque du côté du bord
+--- de la fenêtre, transparent de l'autre.
+---
+--- Renvoie `false` si le client ne sait pas dégrader une texture — l'appelant
+--- doit alors renoncer au voile plutôt que de laisser une bande noire pleine.
+---@param texture table
+---@param orientation string  "HORIZONTAL" (min = gauche) ou "VERTICAL" (min = bas)
+---@param edgeAtMax boolean   le bord est-il du côté « max » du dégradé ?
+---@return boolean applied
+function T.ApplyShade(texture, orientation, edgeAtMax)
+    if not texture.SetGradient then return false end
+
+    local r, g, b = T.COLOR.SHADE:GetRGB()
+    texture:SetColorTexture(r, g, b)
+
+    local opaque = CreateColor(r, g, b, T.ALPHA.EDGE_SHADE)
+    local clear  = CreateColor(r, g, b, 0)
+
+    if edgeAtMax then
+        texture:SetGradient(orientation, clear, opaque)
+    else
+        texture:SetGradient(orientation, opaque, clear)
+    end
+    return true
+end
+
+--- Rend un panneau translucide sans toucher à son contenu.
+---
+--- On ne baisse jamais l'alpha de la frame elle-même : cela ferait pâlir ses
+--- enfants avec elle. On n'agit que sur les textures de fond. `Bg` est la clé
+--- qu'exposent les templates du client ; le repli parcourt le calque
+--- `BACKGROUND` pour les templates qui ne la publient pas — ce qui évite d'avoir
+--- à connaître leur structure interne, susceptible de changer à tout patch.
+---@param frame table
+---@param alpha number
+function T.SetPanelAlpha(frame, alpha)
+    if frame.Bg then
+        frame.Bg:SetAlpha(alpha)
+        return
+    end
+
+    for _, region in ipairs({ frame:GetRegions() }) do
+        if region.GetDrawLayer and region:GetDrawLayer() == "BACKGROUND" then
+            region:SetAlpha(alpha)
+        end
+    end
+end
 
 --- Code couleur inline, pour les chaînes concaténées.
 ---@param color ColorMixin
@@ -121,7 +239,6 @@ end
 -- Uniquement des atlas du client (`SetAtlas`), jamais de chemin en dur.
 
 T.ATLAS = {
-    DIVIDER_V   = "!UI-HUD-ActionBar-Divider",   -- séparateur vertical fin
     ARROW_RIGHT = "NPE_ArrowRight",
     CHECK       = "common-icon-checkmark",
 }

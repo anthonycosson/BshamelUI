@@ -83,7 +83,7 @@ end
 function Sidebar:SetModuleEnabled(moduleName, enabled)
     local item = items[moduleName]
     if not item then return end
-    item:SetAlpha(enabled and 1 or 0.45)
+    item:SetAlpha(enabled and 1 or T.ALPHA.ITEM_OFF)
 end
 
 --- Réapplique l'opacité de toutes les entrées d'après la base.
@@ -91,7 +91,7 @@ function Sidebar:RefreshStates()
     for name, item in pairs(items) do
         local mod = BUI.Modules:Get(name)
         if mod then
-            item:SetAlpha(mod:Get("enabled") and 1 or 0.45)
+            item:SetAlpha(mod:Get("enabled") and 1 or T.ALPHA.ITEM_OFF)
         end
     end
 end
