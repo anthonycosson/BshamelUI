@@ -2,8 +2,6 @@
 
 ## Non publié
 
-## 0.1.1 — 2026-07-30
-
 ### Modifié
 - Publication sous le nom d'auteur « Bshamel ».
 
@@ -12,7 +10,12 @@
   fermeture recréée pour chaque module.
 - Suppression d'une table morte dans la barre latérale.
 - Intégration continue opérationnelle : `luacheck` et garde-fous de design
-  vérifiés à chaque push.
+  vérifiés à chaque push, packaging et publication automatiques sur tag.
+
+<!-- La version 0.1.1 a été taguée mais jamais publiée : le job de release
+     manquait `jq` et sautait l'envoi. Le tag reste en place, la protection des
+     tags interdisant sa suppression. -->
+
 
 ## 0.1.0 — 2026-07-30
 
