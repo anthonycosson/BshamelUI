@@ -162,6 +162,41 @@ local function layout(page)
     return height
 end
 
+--- Relit tous les réglages d'une page et réapplique l'état actif de chaque
+--- ligne. Définie ici plutôt que dans `GetPage` : une seule fonction partagée
+--- par toutes les pages, au lieu d'une fermeture recréée pour chacune.
+---@param page table
+local function refreshPage(page)
+    local mod = page._module
+    local moduleOn = mod:Get("enabled") and true or false
+
+    for i = 1, #page._entries do
+        local entry = page._entries[i]
+        local descriptor, frame = entry.descriptor, entry.frame
+
+        if frame.Refresh then frame.Refresh(frame) end
+
+        -- Tout ce qui n'est pas l'interrupteur du module est grisé quand le
+        -- module est éteint : l'utilisateur voit ce qu'il gagnerait à
+        -- l'allumer, au lieu d'une page vide.
+        local enabled = moduleOn or descriptor._isSwitch == true
+        local reason  = descriptor.disabledReason or L["Module disabled tooltip"]
+
+        if enabled and descriptor.disabled then
+            if descriptor.disabled() then
+                enabled = false
+                reason  = descriptor.disabledReason
+            end
+        end
+
+        if frame.label or frame.control then
+            W.SetEnabled(frame, enabled, reason)
+        end
+    end
+
+    layout(page)
+end
+
 --- Construit (une seule fois) la page d'un module.
 ---@param parent table  frame de contenu de la zone défilante
 ---@param mod table
@@ -191,36 +226,7 @@ function PB:GetPage(parent, mod)
         end
     end
 
-    --- Relit tous les réglages et réapplique l'état actif de chaque ligne.
-    function page:Refresh()
-        local moduleOn = mod:Get("enabled") and true or false
-
-        for i = 1, #self._entries do
-            local entry = self._entries[i]
-            local descriptor, frame = entry.descriptor, entry.frame
-
-            if frame.Refresh then frame.Refresh(frame) end
-
-            -- Tout ce qui n'est pas l'interrupteur du module est grisé quand le
-            -- module est éteint : l'utilisateur voit ce qu'il gagnerait à
-            -- l'allumer, au lieu d'une page vide.
-            local enabled = moduleOn or descriptor._isSwitch == true
-            local reason  = descriptor.disabledReason or L["Module disabled tooltip"]
-
-            if enabled and descriptor.disabled then
-                if descriptor.disabled() then
-                    enabled = false
-                    reason  = descriptor.disabledReason
-                end
-            end
-
-            if frame.label or frame.control then
-                W.SetEnabled(frame, enabled, reason)
-            end
-        end
-
-        layout(self)
-    end
+    page.Refresh = refreshPage
 
     pages[mod.name] = page
     page:Hide()

@@ -17,7 +17,6 @@ local Sidebar = {}
 BUI.Sidebar = Sidebar
 
 local items = {}      --- moduleName -> bouton
-local headers = {}    --- categoryKey -> bouton d'en-tête
 local built = false
 
 --- Construit la liste. Appelé une fois, après PLAYER_LOGIN, quand tous les
@@ -37,7 +36,6 @@ function Sidebar:Build(content, onSelect)
             local header = W.SidebarItem(content, L[category.label], false)
             header:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
             header:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, y)
-            headers[category.key] = header
             y = y - header:GetHeight()
 
             for _, mod in ipairs(modules) do
