@@ -93,6 +93,27 @@ indétectable » tenable sans discipline.
 Un module marqué `secure = true` voit son activation différée quand le joueur
 est en combat (`PLAYER_REGEN_ENABLED`).
 
+### Modules annoncés (`preview = true`)
+
+Un module marqué `preview = true` occupe sa place dans la navigation et montre
+les réglages qu'il proposera, mais **n'a aucun code derrière lui**. Le core
+force son défaut `enabled` à `false` et `BUI:EnableModule` refuse de l'allumer ;
+le moteur de pages grise la page entière, interrupteur du module compris, et
+ajoute en tête un encart « bientôt disponible ». Il n'existe donc aucun chemin
+— clic, base d'un joueur, changement de profil — par lequel il puisse
+s'exécuter.
+
+Dans la navigation, un module en avant-première n'est **pas** grisé, alors qu'un
+module éteint l'est. Les deux états n'en sont pas un seul : un module éteint peut
+être rallumé, celui-ci n'a jamais été allumable. Le griser annoncerait un réglage
+qui n'existe pas — et tant qu'ils sont majoritaires, cela délaverait la colonne
+entière.
+
+Ils vivent tous dans `Modules/Upcoming.lua`. Le fichier est un échafaudage :
+quand un module est écrit, il part dans son propre fichier avec son `OnEnable`
+et sa déclaration disparaît d'`Upcoming.lua`. Son **nom** ne bouge pas — c'est
+une clé de base de données, choisie une fois pour toutes dès la maquette.
+
 ## Interface
 
 `UI/Theme.lua` détient tous les tokens. `UI/Widgets/` détient toutes les

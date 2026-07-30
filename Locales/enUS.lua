@@ -9,11 +9,11 @@ local BUI = ns.BUI
 BUI:RegisterLocale("enUS", {
     -- Fenêtre d'options
     ["Bshamel UI"]              = "Bshamel UI",
-    ["General"]                 = "General",
+    ["Game"]                    = "Game",
+    ["Interface"]               = "Interface",
     ["QoL"]                     = "QoL",
     ["Mythic+ / Raid"]          = "Mythic+ / Raid",
     ["Search..."]               = "Search...",
-    ["Enable this module"]      = "Enable this module",
     ["Reset this page"]         = "Reset this page",
     ["Reset page confirm"]      = "Reset every setting on this page to its default value?",
     ["Yes"]                     = "Yes",
@@ -22,6 +22,11 @@ BUI:RegisterLocale("enUS", {
     ["Cannot open in combat"]   = "The options window cannot be opened during combat.",
     ["Module disabled tooltip"] = "This module is disabled.",
     ["Version"]                 = "Version",
+
+    -- Modules annoncés (Modules/Upcoming.lua)
+    ["Coming soon"]             = "Coming soon",
+    ["Coming soon notice"]      = "This module is not written yet. The settings below show what it will offer.",
+    ["Coming soon tooltip"]     = "Not available yet.",
 
     -- Module Quest
     ["Quest"]                   = "Quest",
@@ -39,4 +44,80 @@ BUI:RegisterLocale("enUS", {
     ["Shift"]                   = "Shift",
     ["Ctrl"]                    = "Ctrl",
     ["Alt"]                     = "Alt",
+
+    -- Module General
+    ["General"]                        = "General",
+    ["Auto-repair"]                    = "Auto-repair",
+    ["Auto-repair tip"]                = "Repairs at every merchant, from guild funds first and from your own money second.",
+    ["Auction current expansion"]      = "Auction house: current expansion only",
+    ["Auction current expansion tip"]  = "Restricts auction house browsing to items from the current expansion.",
+    ["Announcements"]                  = "Announcements",
+    ["Announce group deaths"]          = "Announce group deaths",
+    ["Announce group deaths tip"]      = "Posts a message in group chat when a member of your party or raid dies.",
+    ["Death sound alert"]              = "Play a sound on death",
+    ["Death sound alert tip"]          = "Adds an audio alert to the death announcement.",
+    ["Annoyances"]                     = "Annoyances",
+    ["Skip cinematics"]                = "Skip cinematics",
+    ["Skip cinematics tip"]            = "Skips cinematics and in-game movies.",
+    ["Hide talking heads"]             = "Hide talking heads",
+    ["Hide talking heads tip"]         = "Hides the talking head frame that pops up during quests and dungeons.",
+    ["Hide Lua errors"]                = "Hide Lua errors",
+    ["Hide Lua errors tip"]            = "Suppresses the error popup. Errors are still reported to error handlers.",
+
+    -- Module Character
+    ["Character sheet"]                = "Character sheet",
+    ["Item details"]                   = "Item details",
+    ["Show upgrade level"]             = "Show upgrade level",
+    ["Show upgrade level tip"]         = "Shows the upgrade track and rank on each equipped item.",
+    ["Show enchants"]                  = "Show enchants",
+    ["Show enchants tip"]              = "Shows the enchant on every slot that can take one, and flags those that are missing it.",
+    ["Show gems"]                      = "Show gems",
+    ["Show gems tip"]                  = "Shows socketed gems, and flags empty sockets.",
+    ["Show void core"]                 = "Show void core",
+    ["Show void core tip"]             = "Shows the void core fitted to each item that can take one.",
+
+    -- Modules ActionBars et UnitFrames
+    ["Action bars"]                    = "Action bars",
+    ["Unit frames"]                    = "Unit frames",
+    ["Appearance"]                     = "Appearance",
+    ["Dark mode"]                      = "Dark mode",
+    ["Dark mode tip"]                  = "Darkens the artwork so it sits back into the screen.",
+    ["Class-colored health"]           = "Class-colored health bars",
+    ["Class-colored health tip"]       = "Colors each health bar with the class color of the unit.",
+
+    -- Module Chat
+    ["Chat"]                           = "Chat",
+    ["History"]                        = "History",
+    ["Keep history"]                   = "Keep history across reloads",
+    ["Keep history tip"]               = "Restores the last messages after a /reload or a relog.",
+    ["Drag to resize"]                 = "Drag to resize the height",
+    ["Drag to resize tip"]             = "Adds a handle to change the chat height without opening its settings.",
+
+    -- Module Bags
+    ["Bags"]                           = "Bags",
+    ["Merchants"]                      = "Merchants",
+    ["Auto-sell junk"]                 = "Auto-sell junk",
+    ["Auto-sell junk tip"]             = "Sells grey items at every merchant.",
+    ["Confirmations"]                  = "Confirmations",
+    ["Fill delete confirmation"]       = "Fill the delete confirmation",
+    ["Fill delete confirmation tip"]   = "Types the confirmation word for you when destroying an item asks for it.",
+    ["Display"]                        = "Display",
+    ["Show item level"]                = "Show item level",
+    ["Show item level tip"]            = "Prints the item level on equipment icons in your bags.",
+
+    -- Modules Keystones et RaidTools
+    ["Keystones"]                      = "Keystones",
+    ["Answer keys request"]            = "Answer !keys in chat",
+    ["Answer keys request tip"]        = "Replies with your keystone when someone types !keys in party or raid chat.",
+    ["Raid tools"]                     = "Raid tools",
+    ["Combat"]                         = "Combat",
+    ["Battle res tracker"]             = "Battle res tracker",
+    ["Battle res tracker tip"]         = "Shows how many battle resurrections are left and how long until the next one.",
+    ["Ready check buffs"]              = "Check buffs on ready check",
+    ["Ready check buffs tip"]          = "Reports who is missing food, flask or a raid buff when a ready check starts.",
+    ["World markers"]                  = "World marker panel",
+    ["World markers tip"]              = "Opens a panel to place and clear world markers.",
+    ["Logging"]                        = "Logging",
+    ["Auto combat logging"]            = "Automatic combat logging",
+    ["Auto combat logging tip"]        = "Starts combat logging when you enter a raid or a mythic+ dungeon, and stops it when you leave.",
 })

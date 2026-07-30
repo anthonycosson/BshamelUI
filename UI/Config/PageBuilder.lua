@@ -42,18 +42,6 @@ local pages = {}
 --  Construction
 -- =========================================================================
 
---- Descripteur implicite ajouté en tête de chaque page : l'interrupteur du
---- module lui-même. Toutes les pages ont donc la même première ligne, au même
---- endroit, sans qu'aucun module n'ait à y penser.
-local function moduleSwitch()
-    return {
-        type    = "toggle",
-        key     = "enabled",
-        text    = L["Enable this module"],
-        _isSwitch = true,
-    }
-end
-
 local function accessors(mod, descriptor)
     local get = descriptor.get
     local set = descriptor.set
@@ -168,6 +156,7 @@ end
 ---@param page table
 local function refreshPage(page)
     local mod = page._module
+    local preview  = mod.preview == true
     local moduleOn = mod:Get("enabled") and true or false
 
     for i = 1, #page._entries do
@@ -176,13 +165,18 @@ local function refreshPage(page)
 
         if frame.Refresh then frame.Refresh(frame) end
 
-        -- Tout ce qui n'est pas l'interrupteur du module est grisé quand le
-        -- module est éteint : l'utilisateur voit ce qu'il gagnerait à
-        -- l'allumer, au lieu d'une page vide.
-        local enabled = moduleOn or descriptor._isSwitch == true
+        -- Un module peut être éteint par le code (module sécurisé en attente de
+        -- sortie de combat, par exemple) : sa page se grise alors entièrement.
+        local enabled = moduleOn
         local reason  = descriptor.disabledReason or L["Module disabled tooltip"]
 
-        if enabled and descriptor.disabled then
+        -- Une page en avant-première est grisée jusqu'à son interrupteur : il
+        -- n'y a rien derrière, promettre qu'on peut l'allumer serait un
+        -- mensonge que le premier clic démentirait.
+        if preview then
+            enabled = false
+            reason  = L["Coming soon tooltip"]
+        elseif enabled and descriptor.disabled then
             if descriptor.disabled() then
                 enabled = false
                 reason  = descriptor.disabledReason
@@ -213,7 +207,18 @@ function PB:GetPage(parent, mod)
     page._entries = {}
     page._module  = mod
 
-    local descriptors = { moduleSwitch() }
+    -- Pas d'interrupteur de module en tête de page : chaque réglage est éteint
+    -- par défaut, allumer celui qu'on veut suffit. Un interrupteur au-dessus
+    -- n'ajouterait qu'une case à cocher de plus à cocher pour rien.
+    local descriptors = {}
+
+    -- Un module en avant-première annonce la couleur en tête de page, avant
+    -- d'aligner des contrôles gris que rien n'explique autrement.
+    if mod.preview then
+        descriptors[#descriptors + 1] = { type = "header",      text = L["Coming soon"] }
+        descriptors[#descriptors + 1] = { type = "description", text = L["Coming soon notice"] }
+    end
+
     for i = 1, #(mod.options or {}) do
         descriptors[#descriptors + 1] = mod.options[i]
     end

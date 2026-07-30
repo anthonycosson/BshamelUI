@@ -52,3 +52,7 @@ UI\Config\ConfigFrame.lua
 
 # Modules
 Modules\Quest.lua
+
+# Modules annoncés, sans code derrière : ils se voient dans la fenêtre mais ne
+# s'allument pas. Chaque ligne disparaît d'ici le jour où le module est écrit.
+Modules\Upcoming.lua

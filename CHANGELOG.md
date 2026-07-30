@@ -2,6 +2,19 @@
 
 ## Non publié
 
+### Ajouté
+- Aperçu des modules à venir dans la fenêtre d'options : **Général**, **Fiche de
+  personnage**, **Barres d'action**, **Cadres d'unités**, **Chat**, **Sacs**,
+  **Clés mythiques** et **Outils de raid**. Leurs pages se parcourent et
+  montrent les réglages qu'ils proposeront, mais rien ne s'y active : ces
+  modules n'ont pas encore de code.
+- Deux catégories de navigation, **Jeu** et **Interface**, pour accueillir ces
+  pages.
+
+  Ces entrées ne sont pas grisées dans la colonne, contrairement à celles d'un
+  module éteint : un module à venir n'a jamais été allumable, et les griser
+  délaverait toute la navigation.
+
 ### Modifié
 - Fenêtre d'options sombre et translucide : le jeu reste visible derrière, les
   bordures du cadre restent pleines, et un voile en dégradé assombrit les quatre

@@ -76,14 +76,31 @@ function Sidebar:FirstModuleName()
     return nil
 end
 
---- Grise l'entrée d'un module éteint : l'état du module se lit dans la
---- navigation, sans avoir à ouvrir la page.
+--- Opacité de l'entrée d'un module.
+---
+--- Un module **éteint** est grisé : son état se lit dans la navigation, sans
+--- avoir à ouvrir la page.
+---
+--- Un module **en avant-première** ne l'est pas, bien qu'il soit éteint lui
+--- aussi. Ce n'est pas le même état : il n'a jamais été allumable, le griser
+--- annoncerait un réglage que le joueur pourrait changer. Et tant qu'ils sont
+--- majoritaires, les griser délave toute la colonne — le doré vire au gris et
+--- rien ne ressort plus.
+---@param mod table
+---@return number
+local function itemAlpha(mod)
+    if mod.preview then return 1 end
+    return mod:Get("enabled") and 1 or T.ALPHA.ITEM_OFF
+end
+
 ---@param moduleName string
 ---@param enabled boolean
 function Sidebar:SetModuleEnabled(moduleName, enabled)
     local item = items[moduleName]
     if not item then return end
-    item:SetAlpha(enabled and 1 or T.ALPHA.ITEM_OFF)
+
+    local mod = BUI.Modules:Get(moduleName)
+    item:SetAlpha(mod and itemAlpha(mod) or (enabled and 1 or T.ALPHA.ITEM_OFF))
 end
 
 --- Réapplique l'opacité de toutes les entrées d'après la base.
@@ -91,7 +108,7 @@ function Sidebar:RefreshStates()
     for name, item in pairs(items) do
         local mod = BUI.Modules:Get(name)
         if mod then
-            item:SetAlpha(mod:Get("enabled") and 1 or T.ALPHA.ITEM_OFF)
+            item:SetAlpha(itemAlpha(mod))
         end
     end
 end

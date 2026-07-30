@@ -31,8 +31,12 @@ BUI.Modules = Modules
 
 --- Catégories de la barre latérale, dans l'ordre d'affichage.
 --- Ajouter une catégorie ici et nulle part ailleurs.
+---
+--- Aucune catégorie ne porte le nom d'un de ses modules : un intitulé répété
+--- juste sous lui-même donne une navigation qui a l'air cassée.
 BUI.CATEGORIES = {
-    { key = "General",    label = "General" },
+    { key = "Game",       label = "Game" },
+    { key = "Interface",  label = "Interface" },
     { key = "QoL",        label = "QoL" },
     { key = "MythicRaid", label = "Mythic+ / Raid" },
 }
@@ -129,7 +133,7 @@ function BUI:RegisterModule(name, definition)
 
     local mod = definition
     mod.name      = name
-    mod.category  = mod.category or "General"
+    mod.category  = mod.category or "Game"
     mod.title     = mod.title or name
     mod.order     = mod.order or 100
     mod._index    = registrationIndex
@@ -142,6 +146,14 @@ function BUI:RegisterModule(name, definition)
     -- Tout module est activable/désactivable : le core possède cette clé.
     mod.defaults = mod.defaults or {}
     if mod.defaults.enabled == nil then mod.defaults.enabled = true end
+
+    -- `preview` : le module annonce une fonctionnalité qui n'est pas encore
+    -- écrite. Il occupe sa place dans la navigation et montre les réglages
+    -- qu'il proposera, mais il ne s'allume jamais — ni au démarrage, ni depuis
+    -- la base d'un joueur, ni par un clic. Le forçage est ici, à l'écriture des
+    -- défauts, et pas seulement dans l'interface : un réglage qui n'existe pas
+    -- ne doit pas pouvoir s'allumer par un autre chemin que celui qu'on a prévu.
+    if mod.preview then mod.defaults.enabled = false end
 
     registry[name] = mod
     BUI.DB:RegisterDefaults(name, mod.defaults)
@@ -186,6 +198,7 @@ end
 function BUI:EnableModule(name)
     local mod = registry[name]
     if not mod or mod._active then return end
+    if mod.preview then return end
 
     if mod.secure and InCombatLockdown() then
         pendingCombat[name] = true
@@ -290,6 +303,7 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         BUI:Print(L["Version"], BUI.VERSION)
         return
     end
+
 
     if BUI.Config and BUI.Config.Toggle then
         BUI.Config:Toggle()
