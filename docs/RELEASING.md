@@ -1,6 +1,12 @@
 # Publier une version
 
+Projet CurseForge : **1631877**
+<https://authors.curseforge.com/#/projects/1631877/general>
+
 ## Une seule fois : créer le projet CurseForge
+
+> Déjà fait — cette section est conservée pour mémoire, et pour le jour où un
+> second projet sera créé.
 
 L'API CurseForge sait ajouter un fichier à un projet, pas créer le projet.
 Cette partie est donc manuelle et se fait une fois pour toutes.
@@ -15,11 +21,12 @@ Cette partie est donc manuelle et se fait une fois pour toutes.
    Le zip apparaît dans `.release/`. L'uploader à la main sur le projet.
 4. Attendre la modération (de quelques minutes à trois jours ouvrés, 8 h – 15 h
    CET).
-5. Une fois le projet approuvé, relever son **ID numérique** dans la colonne de
-   droite de sa page, et le reporter dans `BshamelUI.toc` :
+5. Une fois le projet approuvé, relever son **ID numérique** (il est dans l'URL
+   du tableau de bord auteur) et le reporter dans `BshamelUI.toc` :
    ```
-   ## X-Curse-Project-ID: 123456
+   ## X-Curse-Project-ID: 1631877
    ```
+   C'est cette ligne, et elle seule, qui dit au packager où envoyer le fichier.
 6. Générer un jeton sur <https://authors.curseforge.com/account/api-tokens>.
 
 ## Une seule fois : configurer GitLab

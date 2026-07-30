@@ -12,7 +12,7 @@
 ## IconTexture: Interface\Icons\INV_Misc_QuestionMark
 ## AddonCompartmentFunc: BshamelUI_OnAddonCompartmentClick
 ## X-License: All Rights Reserved
-# ## X-Curse-Project-ID: <à renseigner après création du projet CurseForge>
+## X-Curse-Project-ID: 1631877
 
 # ---------------------------------------------------------------------------
 # Ordre de chargement : Core -> Locales -> UI -> Modules.
