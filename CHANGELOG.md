@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.2.0 — 2026-07-31
+
 ### Ajouté
 - Aperçu des modules à venir dans la fenêtre d'options : **Général**, **Fiche de
   personnage**, **Barres d'action**, **Cadres d'unités**, **Chat**, **Sacs**,
