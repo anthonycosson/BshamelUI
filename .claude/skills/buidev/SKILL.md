@@ -1,4 +1,4 @@
----
+﻿---
 name: buidev
 description: Enregistre le travail en cours de l'addon Bshamel UI sur GitLab, sans rien publier sur CurseForge. À utiliser quand l'utilisateur dit "/buidev", "pousse sur gitlab", "sauvegarde le travail", "commit et push", "enregistre ce que j'ai fait", ou quand il vient de terminer une modification de BshamelUI et veut la mettre à l'abri sans faire de version. Couvre les vérifications locales, le CHANGELOG, le commit et le push sur main. Ne crée jamais de tag et ne publie jamais — pour publier une version, c'est le skill buiprod.
 ---
@@ -10,7 +10,7 @@ Objectif : mettre le travail en cours à l'abri sur GitLab, avec la CI au vert.
 
 | | |
 |---|---|
-| Dépôt local | `C:\Users\Cosso\dev\BshamelUI` |
+| Dépôt local | `C:\Users\Cosso\Documents\Claude\BshamelUI` |
 | Remote | `https://gitlab.anthocsn.com/anthony/bshamelui.git` (HTTPS, jeton en cache GCM) |
 | Branche | `main` |
 
@@ -25,7 +25,7 @@ skill `buiprod`, pas celui-ci — le lui dire et basculer.
 ### 1. Regarder ce qui a changé
 
 ```bash
-cd "C:/Users/Cosso/dev/BshamelUI" && git status --short && git diff --stat
+cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && git status --short && git diff --stat
 ```
 
 Résumer en une phrase ce que la modification fait. Si le diff contient des
@@ -35,7 +35,7 @@ un commit = un sujet.
 ### 2. Vérifier
 
 ```bash
-cd "C:/Users/Cosso/dev/BshamelUI" && bash dev/scripts/lint-local.sh
+cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && bash dev/scripts/lint-local.sh
 ```
 
 Trois passes : syntaxe (`luac`), diagnostics (`lua-language-server`), garde-fous
@@ -77,7 +77,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ### 5. Pousser
 
 ```bash
-cd "C:/Users/Cosso/dev/BshamelUI" && git push origin main
+cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && git push origin main
 ```
 
 Ne pas demander confirmation : c'est réversible, ça reste sur l'infrastructure

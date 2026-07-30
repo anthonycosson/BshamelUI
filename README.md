@@ -1,4 +1,4 @@
-# Bshamel UI
+﻿# Bshamel UI
 
 Suite d'améliorations d'interface pour World of Warcraft *retail*, faite maison :
 un seul addon, un seul dossier, zéro dépendance.
@@ -24,17 +24,39 @@ jonction NTFS posée une fois pour toutes.
 ```
 C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI
         ↓ jonction NTFS (ce n'est pas une copie, c'est le même dossier)
-C:\Users\Cosso\dev\BshamelUI
+C:\Users\Cosso\Documents\Claude\BshamelUI
 ```
 
 Conséquence pratique : **éditer un fichier, puis `/reload` en jeu.** C'est toute
 la boucle de développement. Rien à compiler, rien à copier.
 
-Pour recréer la jonction sur une autre machine :
+Pour recréer la jonction, après un clone ou un déplacement du dépôt :
 
 ```bash
-cmd //c mklink /J "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI" "C:\Users\<vous>\dev\BshamelUI"
+cmd //c mklink /J "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI" "C:\Users\Cosso\Documents\Claude\BshamelUI"
 ```
+
+> ### ⚠ Ne jamais installer Bshamel UI depuis CurseForge sur cette machine
+>
+> Télécharger l'addon — par le site ou par l'application CurseForge — **écrase
+> la jonction** par un vrai dossier contenant la version publiée. Le jeu charge
+> alors une copie figée, tes modifications locales n'ont plus aucun effet, et
+> rien ne te le signale.
+>
+> C'est déjà arrivé une fois : le dossier contenait la v0.1.0 alors que le
+> dépôt était en v0.1.2.
+>
+> Pour vérifier que la jonction est intacte :
+>
+> ```bash
+> cmd //c dir /AL "C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns"
+> ```
+>
+> `BshamelUI` doit apparaître avec la mention `<JONCTION>`. S'il en est absent,
+> le dossier a été remplacé : le supprimer puis relancer le `mklink` ci-dessus.
+>
+> Corollaire : pour tester la version *publiée* comme le ferait un joueur, il
+> faut le faire sur une autre installation de WoW, pas sur celle-ci.
 
 ## 2. Ce qui est publié, et ce qui ne l'est pas
 
@@ -204,7 +226,7 @@ Deux skills sont versionnés dans `.claude/skills/` :
 | `/buiprod` | choisit le numéro de version, prépare le tag, demande confirmation, publie sur CurseForge et suit la pipeline jusqu'à l'envoi effectif. |
 
 Étant versionnés dans le dépôt, ils ne sont chargés que dans les sessions
-**ouvertes depuis ce dossier** (`C:\Users\Cosso\dev\BshamelUI`). C'est le
+**ouvertes depuis ce dossier** (`C:\Users\Cosso\Documents\Claude\BshamelUI`). C'est le
 répertoire de travail à utiliser pour développer l'addon.
 
 ## 8. Commandes utiles

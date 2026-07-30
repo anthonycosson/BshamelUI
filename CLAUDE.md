@@ -1,4 +1,4 @@
-# Bshamel UI — règles du dépôt
+﻿# Bshamel UI — règles du dépôt
 
 Addon World of Warcraft **retail uniquement**, un seul dossier, zéro dépendance.
 Licence *all rights reserved*. Distribution : CurseForge via GitLab CI.
@@ -141,7 +141,7 @@ Le dépôt est monté dans le jeu par une jonction NTFS :
 
 ```
 C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI
-  -> C:\Users\Cosso\dev\BshamelUI
+  -> C:\Users\Cosso\Documents\Claude\BshamelUI
 ```
 
 Éditer le dépôt, `/reload` en jeu, c'est tout.
