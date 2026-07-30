@@ -43,15 +43,30 @@ branche ou de merge request.
 
 ## À chaque version
 
-1. Mettre `CHANGELOG.md` à jour (déjà fait au fil des commits).
-2. Taguer et pousser :
-   ```bash
-   git tag -a v0.1.0 -m "v0.1.0"
-   ```
-   ```bash
-   git push origin v0.1.0
-   ```
-3. La pipeline `release` construit le zip et l'envoie sur CurseForge.
+Écrire ce qui a changé sous `## Non publié` dans `CHANGELOG.md` au fil des
+commits, puis :
+
+```bash
+bash scripts/tag-release.sh 0.2.0
+```
+
+Le script vérifie que l'arbre est propre, lance le lint et les garde-fous,
+date la section du CHANGELOG, commite, tague, et affiche un aperçu du paquet.
+**Il ne pousse rien** : pousser un tag publie pour de vrai sur CurseForge, ce
+qui mérite un geste explicite. Quand tu es sûr :
+
+```bash
+git push origin HEAD && git push origin v0.2.0
+```
+
+Ou en une fois, si tu n'as pas besoin de relire l'aperçu :
+
+```bash
+bash scripts/tag-release.sh 0.2.0 --push
+```
+
+La pipeline `release` prend le relais : elle construit le zip et l'envoie sur
+le projet 1631877.
 
 Il n'y a **jamais** de numéro de version à modifier à la main : le `.toc`
 contient `@project-version@`, que le packager remplace par le tag.
