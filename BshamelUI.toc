@@ -1,7 +1,9 @@
 ## Interface: 120007, 120100
 ## Title: |cff00aeefBshamel|rUI
-## Notes: Suite d'améliorations d'interface faite maison — QoL, Mythique+ et raid.
-## Notes-frFR: Suite d'améliorations d'interface faite maison — QoL, Mythique+ et raid.
+# `Notes` est le repli pour tous les clients : il doit rester en anglais.
+# Les variantes `Notes-<locale>` le remplacent quand la locale correspond.
+## Notes: Hand-made quality-of-life suite built on Blizzard's own UI. No dependencies.
+## Notes-frFR: Suite de confort faite maison, bâtie sur l'interface de Blizzard. Sans dépendance.
 ## Author: Cosso
 ## Version: @project-version@
 ## SavedVariables: BshamelUIDB
