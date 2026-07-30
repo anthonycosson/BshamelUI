@@ -1,0 +1,18 @@
+# Fins de ligne normalisées en LF dans le dépôt.
+# Sans cela, un poste Windows commite des CRLF et les scripts bash échouent
+# dans l'image Alpine de la CI avec un « bad interpreter » incompréhensible.
+* text=auto eol=lf
+
+*.lua  text eol=lf
+*.toc  text eol=lf
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+
+# Binaires
+*.tga  binary
+*.blp  binary
+*.png  binary
+*.ttf  binary
+*.ogg  binary

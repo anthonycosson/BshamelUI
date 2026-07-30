@@ -1,0 +1,49 @@
+## Interface: 120007, 120100
+## Title: |cff00aeefBshamel|rUI
+## Notes: Suite d'améliorations d'interface faite maison — QoL, Mythique+ et raid.
+## Notes-frFR: Suite d'améliorations d'interface faite maison — QoL, Mythique+ et raid.
+## Author: Cosso
+## Version: @project-version@
+## SavedVariables: BshamelUIDB
+## SavedVariablesPerCharacter: BshamelUICharDB
+## IconTexture: Interface\AddOns\BshamelUI\media\logo
+## AddonCompartmentFunc: BshamelUI_OnAddonCompartmentClick
+## X-License: All Rights Reserved
+# ## X-Curse-Project-ID: <à renseigner après création du projet CurseForge>
+
+# ---------------------------------------------------------------------------
+# Ordre de chargement : Core -> Locales -> UI -> Modules.
+# Rien ne doit dépendre d'un fichier chargé plus bas dans cette liste au moment
+# de son exécution ; les dépendances tardives passent par PLAYER_LOGIN.
+# ---------------------------------------------------------------------------
+
+# Core
+Core\Init.lua
+Core\Util.lua
+Core\Locale.lua
+
+# Locales (enUS est la base, les autres écrasent si GetLocale() correspond)
+Locales\enUS.lua
+Locales\frFR.lua
+
+Core\DB.lua
+Core\Module.lua
+
+# Design system
+UI\Theme.lua
+UI\Widgets\Base.lua
+UI\Widgets\Window.lua
+UI\Widgets\Text.lua
+UI\Widgets\Button.lua
+UI\Widgets\Toggle.lua
+UI\Widgets\Slider.lua
+UI\Widgets\Dropdown.lua
+UI\Widgets\ScrollList.lua
+
+# Fenêtre d'options
+UI\Config\PageBuilder.lua
+UI\Config\Sidebar.lua
+UI\Config\ConfigFrame.lua
+
+# Modules
+Modules\Quest.lua

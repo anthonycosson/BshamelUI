@@ -1,0 +1,20 @@
+# Sorties du packager
+.release/*
+!.release/release.sh
+*.zip
+
+# Environnement local — ne doit jamais être commité (contient CF_API_KEY)
+.env
+
+# Éditeurs / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Fichiers de travail Claude Code non partagés
+.claude/settings.local.json

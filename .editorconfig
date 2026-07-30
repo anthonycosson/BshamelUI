@@ -1,0 +1,22 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.lua]
+max_line_length = 120
+
+[*.{yml,yaml,md}]
+indent_size = 2
+
+[*.toc]
+# Le client lit les .toc en UTF-8 sans BOM ; ne pas y toucher.
+trim_trailing_whitespace = true
+
+[*.sh]
+end_of_line = lf

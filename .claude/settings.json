@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(luacheck:*)",
+      "Bash(bash scripts/check-design.sh)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git show:*)"
+    ]
+  }
+}

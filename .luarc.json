@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.1",
+  "runtime.special": {
+    "hooksecurefunc": "require"
+  },
+  "workspace.ignoreDir": [
+    ".release",
+    ".claude",
+    "docs",
+    "scripts"
+  ],
+  "diagnostics.globals": [
+    "BshamelUI",
+    "BshamelUIDB",
+    "BshamelUICharDB",
+    "BshamelUI_OnAddonCompartmentClick",
+    "SLASH_BSHAMELUI1",
+    "SLASH_BSHAMELUI2",
+    "SlashCmdList",
+    "StaticPopupDialogs",
+    "StaticPopup_Show",
+    "UISpecialFrames",
+
+    "strjoin", "strtrim", "strlower", "strupper", "strsplit",
+    "tostringall", "wipe", "tinsert", "tremove",
+
+    "CreateFrame", "UIParent", "GameTooltip",
+    "GameTooltip_SetTitle", "GameTooltip_AddNormalLine", "GameTooltip_AddErrorLine",
+    "HideUIPanel", "PlaySound", "SOUNDKIT",
+    "CreateColor", "NORMAL_FONT_COLOR", "HIGHLIGHT_FONT_COLOR",
+    "DISABLED_FONT_COLOR", "WHITE_FONT_COLOR", "RED_FONT_COLOR", "GREEN_FONT_COLOR",
+    "SettingsPanel", "Settings", "NineSliceUtil",
+
+    "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",
+
+    "GetLocale", "GetTime", "GetBuildInfo", "InCombatLockdown",
+    "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown", "IsModifierKeyDown",
+    "hooksecurefunc", "geterrorhandler", "CallErrorHandler", "securecallfunction",
+
+    "AcceptQuest", "ConfirmAcceptQuest", "CloseQuest", "CompleteQuest",
+    "GetQuestReward", "GetQuestID", "QuestGetAutoAccept", "IsQuestCompletable",
+    "GetNumQuestChoices", "GetNumActiveQuests", "GetNumAvailableQuests",
+    "GetActiveTitle", "SelectActiveQuest", "SelectAvailableQuest",
+    "IsActiveQuestTrivial", "IsAvailableQuestTrivial"
+  ],
+  "diagnostics.disable": [
+    "lowercase-global"
+  ]
+}

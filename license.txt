@@ -1,0 +1,24 @@
+Custom License for: Bshamel UI (BshamelUI)
+
+Copyright (c) 2026 Cosso. All rights reserved.
+
+The contents of this addon, excluding third-party resources, are copyrighted to
+their authors with all rights reserved.
+
+You may download and use this addon in World of Warcraft for personal use.
+
+You may not, without prior written permission from the copyright holder:
+  - redistribute this addon or any part of it, modified or unmodified;
+  - publish, mirror or repackage it on any platform;
+  - incorporate any part of its code, art or text into another work;
+  - use it as the basis for a derivative addon or user interface.
+
+Third-party resources, if any, are distributed under their own licenses, which
+are reproduced alongside them and take precedence over this file for those
+files only.
+
+All rights not explicitly addressed in this license are reserved by the
+copyright holder.
+
+Bshamel UI is an unofficial World of Warcraft addon. It is not created by, not
+affiliated with, and not endorsed by Blizzard Entertainment, Inc.

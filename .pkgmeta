@@ -1,0 +1,33 @@
+# =========================================================================
+#  Packaging BigWigs — Bshamel UI
+#  https://github.com/BigWigsMods/packager
+#
+#  Le dépôt *est* le dossier d'addon : tout ce qui n'est pas du code de jeu doit
+#  donc être exclu explicitement du zip, sinon il finit dans l'installation des
+#  joueurs.
+# =========================================================================
+
+package-as: BshamelUI
+
+enable-nolib-creation: no
+enable-toc-creation: no
+
+ignore:
+  - .editorconfig
+  - .gitattributes
+  - .gitignore
+  - .gitlab-ci.yml
+  - .luacheckrc
+  - .luarc.json
+  - .release
+  - .claude
+  - .vscode
+  - CLAUDE.md
+  - CONTRIBUTING.md
+  - README.md
+  - docs
+  - scripts
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
