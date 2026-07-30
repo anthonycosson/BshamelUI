@@ -2,6 +2,16 @@
 
 ## Non publié
 
+### Modifié
+- Publication sous le nom d'auteur « Bshamel ».
+
+### Interne
+- `Refresh` d'une page d'options devient une fonction partagée au lieu d'une
+  fermeture recréée pour chaque module.
+- Suppression d'une table morte dans la barre latérale.
+- Intégration continue opérationnelle : `luacheck` et garde-fous de design
+  vérifiés à chaque push.
+
 ## 0.1.0 — 2026-07-30
 
 Première version. Les fondations sont posées ; un seul module fonctionnel pour
