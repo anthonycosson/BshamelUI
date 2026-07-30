@@ -194,7 +194,20 @@ que sur un tag — jamais sur une branche, jamais sur une merge request.
 | Connaître les règles du dépôt | [CLAUDE.md](CLAUDE.md) |
 | Contribuer | [dev/CONTRIBUTING.md](dev/CONTRIBUTING.md) |
 
-## 7. Commandes utiles
+## 7. Raccourcis Claude Code
+
+Deux skills sont versionnés dans `.claude/skills/` :
+
+| Commande | Ce qu'elle fait |
+|---|---|
+| `/buidev` | vérifie, met à jour le CHANGELOG, commite et pousse sur `main`. Ne crée jamais de tag, ne publie rien. |
+| `/buiprod` | choisit le numéro de version, prépare le tag, demande confirmation, publie sur CurseForge et suit la pipeline jusqu'à l'envoi effectif. |
+
+Étant versionnés dans le dépôt, ils ne sont chargés que dans les sessions
+**ouvertes depuis ce dossier** (`C:\Users\Cosso\dev\BshamelUI`). C'est le
+répertoire de travail à utiliser pour développer l'addon.
+
+## 8. Commandes utiles
 
 ```bash
 bash dev/scripts/lint-local.sh
@@ -221,7 +234,7 @@ bash dev/scripts/tag-release.sh 0.2.0
 
 Prépare une version sans la publier. Ajouter `--push` pour publier.
 
-## 8. En jeu
+## 9. En jeu
 
 - `/bui` ou `/bshamelui` — ouvre la fenêtre d'options
 - `/bui version` — affiche la version chargée
