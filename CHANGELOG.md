@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.1.1 — 2026-07-30
+
 ### Modifié
 - Publication sous le nom d'auteur « Bshamel ».
 
