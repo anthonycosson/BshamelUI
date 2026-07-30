@@ -4,7 +4,7 @@
 # Les variantes `Notes-<locale>` le remplacent quand la locale correspond.
 ## Notes: Hand-made quality-of-life suite built on Blizzard's own UI. No dependencies.
 ## Notes-frFR: Suite de confort faite maison, bâtie sur l'interface de Blizzard. Sans dépendance.
-## Author: Cosso
+## Author: bshamel
 ## Version: @project-version@
 ## SavedVariables: BshamelUIDB
 ## SavedVariablesPerCharacter: BshamelUICharDB
