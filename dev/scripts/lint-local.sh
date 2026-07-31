@@ -88,6 +88,31 @@ else
 fi
 
 echo
+echo "== globals déclarés des deux côtés =="
+# Deux fichiers déclarent les globales du client : `.luarc.json` pour l'analyse
+# locale, `.luacheckrc` pour la CI. Ils sont tenus à la main, donc ils divergent
+# — et la divergence ne se voit qu'en CI, une fois le tag posé, c'est-à-dire au
+# pire moment. Une globale utilisée est ajoutée au premier, oubliée au second, et
+# `luacheck` la signale comme variable indéfinie (W113).
+#
+# Le sens du test compte : ce qui est déclaré ici doit l'être là-bas. L'inverse
+# est permis — `.luacheckrc` peut citer des noms que l'analyse locale connaît
+# déjà d'elle-même.
+missing=$(comm -23 \
+    <(grep -o '"[A-Za-z_][A-Za-z0-9_]*"' .luarc.json | tr -d '"' | sort -u) \
+    <(sed -n '/^globals = {/,/^}/p; /^read_globals = {/,/^}/p' .luacheckrc \
+        | grep -o '"[A-Za-z_][A-Za-z0-9_]*"' | tr -d '"' | sort -u) \
+    | grep -vxE 'dev|require')
+
+if [[ -n "$missing" ]]; then
+    echo "  ✗ déclarés dans .luarc.json mais absents de .luacheckrc :"
+    echo "$missing" | sed 's/^/    /'
+    FAILED=1
+else
+    echo "  ✓ .luarc.json et .luacheckrc s'accordent"
+fi
+
+echo
 echo "== garde-fous de design =="
 bash dev/scripts/check-design.sh || FAILED=1
 

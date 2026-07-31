@@ -2293,3 +2293,27 @@ Le rafraîchissement est un `OnUpdate` bridé à `T.TIMING.MENU_COOLDOWN` (règl
 qui ne tourne que menu ouvert : un cadre caché n'en reçoit pas. `SetEntries` le
 rappelle tout de suite, sans quoi une ligne recyclée garderait le temps de
 recharge de ce qu'elle affichait avant.
+
+---
+
+## Deux listes de globals, et seule la CI voit qu'elles divergent
+
+**Symptôme** — la pipeline du tag `v0.7.3` est rouge alors que les vérifications
+locales étaient toutes vertes. Le job `lint` échoue, donc le job `release` ne
+tourne jamais : rien n'est publié.
+
+**Cause** — les globales du client sont déclarées **deux fois** :
+`.luarc.json` pour `lua-language-server`, qui tourne en local, et `.luacheckrc`
+pour `luacheck`, qui tourne en CI. Une globale nouvellement utilisée est ajoutée
+au premier — sans quoi la passe locale échoue tout de suite — et oubliée au
+second, où rien ne la réclame avant le prochain push. `luacheck` la signale alors
+en W113, « accessing undefined variable », et un avertissement y est fatal.
+
+C'est le pire endroit possible pour un défaut : il ne se manifeste qu'après le
+tag, et un tag ne se rejoue pas (le motif `v*` est protégé, la suppression est
+refusée). Il coûte donc un numéro de version à chaque fois.
+
+**Ce qu'on fait** — `dev/scripts/lint-local.sh` compare les deux listes et
+échoue sur la différence. Le sens du test compte : ce qui est déclaré dans
+`.luarc.json` doit l'être dans `.luacheckrc`, l'inverse restant permis — la
+seconde liste peut citer des noms que l'analyse locale connaît d'elle-même.

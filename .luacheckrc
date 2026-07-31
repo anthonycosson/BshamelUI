@@ -93,6 +93,9 @@ read_globals = {
     -- `C_Item` ; les globales existent encore et servent de repli.
     "GetInventoryItemLink", "GetInventorySlotInfo", "GetItemStats", "GetItemGem",
     "GetDetailedItemLevelInfo",
+    -- Temps de recharge d'un objet — donc aussi d'un jouet. La fonction a migré
+    -- dans `C_Item` ; la globale sert de repli, comme partout ailleurs.
+    "GetItemCooldown",
 
     -- Conteneurs (sacs, banque, banque de bataillon)
     "C_Container", "ContainerFrameCombinedBags", "BankFrame",
@@ -111,7 +114,12 @@ read_globals = {
     -- voulu (CLAUDE.md règle 1).
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
     "CharacterFrame",
+    -- Cinématiques. Trois choses distinctes s'y cachent et ne s'arrêtent pas
+    -- pareil : le film, la vraie cinématique et la **scène en jeu**, dont
+    -- l'annulation est conditionnée à un geste matériel (voir
+    -- `dev/docs/API_NOTES.md`). D'où quatre fonctions et deux cadres.
     "CinematicFrame_CancelCinematic", "GameMovieFinished",
+    "CinematicFrame", "MovieFrame", "StopCinematic", "CanCancelScene", "CancelScene",
     "TalkingHeadFrame", "TalkingHeadFrame_CloseImmediately",
 
     -- Chat
