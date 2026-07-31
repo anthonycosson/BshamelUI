@@ -113,11 +113,17 @@ local FRAMES = {
     -- leurs noms globaux n'a rien donné, et rien n'indique pour l'instant que
     -- le client laisse teinter leur habillage. Y revenir demandera de
     -- comprendre d'abord *comment* ils sont peints, pas d'ajouter des noms.
+    --
+    -- Les cadres de **boss** n'y sont plus non plus, et pour une autre raison :
+    -- ce sont des cadres de combat. Ce qu'on y lit — qui est ciblé, qui incante,
+    -- combien il reste de vie — se lit vite ou ne se lit pas, et un habillage
+    -- assombri les rapproche du fond au moment précis où ils comptent le plus.
+    -- Le mode sombre range l'interface ; il n'a rien à faire sur ce qui sert à
+    -- réagir.
     unitFrames = {
         "PlayerFrame", "PetFrame",
         "TargetFrame", "TargetFrameToT",
         "FocusFrame", "FocusFrameToT",
-        "BossTargetFrameContainer",
     },
 
     auras = { "BuffFrame", "DebuffFrame" },

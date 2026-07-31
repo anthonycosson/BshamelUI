@@ -62,7 +62,7 @@ BUI:RegisterLocale("enUS", {
     ["Cast bar"]                       = "Cast bar",
     ["Dark cast bar tip"]              = "Your casting bar and the one on your target.",
     ["Dark unit frames tip"] =
-        "Player, pet, target, target of target, focus and boss frames. Party and raid frames are not covered yet.",
+        "Player, pet, target, target of target and focus frames. Boss, party and raid frames are left alone.",
     ["Buffs and debuffs"]              = "Buffs and debuffs",
     ["Dark auras tip"]                 = "Aura icons, their borders and their timers.",
     ["Tooltip"]                        = "Tooltip",

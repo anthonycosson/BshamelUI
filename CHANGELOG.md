@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Modifié
+- Le mode sombre laisse les **cadres de boss** tranquilles. Ce sont des cadres de
+  combat : ce qu'on y lit se lit vite ou ne se lit pas, et un habillage assombri
+  les rapproche du fond au moment précis où ils comptent le plus. Le mode sombre
+  range l'interface, il n'a rien à faire sur ce qui sert à réagir. Les cadres
+  déjà assombris reprennent leur apparence sans rechargement.
+
 ## 0.7.2 — 2026-07-31
 
 ### Ajouté

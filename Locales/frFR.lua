@@ -65,8 +65,8 @@ BUI:RegisterLocale("frFR", {
     ["Cast bar"]                       = "Barre d'incantation",
     ["Dark cast bar tip"]              = "Votre barre d'incantation et celle de votre cible.",
     ["Dark unit frames tip"] =
-        "Cadres du joueur, du familier, de la cible, de la cible de la cible, du focus et des boss. "
-        .. "Les cadres de groupe et de raid ne sont pas encore couverts.",
+        "Cadres du joueur, du familier, de la cible, de la cible de la cible et du focus. "
+        .. "Les cadres de boss, de groupe et de raid ne sont pas touchés.",
     ["Buffs and debuffs"]              = "Buffs et debuffs",
     ["Dark auras tip"]                 = "Icônes d'auras, leurs bordures et leurs minuteurs.",
     ["Tooltip"]                        = "Infobulle",
