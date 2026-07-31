@@ -2,6 +2,12 @@
 
 ## Non publié
 
+### Ajouté
+- Le menu de téléportation affiche le **temps de recharge** de chaque ligne. Il
+  n'apparaît que lorsqu'il y en a un : une ligne prête ne porte rien, si bien que
+  c'est la présence du nombre qui renseigne, pas sa valeur. Le temps de recharge
+  global n'est pas compté — il court sur tout et ne dit rien.
+
 ### Corrigé
 - **Passer les cinématiques** fonctionne enfin sur les scènes en jeu, c'est-à-dire
   sur presque toutes celles qu'on croise. Trois choses différentes se cachent

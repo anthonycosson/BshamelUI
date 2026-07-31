@@ -355,6 +355,12 @@ T.TIMING = {
     -- le curseur pendant la traversée.
     MENU_HOVER    = 0.25,
 
+    -- Cadence des temps de recharge affichés dans le menu de téléportation. Ils
+    -- s'écrivent à la seconde : quatre passages par seconde suffisent à ce
+    -- qu'aucun chiffre ne paraisse en retard, là où un passage par image en
+    -- paierait soixante (règle 7). La cadence ne tourne que menu ouvert.
+    MENU_COOLDOWN = 0.25,
+
     -- Cadence des passes de vente de camelote. Le serveur limite le débit des
     -- ventes : voir `Modules/Bags.lua`, qui explique pourquoi une seule passe ne
     -- suffit pas.

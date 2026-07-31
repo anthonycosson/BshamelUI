@@ -2268,3 +2268,28 @@ le réglage a l'air de ne rien faire à la première.
 
 Conséquence assumée : une scène en jeu demande une touche, là où un film part
 tout seul. Aucune API ne permet mieux.
+
+---
+
+## Le temps de recharge d'un jouet se demande comme celui d'un objet
+
+**Ce qu'on fait** — dans le menu de téléportation, chaque ligne affiche ce qui
+lui reste :
+
+- un sort : `C_Spell.GetSpellCooldown(spellID)`, qui rend une **table**
+  (`startTime`, `duration`) sur les clients récents et deux valeurs sur les
+  autres. On accepte les deux formes ;
+- un objet **et un jouet** : `C_Item.GetItemCooldown(itemID)`, la globale
+  `GetItemCooldown` en second recours. Un jouet est un objet, son identifiant
+  suffit.
+
+Deux règles d'affichage. Une durée inférieure ou égale à **1,5 s** est le temps
+de recharge global : elle court sur presque tout ce que le personnage connaît, et
+l'afficher ferait clignoter le menu entier à chaque sort lancé. Et une ligne
+prête ne porte **rien** — c'est la présence du nombre qui renseigne, pas sa
+valeur.
+
+Le rafraîchissement est un `OnUpdate` bridé à `T.TIMING.MENU_COOLDOWN` (règle 7),
+qui ne tourne que menu ouvert : un cadre caché n'en reçoit pas. `SetEntries` le
+rappelle tout de suite, sans quoi une ligne recyclée garderait le temps de
+recharge de ce qu'elle affichait avant.

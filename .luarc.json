@@ -37,7 +37,7 @@
     "GetCursorPosition", "GetCVar", "SetCVar",
     "IsMouseButtonDown", "GetScreenWidth", "GetScreenHeight",
 
-    "C_ToyBox", "PlayerHasToy", "C_Spell", "GetSpellInfo",
+    "C_ToyBox", "PlayerHasToy", "C_Spell", "GetSpellInfo", "GetItemCooldown",
     "IsSpellKnown", "IsPlayerSpell", "C_ChallengeMode", "C_SpellBook", "GetNumExpansions",
     "GetFlyoutInfo", "GetFlyoutSlotInfo",
     "CreateMacro", "EditMacro", "GetMacroIndexByName",

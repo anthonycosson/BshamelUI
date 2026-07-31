@@ -29,6 +29,7 @@
 local _, ns = ...
 local BUI = ns.BUI
 local T    = BUI.Theme
+local U    = BUI.Util
 local W    = BUI.Widgets
 
 ---@class BUI.MenuEntry
@@ -70,6 +71,62 @@ local function dressRow(row)
 end
 
 -- =========================================================================
+--  Temps de recharge
+-- =========================================================================
+-- Une ligne dit ce qu'elle lance ; elle doit aussi dire si elle peut le lancer.
+-- Sans ce nombre, la seule façon de savoir qu'une pierre de foyer est en
+-- recharge est de cliquer et de voir qu'il ne se passe rien.
+--
+-- Il ne s'affiche **que lorsqu'il y en a un** : une ligne prête ne porte rien.
+-- C'est la présence du nombre qui est le signal, pas sa valeur — on lit le menu
+-- pour choisir, pas pour compter.
+
+--- Durée en deçà de laquelle un temps de recharge n'en est pas un.
+---
+--- Le temps de recharge **global** court sur presque tout ce que le personnage
+--- connaît, et il dure une seconde et demie. L'afficher ferait clignoter le menu
+--- entier à chaque sort lancé, pour une information que personne n'attend.
+local GLOBAL_COOLDOWN = 1.5
+
+--- Secondes restantes sur l'action d'une ligne, ou `nil` si elle est prête.
+---
+--- Un **jouet est un objet** : son temps de recharge se demande comme celui d'un
+--- objet, avec son identifiant. C'est la même raison qui fait que le menu
+--- résout ses entrées en demandant au client plutôt qu'en les écrivant.
+---@param kind string|nil
+---@param id number|nil
+---@return number|nil
+local function remainingCooldown(kind, id)
+    if not (kind and id) then return nil end
+
+    local start, duration
+
+    if kind == "spell" then
+        local get = C_Spell and C_Spell.GetSpellCooldown
+        if get then
+            -- Une table sur les clients récents, deux valeurs sur les autres :
+            -- on accepte les deux formes plutôt que de parier sur celle du jour.
+            local first, second = get(id)
+            if type(first) == "table" then
+                start, duration = first.startTime, first.duration
+            else
+                start, duration = first, second
+            end
+        end
+    else
+        local get = (C_Item and C_Item.GetItemCooldown) or GetItemCooldown
+        if get then start, duration = get(id) end
+    end
+
+    if type(start) ~= "number" or type(duration) ~= "number" then return nil end
+    if duration <= GLOBAL_COOLDOWN then return nil end
+
+    local left = start + duration - GetTime()
+    if left <= 0 then return nil end
+    return left
+end
+
+-- =========================================================================
 --  Lignes d'action
 -- =========================================================================
 
@@ -84,6 +141,19 @@ local function newActionRow(menu)
     -- s'étire au lieu de garder sa hauteur.
     local row = CreateFrame("Button", nil, menu, template)
     dressRow(row)
+
+    -- Le temps de recharge se lit à droite, en gris : c'est une précision sur la
+    -- ligne, pas ce qu'on y cherche. Le libellé s'arrête avant lui, sans quoi un
+    -- nom long passerait dessous.
+    local cooldown = row:CreateFontString(nil, "ARTWORK", T.FONT.HINT)
+    cooldown:SetPoint("RIGHT", row, "RIGHT", 0, 0)
+    cooldown:SetJustifyH("RIGHT")
+    cooldown:SetTextColor(T.COLOR.DISABLED:GetRGB())
+    row.cooldown = cooldown
+
+    row.label:ClearAllPoints()
+    row.label:SetPoint("LEFT", row.icon, "RIGHT", T.SIZE.MENU_GAP, 0)
+    row.label:SetPoint("RIGHT", cooldown, "LEFT", -T.SIZE.MENU_GAP, 0)
 
     -- Le clic est pris au **relâchement** seulement. Enregistrer les deux
     -- phases fait partir l'action deux fois quand le joueur a demandé au client
@@ -290,6 +360,24 @@ function W.SecureMenu(parent, root)
         return false
     end
 
+    --- Repose le temps de recharge des lignes visibles.
+    ---
+    --- Les lignes cachées sont ignorées : elles ne montrent rien, et le menu en
+    --- garde en réserve autant qu'il en a affiché au maximum (règle 7).
+    local function refreshCooldowns()
+        for i = 1, #actionRows do
+            local row = actionRows[i]
+            if row:IsShown() then
+                local left = remainingCooldown(row._kind, row._id)
+                row.cooldown:SetText(left and U.Clock(left) or "")
+            end
+        end
+    end
+
+    -- Le seul `OnUpdate` du menu, et il ne tourne que pendant qu'il est ouvert —
+    -- un cadre caché n'en reçoit pas. Bridé, comme tout `OnUpdate` (règle 7).
+    menu:SetScript("OnUpdate", U.Throttle(T.TIMING.MENU_COOLDOWN, refreshCooldowns))
+
     --- Ferme tous les sous-menus ouverts, sauf celui de `keep`.
     ---@param keep? table
     function menu:CloseSubmenus(keep)
@@ -382,6 +470,10 @@ function W.SecureMenu(parent, root)
 
         self:SetHeight(math.abs(y) + T.SIZE.MENU_PAD)
         self._filled = (actions + submenus) > 0
+
+        -- Tout de suite, et pas au prochain passage : une ligne recyclée porte
+        -- encore le temps de recharge de ce qu'elle affichait avant.
+        refreshCooldowns()
         return true
     end
 
