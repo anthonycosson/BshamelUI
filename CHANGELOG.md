@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.4.0 — 2026-07-31
+
 ### Ajouté
 - **Chat** quitte l'avant-première, avec quatre conforts qui laissent le chat du
   jeu à sa place — ses onglets, son arrimage et ses filtres restent les siens :
