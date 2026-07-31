@@ -2176,3 +2176,32 @@ d'un sort à la demande. On la réclame (`C_Spell.RequestLoadSpellData`) et on r
 la main sans rien retenir, pour que la reconstruction suivante repose la
 question. Les réponses, elles, sont retenues — le menu se refait à chaque objet
 qui entre dans les sacs.
+
+---
+
+## Une épingle de carte est un bouton de minicarte pour qui la regarde
+
+**Symptôme** — le tiroir de boutons d'addons se remplit de « GatherMatePin1 »,
+« GatherMatePin2 »… jusqu'à ce qu'on n'y trouve plus les vrais boutons.
+
+**Cause** — un addon de récolte affiche ses gisements sur la minicarte, et il les
+pose exactement comme un bouton : `CreateFrame("Button", "GatherMatePin"..n,
+Minimap)`, nommé, affiché, enfant de la carte. Aucune question posée au cadre ne
+les sépare — même type, même parent, même état.
+
+L'encombrement n'est pas le pire : une épingle rangée est une épingle **volée** à
+l'addon qui la recycle à chaque pas du joueur. Elle ressort dans le tiroir sous
+un autre gisement, et son propriétaire ne peut plus la replacer, puisque le
+tiroir masque `SetPoint` pendant l'emprunt.
+
+**Ce qu'on fait** — deux signes dans `Modules/Minimap.lua`, et il en faut deux :
+
+- un **pool** se reconnaît à ses numéros : plusieurs cadres qui partagent la même
+  racine de nom une fois le numéro retiré. La famille entière est écartée, y
+  compris son premier membre ;
+- une **racine qui se termine par** `Pin`, `Node`, `Waypoint` ou `POI`. Ce
+  second signe rattrape le cas où une seule épingle est visible à l'instant du
+  parcours, où le premier ne voit qu'un cadre isolé.
+
+Un nom dit ici ce que le cadre **est**, là où le nom d'un bouton d'addon dit à
+qui il appartient — et un addon a un bouton, pas une collection numérotée.

@@ -10,6 +10,15 @@
   n'est écrite dans l'addon, et un sort dont le donjon reste introuvable garde
   son nom d'avant.
 
+### Corrigé
+- Le **tiroir de boutons d'addons** ne ramasse plus les épingles que les addons
+  de récolte posent sur la minicarte. Elles sont des boutons nommés comme les
+  autres, et il y en a trente : le tiroir se remplissait de « GatherMatePin1 »,
+  « GatherMatePin2 »… Pire, une épingle rangée était une épingle volée à l'addon
+  qui la recycle à chaque pas. Deux signes les écartent désormais — une racine de
+  nom portée par plusieurs cadres, et un nom qui dit ce que le cadre est plutôt
+  qu'à qui il appartient.
+
 ### Supprimé
 - Le curseur d'**intensité des fenêtres**, arrivé à la version précédente. Il
   n'offrait qu'un dégradé de gris, réglé une fois puis oublié, et il obligeait

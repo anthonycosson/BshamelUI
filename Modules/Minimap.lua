@@ -43,6 +43,9 @@ local MODULE = "Minimap"
 -- pièces de minicarte d'après elle et qu'une nouvelle apparaît à chaque
 -- extension — un cadre inconnu qui s'appelle « Minimap quelque chose » est
 -- presque sûrement le sien.
+--
+-- Un troisième écarte ce qui n'appartient à personne : les **épingles** que les
+-- addons de carte posent sur la minicarte (voir plus bas).
 
 local CLIENT_FRAMES = {
     MinimapZoomIn = true, MinimapZoomOut = true,
@@ -69,6 +72,46 @@ local function isClientFrame(name)
 
     for i = 1, #CLIENT_PREFIXES do
         if name:find(CLIENT_PREFIXES[i], 1, true) == 1 then return true end
+    end
+    return false
+end
+
+-- =========================================================================
+--  Épingles de carte : ce qui ressemble à un bouton sans en être un
+-- =========================================================================
+-- Un addon de récolte pose ses gisements **sur la minicarte**, et il les pose
+-- exactement comme un bouton : des cadres `Button` nommés, enfants de la carte,
+-- affichés. Rien ne les distingue d'un bouton d'addon pour qui regarde leur
+-- type — et il y en a trente à l'écran. Le tiroir se remplissait donc de
+-- « GatherMatePin1 », « GatherMatePin2 »… jusqu'à ce qu'on n'y trouve plus rien.
+--
+-- Pire que l'encombrement : une épingle rangée est une épingle **volée** à son
+-- addon, qui la recycle à chaque pas du joueur. Elle ressortirait dans le tiroir
+-- sous un autre gisement, et son propriétaire ne pourrait plus la replacer.
+--
+-- Deux signes, et il en faut deux : le second rattrape ce que le premier laisse
+-- passer quand une seule épingle est visible à l'instant du parcours.
+
+--- Racine d'un nom, sans son numéro de série. Un pool nomme ses cadres
+--- « <racine>1 », « <racine>2 »… : la racine est ce qui les rassemble.
+---@param name string
+---@return string
+local function nameStem(name)
+    return (name:gsub("%d+$", ""))
+end
+
+--- Mots par lesquels se terminent les noms d'épingles. Ils disent ce que le
+--- cadre **est**, là où un bouton d'addon dit à qui il appartient — et un addon
+--- a un bouton, pas une collection.
+local PIN_WORDS = { "Pin", "Pins", "Node", "Nodes", "Waypoint", "POI" }
+
+---@param name string
+---@return boolean
+local function looksLikePin(name)
+    local stem = nameStem(name)
+    for i = 1, #PIN_WORDS do
+        local word = PIN_WORDS[i]
+        if stem:sub(-#word) == word then return true end
     end
     return false
 end
@@ -110,6 +153,8 @@ local function isAddonButton(frame)
     -- réapparaître dans le tiroir, ce qui défait le geste de quelqu'un d'autre.
     if not frame:IsShown() then return false end
 
+    if looksLikePin(name) then return false end
+
     return not isClientFrame(name)
 end
 
@@ -120,13 +165,15 @@ local function scanRoots()
     return { Minimap, MinimapBackdrop, MinimapCluster }
 end
 
---- Table de travail des candidats. Réutilisée : la recherche tourne à chaque
---- addon chargé (règle 7).
+--- Tables de travail. Réutilisées : la recherche tourne à chaque addon chargé
+--- (règle 7).
 local candidates = {}
+local families   = {}
 
 ---@return table[]
 local function findAddonButtons()
     wipe(candidates)
+    wipe(families)
 
     local roots = scanRoots()
     for i = 1, #roots do
@@ -134,10 +181,28 @@ local function findAddonButtons()
         if root and root.GetChildren then
             for _, child in ipairs({ root:GetChildren() }) do
                 if isAddonButton(child) then
+                    local stem = nameStem(child:GetName())
+                    families[stem] = (families[stem] or 0) + 1
                     candidates[#candidates + 1] = child
                 end
             end
         end
+    end
+
+    -- Une racine portée par plusieurs cadres est un **pool**, donc des épingles :
+    -- un addon pose un bouton, pas une famille numérotée. On écarte la famille
+    -- entière, y compris son premier membre — c'est tout ou rien, sans quoi le
+    -- tiroir volerait une épingle sur trente.
+    local kept = 0
+    for i = 1, #candidates do
+        local frame = candidates[i]
+        if families[nameStem(frame:GetName())] == 1 then
+            kept = kept + 1
+            candidates[kept] = frame
+        end
+    end
+    for i = #candidates, kept + 1, -1 do
+        candidates[i] = nil
     end
 
     return candidates
