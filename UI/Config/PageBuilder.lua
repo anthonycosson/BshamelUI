@@ -106,6 +106,9 @@ local function buildWidget(page, mod, descriptor)
     elseif kind == "description" then
         return W.Description(page, descriptor.text)
 
+    elseif kind == "warning" then
+        return W.Warning(page, descriptor.text)
+
     elseif kind == "spacer" then
         local spacer = W.Row(page, nil)
         spacer:SetHeight(descriptor.height or T.SIZE.SECTION_GAP)

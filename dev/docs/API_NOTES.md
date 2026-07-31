@@ -2205,3 +2205,23 @@ tiroir masque `SetPoint` pendant l'emprunt.
 
 Un nom dit ici ce que le cadre **est**, là où le nom d'un bouton d'addon dit à
 qui il appartient — et un addon a un bouton, pas une collection numérotée.
+
+---
+
+## La vente d'un objet encore échangeable passe par une StaticPopup
+
+**Symptôme** — vendre un butin encore échangeable ouvre une fenêtre de
+confirmation. Aucun réglage du client ne la coupe, et aucune fonction ne vend
+« sans demander ».
+
+**Ce qu'on fait** — on ne vend pas à la place du joueur : on **clique le bouton
+du client**. Les dialogues concernés sont
+`CONFIRM_MERCHANT_TRADE_TIMER_REMOVAL` (l'échange) et
+`CONFIRM_REFUND_TIMER_REMOVAL` (le remboursement) ; la table de noms vaut test de
+capacité, un dialogue que le client ne connaît pas ne s'affiche jamais et n'est
+donc jamais cliqué.
+
+Le clic est **différé d'une image** (`C_Timer.After(0, …)`) : le hook s'exécute à
+l'intérieur du `Show` de la fenêtre qu'il s'apprête à fermer. Il revérifie alors
+que le réglage est toujours coché et que la fenêtre est toujours la bonne — une
+image suffit pour qu'elle ait été fermée à la main.

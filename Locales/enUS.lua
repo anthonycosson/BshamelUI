@@ -295,6 +295,12 @@ BUI:RegisterLocale("enUS", {
     ["Merchants"]                      = "Merchants",
     ["Auto-sell junk"]                 = "Auto-sell junk",
     ["Auto-sell junk tip"]             = "Sells grey items at every merchant.",
+    ["Skip sell confirmation"]         = "Skip the sell confirmation",
+    ["Skip sell confirmation tip"] =
+        "Answers the window that appears when you sell loot that is still tradeable or refundable.",
+    ["Skip sell confirmation warning"] =
+        "That window is the last step before the item stops being tradeable and refundable. " ..
+        "With this on, one misplaced click sells it for good.",
     ["Confirmations"]                  = "Confirmations",
     ["Fill delete confirmation"]       = "Fill the delete confirmation",
     ["Fill delete confirmation tip"]   = "Types the confirmation word for you when destroying an item asks for it.",

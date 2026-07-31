@@ -87,3 +87,19 @@ function W.Description(parent, label)
     frame.text = text
     return frame
 end
+
+--- Le même paragraphe, en orange : ce qu'il dit engage quelque chose qui ne se
+--- rattrape pas.
+---
+--- L'orange et non le rouge : le rouge dit « c'est cassé », or rien ne l'est —
+--- le réglage marche exactement comme annoncé, c'est ce qu'il autorise qui
+--- demande d'y penser. C'est le même orange que le troisième terme du feu
+--- tricolore, et il garde ici le même sens : ni interdit, ni anodin.
+---@param parent table
+---@param label string
+---@return table
+function W.Warning(parent, label)
+    local frame = W.Description(parent, label)
+    frame.text:SetTextColor(T.COLOR.ORANGE:GetRGB())
+    return frame
+end

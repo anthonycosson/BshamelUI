@@ -162,6 +162,49 @@ local CONFIRM_POPUPS = {
     DELETE_GOOD_QUEST_ITEM = true,
 }
 
+-- =========================================================================
+--  Confirmation de vente d'un objet encore échangeable
+-- =========================================================================
+-- Vendre un butin encore échangeable — ou encore remboursable — ouvre une
+-- fenêtre qui demande de valider. Elle est là pour une bonne raison : c'est le
+-- dernier instant où l'objet peut encore partir à un coéquipier ou revenir en
+-- monnaie, et le clic qui suit ferme les deux portes définitivement.
+--
+-- Le réglage la fait cliquer à la place du joueur. Il est éteint par défaut et
+-- le restera : ce qu'on économise est un clic, ce qu'on risque est un objet.
+--
+-- On clique **le bouton du client**, on ne vend pas nous-mêmes : c'est sa
+-- fenêtre, son bouton, sa vente. Rien à défaire à l'extinction, la garde du hook
+-- suffit — et le clic est différé d'une image, parce qu'on est à l'intérieur du
+-- `Show` de la fenêtre qu'on s'apprête à fermer.
+
+--- Les dialogues de vente que l'on sait valider. Ils portent tous deux sur le
+--- même geste — vendre au marchand ce qui est encore récupérable —, et la table
+--- vaut test de capacité : un nom que le client ne connaît pas ne s'affichera
+--- jamais, donc ne sera jamais cliqué.
+local SELL_POPUPS = {
+    CONFIRM_MERCHANT_TRADE_TIMER_REMOVAL = true,
+    CONFIRM_REFUND_TIMER_REMOVAL         = true,
+}
+
+---@param mod table
+---@param popup table
+local function acceptSale(mod, popup)
+    if not mod:Get("skipSellConfirm") then return end
+    if not (popup and SELL_POPUPS[popup.which]) then return end
+
+    local button = popup.button1 or (popup.GetButton1 and popup:GetButton1())
+    if not (button and button.Click) then return end
+
+    C_Timer.After(0, function()
+        -- Le réglage a pu être décoché, ou la fenêtre fermée à la main, dans
+        -- l'image qu'on vient de laisser passer.
+        if not mod:Get("skipSellConfirm") then return end
+        if not (popup:IsShown() and SELL_POPUPS[popup.which]) then return end
+        button:Click()
+    end)
+end
+
 ---@param mod table
 ---@param popup table
 local function fillConfirmation(mod, popup)
@@ -184,6 +227,7 @@ local function hookConfirmations(mod)
         if popup then
             U.GuardedHook(popup, "Show", function(self)
                 fillConfirmation(mod, self)
+                acceptSale(mod, self)
             end, guard)
         end
     end
@@ -201,6 +245,10 @@ BUI:RegisterModule(MODULE, {
     defaults = {
         autoSellJunk    = false,
         fillDeleteInput = false,
+
+        -- Éteint, et c'est le seul défaut possible : la fenêtre qu'on saute est
+        -- la dernière chose qui sépare un butin encore échangeable de sa vente.
+        skipSellConfirm = false,
     },
 
     options = {
@@ -211,6 +259,13 @@ BUI:RegisterModule(MODULE, {
             text    = L["Auto-sell junk"],
             tooltip = L["Auto-sell junk tip"],
         },
+        {
+            type    = "toggle",
+            key     = "skipSellConfirm",
+            text    = L["Skip sell confirmation"],
+            tooltip = L["Skip sell confirmation tip"],
+        },
+        { type = "warning", text = L["Skip sell confirmation warning"] },
 
         { type = "header", text = L["Confirmations"] },
         {

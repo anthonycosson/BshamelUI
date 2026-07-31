@@ -2,6 +2,15 @@
 
 ## Non publié
 
+### Ajouté
+- **Passer la confirmation de vente**, dans *Sacs*. Vendre un butin encore
+  échangeable — ou encore remboursable — ouvre une fenêtre qui demande de
+  valider ; le réglage y répond à votre place. Il est éteint par défaut et porte
+  un avertissement en toutes lettres : cette fenêtre est la dernière chose qui
+  sépare l'objet d'une vente définitive, et ce qu'on économise est un clic là où
+  ce qu'on risque est un objet. On clique d'ailleurs *son* bouton, on ne vend
+  pas nous-mêmes — c'est sa fenêtre, sa vente.
+
 ### Modifié
 - Le menu de téléportation nomme les **donjons**, plus les sorts qui y mènent :
   « Voie de Coursevent » était le nom du chemin, pas celui de l'endroit. Le lien

@@ -293,6 +293,13 @@ BUI:RegisterLocale("frFR", {
     ["Merchants"]                      = "Marchands",
     ["Auto-sell junk"]                 = "Vendre automatiquement la camelote",
     ["Auto-sell junk tip"]             = "Vend les objets gris à chaque marchand.",
+    ["Skip sell confirmation"]         = "Passer la confirmation de vente",
+    ["Skip sell confirmation tip"] =
+        "Répond à la fenêtre qui s'ouvre quand vous vendez un butin encore échangeable ou " ..
+        "remboursable.",
+    ["Skip sell confirmation warning"] =
+        "Cette fenêtre est la dernière étape avant que l'objet cesse d'être échangeable et " ..
+        "remboursable. Avec ce réglage, un clic de trop le vend pour de bon.",
     ["Confirmations"]                  = true,
     ["Fill delete confirmation"]       = "Remplir la confirmation de destruction",
     ["Fill delete confirmation tip"] =
