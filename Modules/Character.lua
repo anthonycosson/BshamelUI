@@ -300,6 +300,224 @@ local function upgradeOf(link)
 end
 
 -- =========================================================================
+--  Sacs, banque, banque de bataillon
+-- =========================================================================
+-- Le même nombre que sur la fiche, posé sur les objets rangés. C'est la même
+-- question — « celle-là vaut-elle mieux que ce que je porte ? » — et elle se
+-- pose surtout devant un sac.
+--
+-- Le module s'appelle « Fiche de personnage » et déborde donc un peu de son
+-- nom. C'est assumé : éclater deux affichages du même nombre dans deux pages
+-- obligerait à les régler à deux endroits pour un seul geste de lecture.
+
+--- Cadres à parcourir pour trouver des boutons d'objet.
+---
+--- `BankFrame` couvre normalement la banque du personnage **et** la banque de
+--- bataillon : depuis leur refonte, les deux sont des onglets d'une même
+--- fenêtre. Les deux noms de panneau qui suivent sont cités par prudence, au cas
+--- où le contenu ne serait pas descendant du cadre — une racine absente ne coûte
+--- rien, une racine manquante coûte un affichage muet.
+local CONTAINER_ROOTS = {
+    "ContainerFrameCombinedBags",
+    "BankFrame", "BankPanel", "AccountBankPanel",
+}
+for i = 1, 13 do
+    CONTAINER_ROOTS[#CONTAINER_ROOTS + 1] = "ContainerFrame" .. i
+end
+
+--- Profondeur de descente dans l'arbre d'un conteneur.
+---
+--- Les boutons ne sont pas tous des enfants directs. Un sac les tient à un ou
+--- deux niveaux ; la **banque** les enterre bien plus bas — cadre, panneau,
+--- zone défilante, cible de défilement, puis le bouton. Cinq niveaux ne
+--- suffisaient pas, et l'échec était muet : un bouton hors de portée ne se
+--- distingue pas d'un bouton absent.
+---
+--- Huit laisse de la marge sans ouvrir la porte à un parcours sans fin. La
+--- borne n'est pas là pour économiser du temps de calcul, elle est là parce
+--- qu'un parcours d'arbre sans borne est un pari sur une structure qui ne nous
+--- appartient pas.
+local WALK_DEPTH = 8
+
+--- Sac et emplacement que désigne un bouton, ou `nil`.
+---
+--- Trois conventions coexistent selon l'âge du cadre : le bouton publie son sac,
+--- son parent le publie, ou il le porte en champ. On les essaie dans cet ordre.
+--- Rien n'est deviné pour autant — le couple obtenu n'est retenu que si le
+--- client y reconnaît un objet.
+---@param button table
+---@return integer|nil bag
+---@return integer|nil slot
+local function containerSlotOf(button)
+    local bag
+    if button.GetBagID then bag = button:GetBagID() end
+
+    -- La banque refondue ne parle pas de sac mais d'**onglet**, et ses boutons
+    -- publient donc autre chose. Un onglet de banque est pourtant un sac comme
+    -- un autre pour `C_Container` : seul le nom du chemin change.
+    if bag == nil and button.GetBankTabID then bag = button:GetBankTabID() end
+    if bag == nil then bag = button.bankTabID end
+
+    if bag == nil then
+        local parent = button.GetParent and button:GetParent()
+        if parent and parent.GetBagID then bag = parent:GetBagID() end
+    end
+
+    if bag == nil then bag = button.bagID end
+    if bag == nil then return nil end
+
+    -- L'emplacement se demande **avant** `GetID`, et pas après : un bouton sorti
+    -- d'un pool porte volontiers dans son `GetID` son rang dans le pool, qui
+    -- n'est pas son emplacement dans le conteneur. Prendre le mauvais des deux
+    -- ne donnerait pas une case vide mais une case **fausse**.
+    local slot
+    if button.GetContainerSlotID then slot = button:GetContainerSlotID() end
+    if slot == nil then slot = button.containerSlotID end
+    if slot == nil and button.GetID then slot = button:GetID() end
+
+    if not slot or slot < 1 then return nil end
+
+    return bag, slot
+end
+
+--- Pose — ou retire — le niveau d'objet sur un bouton.
+---
+--- Aucun test préalable ne cherche à reconnaître un bouton d'objet, et c'est
+--- délibéré : le seul juge est le client. Si le couple sac/emplacement lu sur le
+--- cadre désigne un objet, c'en est un ; sinon on ne touche à rien. Un test de
+--- forme — « a-t-il telle méthode ? », « est-il de tel type ? » — n'aurait fait
+--- qu'ajouter une façon d'écarter un vrai bouton en silence.
+---@param button table
+---@return boolean handled  le cadre est-il un vrai bouton de conteneur ?
+local function tagButton(button)
+    local bag, slot = containerSlotOf(button)
+    if not bag then return false end
+
+    local link = C_Container and C_Container.GetContainerItemLink
+                 and C_Container.GetContainerItemLink(bag, slot)
+
+    local tag = W.ItemLevelTag(button)
+    if not tag then return true end
+
+    if not link then
+        tag:Hide()
+        return true
+    end
+
+    -- Seul l'équipement porte un niveau d'objet qui veuille dire quelque chose.
+    -- Un nombre sur une potion ou un minerai serait du bruit sur toute la grille.
+    if not (C_Item and C_Item.GetItemInfoInstant) then
+        tag:Hide()
+        return true
+    end
+
+    local _, _, _, equipLoc, _, classID = C_Item.GetItemInfoInstant(link)
+    local weapon = Enum and Enum.ItemClass and Enum.ItemClass.Weapon or 2
+    local armor  = Enum and Enum.ItemClass and Enum.ItemClass.Armor  or 4
+
+    local equippable = (classID == weapon or classID == armor)
+                       and equipLoc and equipLoc ~= "" and equipLoc ~= "INVTYPE_NON_EQUIP"
+    if not equippable then
+        tag:Hide()
+        return true
+    end
+
+    -- Trois chemins vers le niveau d'objet, du plus juste au plus disponible.
+    -- Le premier tient compte de la mise à l'échelle et c'est pour ça qu'il
+    -- passe en premier ; les deux autres lisent le lien, ce qui suffit pour un
+    -- objet rangé. En avoir trois n'est pas de la superstition : un seul chemin
+    -- qui rend `nil` donne une case muette, et une case muette ne se distingue
+    -- pas d'un réglage éteint.
+    local level
+    if ItemLocation and C_Item.GetCurrentItemLevel then
+        local location = ItemLocation:CreateFromBagAndSlot(bag, slot)
+        if location and C_Item.DoesItemExist and C_Item.DoesItemExist(location) then
+            level = C_Item.GetCurrentItemLevel(location)
+        end
+    end
+    if not level and C_Item.GetDetailedItemLevelInfo then
+        level = C_Item.GetDetailedItemLevelInfo(link)
+    end
+    if not level and GetDetailedItemLevelInfo then
+        level = GetDetailedItemLevelInfo(link)
+    end
+
+    if not level or level <= 0 then
+        tag:Hide()
+        return true
+    end
+
+    local quality = C_Item.GetItemQualityByID and C_Item.GetItemQualityByID(link)
+    tag:SetText(tostring(level))
+    tag:SetTextColor(T.ItemQualityColor(quality))
+    tag:Show()
+
+    return true
+end
+
+--- Met un bouton sous surveillance, pour qu'il annonce lui-même ses changements.
+---
+--- C'est le seul moyen de suivre un **changement d'onglet de banque**. Le client
+--- n'émet aucun événement : il se contente de repeupler les mêmes boutons avec
+--- le contenu de l'autre onglet. Sans ce guet, le nombre de l'onglet précédent
+--- reste affiché sur une case qui montre désormais autre chose — un chiffre
+--- faux, ce qui est pire qu'un chiffre absent.
+---
+--- On s'accroche à la pose de la texture parce que c'est le geste que le client
+--- fait **à chaque fois** qu'une case change de contenu, quel que soit le
+--- conteneur : changer d'onglet, trier, déplacer un objet. Un bouton n'est
+--- accroché qu'une fois — `U.GuardedHook` retient ce qu'il a déjà posé —, et les
+--- boutons sortant d'un pool borné, leur nombre l'est aussi.
+---@param button table
+local function watchButton(button)
+    if type(button.SetItemButtonTexture) ~= "function" then return end
+
+    U.GuardedHook(button, "SetItemButtonTexture", function(self)
+        local mod = BUI.Modules:Get(MODULE)
+        if not (mod and mod:Get("showBagItemLevel")) then return end
+        BUI.safecall(tagButton, self)
+    end, function()
+        local mod = BUI.Modules:Get(MODULE)
+        return mod and mod:IsEnabled()
+    end)
+end
+
+--- Descend dans un cadre et étiquette tous les boutons d'objet rencontrés.
+---@param frame table
+---@param depth integer
+local function walkContainer(frame, depth)
+    if depth <= 0 or not frame.GetChildren then return end
+
+    for _, child in ipairs({ frame:GetChildren() }) do
+        -- Un cadre qui s'est révélé être un bouton de conteneur est mis sous
+        -- surveillance : le parcours ne repassera pas forcément par lui, mais
+        -- lui saura se signaler.
+        local ok, handled = BUI.safecall(tagButton, child)
+        if ok and handled then watchButton(child) end
+
+        walkContainer(child, depth - 1)
+    end
+end
+
+--- Repasse sur tous les conteneurs ouverts.
+---@param mod table
+local function updateContainers(mod)
+    if not mod:Get("showBagItemLevel") then
+        W.ClearItemLevelTags()
+        return
+    end
+
+    for i = 1, #CONTAINER_ROOTS do
+        local root = _G[CONTAINER_ROOTS[i]]
+        -- Un conteneur fermé n'a rien à montrer, et son parcours coûte autant
+        -- que celui d'un conteneur ouvert.
+        if root and root.IsShown and root:IsShown() then
+            walkContainer(root, WALK_DEPTH)
+        end
+    end
+end
+
+-- =========================================================================
 --  Bandeaux
 -- =========================================================================
 
@@ -428,6 +646,75 @@ local refresh = U.Debounce(T.TIMING.SLOT_INFO, repaint)
 --- des données arrivées en retard.
 local refreshLater = U.Debounce(T.TIMING.SLOT_INFO_SETTLE, repaint)
 
+--- Repeinte des conteneurs.
+---
+--- Elle n'est **pas** conditionnée à la fiche de personnage, contrairement aux
+--- deux précédentes : les sacs s'ouvrent seuls, c'est même leur usage courant.
+local refreshBags = U.Debounce(T.TIMING.BAG_TAG, function()
+    local mod = BUI.Modules:Get(MODULE)
+    if not (mod and mod:IsEnabled()) then return end
+
+    updateContainers(mod)
+end)
+
+--- Deux passages à l'ouverture de la banque.
+---
+--- Elle n'est pas remplie quand elle s'annonce : son interface se charge à la
+--- demande, son panneau se peuple ensuite, et ses boutons sortent d'un pool qui
+--- grandit au fur et à mesure. Un seul passage arrive donc trop tôt, et rien ne
+--- prévient une seconde fois. Le retardataire est le filet — c'est le même motif
+--- que le mode sombre applique aux cadres qui se rhabillent après coup.
+local function refreshBank()
+    refreshBags()
+    C_Timer.After(T.TIMING.SLOT_INFO_SETTLE, refreshBags)
+end
+
+-- =========================================================================
+--  Veille sur la banque
+-- =========================================================================
+-- **Changer d'onglet de banque n'émet aucun signal.** Ni événement, ni appel
+-- qu'on puisse intercepter : le client repeuple les mêmes boutons avec le
+-- contenu de l'autre onglet, et rien ne l'annonce. Deux tentatives ont échoué —
+-- s'abonner à ce qui touche aux sacs (le contenu ne change pas), et s'accrocher
+-- à la pose de texture des boutons (ces boutons-là ne passent pas par elle).
+--
+-- Le symptôme était le pire des trois possibles : non pas une case muette, mais
+-- une case portant le **nombre de l'onglet précédent**. Un chiffre faux se croit.
+--
+-- Faute de signal, on regarde. La veille ne tourne **que pendant que la banque
+-- est ouverte**, elle s'arrête d'elle-même à la fermeture, et elle ne fait que
+-- redemander la relecture groupée — qui, elle, est déjà limitée par son propre
+-- regroupement. C'est le seul endroit de l'addon qui scrute au lieu d'écouter,
+-- et ce commentaire est là pour qu'on le remplace le jour où le client publiera
+-- de quoi écouter.
+
+local bankTicker
+
+local function stopBankWatch()
+    if bankTicker then
+        bankTicker:Cancel()
+        bankTicker = nil
+    end
+end
+
+local function startBankWatch()
+    if bankTicker then return end
+
+    bankTicker = C_Timer.NewTicker(T.TIMING.BANK_WATCH, function()
+        local mod = BUI.Modules:Get(MODULE)
+        local wanted = mod and mod:IsEnabled() and mod:Get("showBagItemLevel")
+
+        -- La veille se coupe seule dès qu'elle n'a plus lieu d'être : banque
+        -- fermée, réglage décoché, module éteint.
+        if not wanted or not (BankFrame and BankFrame:IsShown()) then
+            stopBankWatch()
+            return
+        end
+
+        refreshBags()
+    end)
+end
+
 --- Montre ou cache tous les bandeaux d'un coup.
 ---@param shown boolean
 local function setShown(shown)
@@ -457,6 +744,8 @@ BUI:RegisterModule(MODULE, {
         -- rang d'amélioration doit donc distinguer tout de suite ce qui est fini
         -- de ce qui ne l'est pas — décocher ensuite est le geste rare.
         warnPartialUpgrade = true,
+
+        showBagItemLevel = false,
     },
 
     options = {
@@ -465,8 +754,6 @@ BUI:RegisterModule(MODULE, {
             type    = "toggle",
             key     = "showItemLevel",
             text    = L["Show item level"],
-            -- Infobulle propre à la fiche : le module Sacs annonce le même
-            -- réglage, et une clé partagée décrirait les sacs sur cette page-ci.
             tooltip = L["Show item level on slots tip"],
         },
         {
@@ -504,6 +791,14 @@ BUI:RegisterModule(MODULE, {
             text    = L["Show void core"],
             tooltip = L["Show void core tip"],
         },
+
+        { type = "header", text = L["Bags and bank"] },
+        {
+            type    = "toggle",
+            key     = "showBagItemLevel",
+            text    = L["Show item level in bags"],
+            tooltip = L["Show item level in bags tip"],
+        },
     },
 
     OnEnable = function(self)
@@ -531,16 +826,45 @@ BUI:RegisterModule(MODULE, {
             if unit == "player" then refresh() end
         end)
 
+        -- Conteneurs. `BAG_UPDATE_DELAYED` est le regroupé du client : il tombe
+        -- une fois quand la rafale de `BAG_UPDATE` est retombée, ce qui est
+        -- exactement ce qu'on veut d'un tri ou d'un vidage de sacoche.
+        self:RegisterEvent("BAG_UPDATE_DELAYED",          refreshBags)
+        self:RegisterEvent("BANKFRAME_OPENED", function()
+            refreshBank()
+            startBankWatch()
+        end)
+        self:RegisterEvent("BANKFRAME_CLOSED", stopBankWatch)
+        self:RegisterEvent("PLAYERBANKSLOTS_CHANGED",     refreshBags)
+        self:RegisterEvent("PLAYERBANKBAGSLOTS_CHANGED",  refreshBags)
+        self:RegisterEvent("ITEM_LOCK_CHANGED",           refreshBags)
+        self:RegisterEvent("GET_ITEM_INFO_RECEIVED",      refreshBags)
+
+        -- Ouvrir un sac ne change rien à son contenu : aucun événement ne
+        -- l'annonce. Ces quatre fonctions sont les seules portes d'entrée, et
+        -- `U.GuardedHook` les rend inertes quand le module s'éteint (règle 6).
+        local guard = function() return self:IsEnabled() end
+        local BAG_TOGGLES = { "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags" }
+        for i = 1, #BAG_TOGGLES do
+            if type(_G[BAG_TOGGLES[i]]) == "function" then
+                U.GuardedHook(BAG_TOGGLES[i], refreshBags, guard)
+            end
+        end
+
         refresh()
+        refreshBags()
     end,
 
-    -- Les bandeaux ne se détruisent pas — aucune frame ne se détruit dans ce
-    -- jeu —, ils se cachent. La fiche redevient celle du client, au pixel près.
+    -- Rien ne se détruit — aucune frame ne se détruit dans ce jeu —, tout se
+    -- cache. La fiche et les sacs redeviennent ceux du client, au pixel près.
     OnDisable = function()
         setShown(false)
+        W.ClearItemLevelTags()
+        stopBankWatch()
     end,
 
     OnSettingChanged = function()
         refresh()
+        refreshBags()
     end,
 })

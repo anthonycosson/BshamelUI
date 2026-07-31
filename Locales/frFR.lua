@@ -115,7 +115,7 @@ BUI:RegisterLocale("frFR", {
     -- Module Character
     ["Character sheet"]                = "Fiche de personnage",
     ["Item details"]                   = "Détails des objets",
-    -- Voir enUS : le libellé est déclaré avec le module Bags.
+    ["Show item level"]                = "Afficher le niveau d'objet",
     ["Show item level on slots tip"] =
         "Affiche le niveau d'objet de chaque pièce équipée sur son emplacement, mise à l'échelle comprise.",
     ["Show upgrade level"]             = "Afficher le niveau d'amélioration",
@@ -129,6 +129,10 @@ BUI:RegisterLocale("frFR", {
     ["Show gems"]                      = "Afficher les gemmes",
     ["Show gems tip"] =
         "Vert quand toutes les châsses sont serties, rouge dès qu'il en reste une vide.",
+    ["Bags and bank"]                  = "Sacs et banque",
+    ["Show item level in bags"]        = "Afficher le niveau d'objet sur l'équipement rangé",
+    ["Show item level in bags tip"] =
+        "Inscrit le niveau d'objet sur chaque pièce d'équipement dans les sacs, la banque et la banque de bataillon.",
     ["Show void core"]                 = "Afficher le noyau du vide",
     ["Show void core tip"] =
         "Signale les armes et les bijoux qui n'ont pas encore reçu la forge du vide ascendant.",
@@ -209,9 +213,6 @@ BUI:RegisterLocale("frFR", {
     ["Fill delete confirmation"]       = "Remplir la confirmation de destruction",
     ["Fill delete confirmation tip"] =
         "Saisit le mot de confirmation à votre place quand la destruction d'un objet le demande.",
-    ["Display"]                        = "Affichage",
-    ["Show item level"]                = "Afficher le niveau d'objet",
-    ["Show item level tip"]            = "Inscrit le niveau d'objet sur les icônes d'équipement dans les sacs.",
 
     -- Modules Keystones et RaidTools
     ["Keystones"]                      = "Clés mythiques",

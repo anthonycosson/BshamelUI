@@ -173,6 +173,21 @@ T.SIZE = {
                             -- quoi les pastilles paraissent collées au cadre
     SLOT_TEXT_INSET = 2,    -- retrait du niveau d'objet posé sur l'icône
 
+    -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
+    -- de sa case.
+    --
+    -- Nul : le nombre se cale dans l'angle. On l'avait d'abord rentré de trois
+    -- pixels, en craignant qu'un nombre collé au bord se lise comme appartenant
+    -- à la case voisine — les cases d'un sac se touchent. La crainte ne s'est pas
+    -- vérifiée : la police à contour détache le chiffre de tout ce qu'il y a
+    -- derrière, et rentrer le nombre le faisait flotter au milieu de l'icône au
+    -- lieu de l'ancrer.
+    --
+    -- C'est le réglage à bouger pour déplacer l'étiquette. Une valeur négative
+    -- la fait déborder **hors** de la case, ce qui la détache encore davantage
+    -- de l'icône — au prix d'un empiétement sur la case d'à côté.
+    BAG_TAG_INSET   = 0,
+
 
     -- De combien le bandeau passe au-dessus de son emplacement. La scène du
     -- personnage occupe la même strate que les emplacements : sans ce relèvement,
@@ -224,6 +239,17 @@ T.TIMING = {
                             -- changer une pièce émet plusieurs événements
                             -- coup sur coup, et chacun relit les seize
                             -- emplacements
+    -- Cadence de la veille sur la banque. Changer d'onglet n'émet aucun signal :
+    -- c'est le seul endroit de l'addon qui scrute au lieu d'écouter (voir
+    -- `Modules/Character.lua`). Elle ne tourne que banque ouverte, et chaque
+    -- réveil ne fait que redemander une relecture déjà groupée — la valeur ne
+    -- décide donc pas d'un coût, seulement du temps qu'un nombre périmé peut
+    -- rester à l'écran.
+    BANK_WATCH    = 0.25,
+    BAG_TAG       = 0.2,    -- regroupement des relectures de sacs. Plus lâche
+                            -- que la fiche : on parcourt l'arbre de chaque
+                            -- conteneur ouvert, et un tri de sacs émet des
+                            -- dizaines d'événements
     SLOT_INFO_SETTLE = 0.5, -- la même relecture, quand elle ne sert qu'à
                             -- rattraper des données d'objet arrivées en retard.
                             -- L'événement qui la déclenche est émis pour

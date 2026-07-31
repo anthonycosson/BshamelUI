@@ -46,6 +46,7 @@ UI\Widgets\MinimapButton.lua
 UI\Widgets\Countdown.lua
 UI\Widgets\ShadeBorder.lua
 UI\Widgets\SlotInfo.lua
+UI\Widgets\ItemLevelTag.lua
 UI\Widgets\Mover.lua
 UI\Widgets\ChatTools.lua
 # La fenêtre de copie assemble une fenêtre et une zone défilante : elle vient

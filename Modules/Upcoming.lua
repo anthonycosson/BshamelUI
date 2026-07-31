@@ -58,7 +58,6 @@ BUI:RegisterModule("Bags", {
     defaults = {
         autoSellJunk    = false,
         fillDeleteInput = false,
-        showItemLevel   = false,
     },
 
     options = {
@@ -78,13 +77,10 @@ BUI:RegisterModule("Bags", {
             tooltip = L["Fill delete confirmation tip"],
         },
 
-        { type = "header", text = L["Display"] },
-        {
-            type    = "toggle",
-            key     = "showItemLevel",
-            text    = L["Show item level"],
-            tooltip = L["Show item level tip"],
-        },
+        -- Le niveau d'objet sur l'équipement rangé n'est plus annoncé ici : il
+        -- est écrit, et il vit dans **Fiche de personnage**, avec l'autre
+        -- affichage du même nombre. Deux pages pour un seul geste de lecture
+        -- obligeraient à le régler à deux endroits.
     },
 })
 

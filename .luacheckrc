@@ -67,6 +67,11 @@ read_globals = {
     -- Équipement du personnage. `GetItemStats` et `GetItemGem` ont migré dans
     -- `C_Item` ; les globales existent encore et servent de repli.
     "GetInventoryItemLink", "GetInventorySlotInfo", "GetItemStats", "GetItemGem",
+    "GetDetailedItemLevelInfo",
+
+    -- Conteneurs (sacs, banque, banque de bataillon)
+    "C_Container", "ContainerFrameCombinedBags", "BankFrame",
+    "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags",
 
     -- Marchands et réparation
     "CanMerchantRepair", "GetRepairAllCost", "CanGuildBankRepair", "RepairAllItems",

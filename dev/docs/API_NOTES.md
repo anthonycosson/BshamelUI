@@ -1301,3 +1301,66 @@ courant. Repasser ne coûte alors que le passage — jamais un clignotement (voi
 Effet de bord à ne pas oublier : ce qui **déclenche une requête** doit partir au
 premier passage. Une demande d'inspection posée seulement dans le passage groupé
 ajoute le retard du rafraîchissement à celui du serveur, et les deux se voient.
+---
+
+## Annoter les objets rangés sans connaître les cadres qui les portent
+
+**Symptôme** — poser un niveau d'objet sur les objets des sacs, de la banque et
+de la banque de bataillon demande de trouver les boutons. Les trois interfaces
+ont des structures différentes, et celle de la banque a été refondue.
+
+**Ce qu'on ne fait pas** — s'accrocher à une fonction du client. Les deux
+candidates échouent chacune pour sa raison :
+
+- `hooksecurefunc("SetItemButtonQuality", …)` ne se déclenche que si le code du
+  client appelle bien la **globale**, alors qu'il peut passer par la méthode de
+  mixin du bouton ;
+- `hooksecurefunc(ItemButtonMixin, "SetItemButtonQuality", …)` ne sert à rien sur
+  les boutons **déjà créés** : un mixin XML **copie** ses fonctions sur la frame
+  à sa création. Hooker la table après coup ne touche que les frames à naître.
+
+**Ce qu'on fait** — un parcours de l'arbre des cadres, borné en profondeur, à
+partir d'une liste de racines nommées : `ContainerFrameCombinedBags`,
+`ContainerFrame1` à `13`, et `BankFrame`. `GetChildren` est stable depuis
+toujours, et ne suppose rien de la disposition interne.
+
+Un bouton publie son sac de trois façons selon son âge — `button:GetBagID()`, le
+`GetBagID()` de son parent, ou un champ `bagID` —, et son emplacement par
+`GetID()`. **Le couple obtenu n'est retenu que si `C_Container.GetContainerItemLink`
+y reconnaît un objet** : c'est ce qui empêche d'écrire un nombre sur un cadre qui
+n'est pas un bouton d'objet. En cas d'échec, rien ne s'affiche — jamais une
+valeur fausse.
+
+`BankFrame` couvre à lui seul la banque du personnage **et** la banque de
+bataillon : depuis leur refonte, les deux sont des onglets d'une même fenêtre.
+
+---
+
+## Identifiants de sac de la banque, depuis Midnight
+
+Les onglets de banque ne sont plus des sacs numérotés à la main. Ils se lisent
+dans `Enum.BagIndex` :
+
+- banque du personnage : `CharacterBankTab_1` à `CharacterBankTab_6` ;
+- banque de bataillon : `AccountBankTab_1` à `AccountBankTab_5`.
+
+Les métadonnées d'un onglet (nom, icône, achat) passent par
+`C_Bank.FetchPurchasedBankTabData(Enum.BankType.Character | .Account)`.
+
+On ne s'en sert pas pour l'étiquetage — le parcours de l'arbre lit le sac sur le
+bouton lui-même —, mais c'est le chemin à prendre pour toute lecture d'un onglet
+sans passer par son interface.
+
+---
+
+## Les étiquettes d'un pool ne se rangent pas dans le cadre
+
+Un bouton de conteneur sort d'un pool : il est recyclé d'un objet à l'autre, et
+le client peut le rendre à tout moment. Ranger notre `FontString` dans un champ
+posé sur le bouton pose deux problèmes — on écrit sur un cadre qui porte une
+chaîne d'exécution sécurisée, et la référence survit au recyclage.
+
+Une table **à clés faibles** (`__mode = "k"`) tenue par le widget règle les deux :
+rien n'est écrit sur le cadre, et un bouton oublié par le client l'est aussi par
+nous. Elle sert en plus d'inventaire — c'est elle qui permet de tout effacer à la
+désactivation du module sans avoir à retrouver les boutons.

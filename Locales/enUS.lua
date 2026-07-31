@@ -103,8 +103,7 @@ BUI:RegisterLocale("enUS", {
     -- Module Character
     ["Character sheet"]                = "Character sheet",
     ["Item details"]                   = "Item details",
-    -- Le libellé « Show item level » est déclaré avec le module Bags : les deux
-    -- modules proposent le même réglage, seule l'infobulle diffère.
+    ["Show item level"]                = "Show item level",
     ["Show item level on slots tip"] =
         "Shows the item level of every equipped piece on its own slot, scaling included.",
     ["Show upgrade level"]             = "Show upgrade level",
@@ -119,6 +118,10 @@ BUI:RegisterLocale("enUS", {
     ["Show gems tip"]                  = "Green when every socket is filled, red as soon as one is empty.",
     ["Show void core"]                 = "Show void core",
     ["Show void core tip"]             = "Flags weapons and trinkets that have not been voidforged yet.",
+    ["Bags and bank"]                  = "Bags and bank",
+    ["Show item level in bags"]        = "Show item level on stored gear",
+    ["Show item level in bags tip"] =
+        "Prints the item level on every piece of gear in your bags, your bank and the warband bank.",
 
     -- Pastilles posées à côté d'un emplacement, une par ligne. C'est leur
     -- couleur qui informe, le mot ne fait que nommer la question — il gagne donc
@@ -200,9 +203,6 @@ BUI:RegisterLocale("enUS", {
     ["Confirmations"]                  = "Confirmations",
     ["Fill delete confirmation"]       = "Fill the delete confirmation",
     ["Fill delete confirmation tip"]   = "Types the confirmation word for you when destroying an item asks for it.",
-    ["Display"]                        = "Display",
-    ["Show item level"]                = "Show item level",
-    ["Show item level tip"]            = "Prints the item level on equipment icons in your bags.",
 
     -- Modules Keystones et RaidTools
     ["Keystones"]                      = "Keystones",

@@ -57,8 +57,16 @@
   Une pastille ne se pose en revanche jamais si la question ne se pose pas —
   une pièce sans châsse n'a pas de gemme manquante.
 
-  Rien n'est modifié sur la fiche du client : le module ajoute une frame par
-  emplacement et la cache quand on l'éteint.
+  Un sixième réglage sort de la fiche : le **niveau d'objet sur l'équipement
+  rangé**, dans les sacs, la banque et la banque de bataillon. C'est le même
+  nombre et la même question — « celle-là vaut-elle mieux que ce que je
+  porte ? » —, et elle se pose surtout devant un sac. Seul l'équipement en
+  reçoit un : un nombre sur une potion serait du bruit sur toute la grille. Le
+  module Sacs cesse donc de l'annoncer.
+
+  Rien n'est modifié sur la fiche ni sur les sacs du client : le module ajoute
+  une frame par emplacement, une étiquette par objet, et cache tout quand on
+  l'éteint.
 
 - **Gestionnaire de temps de recharge** — nouvelle page, avec un premier
   réglage : le **suivi des améliorations reste groupé**. Le client réserve une

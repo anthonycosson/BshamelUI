@@ -50,6 +50,8 @@
     "C_TooltipInfo", "TooltipUtil", "ItemLocation",
     "CharacterFrame", "GetInventorySlotInfo", "GetInventoryItemLink",
     "GetItemStats", "GetItemGem",
+    "C_Container", "ContainerFrameCombinedBags", "BankFrame", "GetDetailedItemLevelInfo",
+    "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags",
 
     "GetLocale", "GetTime", "GetBuildInfo", "InCombatLockdown",
     "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown", "IsModifierKeyDown",
