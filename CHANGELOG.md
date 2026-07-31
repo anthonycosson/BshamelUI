@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.5 — 2026-08-01
+
 ### Ajouté
 - La catégorie **MM+ / Raid** s'allume. Ses quatre pages étaient annoncées et
   grisées ; elles sont livrées, chaque réglage restant éteint par défaut.
