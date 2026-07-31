@@ -46,6 +46,7 @@
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
     "LFGDungeonReadyPopup", "LFGDungeonReadyDialog", "PVPReadyDialog",
     "CinematicFrame_CancelCinematic", "GameMovieFinished",
+    "CinematicFrame", "MovieFrame", "StopCinematic", "CanCancelScene", "CancelScene",
     "TalkingHeadFrame", "TalkingHeadFrame_CloseImmediately",
     "CanMerchantRepair", "GetRepairAllCost", "CanGuildBankRepair", "RepairAllItems",
     "GetMoney", "GetCoinTextureString",

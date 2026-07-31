@@ -100,7 +100,9 @@ BUI:RegisterLocale("enUS", {
     ["Death sound alert tip"]          = "Adds an audio alert to the death announcement.",
     ["Annoyances"]                     = "Annoyances",
     ["Skip cinematics"]                = "Skip cinematics",
-    ["Skip cinematics tip"]            = "Skips cinematics and in-game movies.",
+    ["Skip cinematics tip"] =
+        "Movies and cinematics end on their own. An in-game scene ends on your first key press: " ..
+        "the game only lets it be cancelled while a key is being handled.",
     ["Hide talking heads"]             = "Hide talking heads",
     ["Hide talking heads tip"]         = "Hides the talking head frame that pops up during quests and dungeons.",
     ["Hide Lua errors"]                = "Hide Lua errors",

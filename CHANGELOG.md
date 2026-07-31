@@ -2,6 +2,16 @@
 
 ## Non publié
 
+### Corrigé
+- **Passer les cinématiques** fonctionne enfin sur les scènes en jeu, c'est-à-dire
+  sur presque toutes celles qu'on croise. Trois choses différentes se cachent
+  derrière ce mot : le film, qui se termine ; la vraie cinématique, qui s'arrête ;
+  et la **scène en jeu**, que le client ne laisse couper que pendant qu'il traite
+  une touche. L'addon ne pouvait donc rien faire depuis l'événement d'ouverture.
+  Il arme désormais l'annulation, que votre première touche déclenche — et il
+  répond pour vous à la demande de confirmation, de sorte qu'une touche suffit là
+  où il en fallait deux.
+
 ### Modifié
 - Le mode sombre laisse les **cadres de boss** tranquilles. Ce sont des cadres de
   combat : ce qu'on y lit se lit vite ou ne se lit pas, et un habillage assombri

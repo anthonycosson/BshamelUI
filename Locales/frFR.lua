@@ -108,7 +108,9 @@ BUI:RegisterLocale("frFR", {
     ["Death sound alert tip"]          = "Ajoute une alerte sonore à l'annonce des morts.",
     ["Annoyances"]                     = "Nuisances",
     ["Skip cinematics"]                = "Passer les cinématiques",
-    ["Skip cinematics tip"]            = "Passe les cinématiques et les vidéos du jeu.",
+    ["Skip cinematics tip"] =
+        "Les vidéos et les cinématiques partent toutes seules. Une scène en jeu s'arrête à votre " ..
+        "première touche : le jeu ne la laisse couper que pendant qu'il traite une touche.",
     ["Hide talking heads"]             = "Masquer les têtes parlantes",
     ["Hide talking heads tip"] =
         "Masque le cadre de tête parlante qui apparaît pendant les quêtes et les donjons.",

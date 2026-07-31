@@ -2235,3 +2235,36 @@ Le clic est **différé d'une image** (`C_Timer.After(0, …)`) : le hook s'exé
 l'intérieur du `Show` de la fenêtre qu'il s'apprête à fermer. Il revérifie alors
 que le réglage est toujours coché et que la fenêtre est toujours la bonne — une
 image suffit pour qu'elle ait été fermée à la main.
+
+---
+
+## « Cinématique » recouvre trois choses, qui ne s'arrêtent pas pareil
+
+**Symptôme** — le réglage « passer les cinématiques » ne fait rien. Les films
+s'en vont, les scènes de quête — c'est-à-dire l'immense majorité de ce qu'on
+croise — restent.
+
+**Cause** — un seul appel traitait le cas le plus rare :
+
+- le **film** (`PLAY_MOVIE`) : `GameMovieFinished()`, et `MovieFrame:Hide()` pour
+  la fenêtre qui peut rester posée ;
+- la **vraie cinématique** (`CinematicFrame.isRealCinematic`) : `StopCinematic()`
+  passe depuis n'importe où, gestionnaire d'événement compris ;
+- la **scène en jeu** : la caméra prend la main pendant que le monde tourne.
+  Elle s'annule par `CancelScene()`, sous réserve de `CanCancelScene()` — et cet
+  appel est **conditionné à un geste matériel**. Depuis `CINEMATIC_START`, il est
+  refusé.
+
+**Ce qu'on fait** — on n'appelle jamais `CancelScene` depuis l'événement : on
+**arme** une annulation à `CINEMATIC_START`, et la première touche pressée sur
+`CinematicFrame` la consomme, puisque le client accepte l'appel pendant qu'il
+traite une touche. `CINEMATIC_STOP` désarme, pour qu'une scène passée ne laisse
+pas de piège à la suivante.
+
+Le hook des touches passe par `U.GuardedScript` (règle 6) : posé une fois, inerte
+quand le module s'éteint. Il sert aussi à **cliquer la confirmation** que le
+client ouvre sur Échap — sans quoi couper une séquence demande deux touches, et
+le réglage a l'air de ne rien faire à la première.
+
+Conséquence assumée : une scène en jeu demande une touche, là où un film part
+tout seul. Aucune API ne permet mieux.

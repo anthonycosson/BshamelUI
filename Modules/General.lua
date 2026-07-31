@@ -401,17 +401,107 @@ end
 -- =========================================================================
 --  Nuisances : cinématiques et têtes parlantes
 -- =========================================================================
+-- Trois choses différentes se cachent derrière le mot « cinématique », et elles
+-- ne s'arrêtent pas de la même façon. C'est ce qui faisait qu'un seul appel ne
+-- suffisait pas — il traitait la plus rare des trois :
+--
+--   · le **film** (`PLAY_MOVIE`) : une vidéo, que le client sait terminer ;
+--   · la **vraie cinématique** (`CinematicFrame.isRealCinematic`) : une séquence
+--     précalculée, que `StopCinematic` arrête depuis n'importe où ;
+--   · la **scène en jeu** : la caméra prend la main pendant que le monde
+--     continue de tourner. C'est aujourd'hui le cas le plus fréquent — presque
+--     toutes les scènes de quête — et c'est celui qu'on ne pouvait pas couper.
+--
+-- `CancelScene` est en effet **conditionnée à un geste matériel** : appelée
+-- depuis un gestionnaire d'événement, elle est refusée. Appelée pendant que le
+-- client traite une touche, elle passe. On ne l'appelle donc pas à l'ouverture
+-- de la scène : on **arme** une annulation, que la première touche consomme.
+--
+-- Conséquence assumée : une scène en jeu demande une touche, là où un film s'en
+-- va tout seul. C'est une touche au lieu de deux — le client en demandait déjà
+-- une pour ouvrir sa demande de confirmation, et une autre pour la confirmer.
+
+--- Annulation en attente d'une touche. Remise à zéro à la fin de la scène :
+--- une scène passée ne doit pas laisser un piège armé pour la suivante.
+local sceneSkipArmed = false
 
 ---@param mod table
 local function skipCinematic(mod)
     if not mod:Get("skipCinematics") then return end
-    if CinematicFrame_CancelCinematic then CinematicFrame_CancelCinematic() end
+
+    -- Une vraie cinématique s'arrête tout de suite. Les scènes attendent la
+    -- touche, faute de quoi le client refuse.
+    if CinematicFrame and CinematicFrame.isRealCinematic and StopCinematic then
+        StopCinematic()
+        return
+    end
+
+    sceneSkipArmed = true
+end
+
+--- Consomme l'annulation armée. Appelée depuis le traitement d'une touche, donc
+--- au seul moment où le client accepte de couper une scène.
+---@param mod table
+local function consumeSceneSkip(mod)
+    if not sceneSkipArmed then return end
+    if not mod:Get("skipCinematics") then return end
+    if not (CinematicFrame and CinematicFrame:IsShown()) then return end
+
+    sceneSkipArmed = false
+
+    if CinematicFrame.isRealCinematic then
+        if StopCinematic then StopCinematic() end
+    elseif CanCancelScene and CanCancelScene() and CancelScene then
+        CancelScene()
+    end
+end
+
+--- S'accroche aux touches des deux fenêtres de lecture.
+---
+--- Deux gestes en un : consommer l'annulation armée, et **répondre à la demande
+--- de confirmation** que le client ouvre quand on appuie sur Échap. Sans le
+--- second, couper une séquence demande toujours deux touches, et le réglage a
+--- l'air de ne rien faire à la première.
+---
+--- `U.GuardedScript` est le seul motif autorisé pour cela (règle 6) : le hook
+--- est posé une fois et devient inerte quand le module s'éteint.
+---@param mod table
+local function hookCinematicKeys(mod)
+    local guard = function() return mod:IsEnabled() and mod:Get("skipCinematics") end
+
+    ---@param dialog table|nil
+    local function confirm(dialog)
+        local button = dialog and (dialog.ConfirmButton or dialog.confirmButton)
+        if button and button.Click then button:Click() end
+    end
+
+    if CinematicFrame then
+        U.GuardedScript(CinematicFrame, "OnKeyDown", function()
+            consumeSceneSkip(mod)
+        end, guard)
+
+        U.GuardedScript(CinematicFrame, "OnKeyUp", function()
+            consumeSceneSkip(mod)
+            confirm(CinematicFrame.closeDialog)
+        end, guard)
+    end
+
+    if MovieFrame then
+        U.GuardedScript(MovieFrame, "OnKeyUp", function()
+            confirm(MovieFrame.CloseDialog)
+        end, guard)
+    end
 end
 
 ---@param mod table
 local function skipMovie(mod)
     if not mod:Get("skipCinematics") then return end
+
     if GameMovieFinished then GameMovieFinished() end
+
+    -- Le film s'arrête, mais sa fenêtre peut rester posée par-dessus le monde :
+    -- ce qui suit ne coûte rien quand elle est déjà partie.
+    if MovieFrame and MovieFrame.Hide then MovieFrame:Hide() end
 end
 
 ---@param mod table
@@ -729,9 +819,13 @@ BUI:RegisterModule(MODULE, {
         applyAll(self)
         hookAuraUpdates(self)
         hookCooldownViewers(self)
+        hookCinematicKeys(self)
 
         self:RegisterEvent("MERCHANT_SHOW",    function() repairAtMerchant(self) end)
         self:RegisterEvent("CINEMATIC_START",  function() skipCinematic(self) end)
+        -- Une scène qui se termine sans avoir été coupée ne doit pas laisser son
+        -- annulation armée derrière elle.
+        self:RegisterEvent("CINEMATIC_STOP",   function() sceneSkipArmed = false end)
         self:RegisterEvent("PLAY_MOVIE",       function() skipMovie(self) end)
         self:RegisterEvent("TALKINGHEAD_REQUESTED", function() hideTalkingHead(self) end)
 
