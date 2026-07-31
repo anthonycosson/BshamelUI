@@ -60,12 +60,6 @@ BUI:RegisterLocale("frFR", {
 
     -- Module General
     ["General"]                        = "Général",
-    ["Addon windows"]                  = "Fenêtres de l'addon",
-    ["Window intensity"]               = "Intensité",
-    ["Window intensity tip"] =
-        "À quel point les fenêtres de l'addon sont sombres. Au maximum, c'est l'apparence " ..
-        "d'origine ; en descendant, elles s'éclaircissent vers le gris, ce qui se lit mieux " ..
-        "sur un écran lumineux.",
     ["Enable dark mode"]               = "Activer le mode sombre",
     ["Dark action bars tip"]           = "Boutons, bordures et habillage derrière chaque barre d'action.",
     ["Cast bar"]                       = "Barre d'incantation",

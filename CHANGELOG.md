@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Supprimé
+- Le curseur d'**intensité des fenêtres**, arrivé à la version précédente. Il
+  n'offrait qu'un dégradé de gris, réglé une fois puis oublié, et il obligeait
+  chaque surface de l'addon à savoir se repeindre — un mécanisme entier pour une
+  valeur qui se décide une bonne fois. C'est le maximum, c'est-à-dire l'apparence
+  d'origine, qui reste. Le réglage de ceux qui l'avaient bougé est effacé de leur
+  fichier au premier chargement.
+
 ## 0.6.0 — 2026-07-31
 
 ### Ajouté

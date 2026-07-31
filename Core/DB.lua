@@ -31,7 +31,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 2
+local SCHEMA_VERSION   = 3
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -131,6 +131,18 @@ function DB:RunMigrations()
             end
         end
         from = 2
+    end
+
+    -- Palier 3 — l'intensité des fenêtres de l'addon n'existe plus. Un réglage
+    -- retiré du code n'est plus dans les défauts, donc plus rien ne le retire du
+    -- fichier à la déconnexion : il y resterait indéfiniment, sans effet et sans
+    -- explication. On l'efface une fois.
+    if from < 3 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local general = profile.modules and profile.modules.General
+            if general then general.windowIntensity = nil end
+        end
+        from = 3
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)
