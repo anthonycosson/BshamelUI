@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.3.0 — 2026-07-31
+
 ### Ajouté
 - **Général** est le premier module écrit depuis Quête. Il quitte l'avant-première
   et fait réellement onze choses :
