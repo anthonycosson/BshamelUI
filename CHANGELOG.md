@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.2 — 2026-07-31
+
 ### Ajouté
 - **Passer la confirmation de vente**, dans *Sacs*. Vendre un butin encore
   échangeable — ou encore remboursable — ouvre une fenêtre qui demande de
