@@ -73,6 +73,92 @@ T.SIZE = {
     CHROME_TOP     = 30,
     CHROME_SIDE    = 10,
     CHROME_BOTTOM  = 10,
+
+    -- Bouton de la minicarte, à 1,3 fois les proportions du client (qui pose une
+    -- bordure de 53 pixels pour une zone cliquable de 31) : le bouton d'un addon
+    -- se cherche à la souris, il gagne à être un peu plus franc — mais au double
+    -- il cessait d'être un bouton de minicarte pour devenir une pastille.
+    -- Le rapport entre les deux valeurs, lui, ne se touche pas : c'est lui qui
+    -- loge l'icône dans le trou.
+    MINIMAP_BUTTON = 40,
+    MINIMAP_BORDER = 69,
+
+    -- L'icône est **centrée**, et non posée par son coin comme le veut l'usage.
+    -- L'usage suppose une icône carrée que la bordure recouvre sur ses bords ;
+    -- la nôtre est un disque, qui doit donc remplir le trou et non s'y inscrire.
+    -- Le trou n'étant pas centré sur le bouton, l'icône remonte de deux pixels.
+    --
+    -- Sa taille est celle du **trou** de la bordure, qui ne se déduit d'aucune
+    -- des deux autres valeurs. On l'a d'abord crue égale à la diagonale du carré
+    -- de dix-sept pixels que posent les boutons du client — c'est faux : l'anneau
+    -- recouvre précisément les coins de ce carré, donc le trou est plus petit que
+    -- sa diagonale, et plus grand que son côté. Il se mesure à l'œil, et c'est la
+    -- seule façon de l'obtenir.
+    --
+    -- Trop grand, le disque déborde sur l'anneau ; trop petit, il laisse un jour.
+    -- Le premier défaut est le plus discret des deux à petite taille — c'est ce
+    -- qui l'a laissé passer, jusqu'à ce qu'agrandir le bouton le rende évident.
+    -- Le décalage vertical est celui du **trou**, pas celui qu'on lirait dans
+    -- les proportions du client : c'est la même mesure à l'œil que la taille, et
+    -- les deux se règlent ensemble. Un disque qui affleure en haut sans remplir
+    -- en bas est à la fois trop haut et trop petit — descendre son centre comble
+    -- le bas, et l'agrandir rattrape ce que la descente retire au haut.
+    MINIMAP_ICON   = 33,
+    MINIMAP_ICON_X = 0,
+    MINIMAP_ICON_Y = 0,
+
+    -- Écart entre le bord de la minicarte et le centre du bouton ; le rayon s'en
+    -- déduit à l'exécution, la minicarte n'ayant pas la même taille partout.
+    --
+    -- Il vaut un peu moins que le rayon du bouton, de sorte que celui-ci mord
+    -- sur l'anneau de la minicarte au lieu de flotter à côté. Grandir le bouton
+    -- sans grandir cet écart le ferait empiéter sur la carte.
+    MINIMAP_PAD    = 13,
+
+    COUNTDOWN_PAD  = 4,     -- retrait du décompte dans la fenêtre qu'il coiffe
+
+    -- De combien le contour sombre d'une icône déborde de ses quatre bords.
+    --
+    -- Une **proportion** du côté de l'icône, avec un plancher : l'atlas de
+    -- bordure porte une marge transparente autour de son trait, si bien qu'étiré
+    -- pile sur l'icône, l'anneau tombe à l'intérieur au lieu de l'entourer. Le
+    -- débordement compense cette marge, et il doit donc grandir avec l'icône.
+    --
+    -- C'est le réglage à bouger si l'anneau mord sur l'image (monter) ou flotte
+    -- au large (descendre).
+    -- Le plafond compte autant que la proportion : au-delà de quelques pixels,
+    -- l'anneau sort de son icône et vient mordre sur ses voisines, qui sont
+    -- serrées les unes contre les autres dans une rangée d'auras ou de temps de
+    -- recharge.
+    SHADE_BORDER_PAD       = 1,
+    SHADE_BORDER_PAD_RATIO = 0.12,
+    SHADE_BORDER_PAD_MAX   = 3,
+
+    -- Fraction rognée sur chaque bord d'une icône avant d'y poser le contour.
+    --
+    -- Les icônes de sort portent un liseré sombre **dans leur image**. Sans
+    -- rognage, notre contour s'ajoute à ce liseré au lieu de le remplacer, et le
+    -- bord paraît deux fois trop épais quoi qu'on fasse.
+    SHADE_ICON_CROP = 0.06,
+}
+
+-- =========================================================================
+--  Minuteries
+-- =========================================================================
+-- Tout ce qui se compte en secondes et qui décide d'un rendu. Regroupé ici pour
+-- la même raison que les opacités : ces valeurs se règlent les unes par rapport
+-- aux autres, pas isolément au fil des fichiers.
+
+T.TIMING = {
+    DRAG          = 0.02,   -- suivi du curseur pendant un déplacement
+    COUNTDOWN     = 0.1,    -- rafraîchissement d'un décompte affiché
+    SHADE_QUICK   = 0.05,   -- second passage du mode sombre, juste après le
+                            -- premier : le client rhabille un cadre d'unité
+                            -- *après* avoir annoncé le changement de cible, et
+                            -- ce délai-là doit rester invisible
+    SHADE_SETTLE  = 0.2,    -- délai avant de repasser le mode sombre sur les
+                            -- cadres apparus après coup (auras, fenêtres
+                            -- chargées à la demande)
 }
 
 -- =========================================================================
@@ -92,6 +178,12 @@ local FONT_CANDIDATES = {
     -- Titre de page en blanc et non en doré : c'est le repère principal de la
     -- zone de droite, il doit primer sur les en-têtes de section.
     PAGE_TITLE   = { "GameFontHighlightLarge2", "GameFontHighlightHuge", "GameFontHighlightLarge" },
+
+    -- Décompte posé sur une fenêtre du client. Une police à contour d'abord :
+    -- le chiffre se lit par-dessus une illustration, où une police sans contour
+    -- se noie dès que le fond est clair.
+    COUNTDOWN    = { "NumberFont_Outline_Huge", "NumberFontNormalHuge", "GameFontNormalHuge",
+                     "GameFontNormalLarge" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
     LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },
@@ -195,6 +287,53 @@ T.ALPHA = {
     GRIP           = 0.70,  -- poignée de redimensionnement au repos
     GRIP_HOVER     = 1.00,
 }
+
+-- =========================================================================
+--  Mode sombre
+-- =========================================================================
+
+--- Multiplicateur appliqué à la couleur de sommet des textures assombries.
+---
+--- L'assombrissement se fait en **multipliant** la couleur des textures du
+--- client, jamais en posant un voile par-dessus : un voile dépend de l'ordre des
+--- calques d'un template qui ne nous appartient pas, la multiplication agit sur
+--- la texture elle-même (même raison que `SetPanelFill`).
+---
+--- Une seule valeur, sans dosage : le mode sombre est allumé ou éteint, et c'est
+--- la **liste des éléments** qui se règle, pas la profondeur du noir. Un curseur
+--- d'intensité n'offrait qu'un dégradé de gris sans usage — ce qu'on veut faire
+--- varier, c'est ce qui s'assombrit, pas de combien.
+---
+--- Pas zéro : à zéro l'habillage devient une silhouette noire dont on ne
+--- distingue plus les reliefs, ce qui n'est pas « sombre » mais « effacé ».
+T.SHADE_FACTOR = 0.05
+
+--- Débordement, en pixels, du contour sombre d'une icône de côté `side`.
+---@param side number  plus petit côté de l'icône, en pixels
+---@return number
+function T.ShadeBorderPad(side)
+    if not side or side <= 0 then return T.SIZE.SHADE_BORDER_PAD end
+
+    local pad = side * T.SIZE.SHADE_BORDER_PAD_RATIO
+    if pad < T.SIZE.SHADE_BORDER_PAD then return T.SIZE.SHADE_BORDER_PAD end
+    if pad > T.SIZE.SHADE_BORDER_PAD_MAX then return T.SIZE.SHADE_BORDER_PAD_MAX end
+    return pad
+end
+
+--- Couleur d'un décompte : vert au départ, rouge à l'échéance, dégradé entre
+--- les deux. Les deux extrémités sont les couleurs du client.
+---@param ratio number  1 au départ, 0 à l'échéance
+---@return number r, number g, number b
+function T.CountdownColor(ratio)
+    if ratio < 0 then ratio = 0 elseif ratio > 1 then ratio = 1 end
+
+    local r1, g1, b1 = T.COLOR.RED:GetRGB()
+    local r2, g2, b2 = T.COLOR.GREEN:GetRGB()
+
+    return r1 + (r2 - r1) * ratio,
+           g1 + (g2 - g1) * ratio,
+           b1 + (b2 - b1) * ratio
+end
 
 --- Retire le fond d'un panneau, en lui laissant sa bordure.
 ---
@@ -336,6 +475,19 @@ end
 T.ATLAS = {
     ARROW_RIGHT = "NPE_ArrowRight",
     CHECK       = "common-icon-checkmark",
+
+    -- Contour posé autour d'une icône par le mode sombre.
+    --
+    -- La bordure de sort du client, et pas un anneau quelconque : ses coins sont
+    -- **cassés en biseau**, ce qui est la forme que le jeu donne à ses icônes.
+    -- Un cadre d'avatar ou de portrait a des angles droits et se reconnaît
+    -- immédiatement comme une pièce rapportée.
+    --
+    -- Elle ne convient que là où l'on remplace un contour ou qu'il n'y en a
+    -- aucun : ajoutée par-dessus un contour existant, son trait ouvragé dessine
+    -- un second cadre à l'intérieur du premier.
+    SHADE_BORDER = "Adventures-Spell-Border",
+
 }
 
 --- Chemins de texture, pour les rares cas sans atlas équivalent.
@@ -349,7 +501,18 @@ T.TEXTURE = {
     -- Ne sert plus que de repli : les en-têtes portent d'abord la texture de la
     -- barre de titre, relevée sur le cadre lui-même.
     SIDEBAR_BAND = "Interface\\FrameGeneral\\UI-Background-Rock",
-    --
+
+    -- Bouton de la minicarte. La bordure et la surbrillance sont celles des
+    -- boutons du client : un bouton d'addon qui ne ressemble pas aux siens se
+    -- voit immédiatement, et se voit mal.
+    MINIMAP_BORDER    = "Interface\\Minimap\\MiniMap-TrackingBorder",
+    MINIMAP_HIGHLIGHT = "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight",
+
+    -- Logo de l'addon, également déclaré comme icône du compartiment d'addons
+    -- dans le `.toc`. Son disque alpha est **cuit dans la texture** : le trou de
+    -- la bordure de minicarte est rond, et un masque posé à l'exécution serait
+    -- une dépendance de plus, qui peut ne pas prendre (voir `API_NOTES.md`).
+    MINIMAP_ICON      = "Interface\\AddOns\\BshamelUI\\media\\logo",
 }
 
 -- =========================================================================
