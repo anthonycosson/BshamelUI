@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.4 — 2026-07-31
+
 ### Ajouté
 - Le menu de téléportation affiche le **temps de recharge** de chaque ligne. Il
   n'apparaît que lorsqu'il y en a un : une ligne prête ne porte rien, si bien que
