@@ -397,7 +397,9 @@ end
 ---@return number|nil
 local function knownSpec(unit)
     if not (UnitExists(unit) and UnitIsPlayer(unit)) then return nil end
-    if UnitIsUnit(unit, "player") then return playerSpec() end
+    -- `UnitIsUnit` rend un booléen **secret** dès que l'identité d'une des deux
+    -- unités est protégée : le tester en direct lève (voir `U.IsTrue`).
+    if U.IsTrue(UnitIsUnit(unit, "player")) then return playerSpec() end
 
     local guid = guidOf(unit)
     if not guid then return nil end
@@ -412,7 +414,7 @@ end
 ---@return number|nil
 local function resolveSpec(unit)
     if not (UnitExists(unit) and UnitIsPlayer(unit)) then return nil end
-    if UnitIsUnit(unit, "player") then return playerSpec() end
+    if U.IsTrue(UnitIsUnit(unit, "player")) then return playerSpec() end
 
     local guid = guidOf(unit)
     if not guid then return nil end

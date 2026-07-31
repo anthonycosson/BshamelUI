@@ -94,7 +94,13 @@ end
 ---@param b? number
 local function capture(mod, index, text, r, g, b)
     if restoring then return end
-    if type(text) ~= "string" or text == "" then return end
+
+    -- L'ordre des deux tests n'est pas indifférent : une chaîne **secrète** a
+    -- bien le type `string`, et c'est la comparaison suivante qui lèverait. Le
+    -- client rend le texte d'une ligne en valeur secrète dès que notre hook a
+    -- teinté l'exécution ; cette ligne-là n'entre pas dans l'historique, et rien
+    -- de secret ne part dans le SavedVariables.
+    if type(text) ~= "string" or U.IsSecret(text) or text == "" then return end
 
     local list = historyFor(mod, index)
     list[#list + 1] = {

@@ -449,7 +449,9 @@ local function scanChallengeMaps()
         -- Sous `pcall` : on interroge des numéros qui n'existent pas, et un
         -- refus ne doit coûter que l'appel qui a été refusé.
         local ok, name, _, _, _, _, _, spell = pcall(C_ChallengeMode.GetMapUIInfo, id)
-        if ok and type(name) == "string" and name ~= "" and not U.IsSecret(name) then
+        -- `U.IsSecret` avant la comparaison, jamais après : une chaîne secrète a
+        -- le type `string`, et c'est `~= ""` qui lèverait.
+        if ok and type(name) == "string" and not U.IsSecret(name) and name ~= "" then
             dungeonNames[#dungeonNames + 1] = name
             if type(spell) == "number" then dungeonBySpell[spell] = name end
         end
@@ -488,7 +490,7 @@ local function dungeonName(spellID)
     -- celle d'un sort à la demande. On la réclame et on rend la main **sans rien
     -- retenir**, pour que la prochaine reconstruction du menu retrouve la
     -- question posée.
-    if not ok or type(text) ~= "string" or text == "" or U.IsSecret(text) then
+    if not ok or type(text) ~= "string" or U.IsSecret(text) or text == "" then
         if C_Spell and C_Spell.RequestLoadSpellData then
             C_Spell.RequestLoadSpellData(spellID)
         end

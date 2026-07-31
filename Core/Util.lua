@@ -217,6 +217,23 @@ function U.IsSecret(value)
     return issecretvalue ~= nil and issecretvalue(value) == true
 end
 
+--- Un booléen secret ne se **teste** pas plus qu'une chaîne secrète ne s'indexe :
+--- `if flag then` lève « attempt to perform boolean test on a secret boolean
+--- value ». Ce prédicat est le seul test permis, et il rend vrai uniquement
+--- quand la réponse est **connue** et vraie.
+---
+--- Un secret vaut donc « non », et pas « peut-être » : le client cache ces
+--- réponses là où il refuse de nous laisser conclure — sur l'identité d'une unité
+--- d'arène, par exemple. Conclure quand même serait plus faux que de s'abstenir.
+---@param value any
+---@return boolean
+function U.IsTrue(value)
+    if U.IsSecret(value) then return false end
+    -- La truthiness de Lua, pas `== true` : plusieurs fonctions du client
+    -- répondent encore `1` là où elles pourraient répondre `true`.
+    return value ~= nil and value ~= false
+end
+
 -- =========================================================================
 --  Entrées clavier / souris
 -- =========================================================================

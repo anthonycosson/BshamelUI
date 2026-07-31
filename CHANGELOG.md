@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- Plus d'erreurs à répétition sur les **icônes de spécialisation** des cadres
+  d'unités ni sur l'**historique du chat**. Le jeu répond désormais par des
+  valeurs « secrètes » là où il protège une information — l'identité d'une unité
+  d'arène, le texte d'une ligne de chat —, et une telle valeur ne se compare ni ne
+  se teste. Ce qui ne peut pas être lu est simplement laissé de côté : l'icône
+  n'est pas posée, la ligne n'est pas retenue, et le reste continue.
+
 ## 0.7.4 — 2026-07-31
 
 ### Ajouté
