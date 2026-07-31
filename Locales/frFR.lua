@@ -51,9 +51,48 @@ BUI:RegisterLocale("frFR", {
 
     -- Module General
     ["General"]                        = "Général",
+    ["Minimap"]                        = "Minicarte",
+    ["Minimap button"]                 = "Afficher le bouton BshamelUI",
+    ["Minimap button tip"] =
+        "Ajoute un bouton à côté de la minicarte. Un clic gauche ouvre cette fenêtre, "
+        .. "un glisser le déplace autour.",
+    ["Enable dark mode"]               = "Activer le mode sombre",
+    ["Dark action bars tip"]           = "Boutons, bordures et habillage derrière chaque barre d'action.",
+    ["Cast bar"]                       = "Barre d'incantation",
+    ["Dark cast bar tip"]              = "Votre barre d'incantation et celle de votre cible.",
+    ["Dark unit frames tip"] =
+        "Cadres du joueur, du familier, de la cible, de la cible de la cible, du focus et des boss. "
+        .. "Les cadres de groupe et de raid ne sont pas encore couverts.",
+    ["Buffs and debuffs"]              = "Buffs et debuffs",
+    ["Dark auras tip"]                 = "Icônes d'auras, leurs bordures et leurs minuteurs.",
+    ["Tooltip"]                        = "Infobulle",
+    ["Dark tooltip tip"] =
+        "La bordure de l'infobulle. Son fond reste tel que le jeu l'a réglé.",
+    ["Cooldown manager"]               = "Gestionnaire de temps de recharge",
+    ["Dark cooldown manager tip"]      = "Les barres du gestionnaire de temps de recharge et leurs icônes.",
+    ["Camera"]                         = "Caméra",
+    ["Max camera distance"]            = "Augmenter la distance maximale de la caméra",
+    ["Max camera distance tip"] =
+        "Permet à la caméra de reculer plus loin que ce que le client autorise par défaut.",
+    ["Camera zoom factor"]             = "Facteur de zoom",
+    ["Camera zoom factor tip"] =
+        "Multiplie la limite de recul du client. 2,9 est le maximum qu'il accepte.",
+    ["Game menu"]                      = "Menu du jeu",
+    ["Compact game menu"]              = "Réduire le menu du jeu",
+    ["Compact game menu tip"] =
+        "Rapetisse le menu ouvert par Échap, que le client dessine très grand.",
+    ["Game menu scale"]                = "Taille du menu",
+    ["Game menu scale tip"]            = "Taille du menu Échap, en pourcentage de celle du client.",
+    ["Queues"]                         = "Files d'attente",
+    ["Queue popup timer"]              = "Afficher un minuteur sur les fenêtres de file",
+    ["Queue popup timer tip"] =
+        "Décompte le temps restant pour accepter une entrée en donjon, en raid, en arène ou en champ de bataille.",
     ["Auto-repair"]                    = "Réparation automatique",
     ["Auto-repair tip"] =
         "Répare à chaque marchand, en puisant d'abord dans les fonds de guilde, puis dans votre bourse.",
+    ["Repaired from guild"]            = "Réparé pour %s sur les fonds de guilde.",
+    ["Repaired from purse"]            = "Réparé pour %s.",
+    ["Repair too expensive"]           = "Pas assez d'argent pour réparer : il faut %s.",
     ["Auction current expansion"]      = "Hôtel des ventes : extension actuelle uniquement",
     ["Auction current expansion tip"] =
         "Limite la navigation de l'hôtel des ventes aux objets de l'extension actuelle.",
@@ -92,6 +131,8 @@ BUI:RegisterLocale("frFR", {
     ["Appearance"]                     = "Apparence",
     ["Dark mode"]                      = "Mode sombre",
     ["Dark mode tip"]                  = "Assombrit l'habillage pour qu'il se fonde dans l'écran.",
+    ["Dark mode moved"] =
+        "Le mode sombre se règle désormais dans Général, avec un interrupteur par élément d'interface.",
     ["Class-colored health"]           = "Barres de vie aux couleurs de classe",
     ["Class-colored health tip"]       = "Colore chaque barre de vie selon la classe de l'unité.",
 

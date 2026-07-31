@@ -8,10 +8,8 @@
 ## Version: @project-version@
 ## SavedVariables: BshamelUIDB
 ## SavedVariablesPerCharacter: BshamelUICharDB
-# Icône provisoire : une icône du client, garantie présente. À remplacer par
-# media\logo.tga quand le logo existera (l'entrée du compartiment d'addons a
-# besoin d'une texture valide pour être visible).
-## IconTexture: Interface\Icons\INV_Misc_QuestionMark
+# Le chemin s'écrit sans extension : le client cherche `.blp` puis `.tga`.
+## IconTexture: Interface\AddOns\BshamelUI\media\logo
 ## AddonCompartmentFunc: BshamelUI_OnAddonCompartmentClick
 ## X-License: All Rights Reserved
 ## X-Curse-Project-ID: 1631877
@@ -44,6 +42,13 @@ UI\Widgets\Toggle.lua
 UI\Widgets\Slider.lua
 UI\Widgets\Dropdown.lua
 UI\Widgets\ScrollList.lua
+UI\Widgets\MinimapButton.lua
+UI\Widgets\Countdown.lua
+UI\Widgets\ShadeBorder.lua
+
+# Le moteur du mode sombre trace des bords d'icônes : il vient après la fabrique
+# de widgets, dont il dépend.
+UI\Shade.lua
 
 # Fenêtre d'options
 UI\Config\PageBuilder.lua
@@ -51,6 +56,7 @@ UI\Config\Sidebar.lua
 UI\Config\ConfigFrame.lua
 
 # Modules
+Modules\General.lua
 Modules\Quest.lua
 
 # Modules annoncés, sans code derrière : ils se voient dans la fenêtre mais ne

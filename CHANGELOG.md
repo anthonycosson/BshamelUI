@@ -2,6 +2,74 @@
 
 ## Non publié
 
+### Ajouté
+- **Général** est le premier module écrit depuis Quête. Il quitte l'avant-première
+  et fait réellement onze choses :
+
+  - un **bouton BshamelUI sur la minicarte**, déplaçable autour du cadran, qui
+    ouvre la fenêtre d'options. Il porte le logo de l'addon
+    (`media/logo.tga`), qui remplace du même coup le point d'interrogation
+    provisoire du compartiment d'addons ;
+  - un **mode sombre** réglable élément par élément — cadres d'unités, barres
+    d'action, barre d'incantation, buffs et debuffs, gestionnaire de temps de
+    recharge, infobulle. Pas de dosage : c'est la liste qui se règle, pas la
+    profondeur du noir.
+
+    Il modifie l'interface du jeu, il n'en ajoute pas : l'habillage est désaturé
+    puis assombri, et les icônes ne sont jamais teintées — ce sont leurs
+    contours, des textures distinctes que le client dessine autour d'elles, qui
+    foncent. Là où le contour existe on le rhabille ; là où il n'y en a aucun,
+    comme sur les icônes d'auras, on en pose un, à la bordure de sort du client.
+    Rien n'est masqué pour laisser la place à autre chose, et l'état d'origine
+    de chaque texture empruntée est rendu à l'extinction.
+
+    L'infobulle fait exception à la règle : seul son contour fonce. Son fond
+    relève de la lisibilité, pas de l'habillage.
+
+    Deux exclusions assumées pour l'instant : les **cadres de groupe et de
+    raid**, et la **barre de ressource personnelle**. Ni leur conteneur ni leurs
+    noms globaux n'ont permis de les teinter, et ajouter des noms au hasard
+    n'est pas une piste — y revenir demandera de comprendre comment le client
+    les peint ;
+  - la **distance de caméra maximale**, avec son facteur de zoom ;
+  - un **menu Échap réduit**, à la taille qu'on veut ;
+  - un **décompte sur les fenêtres de file d'attente**, donjon comme champ de
+    bataille ;
+  - la **réparation automatique**, fonds de guilde d'abord, bourse ensuite, avec
+    le montant annoncé dans le chat ;
+  - le filtre **extension actuelle uniquement** à l'hôtel des ventes, qui cesse
+    de se remettre à zéro à chaque recherche ;
+  - les **cinématiques passées**, les **têtes parlantes masquées** et la
+    **fenêtre d'erreurs Lua coupée**.
+
+  Les éléments du mode sombre sont cochés d'avance alors que le mode sombre est
+  éteint : l'allumer doit produire un effet visible tout de suite.
+
+### Modifié
+- Le mode sombre quitte les pages **Barres d'action** et **Cadres d'unités**
+  pour vivre uniquement dans **Général**. Un même effet réglé à deux endroits
+  finit par se contredire ; les deux pages renvoient vers Général.
+- **Annoncer les morts du groupe** et son alerte sonore passent de **Général** à
+  **Outils de raid**, qui reste en avant-première. C'est un outil de groupe, sa
+  place est avec le reste de ce qui parle au raid.
+
+### Interne
+- `UI/Shade.lua` : moteur d'assombrissement réversible. Il multiplie la couleur
+  de sommet des textures du client au lieu de poser un voile par-dessus, relève
+  chaque couleur d'origine avant de la changer, et sait toutes les rendre — c'est
+  ce qui permet à `OnDisable` de ne rien laisser derrière.
+
+  Rien n'y est demandé à un cadre du client autrement que par un appel
+  enveloppé, et chaque élément, chaque texture, échoue pour son propre compte :
+  une frame récalcitrante ne coûte qu'elle-même. Ce qui informe — remplissage
+  des barres, textures d'état d'un bouton, icônes, portraits — n'est jamais
+  teinté.
+- Trois fabriques de widgets : `W.MinimapButton`, `W.Countdown` et
+  `W.ShadeBorder`. Aucune bibliothèque tierce : le bouton de minicarte tient en
+  un fichier.
+- `T.ShadeFactor`, `T.TIMING` et les mesures du bouton de minicarte rejoignent
+  `UI/Theme.lua`.
+
 ## 0.2.0 — 2026-07-31
 
 ### Ajouté

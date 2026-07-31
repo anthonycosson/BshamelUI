@@ -31,10 +31,20 @@
     "SettingsPanel", "Settings", "NineSliceUtil",
 
     "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",
+    "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
+
+    "Minimap", "GetCursorPosition", "GetCVar", "SetCVar",
+    "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
+    "LFGDungeonReadyPopup", "LFGDungeonReadyDialog", "PVPReadyDialog",
+    "CinematicFrame_CancelCinematic", "GameMovieFinished",
+    "TalkingHeadFrame", "TalkingHeadFrame_CloseImmediately",
+    "CanMerchantRepair", "GetRepairAllCost", "CanGuildBankRepair", "RepairAllItems",
+    "GetMoney", "GetCoinTextureString",
+    "GetMaxBattlefieldID", "GetBattlefieldStatus", "GetBattlefieldPortExpiration",
 
     "GetLocale", "GetTime", "GetBuildInfo", "InCombatLockdown",
     "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown", "IsModifierKeyDown",
-    "hooksecurefunc", "geterrorhandler", "CallErrorHandler", "securecallfunction",
+    "hooksecurefunc", "geterrorhandler", "CallErrorHandler", "securecallfunction", "issecretvalue",
 
     "AcceptQuest", "ConfirmAcceptQuest", "CloseQuest", "CompleteQuest",
     "GetQuestReward", "GetQuestID", "QuestGetAutoAccept", "IsQuestCompletable",

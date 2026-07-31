@@ -47,9 +47,44 @@ BUI:RegisterLocale("enUS", {
 
     -- Module General
     ["General"]                        = "General",
+    ["Minimap"]                        = "Minimap",
+    ["Minimap button"]                 = "Show the BshamelUI button",
+    ["Minimap button tip"] =
+        "Adds a button next to the minimap. Left-click opens this window, drag to move it around.",
+    ["Enable dark mode"]               = "Enable dark mode",
+    ["Dark action bars tip"]           = "Buttons, borders and the artwork behind every action bar.",
+    ["Cast bar"]                       = "Cast bar",
+    ["Dark cast bar tip"]              = "Your casting bar and the one on your target.",
+    ["Dark unit frames tip"] =
+        "Player, pet, target, target of target, focus and boss frames. Party and raid frames are not covered yet.",
+    ["Buffs and debuffs"]              = "Buffs and debuffs",
+    ["Dark auras tip"]                 = "Aura icons, their borders and their timers.",
+    ["Tooltip"]                        = "Tooltip",
+    ["Dark tooltip tip"]               = "The tooltip border. Its background is left as the game set it.",
+    ["Cooldown manager"]               = "Cooldown manager",
+    ["Dark cooldown manager tip"]      = "The cooldown manager bars and their icons.",
+    ["Camera"]                         = "Camera",
+    ["Max camera distance"]            = "Raise the maximum camera distance",
+    ["Max camera distance tip"] =
+        "Lets the camera zoom out further than the client allows by default.",
+    ["Camera zoom factor"]             = "Zoom factor",
+    ["Camera zoom factor tip"] =
+        "Multiplies the client's zoom-out limit. 2.9 is the highest the client accepts.",
+    ["Game menu"]                      = "Game menu",
+    ["Compact game menu"]              = "Shrink the game menu",
+    ["Compact game menu tip"]          = "Scales down the menu opened with Escape, which the client draws very large.",
+    ["Game menu scale"]                = "Menu size",
+    ["Game menu scale tip"]            = "Size of the Escape menu, as a percentage of the client's own.",
+    ["Queues"]                         = "Queues",
+    ["Queue popup timer"]              = "Show a timer on queue popups",
+    ["Queue popup timer tip"] =
+        "Counts down the time left to accept a dungeon, raid, arena or battleground invitation.",
     ["Auto-repair"]                    = "Auto-repair",
     ["Auto-repair tip"] =
         "Repairs at every merchant, from guild funds first and from your own money second.",
+    ["Repaired from guild"]            = "Repaired for %s from guild funds.",
+    ["Repaired from purse"]            = "Repaired for %s.",
+    ["Repair too expensive"]           = "Not enough money to repair: %s needed.",
     ["Auction current expansion"]      = "Auction house: current expansion only",
     ["Auction current expansion tip"]  = "Restricts auction house browsing to items from the current expansion.",
     ["Announcements"]                  = "Announcements",
@@ -84,6 +119,8 @@ BUI:RegisterLocale("enUS", {
     ["Appearance"]                     = "Appearance",
     ["Dark mode"]                      = "Dark mode",
     ["Dark mode tip"]                  = "Darkens the artwork so it sits back into the screen.",
+    ["Dark mode moved"] =
+        "Dark mode now lives on the General page, with one switch per interface element.",
     ["Class-colored health"]           = "Class-colored health bars",
     ["Class-colored health tip"]       = "Colors each health bar with the class color of the unit.",
 

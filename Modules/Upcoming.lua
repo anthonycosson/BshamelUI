@@ -28,73 +28,6 @@ local L   = ns.L
 --  Jeu
 -- =========================================================================
 
-BUI:RegisterModule("General", {
-    title    = L["General"],
-    category = "Game",
-    order    = 10,
-    preview  = true,
-
-    defaults = {
-        autoRepair       = false,
-        auctionCurrentXP = false,
-        announceDeaths   = false,
-        deathSound       = false,
-        skipCinematics   = false,
-        hideTalkingHead  = false,
-        hideLuaErrors    = false,
-    },
-
-    options = {
-        { type = "header", text = L["Automation"] },
-        {
-            type    = "toggle",
-            key     = "autoRepair",
-            text    = L["Auto-repair"],
-            tooltip = L["Auto-repair tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "auctionCurrentXP",
-            text    = L["Auction current expansion"],
-            tooltip = L["Auction current expansion tip"],
-        },
-
-        { type = "header", text = L["Announcements"] },
-        {
-            type    = "toggle",
-            key     = "announceDeaths",
-            text    = L["Announce group deaths"],
-            tooltip = L["Announce group deaths tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "deathSound",
-            text    = L["Death sound alert"],
-            tooltip = L["Death sound alert tip"],
-        },
-
-        { type = "header", text = L["Annoyances"] },
-        {
-            type    = "toggle",
-            key     = "skipCinematics",
-            text    = L["Skip cinematics"],
-            tooltip = L["Skip cinematics tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "hideTalkingHead",
-            text    = L["Hide talking heads"],
-            tooltip = L["Hide talking heads tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "hideLuaErrors",
-            text    = L["Hide Lua errors"],
-            tooltip = L["Hide Lua errors tip"],
-        },
-    },
-})
-
 BUI:RegisterModule("Character", {
     title    = L["Character sheet"],
     category = "Game",
@@ -149,18 +82,14 @@ BUI:RegisterModule("ActionBars", {
     -- Les barres d'action sont des frames sécurisées : le jour où ce module
     -- aura du code, il devra déclarer `secure = true`.
 
-    defaults = {
-        darkMode = false,
-    },
+    defaults = {},
 
+    -- Le mode sombre des barres d'action est passé dans Général, avec le reste
+    -- de l'interface : un même effet réglé à deux endroits finit par se
+    -- contredire. La page reste annoncée, ses réglages propres viendront avec
+    -- son code.
     options = {
-        { type = "header", text = L["Appearance"] },
-        {
-            type    = "toggle",
-            key     = "darkMode",
-            text    = L["Dark mode"],
-            tooltip = L["Dark mode tip"],
-        },
+        { type = "description", text = L["Dark mode moved"] },
     },
 })
 
@@ -173,7 +102,6 @@ BUI:RegisterModule("UnitFrames", {
 
     defaults = {
         classColorHealth = false,
-        darkMode         = false,
     },
 
     options = {
@@ -184,12 +112,8 @@ BUI:RegisterModule("UnitFrames", {
             text    = L["Class-colored health"],
             tooltip = L["Class-colored health tip"],
         },
-        {
-            type    = "toggle",
-            key     = "darkMode",
-            text    = L["Dark mode"],
-            tooltip = L["Dark mode tip"],
-        },
+        -- Mode sombre : voir la note du module ActionBars ci-dessus.
+        { type = "description", text = L["Dark mode moved"] },
     },
 })
 
@@ -298,6 +222,12 @@ BUI:RegisterModule("RaidTools", {
         readyCheckBuffs  = false,
         worldMarkers     = false,
         autoCombatLog    = false,
+
+        -- Annoncer les morts était rangé dans Général tant que Général n'était
+        -- qu'une maquette. C'est un outil de groupe : sa place est ici, avec le
+        -- reste de ce qui parle au raid.
+        announceDeaths   = false,
+        deathSound       = false,
     },
 
     options = {
@@ -319,6 +249,20 @@ BUI:RegisterModule("RaidTools", {
             key     = "worldMarkers",
             text    = L["World markers"],
             tooltip = L["World markers tip"],
+        },
+
+        { type = "header", text = L["Announcements"] },
+        {
+            type    = "toggle",
+            key     = "announceDeaths",
+            text    = L["Announce group deaths"],
+            tooltip = L["Announce group deaths tip"],
+        },
+        {
+            type    = "toggle",
+            key     = "deathSound",
+            text    = L["Death sound alert"],
+            tooltip = L["Death sound alert tip"],
         },
 
         { type = "header", text = L["Logging"] },
