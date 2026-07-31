@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.5.0 — 2026-07-31
+
 ### Ajouté
 - **Minicarte**, page nouvelle, avec deux boutons qui se déplacent à la souris
   autour de la carte :
