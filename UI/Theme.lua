@@ -86,6 +86,18 @@ T.SIZE = {
     MINIMAP_BUTTON = 31,
     MINIMAP_BORDER = 53,
 
+    -- Bornes de ce qui **ressemble** à un bouton de minicarte, pour le tiroir qui
+    -- range ceux des autres addons. Elles n'habillent rien : elles servent à
+    -- reconnaître, et c'est la seule taille de cette table qui décrive un cadre
+    -- qui ne nous appartient pas.
+    --
+    -- Elles encadrent largement la valeur du client, ci-dessus. Ce qu'elles
+    -- écartent n'est pas le bouton d'un peu plus grand ou d'un peu plus petit,
+    -- c'est ce qui n'est pas un bouton du tout : une **épingle** de carte fait la
+    -- moitié d'un bouton, un panneau en fait le double.
+    MINIMAP_BUTTON_MIN = 20,
+    MINIMAP_BUTTON_MAX = 64,
+
     -- L'icône est **centrée** sur le bouton, et non posée par son coin comme le
     -- veut l'usage. L'usage suppose une icône carrée que la bordure recouvre sur
     -- ses bords ; la nôtre est un disque, qui doit remplir le trou et non s'y

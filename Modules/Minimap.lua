@@ -89,8 +89,11 @@ end
 -- addon, qui la recycle à chaque pas du joueur. Elle ressortirait dans le tiroir
 -- sous un autre gisement, et son propriétaire ne pourrait plus la replacer.
 --
--- Deux signes, et il en faut deux : le second rattrape ce que le premier laisse
--- passer quand une seule épingle est visible à l'instant du parcours.
+-- Trois signes, et il en faut trois : chacun rattrape ce que le précédent laisse
+-- passer. Le pool ne se voit pas quand une seule épingle est affichée à
+-- l'instant du parcours ; le vocabulaire ne voit que les mots auxquels on a
+-- pensé — « GatherMateIcon12 » n'en contient aucun ; la taille, elle, ne demande
+-- rien au nom.
 
 --- Racine d'un nom, sans son numéro de série. Un pool nomme ses cadres
 --- « <racine>1 », « <racine>2 »… : la racine est ce qui les rassemble.
@@ -114,6 +117,25 @@ local function looksLikePin(name)
         if stem:sub(-#word) == word then return true end
     end
     return false
+end
+
+--- Le cadre a-t-il la taille d'un bouton ? C'est le signe qui ne demande rien au
+--- nom, donc le seul qui vaille pour un addon dont on ignore les habitudes : une
+--- épingle fait la moitié d'un bouton de minicarte — c'est ce qui la rend lisible
+--- au milieu de la carte —, un panneau en fait le double.
+---
+--- Les bornes sont larges à dessein. Elles ne trient pas les boutons entre eux :
+--- elles séparent ce qui est un bouton de ce qui n'en est pas un.
+---@param frame table
+---@return boolean
+local function buttonSized(frame)
+    if not (frame.GetWidth and frame.GetHeight) then return false end
+
+    local width, height = frame:GetWidth(), frame:GetHeight()
+    local min,   max    = T.SIZE.MINIMAP_BUTTON_MIN, T.SIZE.MINIMAP_BUTTON_MAX
+
+    return width  >= min and width  <= max
+       and height >= min and height <= max
 end
 
 --- Nos propres boutons, qu'on ne range évidemment pas dans notre tiroir.
@@ -143,9 +165,13 @@ local function isAddonButton(frame)
     local name = frame:GetName()
     if not name then return false end
 
+    -- Le préfixe d'une bibliothèque d'icônes **est** une réponse : rien d'autre
+    -- ne s'appelle ainsi, et ce qui s'appelle ainsi est le bouton d'un addon.
+    local fromLibrary = name:find(LIB_PREFIX, 1, true) == 1
+
     -- Un bouton, ou un cadre de bibliothèque qui n'en est pas tout à fait un :
     -- certaines versions posent une frame et lui greffent les clics.
-    if not (frame:IsObjectType("Button") or name:find(LIB_PREFIX, 1, true) == 1) then
+    if not (frame:IsObjectType("Button") or fromLibrary) then
         return false
     end
 
@@ -153,7 +179,12 @@ local function isAddonButton(frame)
     -- réapparaître dans le tiroir, ce qui défait le geste de quelqu'un d'autre.
     if not frame:IsShown() then return false end
 
-    if looksLikePin(name) then return false end
+    -- Les signes qui écartent les épingles ne valent que pour le reste : une
+    -- bibliothèque nomme d'après l'addon et jamais d'après une collection, et un
+    -- addon a le droit de vouloir son bouton plus petit que ceux du client.
+    if not fromLibrary and (looksLikePin(name) or not buttonSized(frame)) then
+        return false
+    end
 
     return not isClientFrame(name)
 end

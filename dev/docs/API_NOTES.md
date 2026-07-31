@@ -2194,17 +2194,27 @@ l'addon qui la recycle à chaque pas du joueur. Elle ressort dans le tiroir sous
 un autre gisement, et son propriétaire ne peut plus la replacer, puisque le
 tiroir masque `SetPoint` pendant l'emprunt.
 
-**Ce qu'on fait** — deux signes dans `Modules/Minimap.lua`, et il en faut deux :
+**Ce qu'on fait** — trois signes dans `Modules/Minimap.lua`, et il en faut trois :
 
 - un **pool** se reconnaît à ses numéros : plusieurs cadres qui partagent la même
   racine de nom une fois le numéro retiré. La famille entière est écartée, y
   compris son premier membre ;
 - une **racine qui se termine par** `Pin`, `Node`, `Waypoint` ou `POI`. Ce
   second signe rattrape le cas où une seule épingle est visible à l'instant du
-  parcours, où le premier ne voit qu'un cadre isolé.
+  parcours, où le premier ne voit qu'un cadre isolé ;
+- la **taille** du cadre (`T.SIZE.MINIMAP_BUTTON_MIN` / `MAX`). Une épingle fait
+  la moitié d'un bouton de minicarte — c'est ce qui la rend lisible au milieu de
+  la carte — et un panneau en fait le double.
+
+Les deux premiers signes lisent le nom, et un nom ne se lit que si l'on a deviné
+le vocabulaire de celui qui l'a écrit : `GatherMateIcon12` ne contient aucun des
+mots de la liste. Le troisième ne demande rien à personne, et c'est le seul qui
+vaille pour un addon dont on n'a jamais vu les épingles.
 
 Un nom dit ici ce que le cadre **est**, là où le nom d'un bouton d'addon dit à
-qui il appartient — et un addon a un bouton, pas une collection numérotée.
+qui il appartient — et un addon a un bouton, pas une collection numérotée. Seul
+le préfixe d'une bibliothèque d'icônes (`LibDBIcon10_`) échappe aux trois : il
+identifie un bouton d'addon à lui seul, et rien n'interdit d'en vouloir un petit.
 
 ---
 

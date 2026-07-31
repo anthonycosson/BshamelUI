@@ -27,9 +27,11 @@
   de récolte posent sur la minicarte. Elles sont des boutons nommés comme les
   autres, et il y en a trente : le tiroir se remplissait de « GatherMatePin1 »,
   « GatherMatePin2 »… Pire, une épingle rangée était une épingle volée à l'addon
-  qui la recycle à chaque pas. Deux signes les écartent désormais — une racine de
-  nom portée par plusieurs cadres, et un nom qui dit ce que le cadre est plutôt
-  qu'à qui il appartient.
+  qui la recycle à chaque pas. Trois signes les écartent désormais — une racine
+  de nom portée par plusieurs cadres, un nom qui dit ce que le cadre est plutôt
+  qu'à qui il appartient, et la **taille** : une épingle fait la moitié d'un
+  bouton de minicarte. Ce dernier signe ne demande rien au nom, et c'est le seul
+  qui vaille pour un addon dont on n'a jamais vu les épingles.
 
 ### Supprimé
 - Le curseur d'**intensité des fenêtres**, arrivé à la version précédente. Il
