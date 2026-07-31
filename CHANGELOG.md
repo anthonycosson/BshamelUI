@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.6.0 — 2026-07-31
+
 ### Ajouté
 - **Intensité des fenêtres**, curseur en tête de *Général*. Au maximum, c'est
   l'apparence d'origine ; en descendant, les fenêtres de l'addon s'éclaircissent
