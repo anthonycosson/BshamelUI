@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.3.1 — 2026-07-31
+
 ### Corrigé
 - **Mode sombre** — le contour sombre des petites icônes flottait au large au
   lieu d'épouser leur bord. Son débordement est proportionnel à l'icône, mais la
