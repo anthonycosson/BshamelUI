@@ -83,26 +83,22 @@ T.SIZE = {
     MINIMAP_BUTTON = 40,
     MINIMAP_BORDER = 69,
 
-    -- L'icône est **centrée**, et non posée par son coin comme le veut l'usage.
-    -- L'usage suppose une icône carrée que la bordure recouvre sur ses bords ;
-    -- la nôtre est un disque, qui doit donc remplir le trou et non s'y inscrire.
-    -- Le trou n'étant pas centré sur le bouton, l'icône remonte de deux pixels.
+    -- L'icône est **centrée** sur le bouton, et non posée par son coin comme le
+    -- veut l'usage. L'usage suppose une icône carrée que la bordure recouvre sur
+    -- ses bords ; la nôtre est un disque, qui doit remplir le trou et non s'y
+    -- inscrire. Le trou étant centré, les deux décalages sont nuls — ils restent
+    -- déclarés pour que le réglage se fasse ici et non dans le widget.
     --
-    -- Sa taille est celle du **trou** de la bordure, qui ne se déduit d'aucune
-    -- des deux autres valeurs. On l'a d'abord crue égale à la diagonale du carré
-    -- de dix-sept pixels que posent les boutons du client — c'est faux : l'anneau
-    -- recouvre précisément les coins de ce carré, donc le trou est plus petit que
-    -- sa diagonale, et plus grand que son côté. Il se mesure à l'œil, et c'est la
-    -- seule façon de l'obtenir.
+    -- Sa taille est celle du **trou** de la bordure, mesurée à l'œil. Elle ne se
+    -- déduit d'aucune des deux autres valeurs, et trois tentatives de l'en
+    -- déduire ont échoué : ni le côté du carré de dix-sept pixels que posent les
+    -- boutons du client, ni sa diagonale — l'anneau recouvre précisément les
+    -- coins de ce carré, donc le trou tombe entre les deux —, ni une proportion
+    -- de la bordure, le trou ne grandissant pas comme elle.
     --
     -- Trop grand, le disque déborde sur l'anneau ; trop petit, il laisse un jour.
-    -- Le premier défaut est le plus discret des deux à petite taille — c'est ce
-    -- qui l'a laissé passer, jusqu'à ce qu'agrandir le bouton le rende évident.
-    -- Le décalage vertical est celui du **trou**, pas celui qu'on lirait dans
-    -- les proportions du client : c'est la même mesure à l'œil que la taille, et
-    -- les deux se règlent ensemble. Un disque qui affleure en haut sans remplir
-    -- en bas est à la fois trop haut et trop petit — descendre son centre comble
-    -- le bas, et l'agrandir rattrape ce que la descente retire au haut.
+    -- Le premier défaut est le plus discret des deux à petite taille : il est
+    -- passé inaperçu jusqu'à ce qu'agrandir le bouton le rende évident.
     MINIMAP_ICON   = 33,
     MINIMAP_ICON_X = 0,
     MINIMAP_ICON_Y = 0,
