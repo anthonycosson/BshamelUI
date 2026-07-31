@@ -1122,16 +1122,6 @@ local APPLIERS = {
     hearthstone = refreshMenu,
 }
 
---- Grise une ligne tant que l'interrupteur qui la commande est éteint.
----@param key string
----@return fun(): boolean
-local function requires(key)
-    return function()
-        local mod = BUI.Modules:Get(MODULE)
-        return not (mod and mod:Get(key))
-    end
-end
-
 -- =========================================================================
 --  Déclaration du module
 -- =========================================================================
@@ -1190,14 +1180,16 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Teleport menu tip"],
         },
         {
-            type     = "dropdown",
-            key      = "hearthstone",
-            text     = L["Hearthstone choice"],
-            tooltip  = L["Hearthstone choice tip"],
+            -- Pas de `disabled`, pour la même raison que la macro plus bas : le
+            -- menu ne dépend pas du bouton de minicarte. Qui l'ouvre par sa
+            -- macro choisit sa pierre comme les autres.
+            type    = "dropdown",
+            key     = "hearthstone",
+            text    = L["Hearthstone choice"],
+            tooltip = L["Hearthstone choice tip"],
             -- Une fonction et non une liste : ce que le personnage possède n'est
             -- pas connu quand la page se construit, et change en cours de partie.
-            values   = hearthstoneChoices,
-            disabled = requires("teleport"),
+            values  = hearthstoneChoices,
         },
         {
             -- Pas de `disabled` : la macro ne dépend pas du bouton de minicarte.

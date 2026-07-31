@@ -9,6 +9,9 @@
   description du sort sinon, qui nomme le donjon dans sa phrase. Aucune liste
   n'est écrite dans l'addon, et un sort dont le donjon reste introuvable garde
   son nom d'avant.
+- Le choix de la **pierre de foyer** ne dépend plus du bouton de téléportation.
+  Le menu s'ouvre aussi depuis sa macro : qui a rangé son bouton gardait sa
+  macro, mais perdait le réglage qui décide de ce qu'elle propose.
 
 ### Corrigé
 - Le **tiroir de boutons d'addons** ne ramasse plus les épingles que les addons
