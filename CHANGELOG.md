@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Modifié
+- Le menu de téléportation nomme les **donjons**, plus les sorts qui y mènent :
+  « Voie de Coursevent » était le nom du chemin, pas celui de l'endroit. Le lien
+  vient du client — la carte de mode défi quand elle publie son sort, la
+  description du sort sinon, qui nomme le donjon dans sa phrase. Aucune liste
+  n'est écrite dans l'addon, et un sort dont le donjon reste introuvable garde
+  son nom d'avant.
+
 ### Supprimé
 - Le curseur d'**intensité des fenêtres**, arrivé à la version précédente. Il
   n'offrait qu'un dégradé de gris, réglé une fois puis oublié, et il obligeait

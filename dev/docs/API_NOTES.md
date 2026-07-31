@@ -2143,3 +2143,36 @@ c'est le vrai clic de la souris qui l'atteint.
 **Ce qu'on fait** — on regarde ce que le bouton **écoute** avant de le
 solliciter : `OnClick` s'il existe, sinon l'appui puis le relâchement. Jamais les
 deux : un bouton portant les deux scripts agirait deux fois.
+
+---
+
+## Le nom d'une téléportation n'est pas le nom du donjon
+
+**Symptôme** — le menu de téléportation propose « Voie de Coursevent ». C'est le
+nom du sort ; le donjon, lui, s'appelle autrement, et c'est sous ce nom-là qu'on
+le cherche des yeux et qu'on en parle en groupe.
+
+**Cause** — les sorts d'une famille de téléportations sont nommés par thème, pas
+d'après leur destination. Découper le nom ne peut donc pas donner le donjon : il
+n'y est pas.
+
+**Ce qu'on fait** — on relie le sort au donjon par le client, jamais par une
+liste écrite ici. Deux chemins, du plus sûr au plus large :
+
+1. `C_ChallengeMode.GetMapUIInfo(mapID)` rend le nom du donjon et, sur les
+   clients qui le publient, **son sort de téléportation en septième valeur**. Le
+   lien est alors donné. Les numéros de carte se parcourent jusqu'à une borne
+   (`MAX_CHALLENGE_MAP`) : ce n'est pas une liste de donjons, c'est une borne, et
+   ce qui vivrait au-delà retombe simplement sur le nom du sort ;
+2. sinon, `C_Spell.GetSpellDescription(spellID)` **nomme le donjon** dans sa
+   phrase (« Vous téléporte à l'entrée de… »). On cherche donc lequel des donjons
+   relevés à l'étape 1 y apparaît, du nom le plus long au plus court — sans quoi
+   « Tazavesh » l'emporterait sur « Tazavesh : le Gambit de So'leah », que la
+   même description contient. Aucune langue n'est écrite nulle part : c'est du
+   texte du client comparé à du texte du client.
+
+Une description **vide** n'est pas une réponse négative : le client charge celle
+d'un sort à la demande. On la réclame (`C_Spell.RequestLoadSpellData`) et on rend
+la main sans rien retenir, pour que la reconstruction suivante repose la
+question. Les réponses, elles, sont retenues — le menu se refait à chaque objet
+qui entre dans les sacs.

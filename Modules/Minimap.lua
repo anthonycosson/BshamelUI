@@ -308,6 +308,110 @@ local function isSeasonDungeon(spellID, name)
 end
 
 -- =========================================================================
+--  Le nom du donjon, et non celui de la voie qui y mène
+-- =========================================================================
+-- « Voie de Coursevent » est un nom de sort. Ce qu'on cherche dans une liste de
+-- téléportations, c'est le **donjon** : c'est sous ce nom-là qu'on le connaît,
+-- qu'on en parle en groupe et qu'il apparaît partout ailleurs dans le jeu.
+--
+-- Le client sait nommer ses donjons ; toute la difficulté est de relier le sort
+-- au donjon. Deux chemins, du plus sûr au plus large :
+--
+--   1. la carte de mode défi publie parfois **son** sort de téléportation. Le
+--      lien est alors donné, il n'y a rien à interpréter ;
+--   2. sinon, la **description du sort** nomme le donjon (« Vous téléporte à
+--      l'entrée de… »). On y cherche lequel des donjons connus est nommé. C'est
+--      du texte du client comparé à du texte du client : aucune langue n'est
+--      écrite ici, et une description muette ne fait que rendre la main.
+--
+-- Le nom du sort reste le dernier recours. Rien ne dépend donc de ce mécanisme :
+-- au pire, la ligne s'appelle comme avant.
+
+--- Jusqu'où chercher les cartes de mode défi. Une **borne**, pas une liste :
+--- on ne sait pas quels numéros le jeu a distribués, seulement qu'ils sont
+--- petits et qu'il en ajoute une poignée par extension. Ce qui vivrait au-delà
+--- retombe sur le nom du sort, comme tout le reste.
+local MAX_CHALLENGE_MAP = 1200
+
+--- sort de téléportation -> nom du donjon, quand le client publie le lien.
+local dungeonBySpell = {}
+
+--- Tous les donjons connus, du nom le plus long au plus court : « Tazavesh : le
+--- Gambit de So'leah » doit l'emporter sur « Tazavesh », que sa description
+--- contient aussi.
+local dungeonNames = {}
+
+local mapsScanned = false
+
+--- Relève une fois pour toutes les donjons que le client sait nommer.
+local function scanChallengeMaps()
+    if mapsScanned then return end
+    if not (C_ChallengeMode and C_ChallengeMode.GetMapUIInfo) then return end
+    mapsScanned = true
+
+    for id = 1, MAX_CHALLENGE_MAP do
+        -- Sous `pcall` : on interroge des numéros qui n'existent pas, et un
+        -- refus ne doit coûter que l'appel qui a été refusé.
+        local ok, name, _, _, _, _, _, spell = pcall(C_ChallengeMode.GetMapUIInfo, id)
+        if ok and type(name) == "string" and name ~= "" and not U.IsSecret(name) then
+            dungeonNames[#dungeonNames + 1] = name
+            if type(spell) == "number" then dungeonBySpell[spell] = name end
+        end
+    end
+
+    table.sort(dungeonNames, function(a, b) return #a > #b end)
+end
+
+--- sort -> nom du donjon, ou `false` quand la question a été posée sans réponse.
+--- Retenu : le menu se reconstruit à chaque objet qui entre dans les sacs, et
+--- une description ne change pas d'une reconstruction à l'autre (règle 7).
+local resolvedDungeons = {}
+
+---@param spellID number
+---@return string|nil
+local function dungeonName(spellID)
+    local known = resolvedDungeons[spellID]
+    if known ~= nil then return known or nil end
+
+    scanChallengeMaps()
+
+    local name = dungeonBySpell[spellID]
+    if name then
+        resolvedDungeons[spellID] = name
+        return name
+    end
+
+    local ok, text = pcall(function()
+        if C_Spell and C_Spell.GetSpellDescription then
+            return C_Spell.GetSpellDescription(spellID)
+        end
+        return nil
+    end)
+
+    -- Une description vide n'est pas une absence de donjon : le client charge
+    -- celle d'un sort à la demande. On la réclame et on rend la main **sans rien
+    -- retenir**, pour que la prochaine reconstruction du menu retrouve la
+    -- question posée.
+    if not ok or type(text) ~= "string" or text == "" or U.IsSecret(text) then
+        if C_Spell and C_Spell.RequestLoadSpellData then
+            C_Spell.RequestLoadSpellData(spellID)
+        end
+        return nil
+    end
+
+    local lowered = text:lower()
+    for i = 1, #dungeonNames do
+        if lowered:find(dungeonNames[i]:lower(), 1, true) then
+            name = dungeonNames[i]
+            break
+        end
+    end
+
+    resolvedDungeons[spellID] = name or false
+    return name
+end
+
+-- =========================================================================
 --  Les tiroirs du grimoire
 -- =========================================================================
 -- Une extension = un tiroir, et c'est le **grimoire** qui les tient à jour. On
@@ -329,8 +433,10 @@ end
 local SPELLBOOK_PLAYER = Enum and Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player
 local SPELLBOOK_SPELL  = Enum and Enum.SpellBookItemType and Enum.SpellBookItemType.Spell
 
---- Nom du donjon, extrait du nom du sort. La famille se nomme « préfixe :
---- donjon » ; on garde ce qui suit le deux-points, sinon le nom entier.
+--- Ce qu'on affiche d'un nom de sort quand le donjon n'a pas pu être nommé
+--- (voir `dungeonName`). La famille se nomme « préfixe : donjon » ; on garde ce
+--- qui suit le deux-points, sinon le nom entier. C'est aussi ce qui nomme les
+--- **tiroirs**, qui sont des extensions et n'ont pas de donjon à retrouver.
 ---@param name string
 ---@return string
 local function dungeonPart(name)
@@ -477,7 +583,9 @@ local function flyoutDungeons(flyoutID)
         if id then
             local name, icon = spellLook(id)
             if name then
-                local label = dungeonPart(name)
+                -- Le donjon d'abord, le sort ensuite : « Voie de Coursevent »
+                -- est le nom du chemin, pas celui de l'endroit où il mène.
+                local label = dungeonName(id) or dungeonPart(name)
                 out[#out + 1] = {
                     kind = "spell", id = id, payload = id,
                     name = label, icon = icon,
@@ -547,7 +655,8 @@ local function expansionMenus()
                         -- Une téléportation seule, sans tiroir autour d'elle.
                         loose[#loose + 1] = {
                             kind = "spell", id = item.spellID, payload = item.spellID,
-                            name = dungeonPart(item.name), icon = item.iconID,
+                            name = dungeonName(item.spellID) or dungeonPart(item.name),
+                            icon = item.iconID,
                         }
                         seasonSpells[item.spellID] = true
                     end
