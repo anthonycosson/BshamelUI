@@ -222,8 +222,7 @@ function W.Tray(parent, emptyText)
     -- tiroir est une petite fenêtre, il se lit comme le reste de l'addon.
     local background = panel:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
-    background:SetColorTexture(T.COLOR.WINDOW:GetRGB())
-    background:SetAlpha(T.ALPHA.WINDOW_BG)
+    T.WindowSurface(background)
 
     local border = W.Inset(panel)
     border:SetAllPoints()

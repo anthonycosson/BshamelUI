@@ -68,7 +68,7 @@ function W.Window(globalName, titleText, width, height)
     -- Fond sombre et translucide, bordure laissée pleine : le jeu reste visible
     -- derrière la fenêtre sans que le cadre perde son contour. Le voile des
     -- bords lui redonne du poids là où il en faut, sans fermer le centre.
-    T.SetPanelFill(frame, T.COLOR.WINDOW, T.ALPHA.WINDOW_BG)
+    T.WindowSurface(frame)
     W.EdgeShade(frame)
 
     -- On relève la texture de la barre de titre avant que quoi que ce soit

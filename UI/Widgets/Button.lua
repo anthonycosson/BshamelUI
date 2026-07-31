@@ -95,11 +95,11 @@ function W.SidebarItem(parent, label, indented)
         band:SetAllPoints()
 
         if T.ApplyTitleBar(band) then
-            -- Multipliée presque jusqu'au noir : la barre de titre du client est
+            -- Multipliée jusqu'au sombre : la barre de titre du client est
             -- prévue pour trancher sur un cadre clair, elle est trop lumineuse
-            -- pour une colonne sombre.
-            band:SetVertexColor(T.COLOR.TITLE_BAND:GetRGB())
-            band:SetAlpha(T.ALPHA.TITLE_BAND)
+            -- pour une colonne sombre. La teinte suit le curseur d'intensité,
+            -- comme le fond de la fenêtre — c'est leur écart qui fait l'en-tête.
+            T.BandSurface(band)
         else
             band:SetTexture(T.TEXTURE.SIDEBAR_BAND)
             band:SetDesaturated(true)

@@ -53,6 +53,11 @@ BUI:RegisterLocale("enUS", {
 
     -- Module General
     ["General"]                        = "General",
+    ["Addon windows"]                  = "Addon windows",
+    ["Window intensity"]               = "Window intensity",
+    ["Window intensity tip"] =
+        "How dark the addon's own windows are. Full is the default look; lower it to lighten " ..
+        "them toward grey, which reads better on a bright screen.",
     ["Enable dark mode"]               = "Enable dark mode",
     ["Dark action bars tip"]           = "Buttons, borders and the artwork behind every action bar.",
     ["Cast bar"]                       = "Cast bar",

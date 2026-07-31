@@ -477,12 +477,21 @@ T.COLOR = {
     -- fenêtre est sombre, pas son opacité : le fond du template est une pierre
     -- claire, la multiplier est le seul moyen de l'assombrir. Une pointe de bleu
     -- pour éviter le gris mort.
-    WINDOW   = CreateColor(0.07, 0.07, 0.09),
+    --
+    -- C'est la teinte **à pleine intensité**, celle du curseur au maximum. Le
+    -- joueur peut la relever vers le gris (voir « Intensité des fenêtres »), et
+    -- il le fera : un fond aussi sombre se lit ici et se noie sur un écran au
+    -- gamma un peu haut, où le fond, le grain de la pierre et le voile des bords
+    -- tombent sur un même noir. On ne devine pas l'écran d'en face — on donne le
+    -- curseur.
+    WINDOW   = CreateColor(0.13, 0.13, 0.16),
 
     -- Teinte du bandeau des en-têtes, appliquée par-dessus la texture de la
-    -- barre de titre. Presque noire : l'en-tête doit poser une plaque sombre
-    -- sous un titre blanc, pas éclaircir la colonne.
-    TITLE_BAND = CreateColor(0.13, 0.13, 0.16),
+    -- barre de titre. Nettement plus sombre que le fond de la fenêtre : l'en-tête
+    -- doit poser une plaque sous un titre blanc, pas éclaircir la colonne. Ce qui
+    -- compte est l'**écart** avec `WINDOW`, pas la valeur absolue — les deux se
+    -- montent ensemble, sans quoi le bandeau se fond dans la colonne.
+    TITLE_BAND = CreateColor(0.20, 0.20, 0.24),
 }
 
 -- =========================================================================
@@ -496,10 +505,18 @@ T.COLOR = {
 T.ALPHA = {
     -- Opacité du fond de la fenêtre : à quel point le jeu transparaît derrière.
     -- Sa *clarté*, elle, ne se règle pas ici mais avec `T.COLOR.WINDOW`.
-    WINDOW_BG      = 0.88,
+    --
+    -- Assez haute pour que la fenêtre se lise pareil quelle que soit la scène
+    -- derrière : ce qui transparaît d'un donjon noir ou d'une plaine ensoleillée
+    -- ne change alors plus le fond que d'un cheveu. C'est l'autre moitié de la
+    -- lisibilité « partout » — la première étant la clarté du fond lui-même.
+    WINDOW_BG      = 0.92,
 
-    EDGE_SHADE     = 0.65,  -- voile sombre au bord de la fenêtre,
-                            -- dégradé vers l'intérieur
+    EDGE_SHADE     = 0.45,  -- voile sombre au bord de la fenêtre,
+                            -- dégradé vers l'intérieur. Il donne du poids au
+                            -- cadre ; poussé plus haut il noircit les quatre
+                            -- coins, où tombent justement la navigation et le
+                            -- premier réglage de chaque page
 
     TITLE_BAND     = 1.00,  -- bandeau de catégorie portant la texture de la
                             -- barre de titre : pleine, pour qu'un en-tête et la
@@ -512,9 +529,16 @@ T.ALPHA = {
     -- ensemble : opacité **au centre** du dégradé, qui s'estompe sur les deux
     -- bords. Hors survol et hors sélection, une entrée ne porte aucune texture
     -- — les bandeaux sont masqués, pas transparents.
-    ROW_HOVER      = 0.18,
-    ROW_SELECTED   = 0.32,
-    ITEM_OFF       = 0.45,  -- entrée d'un module éteint
+    --
+    -- Ces deux-là suivent la clarté du fond : un voile blanc posé sur un fond
+    -- moins noir ajoute moins de lumière qu'avant (l'écart vaut `alpha × (1 −
+    -- fond)`). Les monter d'autant conserve le saut visible entre une ligne au
+    -- repos, survolée et sélectionnée, qui est tout ce que ces valeurs servent.
+    ROW_HOVER      = 0.20,
+    ROW_SELECTED   = 0.36,
+    ITEM_OFF       = 0.55,  -- entrée d'un module éteint. « Éteint » doit rester
+                            -- lisible : c'est la ligne sur laquelle on clique
+                            -- pour rallumer le module
 
     RULE           = 0.35,  -- filet sous le titre de page
     SECTION_RULE   = 0.30,  -- filet d'un en-tête de section
@@ -532,6 +556,136 @@ T.ALPHA = {
     CHAT_TOOL       = 0.35,
     CHAT_TOOL_HOVER = 1.00,
 }
+
+-- =========================================================================
+--  Intensité des fenêtres de l'addon
+-- =========================================================================
+-- `T.COLOR.WINDOW` et `T.COLOR.TITLE_BAND` sont la teinte **à pleine
+-- intensité**. Le joueur peut la relever d'un cran vers le gris, et ce réglage
+-- existe pour une raison précise : la clarté d'un fond très sombre ne se juge
+-- pas sur l'écran de celui qui l'a réglée. Le même noir qui a du relief ici est
+-- un aplat mort chez quelqu'un d'autre, selon le gamma, la dalle et la
+-- luminosité de la pièce. Aucune valeur ne peut être juste partout — d'où un
+-- curseur plutôt qu'une valeur de plus, discutée sans fin.
+--
+-- Le réglage **descend** depuis la teinte de référence : à fond, c'est la
+-- fenêtre telle qu'elle est dessinée ; en dessous, elle s'éclaircit vers le
+-- gris. Il n'y a rien au-dessus — un fond plus sombre que celui-là ne se
+-- distinguerait plus du vide.
+
+--- Bornes du curseur, et de combien la teinte est relevée à son minimum.
+---
+--- `LIFT` est un **multiplicateur** de la teinte de référence : à intensité
+--- minimale, le fond vaut trois fois sa valeur nominale, soit un gris franc mais
+--- encore sombre. Au-delà, le blanc des libellés commencerait à perdre le
+--- contraste qui les rend lisibles, ce qui retournerait le réglage contre ce
+--- pour quoi il existe.
+T.WINDOW_INTENSITY = { MIN = 0, MAX = 100, STEP = 5, DEFAULT = 100, LIFT = 3 }
+
+--- Multiplicateur courant. 1 = pleine intensité, la teinte de référence.
+local windowFactor = 1
+
+--- Surfaces qui portent une de ces deux teintes, sous la forme de la fonction
+--- qui les repeint.
+---
+--- On retient la fonction et non la frame : les deux teintes ne se posent pas de
+--- la même façon — un aplat se peint, un fond de template se multiplie, un
+--- bandeau se teinte au sommet — et c'est au moment de la construction qu'on
+--- sait laquelle s'applique, pas au moment du repeint.
+---
+--- La liste ne se vide jamais, et n'a pas à l'être : une frame ne se détruit pas
+--- en World of Warcraft (règle 7), et il n'y a qu'une poignée de ces surfaces.
+local surfaces = {}
+
+--- La couleur `color`, relevée du facteur courant.
+---
+--- Une multiplication, jamais une addition : le rapport entre les trois canaux
+--- ne bouge pas, donc la pointe de bleu du fond survit à tous les réglages. Une
+--- addition la diluerait, et le gris mort qu'on évite reviendrait par le
+--- réglage.
+---@param color ColorMixin
+---@return ColorMixin
+local function lifted(color)
+    local r, g, b = color:GetRGB()
+    return CreateColor(math.min(r * windowFactor, 1),
+                       math.min(g * windowFactor, 1),
+                       math.min(b * windowFactor, 1))
+end
+
+--- Teinte du fond des fenêtres de l'addon, réglage du joueur compris.
+---@return ColorMixin
+function T.WindowColor()
+    return lifted(T.COLOR.WINDOW)
+end
+
+--- Teinte du bandeau des en-têtes, réglage du joueur compris.
+---
+--- Elle suit le fond au même facteur, et c'est le point : le bandeau ne vaut que
+--- par son **écart** avec la colonne qui le porte. Figé pendant que le fond monte,
+--- il finirait par le croiser, et l'en-tête disparaîtrait à un réglage précis.
+---@return ColorMixin
+function T.TitleBandColor()
+    return lifted(T.COLOR.TITLE_BAND)
+end
+
+---@param paint fun()
+local function remember(paint)
+    surfaces[#surfaces + 1] = paint
+    paint()
+end
+
+--- Peint une surface qui porte le fond des fenêtres de l'addon, et la retient
+--- pour la repeindre quand le curseur bouge.
+---
+--- Accepte les deux formes qu'on rencontre : une **texture**, qu'on peint d'un
+--- aplat (petits panneaux, tiroir, menus), et une **frame** dont le template
+--- fournit déjà un fond, qu'on multiplie sans le remplacer (`T.SetPanelFill`).
+---@param target table  frame ou texture
+function T.WindowSurface(target)
+    if target.SetColorTexture then
+        remember(function()
+            target:SetColorTexture(T.WindowColor():GetRGB())
+            target:SetAlpha(T.ALPHA.WINDOW_BG)
+        end)
+    else
+        remember(function()
+            T.SetPanelFill(target, T.WindowColor(), T.ALPHA.WINDOW_BG)
+        end)
+    end
+end
+
+--- Idem, pour le bandeau d'un en-tête de catégorie.
+---@param texture table
+function T.BandSurface(texture)
+    remember(function()
+        texture:SetVertexColor(T.TitleBandColor():GetRGB())
+        texture:SetAlpha(T.ALPHA.TITLE_BAND)
+    end)
+end
+
+--- Pose l'intensité choisie, en pourcentage (`MAX` = teinte de référence), et
+--- repeint tout ce qui la porte. `nil` rend la valeur par défaut — c'est ce que
+--- fait la désactivation du module qui publie le réglage (règle 6).
+---
+--- Le repeint est immédiat et n'attend aucun rechargement : c'est la seule façon
+--- de régler une clarté, qui se juge à l'œil pendant qu'on la bouge.
+---@param percent? number
+function T.SetWindowIntensity(percent)
+    local range = T.WINDOW_INTENSITY
+
+    local level = tonumber(percent) or range.DEFAULT
+    if level < range.MIN then level = range.MIN end
+    if level > range.MAX then level = range.MAX end
+
+    -- Pleine intensité -> 1, intensité nulle -> LIFT.
+    local factor = 1 + (range.MAX - level) / (range.MAX - range.MIN) * (range.LIFT - 1)
+    if factor == windowFactor then return end
+    windowFactor = factor
+
+    for i = 1, #surfaces do
+        surfaces[i]()
+    end
+end
 
 -- =========================================================================
 --  Mode sombre

@@ -239,8 +239,7 @@ function W.SecureMenu(parent, root)
 
     local background = menu:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
-    background:SetColorTexture(T.COLOR.WINDOW:GetRGB())
-    background:SetAlpha(T.ALPHA.WINDOW_BG)
+    T.WindowSurface(background)
 
     local border = W.Inset(menu)
     border:SetAllPoints()

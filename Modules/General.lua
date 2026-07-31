@@ -245,6 +245,21 @@ local function hookCooldownViewers(mod)
 end
 
 -- =========================================================================
+--  Intensité des fenêtres de l'addon
+-- =========================================================================
+-- Le seul réglage de cette page qui porte sur **notre** interface et non sur
+-- celle du client. Il est ici parce que c'est là qu'on le cherche : « quelque
+-- part dans les options », comme les neuf autres.
+--
+-- Le module ne connaît ni couleur ni opacité, il transmet un pourcentage
+-- (règle 2). Tout ce qui décide d'une teinte vit dans `UI/Theme.lua`.
+
+---@param mod table
+local function applyWindowIntensity(mod)
+    T.SetWindowIntensity(mod:Get("windowIntensity"))
+end
+
+-- =========================================================================
 --  Caméra
 -- =========================================================================
 
@@ -525,6 +540,7 @@ end
 
 ---@param mod table
 local function applyAll(mod)
+    applyWindowIntensity(mod)
     applyDarkMode(mod)
     applyCamera(mod)
     applyLuaErrors(mod)
@@ -535,6 +551,7 @@ end
 --- Réglage -> fonction qui le pose. Les réglages absents de cette table ne
 --- s'appliquent pas : ils se lisent au moment où l'événement arrive.
 local APPLIERS = {
+    windowIntensity   = applyWindowIntensity,
     darkMode          = applyDarkMode,
     maxCameraDistance = applyCamera,
     cameraZoomFactor  = applyCamera,
@@ -565,6 +582,11 @@ BUI:RegisterModule(MODULE, {
     secure   = true,
 
     defaults = {
+        -- Pleine intensité : la fenêtre telle qu'elle est dessinée. Le réglage
+        -- ne fait que **descendre** de là, personne n'a donc à y toucher pour
+        -- retrouver l'apparence d'origine.
+        windowIntensity = T.WINDOW_INTENSITY.DEFAULT,
+
         -- Le mode sombre est éteint, mais la liste de ce qu'il assombrit est
         -- cochée d'avance : l'allumer doit produire un effet visible tout de
         -- suite, décocher ensuite ce qu'on veut garder clair est le geste rare.
@@ -595,6 +617,17 @@ BUI:RegisterModule(MODULE, {
     },
 
     options = {
+        { type = "header", text = L["Addon windows"] },
+        {
+            type    = "slider",
+            key     = "windowIntensity",
+            text    = L["Window intensity"],
+            tooltip = L["Window intensity tip"],
+            min     = T.WINDOW_INTENSITY.MIN,
+            max     = T.WINDOW_INTENSITY.MAX,
+            step    = T.WINDOW_INTENSITY.STEP,
+        },
+
         { type = "header", text = L["Dark mode"] },
         {
             type    = "toggle",
@@ -774,6 +807,10 @@ BUI:RegisterModule(MODULE, {
     end,
 
     OnDisable = function()
+        -- Les fenêtres retrouvent leur teinte nominale : désactiver un module
+        -- doit le rendre indétectable (règle 6), et ce réglage-ci se voit.
+        T.SetWindowIntensity(nil)
+
         if BUI.Shade then BUI.Shade:RestoreAll() end
 
         overrideCVar(CVAR_ZOOM, nil)

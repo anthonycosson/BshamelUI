@@ -2,6 +2,33 @@
 
 ## Non publié
 
+### Ajouté
+- **Intensité des fenêtres**, curseur en tête de *Général*. Au maximum, c'est
+  l'apparence d'origine ; en descendant, les fenêtres de l'addon s'éclaircissent
+  vers le gris. Il n'y a rien au-dessus : un fond plus sombre que celui-là ne se
+  distinguerait plus du vide.
+
+  Le réglage existe parce qu'aucune valeur ne peut être juste partout. Le même
+  fond qui a du relief sur un écran est un aplat mort sur un autre, selon le
+  gamma, la dalle et la lumière de la pièce — c'est en le voyant chez quelqu'un
+  d'autre qu'on s'en aperçoit, et c'est précisément ce qu'on ne peut pas deviner.
+  Plutôt qu'une valeur de plus, discutée sans fin, un curseur.
+
+  Il porte sur **toutes** les fenêtres de l'addon d'un coup — options, tiroir de
+  la minicarte, menu de téléportation, panneaux de raid —, et se voit pendant
+  qu'on le bouge : une clarté se règle à l'œil, pas au rechargement. Le bandeau
+  des en-têtes suit le fond au même facteur, sans quoi il finirait par le croiser
+  et l'en-tête disparaîtrait à un réglage précis.
+
+### Modifié
+- La fenêtre d'options est **éclaircie** d'un cran, et c'est elle que le curseur
+  prend désormais pour maximum. Le voile sombre des bords s'allège dans la même
+  passe : il noircissait les quatre coins, là où tombent justement la navigation
+  et le premier réglage de chaque page. Le survol, la sélection et les modules
+  éteints sont remontés d'autant — un voile blanc sur un fond moins noir ajoute
+  moins de lumière, il fallait les rendre pour que les trois états d'une ligne
+  restent aussi séparés qu'avant.
+
 ## 0.5.0 — 2026-07-31
 
 ### Ajouté

@@ -48,8 +48,7 @@ function W.Panel(opts)
     -- panneaux sont de petites fenêtres de l'addon, ils se lisent comme le reste.
     local background = panel:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
-    background:SetColorTexture(T.COLOR.WINDOW:GetRGB())
-    background:SetAlpha(T.ALPHA.WINDOW_BG)
+    T.WindowSurface(background)
     panel.background = background
 
     local border = W.Inset(panel)
