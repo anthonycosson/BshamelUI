@@ -68,6 +68,30 @@ function W.Container(parent)
     return CreateFrame("Frame", nil, parent)
 end
 
+--- Parent invisible, où l'on range un élément du client qu'un réglage éteint.
+---
+--- **Masquer ne suffit pas pour tout.** Le client montre et cache lui-même ses
+--- éléments contextuels — la lueur de combat, l'effet de repos, l'icône de coin
+--- — et certains portent une animation qui pilote leur opacité. Un `Hide` comme
+--- un `SetAlpha(0)` y sont défaits au passage suivant, et on se retrouve à
+--- courir après lui.
+---
+--- Rangé sous un parent masqué, l'élément ne se dessine plus quoi que le client
+--- lui demande. Il n'y a ni hook à poser, ni moment à deviner, et rendre son
+--- parent d'origine le remet exactement où il était.
+---
+--- Une seule frame pour tout le monde : elle n'affiche rien, elle ne sert qu'à
+--- ne pas être dessinée.
+---@return table
+local hidden
+function W.Hidden()
+    if not hidden then
+        hidden = CreateFrame("Frame", nil, UIParent)
+        hidden:Hide()
+    end
+    return hidden
+end
+
 --- Panneau creusé, comme les zones de contenu de l'interface Blizzard, mais
 --- réduit à sa bordure : on lui retire son fond.
 ---

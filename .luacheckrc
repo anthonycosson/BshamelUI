@@ -110,7 +110,9 @@ read_globals = {
     -- teste les deux.
     "C_SpecializationInfo", "GetSpecialization", "GetSpecializationInfo",
     "GetSpecializationInfoByID",
-    "CanInspect", "NotifyInspect", "GetInspectSpecialization",
+    -- La spécialisation d'un autre joueur se lit dans son infobulle, par classe :
+    -- voir `dev/docs/API_NOTES.md`.
+    "GetNumSpecializationsForClassID", "GetSpecializationInfoForClassID",
 
     -- API de quête
     "AcceptQuest", "ConfirmAcceptQuest", "CloseQuest", "CompleteQuest",

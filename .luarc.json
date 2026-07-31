@@ -63,7 +63,7 @@
     "RAID_CLASS_COLORS", "C_ClassColor", "C_Item", "ITEM_QUALITY_COLORS",
     "C_SpecializationInfo", "GetSpecialization", "GetSpecializationInfo",
     "GetSpecializationInfoByID",
-    "CanInspect", "NotifyInspect", "GetInspectSpecialization",
+    "GetNumSpecializationsForClassID", "GetSpecializationInfoForClassID",
 
     "AcceptQuest", "ConfirmAcceptQuest", "CloseQuest", "CompleteQuest",
     "GetQuestReward", "GetQuestID", "QuestGetAutoAccept", "IsQuestCompletable",

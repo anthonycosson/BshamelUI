@@ -26,6 +26,7 @@ local _, ns = ...
 local BUI = ns.BUI
 local T    = BUI.Theme
 local U    = BUI.Util
+local W    = BUI.Widgets
 local L    = ns.L
 
 local MODULE = "UnitFrames"
@@ -247,40 +248,36 @@ end
 -- client fait lui-même quand on lui demande une icône de classe à la place du
 -- visage — on remplace la même texture, par une image plus précise.
 --
--- On ne dessine donc rien : `UnitFramePortrait_Update` est le moment où le
--- client peint ce portrait, et c'est là qu'on repasse derrière lui.
+-- On ne dessine donc rien : le client peint cette case, et on repasse derrière
+-- lui à l'instant où il écrit.
 --
--- La spécialisation du joueur se demande au client. Celle d'un autre joueur ne
--- se demande qu'au **serveur**, par une inspection, et cela a deux conséquences
--- qu'aucune astuce ne lève :
---
---   · l'unité doit être à portée d'inspection — quelques dizaines de mètres.
---     Hors de portée, il n'y a pas d'icône, et il ne peut pas y en avoir ;
---   · le serveur ne traite qu'une demande à la fois. On garde donc le résultat
---     par GUID, on ne redemande jamais ce qu'on sait déjà, et on espace les
---     demandes.
---
--- C'est la limite de la fonctionnalité, pas un défaut d'implémentation : en
--- donjon, en raid et en arène — là où la spécialisation d'une cible compte — le
--- groupe est à portée et l'icône est là.
+-- **La spécialisation d'un autre joueur se lit dans son infobulle, elle ne se
+-- demande pas au serveur.** C'est le point qui décide de tout le ressenti. Une
+-- inspection (`NotifyInspect` / `INSPECT_READY`) est le chemin déclaré, et il
+-- coûte un aller-retour serveur, une portée de quelques dizaines de mètres, et
+-- une demande à la fois — l'icône arrivait donc toujours après coup, et parfois
+-- pas du tout. Or le client **connaît déjà** la réponse : il l'écrit dans
+-- l'infobulle de l'unité, et `C_TooltipInfo.GetUnit` rend ces lignes comme des
+-- données, sans créer de frame et sans rien demander à personne. La réponse
+-- tombe dans la même image que la question.
 
---- Délai minimal entre deux demandes d'inspection, en secondes.
+--- GUID -> identifiant de spécialisation, ou `false` quand l'infobulle n'en
+--- portait pas. Une spécialisation ne change qu'au gré du joueur qui la porte :
+--- ce cache tient toute la session sans mentir plus d'une poignée de secondes.
 ---
---- Mesuré sur le comportement du serveur et non déduit d'une constante du
---- client, qui n'en publie aucune : en dessous, les demandes rapprochées sont
---- ignorées en silence.
-local INSPECT_INTERVAL = 1.5
-
---- GUID -> identifiant de spécialisation déjà connu.
---- Une spécialisation ne change qu'au gré du joueur qui la porte : ce cache tient
---- toute la session sans mentir plus d'une poignée de secondes.
+--- Le `false` compte autant que le nombre : sans lui, une unité sans ligne de
+--- spécialisation ferait relire son infobulle à chaque passage.
 local specByGUID = {}
 
---- date de la dernière demande d'inspection
-local lastInspect = 0
-
---- rendez-vous déjà pris pour retenter une demande refusée
-local retryPending = false
+--- classID -> { nom de spécialisation -> identifiant }
+---
+--- **Par classe, et c'est ce qui rend la lecture sûre.** Deux classes peuvent
+--- porter le même nom de spécialisation — un druide et un chaman ont tous deux
+--- une « Restauration ». Comme on connaît déjà la classe de l'unité, on ne
+--- cherche que parmi les siennes : l'ambiguïté disparaît, et on n'a jamais
+--- besoin du nom traduit de la classe, qui se décline en genre selon les langues
+--- et demanderait une table d'exceptions par locale.
+local specsByClass = {}
 
 --- Identifiant de spécialisation du joueur.
 ---
@@ -335,7 +332,67 @@ local function guidOf(unit)
     return guid
 end
 
---- Spécialisation connue d'une unité, sans rien demander à personne.
+--- Spécialisations d'une classe, par leur nom traduit.
+---@param classID number
+---@return table<string, number>
+local function specsForClass(classID)
+    local cached = specsByClass[classID]
+    if cached then return cached end
+
+    local names = {}
+    if GetNumSpecializationsForClassID and GetSpecializationInfoForClassID then
+        for i = 1, GetNumSpecializationsForClassID(classID) do
+            local id, name = GetSpecializationInfoForClassID(classID, i)
+            if id and type(name) == "string" then names[name] = id end
+        end
+    end
+
+    specsByClass[classID] = names
+    return names
+end
+
+--- Spécialisation lue dans l'infobulle d'une unité.
+---
+--- `C_TooltipInfo` rend des **données**, donc sans créer la moindre frame — même
+--- chemin que la fiche de personnage pour lire un objet équipé. Les champs d'une
+--- ligne ne sont peuplés qu'après `SurfaceArgs` : sans ce passage, `leftText`
+--- est absent et la boucle ne trouve jamais rien.
+---
+--- Une lecture d'infobulle alloue une table : cette fonction n'est donc appelée
+--- que depuis un passage de rafraîchissement, jamais depuis un hook de texture
+--- (règle 7). Le cache par GUID fait le reste.
+---@param unit string
+---@return number|nil
+local function tooltipSpec(unit)
+    if not (C_TooltipInfo and C_TooltipInfo.GetUnit) then return nil end
+
+    local _, _, classID = UnitClass(unit)
+    if U.IsSecret(classID) or type(classID) ~= "number" then return nil end
+
+    local names = specsForClass(classID)
+    if not next(names) then return nil end
+
+    local data = C_TooltipInfo.GetUnit(unit)
+    if not data then return nil end
+    if TooltipUtil and TooltipUtil.SurfaceArgs then TooltipUtil.SurfaceArgs(data) end
+
+    for _, line in ipairs(data.lines or {}) do
+        local text = line.leftText
+        if type(text) == "string" and not U.IsSecret(text) then
+            for name, id in pairs(names) do
+                if strfind(text, name, 1, true) then return id end
+            end
+        end
+    end
+
+    return nil
+end
+
+--- Spécialisation **déjà connue** d'une unité : le cache, et rien d'autre.
+---
+--- C'est la fonction que suivent les hooks de texture. Elle ne lit aucune
+--- infobulle et n'alloue rien : à cet endroit-là, on peint ce qu'on sait ou on
+--- ne peint pas.
 ---@param unit string
 ---@return number|nil
 local function knownSpec(unit)
@@ -343,53 +400,29 @@ local function knownSpec(unit)
     if UnitIsUnit(unit, "player") then return playerSpec() end
 
     local guid = guidOf(unit)
-    return guid and specByGUID[guid] or nil
+    if not guid then return nil end
+    return specByGUID[guid] or nil
 end
 
---- Spécialisation de l'unité que le serveur vient de nous décrire.
+--- Spécialisation d'une unité, en la cherchant si on ne l'a pas encore.
 ---
---- Comme pour la spécialisation du joueur, deux chemins : l'espace de noms
---- récent d'abord, la globale ensuite.
+--- Appelée par les passages de rafraîchissement, elle est ce qui **remplit** le
+--- cache que les hooks consultent ensuite.
 ---@param unit string
 ---@return number|nil
-local function inspectedSpec(unit)
-    local api = C_SpecializationInfo
-    if api and api.GetInspectSpecialization then
-        return api.GetInspectSpecialization(unit)
-    end
-    if GetInspectSpecialization then
-        return GetInspectSpecialization(unit)
-    end
-    return nil
-end
+local function resolveSpec(unit)
+    if not (UnitExists(unit) and UnitIsPlayer(unit)) then return nil end
+    if UnitIsUnit(unit, "player") then return playerSpec() end
 
---- Le client sait-il inspecter ?
----@return boolean
-local function canAskServer()
-    if not (CanInspect and NotifyInspect) then return false end
+    local guid = guidOf(unit)
+    if not guid then return nil end
 
-    local api = C_SpecializationInfo
-    return (api and api.GetInspectSpecialization ~= nil)
-        or GetInspectSpecialization ~= nil
-end
+    local cached = specByGUID[guid]
+    if cached ~= nil then return cached or nil end
 
---- Demande au serveur la spécialisation d'une unité.
----
---- Renvoie `false` quand la demande est tombée dans l'intervalle de garde :
---- l'appelant sait alors qu'il lui reste quelque chose à apprendre, et c'est lui
---- qui prend le rendez-vous pour y revenir.
----@param unit string
----@return boolean asked
-local function requestSpec(unit)
-    if not canAskServer() then return true end
-    if not CanInspect(unit, false) then return true end
-
-    local now = GetTime()
-    if now - lastInspect < INSPECT_INTERVAL then return false end
-
-    lastInspect = now
-    NotifyInspect(unit)
-    return true
+    local specID = tooltipSpec(unit)
+    specByGUID[guid] = specID or false
+    return specID
 end
 
 --- Clés sous lesquelles un cadre du client publie son portrait.
@@ -414,6 +447,10 @@ local function portraitOf(frame)
     return nil
 end
 
+--- Sommes-nous en train de poser l'icône ? Le hook posé sur la texture rappelle
+--- notre propre pose ; ce drapeau coupe la boucle.
+local painting = false
+
 --- Pose l'icône de spécialisation à la place du portrait.
 ---
 --- Les coordonnées de texture sont **remises à plein cadre**. Le client ne pose
@@ -430,10 +467,12 @@ local function paintPortrait(frame, unit)
     local file = specTexture(knownSpec(unit))
     if not file then return false end
 
+    painting = true
     pcall(portrait.SetTexture, portrait, file)
     if type(portrait.SetTexCoord) == "function" then
         pcall(portrait.SetTexCoord, portrait, 0, 1, 0, 1)
     end
+    painting = false
     return true
 end
 
@@ -458,73 +497,51 @@ local function applySpecIcons(mod)
         return
     end
 
-    local waiting = false
-
     eachUnitFrame(function(frame, unit)
+        -- La résolution d'abord : elle remplit le cache que les hooks de texture
+        -- consultent. Sans elle, une cible jamais vue n'aurait son icône qu'à la
+        -- prochaine écriture du client — et c'est exactement le délai qu'on
+        -- cherche à supprimer.
+        resolveSpec(unit)
         paintPortrait(frame, unit)
-
-        -- Rien de connu sur un joueur qu'on peut inspecter : on demande, et on
-        -- repassera ici quand le serveur aura répondu.
-        if not knownSpec(unit) and UnitExists(unit) and UnitIsPlayer(unit) then
-            if not requestSpec(unit) then waiting = true end
-        end
     end)
-
-    -- Une demande est tombée dans l'intervalle de garde : sans ce rendez-vous,
-    -- une cible prise juste après une autre n'aurait jamais son icône — la
-    -- seule demande qui la concernait a été refusée, et plus rien ne la
-    -- rappellerait.
-    if waiting and not retryPending then
-        retryPending = true
-        C_Timer.After(INSPECT_INTERVAL, function()
-            retryPending = false
-            if mod:IsEnabled() then applySpecIcons(mod) end
-        end)
-    end
-end
-
---- Réponse du serveur à une demande d'inspection.
----
---- L'événement ne dit que le GUID inspecté : on retrouve l'unité en comparant,
---- parce que la spécialisation ne se lit que par une unité. On ne ferme pas
---- l'inspection derrière nous — `ClearInspectPlayer` fermerait aussi la fenêtre
---- d'inspection que le joueur aurait ouverte lui-même.
----@param mod table
----@param guid any
-local function inspectReady(mod, guid)
-    if U.IsSecret(guid) or type(guid) ~= "string" then return end
-
-    for i = 1, #UNIT_FRAMES do
-        local unit = UNIT_FRAMES[i].unit
-        if UnitExists(unit) and guidOf(unit) == guid then
-            local specID = inspectedSpec(unit)
-            if specID and specID > 0 then specByGUID[guid] = specID end
-            break
-        end
-    end
-
-    applySpecIcons(mod)
 end
 
 --- S'accroche au moment où le client peint un portrait.
 ---
---- C'est le seul moment qui vaille. Le portrait est repeint à chaque changement
---- de cible, à chaque entrée en véhicule, à chaque fois que l'unité change sous
---- le cadre — et à chaque fois, notre icône serait effacée. Repasser à
---- intervalles reviendrait à parier sur le moment où il s'y met, et ce pari se
---- perd : on verrait le visage revenir puis disparaître.
+--- **Deux hooks, et il en faut deux.** `UnitFramePortrait_Update` est le chemin
+--- déclaré, mais s'y arrimer seul laisse voir le visage un instant avant
+--- l'icône : le client ne peint pas toujours par là, et surtout il repasse sur
+--- la case après avoir annoncé le changement de cible. Le second hook est posé
+--- sur **la texture elle-même** — quoi qu'il pose, et quand qu'il le pose, on
+--- repose l'icône dans le même souffle. Il n'y a plus de course à courir : c'est
+--- l'écriture du client qui déclenche la nôtre.
+---
+--- Une minuterie ne pouvait pas y arriver. Elle parie sur le moment où le client
+--- s'y met, et ce pari se perd des deux côtés : trop tôt on peint l'ancienne
+--- cible, trop tard le joueur a vu le portrait par défaut.
 ---@param mod table
 local function hookPortraits(mod)
-    if type(UnitFramePortrait_Update) ~= "function" then return end
-
     local guard = function()
         return mod:IsEnabled() and mod:Get("specIcon") == true
     end
 
-    U.GuardedHook("UnitFramePortrait_Update", function(frame)
-        if type(frame) ~= "table" or not frame.unit then return end
-        paintPortrait(frame, frame.unit)
-    end, guard)
+    if type(UnitFramePortrait_Update) == "function" then
+        U.GuardedHook("UnitFramePortrait_Update", function(frame)
+            if type(frame) ~= "table" or not frame.unit then return end
+            paintPortrait(frame, frame.unit)
+        end, guard)
+    end
+
+    eachUnitFrame(function(frame, unit)
+        local portrait = portraitOf(frame)
+        if not portrait then return end
+
+        U.GuardedHook(portrait, "SetTexture", function()
+            if painting then return end
+            paintPortrait(frame, unit)
+        end, guard)
+    end)
 end
 
 -- =========================================================================
@@ -534,17 +551,26 @@ end
 -- repeinte par le client à chaque changement de cible, et la teindre une fois ne
 -- suffit donc pas : on se branche sur le moment où il la repeint.
 --
--- **On la rend transparente, on ne la masque pas.** `CheckFaction` recalcule sa
--- *couleur*, et rien d'autre : le client ne la réaffiche jamais, parce qu'il ne
--- l'a jamais cachée. Un `Hide` est donc sans retour — décocher le réglage
--- laissait la plaque disparue jusqu'au rechargement. Une opacité nulle laisse au
--- contraire la visibilité entre ses mains : on rend invisible ce qu'il montre,
--- et reposer l'opacité d'origine rend exactement son état.
+-- **On la masque, une fois, et elle reste masquée.** C'est la conclusion de deux
+-- tentatives ratées, et elle tient en une phrase : le client ne réaffiche jamais
+-- cette plaque, parce qu'il ne la cache jamais.
+--
+--   · `CheckFaction` recalcule sa *couleur*, et rien d'autre. Lui demander de
+--     recalculer ne rend donc pas une plaque masquée — d'où un réglage qui ne
+--     revenait pas quand on le décochait. La restitution, c'est `Show`, pas un
+--     recalcul ;
+--   · une opacité nulle marchait, mais elle demandait de courir après chaque
+--     écriture d'opacité du client, avec le battement visible que cela suppose.
+--
+-- `Hide` est persistant, donc gratuit : il n'y a rien à repasser à chaque
+-- changement de cible, et rien qui puisse arriver en retard. Le hook sur `Show`
+-- n'est qu'un garde — si une écriture du client rendait un jour la plaque, elle
+-- serait défaite dans le même souffle.
 
 local REPUTATION_FRAMES = { "TargetFrame", "FocusFrame" }
 
---- plaque -> opacité qu'elle portait avant qu'on y touche
-local repAlphas = {}
+--- plaque -> était-elle affichée avant qu'on la masque
+local repShown = {}
 
 ---@param frame table|nil
 ---@return table|nil
@@ -553,26 +579,26 @@ local function reputationColorOf(frame)
     local main    = content and content.TargetFrameContentMain
     local region  = main and main.ReputationColor
 
-    if type(region) == "table" and type(region.SetAlpha) == "function" then return region end
+    if type(region) == "table" and type(region.Hide) == "function" then return region end
     return nil
 end
 
---- Efface une plaque, en retenant l'opacité qu'elle avait.
+--- Masque une plaque, en retenant si elle était affichée.
 ---@param region table
-local function fadeReputationColor(region)
-    if repAlphas[region] == nil then
-        local ok, alpha = pcall(region.GetAlpha, region)
-        repAlphas[region] = (ok and type(alpha) == "number") and alpha or 1
+local function hideReputationColor(region)
+    if repShown[region] == nil then
+        local ok, shown = pcall(region.IsShown, region)
+        repShown[region] = (ok and shown) and true or false
     end
-    pcall(region.SetAlpha, region, 0)
+    pcall(region.Hide, region)
 end
 
---- Rend leur opacité aux plaques qu'on avait effacées.
+--- Rend leur état aux plaques qu'on avait masquées.
 local function restoreReputationColor()
-    for region, alpha in pairs(repAlphas) do
-        pcall(region.SetAlpha, region, alpha)
+    for region, shown in pairs(repShown) do
+        if shown then pcall(region.Show, region) else pcall(region.Hide, region) end
     end
-    wipe(repAlphas)
+    wipe(repShown)
 end
 
 ---@param mod table
@@ -584,10 +610,18 @@ local function applyReputationColor(mod)
 
     for i = 1, #REPUTATION_FRAMES do
         local region = reputationColorOf(_G[REPUTATION_FRAMES[i]])
-        if region then fadeReputationColor(region) end
+        if region then hideReputationColor(region) end
     end
 end
 
+--- Garde posé sur la plaque : si quelque chose la rend visible, elle repart.
+---
+--- Le hook est sur **la texture**, pas sur la fonction censée la peindre : il
+--- n'a donc aucun moment à deviner, et il ne peut pas arriver en retard. Il ne
+--- sert normalement jamais — `Hide` est persistant — mais il coûte un test et
+--- il rend le réglage insensible à ce que le client changerait un jour.
+---
+--- Pas de récursion possible : masquer ne déclenche pas `Show`.
 ---@param mod table
 local function hookReputationColor(mod)
     local guard = function()
@@ -595,12 +629,147 @@ local function hookReputationColor(mod)
     end
 
     for i = 1, #REPUTATION_FRAMES do
-        local frame = _G[REPUTATION_FRAMES[i]]
-        if type(frame) == "table" and type(frame.CheckFaction) == "function" then
-            U.GuardedHook(frame, "CheckFaction", function(self)
-                local region = reputationColorOf(self)
-                if region then fadeReputationColor(region) end
+        local region = reputationColorOf(_G[REPUTATION_FRAMES[i]])
+        if region then
+            U.GuardedHook(region, "Show", function(self)
+                hideReputationColor(self)
             end, guard)
+        end
+    end
+end
+
+-- =========================================================================
+--  Décorations que l'on peut éteindre
+-- =========================================================================
+-- Le client pose sur ses cadres des éléments qui ne disent rien qu'on ne sache
+-- déjà : la lueur qui clignote quand on est en combat, l'effet de repos, la
+-- pastille de coin, l'icône de prestige. Chacun s'éteint séparément.
+--
+-- **On les range sous un parent masqué, on ne les cache pas.** Ce sont des
+-- éléments *contextuels* : le client les montre et les cache lui-même selon la
+-- situation, et deux d'entre eux portent une animation qui pilote leur opacité.
+-- Un `Hide` comme un `SetAlpha(0)` seraient donc défaits au passage suivant —
+-- avec le battement visible que cela suppose. Sous un parent masqué, il n'y a
+-- plus rien à repasser ni aucun moment à deviner (voir `W.Hidden`).
+
+--- Réglage -> chemins des éléments qu'il éteint.
+---
+--- Un chemin est une suite de clés à partir d'une globale. On descend clé à
+--- clé, et une clé absente arrête la descente sans rien casser : c'est la forme
+--- que prend ici le test de capacité, pour des chemins que Blizzard réorganise
+--- d'une extension à l'autre.
+local DECORATIONS = {
+    hideRestedEffect = {
+        { "PlayerFrame", "PlayerFrameContent", "PlayerFrameContentContextual", "PlayerRestLoop" },
+    },
+
+    hideCornerIcon = {
+        { "PlayerFrame", "PlayerFrameContent", "PlayerFrameContentContextual",
+          "PlayerPortraitCornerIcon" },
+    },
+
+    -- **Tous les cadres qui clignotent, pas seulement le vôtre.** La lueur de
+    -- combat n'est pas une décoration du cadre du joueur : c'est un même signal
+    -- posé sur chaque cadre engagé — le joueur, son familier, la cible, le focus
+    -- et les boss. N'en éteindre qu'une partie ne se lit pas comme un réglage
+    -- partiel mais comme un réglage qui ne marche pas, et c'est exactement ce
+    -- qui s'est produit : le cadre du joueur se taisait, celui de la cible
+    -- continuait de battre.
+    --
+    -- Le nom de la texture n'est d'ailleurs pas le même partout — `FrameFlash`
+    -- chez le joueur, `Flash` chez la cible — ce qui est une raison de plus de
+    -- les citer une par une plutôt que de croire à une convention.
+    hideCombatGlow = {
+        { "PlayerFrame", "PlayerFrameContainer", "FrameFlash" },
+        { "TargetFrame", "TargetFrameContainer", "Flash" },
+        { "FocusFrame",  "TargetFrameContainer", "Flash" },
+        { "PetFrameFlash" },
+        { "PetAttackModeTexture" },
+    },
+
+    -- Le badge et le portrait de prestige vont ensemble, et l'icône PvP avec
+    -- eux : c'est une seule décoration pour le joueur, qui la voit comme telle.
+    -- Elle est éteinte sur les trois cadres qui la portent — la couper sur la
+    -- cible et la garder sur le focus serait un réglage à moitié appliqué.
+    hidePvpIcon = {
+        { "PlayerFrame", "PlayerFrameContent", "PlayerFrameContentContextual", "PrestigeBadge" },
+        { "PlayerFrame", "PlayerFrameContent", "PlayerFrameContentContextual", "PrestigePortrait" },
+        { "PlayerFrame", "PlayerFrameContent", "PlayerFrameContentContextual", "PvpIcon" },
+        { "TargetFrame", "TargetFrameContent", "TargetFrameContentContextual", "PrestigeBadge" },
+        { "TargetFrame", "TargetFrameContent", "TargetFrameContentContextual", "PrestigePortrait" },
+        { "TargetFrame", "TargetFrameContent", "TargetFrameContentContextual", "PvpIcon" },
+        { "FocusFrame", "TargetFrameContent", "TargetFrameContentContextual", "PrestigeBadge" },
+        { "FocusFrame", "TargetFrameContent", "TargetFrameContentContextual", "PrestigePortrait" },
+        { "FocusFrame", "TargetFrameContent", "TargetFrameContentContextual", "PvpIcon" },
+    },
+}
+
+-- Les cadres de boss portent la même lueur, sous le même chemin. Cinq lignes
+-- identiques à une lettre près se recopient mal : on les engendre.
+for i = 1, 5 do
+    local glows = DECORATIONS.hideCombatGlow
+    glows[#glows + 1] = { "Boss" .. i .. "TargetFrame", "TargetFrameContainer", "Flash" }
+end
+
+--- élément rangé -> son parent d'origine
+local stowed = {}
+
+--- Élément désigné par un chemin, ou `nil` si le client ne l'a plus.
+---@param path string[]
+---@return table|nil
+local function resolve(path)
+    local node = _G[path[1]]
+    for i = 2, #path do
+        if type(node) ~= "table" then return nil end
+        node = node[path[i]]
+    end
+
+    if type(node) == "table" and type(node.SetParent) == "function" then return node end
+    return nil
+end
+
+---@param region table
+local function stow(region)
+    if stowed[region] then return end
+
+    local ok, parent = pcall(region.GetParent, region)
+    if not ok or type(parent) ~= "table" then return end
+
+    stowed[region] = parent
+    pcall(region.SetParent, region, W.Hidden())
+end
+
+---@param region table
+local function release(region)
+    local parent = stowed[region]
+    if not parent then return end
+
+    stowed[region] = nil
+    pcall(region.SetParent, region, parent)
+end
+
+--- Rend tous les éléments rangés, sans relire les réglages.
+local function releaseAll()
+    for region, parent in pairs(stowed) do
+        pcall(region.SetParent, region, parent)
+    end
+    wipe(stowed)
+end
+
+---@param mod table
+local function applyDecorations(mod)
+    -- Ces éléments pendent de cadres protégés : les reparenter en combat lève
+    -- une erreur d'action bloquée. Ce qui est refusé ici est rattrapé à la
+    -- sortie de combat (voir `OnEnable`).
+    if InCombatLockdown() then return end
+
+    for key, paths in pairs(DECORATIONS) do
+        local on = mod:Get(key)
+        for i = 1, #paths do
+            local region = resolve(paths[i])
+            if region then
+                if on then stow(region) else release(region) end
+            end
         end
     end
 end
@@ -697,6 +866,7 @@ local function applyAll(mod)
     applyClassColors(mod)
     applySpecIcons(mod)
     applyReputationColor(mod)
+    applyDecorations(mod)
     applyPartyScale(mod)
 end
 
@@ -708,6 +878,10 @@ local APPLIERS = {
     enlargeParty        = applyPartyScale,
     partyScale          = applyPartyScale,
 }
+
+for key in pairs(DECORATIONS) do
+    APPLIERS[key] = applyDecorations
+end
 
 -- =========================================================================
 --  Déclaration du module
@@ -724,6 +898,11 @@ BUI:RegisterModule(MODULE, {
         hideReputationColor = false,
 
         specIcon     = false,
+
+        hideRestedEffect = false,
+        hideCornerIcon   = false,
+        hideCombatGlow   = false,
+        hidePvpIcon      = false,
 
         enlargeParty = false,
         -- 100 % : l'échelle que le cadre porte déjà. Allumer l'interrupteur sans
@@ -754,6 +933,32 @@ BUI:RegisterModule(MODULE, {
             text    = L["Show spec icon"],
             tooltip = L["Show spec icon tip"],
         },
+        { type = "header", text = L["Decorations"] },
+        {
+            type    = "toggle",
+            key     = "hideRestedEffect",
+            text    = L["Hide rested effect"],
+            tooltip = L["Hide rested effect tip"],
+        },
+        {
+            type    = "toggle",
+            key     = "hideCornerIcon",
+            text    = L["Hide corner icon"],
+            tooltip = L["Hide corner icon tip"],
+        },
+        {
+            type    = "toggle",
+            key     = "hideCombatGlow",
+            text    = L["Hide combat glow"],
+            tooltip = L["Hide combat glow tip"],
+        },
+        {
+            type    = "toggle",
+            key     = "hidePvpIcon",
+            text    = L["Hide PvP icon"],
+            tooltip = L["Hide PvP icon tip"],
+        },
+
         { type = "header", text = L["Party frames"] },
         {
             type    = "toggle",
@@ -784,26 +989,25 @@ BUI:RegisterModule(MODULE, {
         hookReputationColor(self)
         hookPartyFrames(self)
 
-        -- Trois passages, et chacun couvre ce que les autres manquent. C'est le
-        -- même motif que le mode sombre, pour exactement la même raison — voir
-        -- `refresher` dans `Modules/General.lua` et `dev/docs/API_NOTES.md`.
+        -- **Ce qui se voit ne passe pas par ici.** Barre de vie, portrait et
+        -- plaque de faction sont reposés par les hooks ci-dessus, au moment même
+        -- où le client écrit dessus : il n'y a aucun délai à rattraper, et aucun
+        -- réglage n'attend un passage pour s'appliquer.
         --
-        -- Le premier applique **à l'instant** du changement de cible. C'est lui
-        -- qui manquait : tout partait sur le troisième, et le cadre s'affichait
-        -- deux dixièmes de seconde dans son état par défaut avant de prendre nos
-        -- réglages. Le délai se voyait d'autant mieux sur l'icône de
-        -- spécialisation, dont la demande d'inspection ne partait qu'à ce
-        -- moment-là — le retard du rafraîchissement s'ajoutait à celui du
-        -- serveur.
+        -- Les deux passages qui suivent ne servent qu'à ce qu'aucune écriture du
+        -- client n'annonce :
         --
-        -- Le deuxième rattrape le rhabillage que le client fait *après* avoir
-        -- annoncé le changement de cible. Le troisième est le filet : la cible
-        -- de la cible n'est pas résolue quand la cible l'est.
-        --
-        -- Les trois passages sont idempotents — ils relisent l'état voulu et le
-        -- reposent — donc repasser ne coûte que le passage, jamais un
-        -- clignotement.
+        --   · le premier, immédiat, **lance les demandes d'inspection**. C'est
+        --     la seule chose qui doive partir tôt, parce que la réponse vient du
+        --     serveur : tout retard pris ici s'ajoute au sien ;
+        --   · le second, groupé, est le filet. La cible de la cible n'est pas
+        --     résolue au moment où la cible l'est, et un cadre peut naître en
+        --     cours de route — d'où le repostage des hooks, que `GuardedHook`
+        --     rend gratuit quand il n'y a rien de neuf.
         local function pass()
+            hookPortraits(self)
+            hookReputationColor(self)
+
             applyClassColors(self)
             applySpecIcons(self)
             applyReputationColor(self)
@@ -813,7 +1017,6 @@ BUI:RegisterModule(MODULE, {
 
         local function refresh()
             pass()
-            C_Timer.After(T.TIMING.UNIT_QUICK, pass)
             settle()
         end
 
@@ -829,16 +1032,17 @@ BUI:RegisterModule(MODULE, {
             if unit == "target" or unit == "focus" then refresh() end
         end)
 
-        self:RegisterEvent("INSPECT_READY", function(_, guid)
-            inspectReady(self, guid)
-        end)
-
         -- Un cadre de groupe peut n'exister qu'une fois le groupe formé, et un
         -- hook ne se pose que sur un cadre qui existe : on repasse. `GuardedHook`
         -- ne pose jamais deux fois le même, rappeler ne coûte donc rien.
         local rescale = function()
             hookPartyFrames(self)
             applyPartyScale(self)
+
+            -- Les décorations pendent de cadres protégés, comme les cadres de
+            -- groupe : elles se reposent aux mêmes moments, et pour la même
+            -- raison — ce que le combat a refusé se rattrape à sa sortie.
+            applyDecorations(self)
         end
 
         self:RegisterEvent("GROUP_ROSTER_UPDATE",       rescale)
@@ -855,6 +1059,7 @@ BUI:RegisterModule(MODULE, {
         restoreBars()
         restorePortraits()
         restoreReputationColor()
+        releaseAll()
         restorePartyScale()
     end,
 

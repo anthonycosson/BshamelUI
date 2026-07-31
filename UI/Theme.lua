@@ -220,16 +220,12 @@ T.TIMING = {
                             -- cadres apparus après coup (auras, fenêtres
                             -- chargées à la demande)
 
-    UNIT_QUICK    = 0.05,   -- second passage sur les cadres d'unités, juste
-                            -- après le premier. Même délai et même raison que
-                            -- `SHADE_QUICK` : le client rhabille un cadre
-                            -- **après** avoir annoncé le changement de cible, et
-                            -- sans ce rattrapage on voit le cadre passer par son
-                            -- état par défaut avant de prendre nos réglages
-    UNIT_SETTLE   = 0.2,    -- troisième passage, une fois la rafale retombée :
-                            -- la cible de la cible n'est pas résolue au moment
-                            -- où la cible l'est, et la réponse du serveur à une
-                            -- demande d'inspection arrive quand elle arrive
+    -- Filet des cadres d'unités, une fois la rafale retombée. Il ne porte
+    -- **rien de visible** : ce qui s'affiche est reposé par des hooks, au moment
+    -- où le client écrit. Il ne rattrape que ce qu'aucune écriture n'annonce —
+    -- la cible de la cible, qui n'est pas résolue quand la cible l'est, et un
+    -- cadre né en cours de route.
+    UNIT_SETTLE   = 0.2,
 
     CHAT_SETTLE   = 0.2,    -- regroupement des passages sur les cadres de chat :
                             -- le client annonce une couleur par type de

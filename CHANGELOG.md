@@ -112,20 +112,24 @@
   - l'**icône de spécialisation à la place du portrait**, sur les cinq cadres.
     Le portrait est déjà la case où l'on regarde pour savoir qui est en face :
     la spécialisation y répond plus précisément que le visage ou que l'icône de
-    classe. La spécialisation d'un autre joueur n'est connue que lorsque le jeu
-    peut l'inspecter — donc quand il est à proximité ; d'ici là son portrait est
-    laissé tel quel. En donjon, en raid et en arène, c'est-à-dire là où elle
-    compte, le groupe est à portée ;
+    classe. Elle se lit dans l'infobulle de l'unité, que le client remplit
+    lui-même — donc sans inspection, sans aller-retour serveur et sans limite de
+    portée : l'icône est là au moment où la cible l'est ;
+  - quatre **décorations qui s'éteignent** séparément : l'effet de repos,
+    l'icône de coin du portrait, la lueur de combat — sur tous les cadres
+    engagés, le vôtre comme celui de votre cible, de votre familier, de votre
+    focus et des boss — et l'icône JcJ avec le badge de prestige, sur le joueur,
+    la cible et le focus ;
   - l'**agrandissement des cadres de groupe** au-delà du maximum qu'autorise le
     curseur du mode Édition, de 100 à 250 %. Les deux styles de cadres de groupe
     sont couverts, et le réglage tient : le mode Édition repose sa taille en se
     refermant, on repose la nôtre derrière lui.
 
-  Rien n'est reconstruit : les couleurs d'origine des barres et l'échelle des
-  cadres de groupe sont relevées avant d'être changées, et reposées quand le
-  module s'éteint. La couleur de réputation, elle, n'est pas rallumée à
-  l'aveugle — on demande au client de la recalculer, lui seul sait quelles cibles
-  en ont une.
+  Rien n'est reconstruit, et rien n'attend : chaque réglage est reposé par un
+  hook au moment même où le client écrit sur la case concernée, pas par un
+  rafraîchissement périodique. Couleurs d'origine des barres, parents des
+  décorations et échelle des cadres de groupe sont relevés avant d'être changés,
+  et reposés quand le module s'éteint.
 
 ### Corrigé
 - **Mode sombre** — les cadres d'unités s'assombrissent de nouveau lorsqu'un

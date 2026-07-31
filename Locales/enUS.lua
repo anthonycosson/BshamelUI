@@ -159,6 +159,20 @@ BUI:RegisterLocale("enUS", {
         "Replaces the portrait with the specialization icon on the player, target, focus and " ..
         "target-of-target frames. Another player's specialization is only known once the game can " ..
         "inspect them, which needs them to be nearby; until then the portrait is left alone.",
+    ["Decorations"]                    = "Decorations",
+    ["Hide rested effect"]             = "Hide the rested effect",
+    ["Hide rested effect tip"] =
+        "Removes the animation that plays over your portrait while you are rested.",
+    ["Hide corner icon"]               = "Hide the corner icon",
+    ["Hide corner icon tip"] =
+        "Removes the small badge the game draws in the corner of your portrait.",
+    ["Hide combat glow"]               = "Hide the combat glow",
+    ["Hide combat glow tip"] =
+        "Removes the flashing glow around every engaged frame: yours, your pet's, your target's, "
+        .. "your focus and the boss frames.",
+    ["Hide PvP icon"]                  = "Hide the PvP icon",
+    ["Hide PvP icon tip"] =
+        "Removes the PvP and prestige badge from the player, target and focus frames.",
     ["Party frames"]                   = "Party frames",
     ["Enlarge party frames"]           = "Enlarge the party frames",
     ["Enlarge party frames tip"] =

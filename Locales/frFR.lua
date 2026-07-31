@@ -165,6 +165,20 @@ BUI:RegisterLocale("frFR", {
         "du focus et de la cible de la cible. La spécialisation d'un autre joueur n'est connue que " ..
         "lorsque le jeu peut l'inspecter, ce qui suppose qu'il soit à proximité ; d'ici là le " ..
         "portrait est laissé tel quel.",
+    ["Decorations"]                    = "Décorations",
+    ["Hide rested effect"]             = "Masquer l'effet de repos",
+    ["Hide rested effect tip"] =
+        "Retire l'animation que le jeu joue sur votre portrait lorsque vous êtes reposé.",
+    ["Hide corner icon"]               = "Masquer l'icône de coin",
+    ["Hide corner icon tip"] =
+        "Retire la pastille que le jeu dessine dans le coin de votre portrait.",
+    ["Hide combat glow"]               = "Masquer la lueur de combat",
+    ["Hide combat glow tip"] =
+        "Retire la lueur clignotante posée autour de chaque cadre engagé : le vôtre, celui de "
+        .. "votre familier, de votre cible, de votre focus et des boss.",
+    ["Hide PvP icon"]                  = "Masquer l'icône JcJ",
+    ["Hide PvP icon tip"] =
+        "Retire l'icône JcJ et le badge de prestige des cadres du joueur, de la cible et du focus.",
     ["Party frames"]                   = "Cadres de groupe",
     ["Enlarge party frames"]           = "Agrandir les cadres de groupe",
     ["Enlarge party frames tip"] =

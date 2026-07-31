@@ -1291,7 +1291,14 @@ changement de cible n'a pas un seul instant utile, il en a trois :
 
 **Ce qu'on fait** — les trois passages, dans cet ordre : immédiat, court délai,
 puis groupé. C'est ce que fait `refresher` dans `Modules/General.lua` pour le
-mode sombre, et `Modules/UnitFrames.lua` pour ses réglages.
+mode sombre, où l'on n'a pas de prise plus fine : le moteur teinte des dizaines
+de textures qu'on ne peut pas toutes coiffer une par une.
+
+**Quand on a cette prise, elle vaut mieux.** `Modules/UnitFrames.lua` est parti
+de ce motif-là et l'a quitté : trois passages laissaient encore voir le cadre
+par défaut, et se brancher sur la texture a supprimé le délai au lieu de le
+raccourcir (voir « Pour ne pas courir après le client, se brancher sur sa
+texture »). Le motif à trois passages est un pis-aller, pas une cible.
 
 La condition qui rend ce motif praticable est que chaque passage soit
 **idempotent** : il relit l'état voulu et le repose, sans partir de l'état
@@ -1301,6 +1308,128 @@ courant. Repasser ne coûte alors que le passage — jamais un clignotement (voi
 Effet de bord à ne pas oublier : ce qui **déclenche une requête** doit partir au
 premier passage. Une demande d'inspection posée seulement dans le passage groupé
 ajoute le retard du rafraîchissement à celui du serveur, et les deux se voient.
+
+## Pour ne pas courir après le client, se brancher sur sa texture
+
+**Symptôme** — un réglage posé sur un cadre d'unité s'applique « avec un temps
+de retard » : on cible quelqu'un, le cadre s'affiche un battement dans son état
+par défaut, puis se corrige. Ajouter un passage immédiat sur
+`PLAYER_TARGET_CHANGED` ne suffit pas, et déplacer les passages non plus.
+
+**Cause** — l'événement est annoncé **avant** que le client n'ait redessiné le
+cadre. Un passage posé sur l'événement travaille donc sur l'ancien état ; le
+client peint ensuite le sien par-dessus. Les hooks « déclarés »
+(`UnitFramePortrait_Update`, `CheckFaction`) n'y suffisent pas davantage : le
+client repasse sur la case **après** eux, à un moment qu'aucun contrat ne fixe.
+
+Toute la famille des correctifs par minuterie est perdue d'avance. Elle parie
+sur l'instant où le client s'y met, et le pari se perd des deux côtés : trop tôt
+on peint l'ancienne cible, trop tard le joueur a vu l'état par défaut.
+
+**Ce qu'on fait** — on se branche sur **la texture elle-même**, pas sur la
+fonction censée la peindre : `SetTexture` pour un portrait, `SetAlpha` et `Show`
+pour une plaque qu'on veut effacée. Quoi que le client écrive, et quand qu'il
+l'écrive, notre écriture part dans le même souffle. Il n'y a plus de moment à
+deviner, donc plus de délai.
+
+Deux précautions :
+
+- **couper la récursion.** Notre propre écriture rappelle le hook. Un drapeau
+  (`painting`) pour une pose de texture ; pour une opacité, il suffit de
+  n'agir que si la valeur reçue est non nulle — reposer zéro rappelle le hook
+  avec zéro, qui ne fait rien ;
+- **garder un passage groupé pour ce qu'aucune écriture n'annonce** : la cible
+  de la cible n'est pas résolue quand la cible l'est, et ce qui dépend d'une
+  réponse du serveur doit être **demandé au premier passage**, pas au dernier —
+  sinon le retard du rafraîchissement s'ajoute à celui du serveur.
+
+## La spécialisation d'un autre joueur se lit, elle ne se demande pas
+
+**Symptôme** — l'icône de spécialisation arrive systématiquement après coup sur
+une nouvelle cible, et parfois jamais. Aucun réglage du rafraîchissement n'y
+change rien : le délai ne vient pas de nous.
+
+**Cause** — l'inspection (`CanInspect` / `NotifyInspect` / `INSPECT_READY` /
+`GetInspectSpecialization`) est le chemin **déclaré**, et c'est un aller-retour
+serveur. Il coûte trois choses qu'aucun code ne rattrape : une latence, une
+portée de quelques dizaines de mètres, et une demande à la fois — deux cibles
+prises coup sur coup et la seconde attend.
+
+**Ce qu'on fait** — on lit l'infobulle de l'unité. Le client **connaît déjà** la
+spécialisation des joueurs qu'il affiche : il l'écrit là.
+`C_TooltipInfo.GetUnit(unit)` rend ces lignes comme des **données**, sans créer
+de frame et sans rien demander à personne — la réponse tombe dans la même image
+que la question.
+
+Trois points de mise en œuvre :
+
+- `TooltipUtil.SurfaceArgs(data)` est obligatoire, sinon `line.leftText` est
+  absent et la boucle ne trouve jamais rien (même piège que la lecture d'un
+  objet équipé dans `Modules/Character.lua`) ;
+- **on cherche par classe.** `UnitClass` rend le `classID` en troisième valeur ;
+  `GetNumSpecializationsForClassID` et `GetSpecializationInfoForClassID` donnent
+  les noms traduits des spécialisations de cette classe-là, et on ne cherche que
+  parmi eux. Deux classes peuvent partager un nom — un druide et un chaman ont
+  chacun une « Restauration » —, et passer par la classe lève l'ambiguïté sans
+  jamais avoir besoin du **nom traduit de la classe**, qui se décline en genre
+  selon les langues et demanderait une table d'exceptions par locale ;
+- une lecture d'infobulle **alloue une table**. Elle n'est donc appelée que
+  depuis un passage de rafraîchissement, jamais depuis un hook de texture
+  (règle 7) : le résultat est mis en cache par GUID, et c'est le cache que les
+  hooks consultent. Le `false` mis en cache compte autant que le nombre — sans
+  lui, une unité sans ligne de spécialisation ferait relire son infobulle à
+  chaque écriture du client.
+
+**Trouvé en lisant** BetterBlizzFrames. Aucun code n'en a été repris (règle 8) :
+ce qu'on y a lu, c'est *que la réponse est dans l'infobulle*. Leur mise en œuvre
+compare la ligne entière à « nom de spé + nom de classe », ce qui les oblige à
+gérer les formes genrées et à corriger l'espagnol à la main ; passer par le
+`classID` évite tout cela.
+
+## Une décoration contextuelle se range, elle ne se cache pas
+
+**Symptôme** — masquer la lueur de combat, l'effet de repos ou l'icône de coin
+« ne tient pas » : l'élément revient au prochain changement d'état.
+
+**Cause** — ce sont des éléments **contextuels**. Le client décide lui-même de
+les montrer et de les cacher, et deux d'entre eux portent une animation qui
+pilote leur opacité. `Hide` est défait par le prochain `Show`, `SetAlpha(0)` par
+la piste d'opacité de l'animation.
+
+**Ce qu'on fait** — on les **reparente** à une frame masquée (`W.Hidden`). Un
+élément rangé là ne se dessine plus, quoi que le client lui demande, sans hook à
+poser ni moment à deviner. Lui rendre son parent d'origine le remet exactement
+où il était.
+
+Deux précautions :
+
+- ces éléments pendent de cadres **protégés** : reparenter en combat lève une
+  erreur d'action bloquée. On se garde par `InCombatLockdown` et on rattrape à
+  `PLAYER_REGEN_ENABLED` ;
+- on garde le parent relevé avant de le changer, jamais un parent supposé.
+
+Les chemins relevés sur le client, tous sous
+`PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual` sauf mention :
+`PlayerRestLoop` (repos), `PlayerPortraitCornerIcon` (coin), `PrestigeBadge` /
+`PrestigePortrait` / `PvpIcon` (JcJ, également sous
+`TargetFrameContent.TargetFrameContentContextual` pour la cible et le focus).
+
+**La lueur de combat n'est pas une décoration du cadre du joueur.** C'est un même
+signal posé sur **chaque cadre engagé**, et son nom change d'un cadre à l'autre :
+
+| Cadre | Chemin |
+|---|---|
+| joueur | `PlayerFrame.PlayerFrameContainer.FrameFlash` |
+| cible / focus | `<Frame>.TargetFrameContainer.Flash` |
+| boss 1 à 5 | `Boss<i>TargetFrame.TargetFrameContainer.Flash` |
+| familier | `PetFrameFlash`, `PetAttackModeTexture` |
+
+N'en éteindre qu'une partie ne se lit pas comme un réglage partiel mais comme un
+réglage qui ne marche pas — le cadre du joueur se tait, celui de la cible
+continue de battre, et on conclut que l'option est cassée. Le nom qui diffère
+(`FrameFlash` contre `Flash`) est la raison de citer les chemins un par un
+plutôt que de croire à une convention.
+
 ---
 
 ## Annoter les objets rangés sans connaître les cadres qui les portent
