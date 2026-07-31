@@ -74,14 +74,17 @@ T.SIZE = {
     CHROME_SIDE    = 10,
     CHROME_BOTTOM  = 10,
 
-    -- Bouton de la minicarte, à 1,3 fois les proportions du client (qui pose une
-    -- bordure de 53 pixels pour une zone cliquable de 31) : le bouton d'un addon
-    -- se cherche à la souris, il gagne à être un peu plus franc — mais au double
-    -- il cessait d'être un bouton de minicarte pour devenir une pastille.
+    -- Bouton de la minicarte, aux proportions **exactes** du client : une
+    -- bordure de 53 pixels pour une zone cliquable de 31. On les a agrandies de
+    -- moitié un temps, en se disant que le bouton d'un addon se cherche à la
+    -- souris ; il ne se cherchait pas davantage, il dépassait simplement de la
+    -- rangée. Un bouton d'addon qui a la taille de ceux du jeu se fond dans la
+    -- même rangée, ce qui est exactement ce qu'on lui demande.
+    --
     -- Le rapport entre les deux valeurs, lui, ne se touche pas : c'est lui qui
     -- loge l'icône dans le trou.
-    MINIMAP_BUTTON = 40,
-    MINIMAP_BORDER = 69,
+    MINIMAP_BUTTON = 31,
+    MINIMAP_BORDER = 53,
 
     -- L'icône est **centrée** sur le bouton, et non posée par son coin comme le
     -- veut l'usage. L'usage suppose une icône carrée que la bordure recouvre sur
@@ -99,7 +102,7 @@ T.SIZE = {
     -- Trop grand, le disque déborde sur l'anneau ; trop petit, il laisse un jour.
     -- Le premier défaut est le plus discret des deux à petite taille : il est
     -- passé inaperçu jusqu'à ce qu'agrandir le bouton le rende évident.
-    MINIMAP_ICON   = 33,
+    MINIMAP_ICON   = 25,
     MINIMAP_ICON_X = 0,
     MINIMAP_ICON_Y = 0,
 
@@ -109,7 +112,37 @@ T.SIZE = {
     -- Il vaut un peu moins que le rayon du bouton, de sorte que celui-ci mord
     -- sur l'anneau de la minicarte au lieu de flotter à côté. Grandir le bouton
     -- sans grandir cet écart le ferait empiéter sur la carte.
-    MINIMAP_PAD    = 13,
+    MINIMAP_PAD    = 10,
+
+    -- Côté d'une icône **carrée** posée dans le même trou, **quand le client ne
+    -- sait pas masquer**. Le disque du logo remplit le trou ; une icône d'objet
+    -- ou de sort a des angles, et à défaut de masque circulaire pour les couper,
+    -- c'est le carré inscrit dans le cercle qui donne sa taille — au-delà, les
+    -- quatre coins débordent sur l'anneau. Le carré inscrit dans un trou de
+    -- 25 pixels mesure 25 / √2 ≈ 17,7 : on reste en dessous.
+    MINIMAP_ICON_SQUARE = 17,
+
+    -- Tiroir des boutons d'addons. C'est une liste, comme le menu de
+    -- téléportation : elle en reprend donc la largeur et les marges, et n'a que
+    -- sa hauteur de ligne à elle.
+    --
+    -- Cette hauteur est celle d'un bouton de minicarte du client : ce sont
+    -- exactement ces boutons-là qu'on y range, et on ne les redimensionne pas —
+    -- un bouton mis à l'échelle par nos soins ne retrouverait jamais sa taille
+    -- d'origine si son addon la relit. C'est aussi la largeur de la colonne
+    -- d'icônes, sur laquelle chaque bouton est centré.
+    TRAY_CELL      = 32,
+    TRAY_GAP       = 4,     -- écart entre le tiroir et le bouton qui l'ouvre
+    TRAY_PAD       = 8,
+
+    -- Menu de téléportation. Sa largeur est celle d'un nom d'objet complet
+    -- (« Pierre de foyer du festival de la bière ») à la police des libellés.
+    MENU_W         = 240,
+    MENU_ROW_H     = 24,
+    MENU_ICON      = 18,
+    MENU_PAD       = 8,
+    MENU_GAP       = 6,     -- écart entre le menu et le bouton qui l'ouvre
+    MENU_ARROW     = 12,    -- flèche d'une ligne qui ouvre un sous-menu
 
     COUNTDOWN_PAD  = 4,     -- retrait du décompte dans la fenêtre qu'il coiffe
 
@@ -194,6 +227,43 @@ T.SIZE = {
     -- le texte qui déborde sur le modèle passe dessous et disparaît.
     SLOT_INFO_LEVEL = 10,
 
+    -- Panneaux autonomes de l'addon (suivi des résurrections de combat, barre de
+    -- marqueurs, chrono mythique+, rappel de file). Ce sont de petites fenêtres
+    -- posées à même l'écran : elles partagent une géométrie, sans quoi quatre
+    -- pièces du même addon auraient quatre marges différentes.
+    -- `PANEL_PAD` est déjà pris par le retrait d'un panneau creusé de la fenêtre
+    -- d'options : ces trois-là portent donc leur propre préfixe.
+    TOOL_PAD       = 8,
+    TOOL_GAP       = 4,     -- écart entre deux lignes d'un panneau
+    TOOL_TITLE_H   = 18,
+
+    -- Suivi des résurrections de combat. La taille est un réglage : l'icône vit
+    -- au milieu de l'écran d'un combat de raid, et ce qu'il faut voir d'un coup
+    -- d'œil n'a pas la même taille pour tout le monde. Les bornes tiennent les
+    -- extrêmes hors de portée — en dessous le compteur n'est plus lisible,
+    -- au-dessus l'icône couvre le champ de bataille.
+    BATTLE_RES_ICON = 40,
+    BATTLE_RES_MIN  = 24,
+    BATTLE_RES_MAX  = 80,
+
+    -- Barre de marqueurs. La case est celle d'un bouton de barre d'action réduit :
+    -- neuf cases doivent tenir sur une rangée sans que le panneau devienne une
+    -- deuxième barre d'action.
+    MARKER_CELL    = 26,
+    MARKER_GAP     = 3,
+    MARKER_ROW_GAP = 6,     -- écart entre la rangée de marqueurs et les boutons
+    MARKER_BUTTON_W = 110,  -- vérification de présence et pull
+
+    -- Chrono mythique+. Assez large pour un nom de donjon complet à la police des
+    -- libellés, comme le menu de téléportation.
+    KEY_TIMER_W    = 220,
+    KEY_ROW_H      = 16,    -- ligne de palier ou de comparatif
+
+    -- Rappel de la file. Une bannière, donc plus large que haute : elle porte un
+    -- nom de donjon et un bouton.
+    REMINDER_W     = 300,
+    REMINDER_ICON  = 20,
+
     -- Fraction rognée sur chaque bord d'une icône avant d'y poser le contour.
     --
     -- Les icônes de sort portent un liseré sombre **dans leur image**. Sans
@@ -257,6 +327,43 @@ T.TIMING = {
                             -- fondu : au moment où le client l'annonce, son
                             -- emplacement est encore opaque, donc encore compté
 
+    -- Regroupement des relectures du pourtour de la minicarte. Large : les
+    -- boutons d'addons apparaissent au chargement de leur addon, donc en rafale
+    -- au démarrage puis presque jamais. Rien ne les annonce — c'est le seul
+    -- endroit du tiroir qui attende au lieu d'écouter.
+    TRAY_SETTLE   = 1.0,
+
+    -- Regroupement des reconstructions du menu de téléportation. Un objet qui
+    -- entre dans les sacs émet un événement par pile déplacée, et reconstruire
+    -- le menu relit toute la liste.
+    MENU_SETTLE   = 0.5,
+
+    -- Sursis d'un sous-menu quand le curseur quitte la ligne qui l'ouvre. Il y a
+    -- un écart entre les deux : sans ce délai, le sous-menu se refermerait sous
+    -- le curseur pendant la traversée.
+    MENU_HOVER    = 0.25,
+
+    -- Cadence des passes de vente de camelote. Le serveur limite le débit des
+    -- ventes : voir `Modules/Bags.lua`, qui explique pourquoi une seule passe ne
+    -- suffit pas.
+    SELL_PASS     = 0.5,
+
+    -- Bride sur la reprise d'une CVar qu'un autre addon a écrite après nous.
+    -- Assez court pour que le réglage reprenne la main tout de suite, assez long
+    -- pour qu'un désaccord entre deux addons reste une oscillation lente et
+    -- observable au lieu d'une boucle.
+    CVAR_SETTLE   = 0.5,
+
+    -- Cadence des panneaux de raid. Ils affichent des secondes : les rafraîchir
+    -- à chaque image serait payer soixante fois le même texte (règle 7).
+    BATTLE_RES    = 0.2,    -- charges de résurrection et temps avant la suivante
+    KEY_TIMER     = 0.1,    -- chrono mythique+, qui affiche des dixièmes
+
+    -- Regroupement des morts annoncées. Un wipe tue vingt personnes en une
+    -- seconde : sans regroupement, c'est vingt lignes envoyées au groupe, donc
+    -- une coupure du chat par le serveur. Une seule ligne les nomme toutes.
+    DEATH_SETTLE  = 1.0,
+
     HOVER         = 0.1,    -- sondage de la fenêtre survolée, pendant qu'un
                             -- modificateur est tenu. Assez court pour que le
                             -- capteur de molette paraisse instantané, assez long
@@ -300,6 +407,12 @@ local FONT_CANDIDATES = {
     -- Texte de la fenêtre de copie. La police du chat d'abord : on y relit ce
     -- qu'on vient de lire dans le chat, à la même largeur de caractère.
     COPY         = { "ChatFontNormal", "GameFontHighlight" },
+
+    -- Chrono mythique+. Une police à contour, pour la même raison que le
+    -- décompte : le temps restant se lit par-dessus le décor d'un donjon, où une
+    -- police sans contour se noie dès que le fond est clair.
+    KEY_TIMER    = { "NumberFont_Outline_Large", "NumberFontNormalLarge",
+                     "GameFontNormalLarge" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
     LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },
@@ -695,6 +808,11 @@ T.ATLAS = {
     ARROW_RIGHT = "NPE_ArrowRight",
     CHECK       = "common-icon-checkmark",
 
+    -- Croix des boutons « effacer ». Celle du client, pour la même raison que le
+    -- reste : un joueur la reconnaît sans qu'on ait à écrire le mot dessus, ce
+    -- qui laisse un bouton de la taille d'une case de marqueur.
+    CLEAR       = "common-icon-redx",
+
     -- Contour posé autour d'une icône par le mode sombre.
     --
     -- La bordure de sort du client, et pas un anneau quelconque : ses coins sont
@@ -733,12 +851,64 @@ T.TEXTURE = {
     -- une dépendance de plus, qui peut ne pas prendre (voir `API_NOTES.md`).
     MINIMAP_ICON      = "Interface\\AddOns\\BshamelUI\\media\\logo",
 
+    -- Masque circulaire, pour qu'une icône **carrée** remplisse le trou d'un
+    -- bouton de minicarte au lieu de s'y inscrire. Celui du portrait de
+    -- personnage : c'est un disque plein, il est là depuis toujours, et il n'a
+    -- pas de mode répétition — un masque et une répétition sont incompatibles
+    -- (voir `dev/docs/API_NOTES.md`).
+    CIRCLE_MASK       = "Interface\\CharacterFrame\\TempPortraitAlphaMask",
+
+    -- Bouton du tiroir d'addons : le sac du client. Ce qu'il ouvre est
+    -- littéralement un contenant — on y range ce qui traînait autour de la
+    -- minicarte —, et l'icône existe depuis la première extension.
+
+    -- Bouton du menu de téléportation : l'icône de la pierre de foyer. C'est le
+    -- premier élément du menu, et celui que tout le monde reconnaît.
+    MINIMAP_TELEPORT  = "Interface\\Icons\\INV_Misc_Rune_01",
+
+    -- Repli d'une ligne qui ouvre une liste de donjons. Elle porte normalement
+    -- l'icône que le **grimoire** donne à ce tiroir-là ; cette montre ne sert que
+    -- si le grimoire n'en a pas.
+    MENU_TIMEWAYS     = "Interface\\Icons\\INV_Misc_PocketWatch_01",
+
     -- Bouton de copie posé sur le cadre de chat : l'icône de note du client.
     -- C'est déjà ce qu'il met sur « du texte qu'on lit et qu'on recopie », et
     -- elle existe depuis toujours. Une icône de presse-papier n'existe pas dans
     -- le jeu, l'inventer ferait une pièce rapportée de plus.
     CHAT_COPY         = "Interface\\Buttons\\UI-GuildButton-PublicNote-Up",
+
+    -- Planche des huit icônes de ciblage, celle que le client utilise partout —
+    -- sur les unités marquées, dans son propre menu de marqueurs et sur la
+    -- minicarte. C'est une planche de quatre colonnes sur quatre rangées dont
+    -- les huit icônes occupent les deux premières : voir `T.RaidMarkerCoords`.
+    RAID_MARKERS      = "Interface\\TargetingFrame\\UI-RaidTargetingIcons",
 }
+
+--- Coordonnées de l'icône de ciblage n° `index` dans la planche
+--- `T.TEXTURE.RAID_MARKERS`.
+---
+--- Les icônes sont rangées de gauche à droite puis de haut en bas, quatre par
+--- rangée, chacune occupant un quart de la planche dans les deux sens : étoile,
+--- cercle, losange, triangle, lune, carré, croix, crâne.
+---@param index number  1 à 8
+---@return number left, number right, number top, number bottom
+function T.RaidMarkerCoords(index)
+    local column = (index - 1) % 4
+    local row    = math.floor((index - 1) / 4)
+    return column * 0.25, column * 0.25 + 0.25,
+           row    * 0.25, row    * 0.25 + 0.25
+end
+
+--- Icône de ciblage qui illustre le marqueur au sol n° `index`.
+---
+--- Les deux numérotations ne coïncident pas, et rien dans le client ne les
+--- relie : le marqueur au sol n° 1 est le **carré bleu**, qui porte l'icône de
+--- ciblage n° 6. Cette table est donc une donnée de jeu, comme les listes
+--- d'objets du menu de téléportation, et elle ne façonne rien : une entrée fausse
+--- ne dessine pas le mauvais marqueur au sol — le clic passe par un attribut
+--- sécurisé qui porte l'index, pas l'icône —, elle met la mauvaise vignette sur
+--- le bouton.
+T.WORLD_MARKER_ICON = { 6, 4, 3, 7, 5, 1, 2, 8 }
 
 -- =========================================================================
 --  Barre de titre : on la relève, on ne la nomme pas
@@ -847,6 +1017,11 @@ T.TEMPLATES = {
     -- du client sans le tainter (voir `UI/Widgets/Mover.lua`). Sans candidat
     -- disponible, les cadres protégés ne se déplacent pas ; les autres, si.
     SECURE_HANDLER = { "SecureHandlerBaseTemplate" },
+
+    -- Seul moyen pour un addon de lancer un sort ou d'utiliser un objet sur un
+    -- clic : le client refuse ces actions depuis du code Lua ordinaire. Sans
+    -- candidat disponible, le menu de téléportation ne se construit pas.
+    SECURE_ACTION  = { "SecureActionButtonTemplate" },
 }
 
 local templateCache = {}

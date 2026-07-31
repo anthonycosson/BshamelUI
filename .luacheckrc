@@ -57,9 +57,34 @@ read_globals = {
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
     "C_Item", "C_TooltipInfo", "TooltipUtil", "ItemLocation",
 
-    -- Minicarte, curseur et écran
-    "Minimap", "GetCursorPosition", "IsMouseButtonDown",
+    -- Minicarte, curseur et écran. Les deux porteurs de boutons autour de la
+    -- minicarte sont cités parce qu'on teste leur présence : le client a déplacé
+    -- les siens d'une extension à l'autre.
+    "Minimap", "MinimapBackdrop", "MinimapCluster",
+    "GetCursorPosition", "IsMouseButtonDown",
     "GetScreenWidth", "GetScreenHeight",
+
+    -- Jouets, objets et sorts du menu de téléportation. `C_ChallengeMode` donne
+    -- la rotation de donjons de la saison en cours, et la téléportation de
+    -- chacun quand le client la publie.
+    "C_ToyBox", "PlayerHasToy", "C_Spell", "GetSpellInfo",
+    "IsSpellKnown", "IsPlayerSpell", "C_ChallengeMode",
+    -- Le grimoire : c'est là que se trouvent les téléportations de donjon hors
+    -- saison, que le client ne publie nulle part ailleurs. Elles y sont rangées
+    -- par extension dans des **tiroirs**, d'où les deux fonctions de flyout —
+    -- citées sous leur ancien nom, qui sert de repli.
+    "C_SpellBook", "GetFlyoutInfo", "GetFlyoutSlotInfo",
+
+    -- Macro qui ouvre le menu depuis une barre d'action, et cadre survolé au
+    -- moment du clic — c'est lui qui dit où poser le menu.
+    "CreateMacro", "EditMacro", "GetMacroIndexByName",
+    "GetMouseFoci", "GetMouseFocus", "WorldFrame",
+    -- Le client publie ses extensions dans l'ordre, sous `EXPANSION_NAME0`,
+    -- `EXPANSION_NAME1`… : c'est ce qui date un tiroir sans le nommer.
+    "GetNumExpansions",
+
+    -- Vente de la camelote et confirmation de destruction
+    "C_MerchantFrame", "DELETE_ITEM_CONFIRM_STRING", "STATICPOPUP_NUMDIALOGS",
 
     -- Réglages du client
     "GetCVar", "SetCVar",
@@ -120,4 +145,35 @@ read_globals = {
     "GetNumQuestChoices", "GetNumActiveQuests", "GetNumAvailableQuests",
     "GetActiveTitle", "SelectActiveQuest", "SelectAvailableQuest",
     "IsActiveQuestTrivial", "IsAvailableQuestTrivial",
+
+    -- Groupe et raid
+    "IsInGroup", "IsInRaid", "GetNumGroupMembers", "UnitName", "UnitIsConnected",
+    "UnitIsGroupLeader", "UnitIsGroupAssistant", "SendChatMessage",
+    "DoReadyCheck", "C_PartyInfo", "LE_PARTY_CATEGORY_INSTANCE",
+    -- Le panneau de contrôle des cadres de raid : on teste sa présence avant de
+    -- le ranger, comme les autres cadres du client.
+    "CompactRaidFrameManager",
+
+    -- Journal de combat. Les drapeaux disent à qui appartient une unité ; `bit`
+    -- est la bibliothèque de manipulation de bits du client, absente du Lua 5.1
+    -- standard sur lequel se base l'analyse.
+    "CombatLogGetCurrentEventInfo", "bit",
+    "COMBATLOG_OBJECT_TYPE_PLAYER", "COMBATLOG_OBJECT_AFFILIATION_MINE",
+    "COMBATLOG_OBJECT_AFFILIATION_PARTY", "COMBATLOG_OBJECT_AFFILIATION_RAID",
+    "LoggingCombat",
+
+    -- Auras, charges de sort et enchantements d'arme
+    "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
+
+    -- Clés mythiques et chrono de donjon
+    "C_ChallengeMode", "C_MythicPlus", "NUM_BAG_SLOTS",
+    "GetCursorInfo", "ClearCursor",
+    "GetWorldElapsedTimers", "GetWorldElapsedTime",
+
+    -- Recherche de groupe
+    "C_LFGList", "LFGListApplicationDialog", "CompleteLFGRoleCheck",
+    "AcceptGroup", "StaticPopup_Hide", "C_SpellBook",
+
+    -- Instances
+    "GetInstanceInfo",
 }

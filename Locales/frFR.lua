@@ -23,6 +23,12 @@ BUI:RegisterLocale("frFR", {
     ["Cannot open in combat"]   = "La fenêtre d'options ne peut pas être ouverte en combat.",
     ["Module disabled tooltip"] = "Ce module est désactivé.",
     ["Version"]                 = true,
+    ["Blocked action watch"]    = "Veille des actions bloquées :",
+    ["Blocked action needs errors"] =
+        "L'affichage des erreurs Lua a été allumé : le jeu ne signale les actions bloquées " ..
+        "qu'à cette condition. Il retrouvera son état en éteignant la veille.",
+    ["On"]                      = "activée",
+    ["Off"]                     = "désactivée",
 
     -- Modules annoncés (Modules/Upcoming.lua)
     ["Coming soon"]             = "Bientôt disponible",
@@ -51,11 +57,6 @@ BUI:RegisterLocale("frFR", {
 
     -- Module General
     ["General"]                        = "Général",
-    ["Minimap"]                        = "Minicarte",
-    ["Minimap button"]                 = "Afficher le bouton BshamelUI",
-    ["Minimap button tip"] =
-        "Ajoute un bouton à côté de la minicarte. Un clic gauche ouvre cette fenêtre, "
-        .. "un glisser le déplace autour.",
     ["Enable dark mode"]               = "Activer le mode sombre",
     ["Dark action bars tip"]           = "Boutons, bordures et habillage derrière chaque barre d'action.",
     ["Cast bar"]                       = "Barre d'incantation",
@@ -146,6 +147,19 @@ BUI:RegisterLocale("frFR", {
 
     -- Modules ActionBars et UnitFrames
     ["Action bars"]                    = "Barres d'action",
+    ["Input"]                          = "Saisie",
+    ["Cast on key down"]               = "Lancer les actions",
+    ["Cast on key down tip"] =
+        "Si l'action part au moment où la touche s'enfonce, ou quand elle remonte. Vaut pour "
+        .. "toutes les barres d'action, et pour les clics comme pour les touches.",
+    ["Cast on key down notice"] =
+        "Le jeu a son propre défaut ici, et d'autres addons écrivent le même réglage. C'est "
+        .. "pourquoi il y a trois choix et non une case à cocher : « Défaut du jeu » ne touche "
+        .. "à rien, les deux autres forcent dans un sens ou dans l'autre. Éteindre ce module "
+        .. "rend au jeu la valeur qu'il avait avant.",
+    ["Game default"]                   = "Défaut du jeu",
+    ["Key down"]                       = "À l'enfoncement",
+    ["Key up"]                         = "Au relâchement",
     ["Unit frames"]                    = "Cadres d'unités",
     ["Appearance"]                     = "Apparence",
     ["Dark mode"]                      = "Mode sombre",
@@ -218,8 +232,61 @@ BUI:RegisterLocale("frFR", {
     ["Copy chat"]                      = "Copier le chat",
     ["Copy chat hint"]                 = "Tout est sélectionné : Ctrl+C pour copier.",
 
+    -- Module Minimap
+    ["Minimap"]                        = "Minicarte",
+    ["Buttons"]                        = "Boutons",
+    ["Minimap button"]                 = "Afficher le bouton BshamelUI",
+    ["Minimap button tip"] =
+        "Clic gauche : liste d'addons\n"
+        .. "Clic droit : options\n"
+        .. "Glisser : déplacer autour de la minicarte",
+    ["Addon buttons empty"]            = "Aucune icône d'addon à afficher.",
+    ["Group addon buttons"]            = "Regrouper les boutons d'addons",
+    ["Group addon buttons tip"] =
+        "Range le bouton de minicarte de chaque autre addon dans un tiroir qui s'ouvre à côté "
+        .. "du bouton BshamelUI, au clic gauche. Les boutons du jeu ne sont pas touchés, et "
+        .. "éteindre le réglage remet chaque bouton exactement où il était. Demande le bouton "
+        .. "BshamelUI : c'est lui qui ouvre le tiroir.",
+    ["Teleports"]                      = "Téléportations",
+    ["Teleport menu"]                  = "Afficher un bouton de téléportation",
+    ["Teleport menu tip"] =
+        "Ajoute un bouton à côté de la minicarte : vos pierres de foyer, et les donjons de la "
+        .. "saison en cours dans un sous-menu. Un clic sur une ligne l'utilise.",
+    ["Teleport menu notice"] =
+        "Le menu ne montre que ce que ce personnage possède ou connaît réellement : la pierre "
+        .. "de foyer choisie ci-dessus, les pierres qui ont leur propre temps de recharge, et "
+        .. "chaque donjon de la saison en cours vers lequel vous avez une téléportation, voie "
+        .. "héroïque ou mythique. Il ne s'ouvre pas en combat : le jeu refuse de confier un "
+        .. "sort à un addon pendant un combat, et de toute façon rien de ce qu'il contient ne "
+        .. "s'utilise en combat.",
+    ["Teleport in combat"]             = "Le menu de téléportation ne s'ouvre pas en combat.",
+    ["Hearthstones"]                   = "Pierres de foyer",
+    ["Hearthstone choice"]             = "Pierre de foyer personnalisée",
+    ["Hearthstone choice tip"] =
+        "Quelle pierre de foyer le menu propose. Elles partagent toutes le même temps de "
+        .. "recharge et vont toutes au même endroit : le menu n'en montre donc qu'une, celle "
+        .. "que vous préférez regarder. La liste ne contient que celles que ce personnage "
+        .. "possède.",
+    ["Other expansions"]               = "Autres extensions",
+    ["Teleport macro"]                 = "Macro pour la barre d'action",
+    ["Teleport macro tip"] =
+        "Crée une macro qui ouvre ce menu. Glissez-la depuis la fenêtre des macros sur une barre "
+        .. "d'action : un emplacement n'accepte que ce que le jeu y range, et une macro en fait "
+        .. "partie.",
+    ["Create"]                         = "Créer",
+    ["Teleport macro name"]            = "Téléportation",
+    ["Teleport macro created"] =
+        "Macro « %s » créée. Ouvrez la fenêtre des macros et glissez-la sur une barre d'action.",
+    ["Teleport macro updated"]         = "La macro « %s » est déjà là, et à jour.",
+    ["Teleport macro failed"]          = "Plus d'emplacement de macro libre : libérez-en un et réessayez.",
+    -- Toutes les familles commencent par « Voie » : voie héroïque, voie
+    -- temporelle. Un seul préfixe suffit donc, et il les prend toutes — y
+    -- compris celles qu'une extension ajoutera.
+    ["Teleport spell prefixes"]        = "Voie",
+
     -- Module Bags
     ["Bags"]                           = "Sacs",
+    ["Sold junk"]                      = "Camelote vendue pour %s.",
     ["Merchants"]                      = "Marchands",
     ["Auto-sell junk"]                 = "Vendre automatiquement la camelote",
     ["Auto-sell junk tip"]             = "Vend les objets gris à chaque marchand.",
@@ -228,26 +295,136 @@ BUI:RegisterLocale("frFR", {
     ["Fill delete confirmation tip"] =
         "Saisit le mot de confirmation à votre place quand la destruction d'un objet le demande.",
 
-    -- Modules Keystones et RaidTools
+    -- Module Keystones
     ["Keystones"]                      = "Clés mythiques",
     ["Answer keys request"]            = "Répondre à !keys dans le chat",
     ["Answer keys request tip"] =
         "Répond avec votre clé quand quelqu'un tape !keys dans le chat de groupe ou de raid.",
+    ["Auto slot keystone"]             = "Insérer la clé automatiquement",
+    ["Auto slot keystone tip"] =
+        "Place votre clé dans la fontaine de puissance dès qu'elle s'ouvre. Une clé déjà posée "
+        .. "par quelqu'un d'autre n'est pas touchée.",
+    ["Keystones notice"] =
+        "La réponse est le lien de la clé lui-même dès qu'elle est trouvée dans les sacs : chacun "
+        .. "peut donc la survoler. Sinon, le donjon et le niveau sont écrits en toutes lettres.",
+    ["No keystone"]                    = "Pas de clé.",
+
+    -- Module GroupFinder
+    ["Group finder"]                   = "Recherche de groupe",
+    ["Signing up"]                     = "Inscription",
+    ["Keep signup note"]               = "Conserver la note d'inscription",
+    ["Keep signup note tip"] =
+        "Retient ce que vous écrivez dans la note de candidature et le remet la fois suivante.",
+    ["Auto role check"]                = "Valider les vérifications de rôle",
+    ["Auto role check tip"] =
+        "Répond automatiquement à la vérification des rôles, avec ceux que vous aviez déjà choisis.",
+    ["Auto accept invite"]             = "Accepter l'invitation attendue",
+    ["Auto accept invite tip"] =
+        "Accepte une invitation de groupe quand une candidature est en cours. Les invitations de "
+        .. "n'importe qui d'autre restent à votre main.",
+    ["Queue reminder"]                 = "Rappeler ce que j'ai rejoint",
+    ["Queue reminder tip"] =
+        "Affiche le donjon ou le raid que vous venez de rejoindre, avec un bouton de "
+        .. "téléportation quand le personnage connaît celle qui va avec.",
+    ["Queue reminder notice"] =
+        "Le rappel reste à l'écran jusqu'à l'entrée dans l'instance ou jusqu'au premier combat. "
+        .. "Il se déplace à la souris.",
+    ["Teleport"]                       = "Téléportation",
+
+    -- Module RaidTools
     ["Raid tools"]                     = "Outils de raid",
     ["Combat"]                         = true,
     ["Battle res tracker"]             = "Suivi des résurrections de combat",
     ["Battle res tracker tip"] =
         "Affiche le nombre de résurrections de combat restantes et le délai avant la suivante.",
+    ["Battle res size"]                = "Taille du suivi",
+    ["Battle res size tip"] =
+        "Côté de l'icône, en pixels. Le panneau se déplace à la souris.",
+
+    ["Group tools"]                    = "Outils de groupe",
+    ["World markers"]                  = "Barre de marqueurs au sol",
+    ["World markers tip"] =
+        "Une barre avec les huit marqueurs au sol, une vérification de présence et un pull timer. "
+        .. "Elle se déplace à la souris.",
+    ["World marker number"]            = "Marqueur au sol %d",
+    ["World marker tip"]               = "Pose ce marqueur au sol là où vous visez.",
+    ["Clear markers"]                  = "Retirer les marqueurs",
+    ["Clear markers tip"]              = "Retire tous les marqueurs au sol.",
+    ["Ready check"]                    = "Vérif. de présence",
+    ["Ready check tip"] =
+        "Lance une vérification de présence. Demande d'être chef ou promu.",
+    ["Pull"]                           = "Pull",
+    ["Pull tip"] =
+        "Lance le décompte et l'annonce dans le chat du groupe. Demande d'être chef ou promu.",
+    ["Pull seconds"]                   = "Pull (%d)",
+    ["Pull announce"]                  = "Pull dans %d secondes.",
+    ["Pull timer"]                     = "Durée du pull",
+    ["Pull timer tip"]                 = "Nombre de secondes décomptées par le bouton de pull.",
+    ["Hide raid manager"]              = "Masquer le panneau de contrôle du jeu",
+    ["Hide raid manager tip"] =
+        "Masque l'onglet que le jeu colle contre le bord gauche de l'écran en raid.",
+    ["Group tools notice"] =
+        "La barre n'apparaît ni ne disparaît en combat : le jeu refuse de montrer ou de cacher un "
+        .. "bouton de marqueur pendant qu'on se bat. Elle suit de nouveau le réglage dès la fin "
+        .. "du combat.",
+    ["Need lead"]                      = "Il faut être chef ou promu pour ça.",
+
+    ["Buffs"]                          = true,
     ["Ready check buffs"]              = "Contrôler les buffs au ready check",
     ["Ready check buffs tip"] =
-        "Signale qui n'a ni nourriture, ni flacon, ni buff de raid "
-        .. "au lancement d'une vérification de disponibilité.",
-    ["World markers"]                  = "Panneau de marqueurs au sol",
-    ["World markers tip"]              = "Ouvre un panneau pour poser et retirer les marqueurs au sol.",
+        "Signale qui n'a ni nourriture ni flacon au lancement d'une vérification de présence, et "
+        .. "combien de temps tiennent encore les vôtres. Vous seul voyez le rapport.",
+    ["Check food"]                     = "Contrôler la nourriture",
+    ["Check food tip"]                 = "Liste tout le monde sans buff de nourriture.",
+    ["Check flask"]                    = "Contrôler les flacons",
+    ["Check flask tip"] =
+        "Liste tout le monde sans flacon, et ceux dont le flacon est sur le point d'expirer.",
+    ["Check weapon enchant"]           = "Contrôler l'enchantement d'arme",
+    ["Check weapon enchant tip"] =
+        "Prévient quand votre enchantement d'arme manque ou va expirer. Seule votre arme est "
+        .. "lisible : le jeu ne publie pas celle des autres.",
+    ["Expiry warning"]                 = "Alerter en dessous de",
+    ["Expiry warning tip"] =
+        "Minutes restantes en dessous desquelles un flacon ou un enchantement est signalé.",
+    ["Missing food"]                   = "Sans nourriture : %s",
+    ["Missing flask"]                  = "Sans flacon : %s",
+    ["Flask expiring"]                 = "Flacon bientôt fini : %s",
+    ["Weapon enchant missing"]         = "Votre arme n'est pas enchantée.",
+    ["Weapon enchant expiring"]        = "Votre enchantement d'arme expire dans %d minutes.",
+
+    ["Death announce"]                 = "À terre : %s",
+
     ["Logging"]                        = "Journalisation",
     ["Auto combat logging"]            = "Journalisation automatique des combats",
     ["Auto combat logging tip"] =
         "Lance la journalisation en entrant en raid ou en donjon mythique+, et la coupe en sortant.",
+    ["Combat log started"]             = "Journalisation des combats lancée.",
+    ["Combat log stopped"]             = "Journalisation des combats arrêtée.",
+
+    -- Noms d'auras cherchés par le contrôle des buffs. Relevés en jeu sur un
+    -- client français : ce sont les seules chaînes du module qui dépendent de la
+    -- langue. « Flacon » couvre les deux familles, le français ne distinguant pas
+    -- flask et phial.
+    ["Well fed aura"]                  = "Rassasié",
+    ["Flask aura"]                     = "Flacon",
+    ["Phial aura"]                     = "Flacon",
+
+    -- Module MythicTimer
+    ["Mythic+ timer"]                  = "Chrono mythique+",
+    ["Display"]                        = "Affichage",
+    ["Show mythic timer"]              = "Afficher le chrono",
+    ["Show mythic timer tip"] =
+        "Un panneau avec le temps restant, les paliers +2 et +3, et votre meilleur temps de la "
+        .. "saison sur ce donjon.",
+    ["Timer preview"]                  = "Mode aperçu",
+    ["Timer preview tip"] =
+        "Affiche le panneau hors donjon, rempli de valeurs d'exemple, pour pouvoir le placer.",
+    ["Mythic timer notice"] =
+        "Les paliers sont ceux du jeu : terminer sous 80 % du chrono donne +2, sous 60 % donne "
+        .. "+3. Le comparatif est le meilleur temps de la saison tel que le jeu le retient — rien "
+        .. "n'est mémorisé ici.",
+    ["Preview dungeon"]                = "Donjon d'exemple",
+    ["Season best"]                    = "Record",
 
     -- Module Windows
     ["Windows"]                        = "Fenêtres",

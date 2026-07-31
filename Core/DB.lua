@@ -31,7 +31,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 1
+local SCHEMA_VERSION   = 2
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -101,10 +101,37 @@ end
 function DB:RunMigrations()
     local from = BshamelUIDB.schema or SCHEMA_VERSION
 
-    -- if from < 2 then
-    --     ... transformation ...
-    --     from = 2
-    -- end
+    -- Palier 2 — le bouton de la minicarte quitte « Général » pour « Minicarte »,
+    -- la page créée avec le tiroir de boutons d'addons et le menu de
+    -- téléportation. Le nom d'un module est une clé de base de données : déplacer
+    -- un réglage d'un module à l'autre se migre.
+    --
+    -- Tous les profils, pas seulement l'actif : un profil qu'on ne rouvrira que
+    -- dans six mois doit trouver son réglage à la bonne place. Et seulement ce
+    -- qui est écrit — les défauts sont retirés du fichier à la déconnexion, donc
+    -- l'absence d'une clé signifie « jamais touchée » et n'a rien à migrer.
+    if from < 2 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            local general = modules and modules.General
+
+            if general then
+                local moved = modules.Minimap or {}
+
+                if general.minimapButton ~= nil and moved.button == nil then
+                    moved.button = general.minimapButton
+                end
+                if general.minimapAngle ~= nil and moved.angle == nil then
+                    moved.angle = general.minimapAngle
+                end
+                general.minimapButton = nil
+                general.minimapAngle  = nil
+
+                if next(moved) then modules.Minimap = moved end
+            end
+        end
+        from = 2
+    end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)
 end

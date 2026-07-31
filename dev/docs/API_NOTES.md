@@ -1493,3 +1493,653 @@ Une table **à clés faibles** (`__mode = "k"`) tenue par le widget règle les d
 rien n'est écrit sur le cadre, et un bouton oublié par le client l'est aussi par
 nous. Elle sert en plus d'inventaire — c'est elle qui permet de tout effacer à la
 désactivation du module sans avoir à retrouver les boutons.
+
+---
+
+## Un bouton sécurisé recyclé garde l'action du précédent
+
+**Symptôme** — dans le menu de téléportation, une ligne lance la téléportation
+d'une autre ligne. Le nom et l'icône sont pourtant les bons.
+
+**Cause** — un bouton d'action sécurisé décrit ce qu'il lance par des attributs :
+`type` dit lequel de `item`, `toy` ou `spell` s'applique, et l'attribut du même
+nom porte la charge. Une ligne recyclée d'une pierre de foyer vers un sort voit
+son `type` passer à `spell`… en gardant son ancien attribut `toy`. Le jour où le
+`type` repasse à `toy`, c'est la charge d'il y a trois reconstructions qui part.
+
+**Ce qu'on fait** — `UI/Widgets/SecureMenu.lua` réécrit **les trois** attributs
+de charge à chaque réemploi, en remettant à `nil` ceux qui ne servent pas.
+
+Deux autres faits d'API relevés au même endroit :
+
+- la charge d'un `type = "item"` est un lien (`"item:6948"`), pas un nombre : un
+  nombre est lu comme un **emplacement d'inventaire** ;
+- une ligne doit s'enregistrer sur `AnyUp` **et** poser
+  `useOnKeyDown = false`. Sans ça, la CVar `ActionButtonUseKeyDown` — que le
+  module Barres d'action expose — fait partir l'action deux fois, et le second
+  départ annule la téléportation que le premier avait commencée.
+
+Enfin, aucun attribut ne s'écrit en combat, et un bouton sécurisé ne se montre ni
+ne se cache : le menu ne s'ouvre donc pas pendant un combat, et se reconstruit à
+`PLAYER_REGEN_ENABLED`.
+
+---
+
+## Un bouton de minicarte emprunté retourne se poser sur la carte
+
+**Symptôme** — les boutons d'addons rangés dans le tiroir en ressortent tout
+seuls, un par un, et se reposent sur le pourtour de la minicarte. Ils sont
+pourtant bien nos enfants : `GetParent()` rend le tiroir.
+
+**Cause** — la position d'un bouton de bibliothèque ne dépend pas de son parent.
+`LibDBIcon` et consorts l'ancrent à `Minimap` par un angle, et **réappliquent cet
+ancrage** dès qu'ils rafraîchissent quoi que ce soit. Un `SetPoint` sur un cadre
+étranger nous passe donc devant sans prévenir.
+
+**Ce qu'on fait** — l'emprunt masque `SetPoint` et `ClearAllPoints` sur le cadre
+le temps du séjour, en gardant les vraies méthodes pour notre propre mise en
+page (`UI/Widgets/Tray.lua`). Le masquage se retire au retour : une méthode qui
+n'appartenait pas au cadre redevient absente — `rawget` le dit —, une méthode
+qu'il portait lui-même lui est rendue.
+
+Le parent, lui, se reprend à chaque passage : certaines versions rattachent le
+bouton à `Minimap` en le rafraîchissant, et un bouton sorti du tiroir avec ses
+ancrages masqués serait posé n'importe où sans moyen d'en bouger.
+
+---
+
+## Vendre la camelote ne se fait pas en un appel
+
+**Symptôme** — `C_MerchantFrame.SellAllJunkItems()` est appelée à
+`MERCHANT_SHOW`, et il reste des gris dans les sacs.
+
+**Cause** — l'appel part sans accusé de réception. Le serveur écarte les ventes
+au-delà de sa limite de débit, et une case dont l'objet n'est pas encore en cache
+au moment de l'ouverture n'est pas vue du tout.
+
+**Ce qu'on fait** — `Modules/Bags.lua` recompte les gris après chaque passe et
+recommence tant que le nombre baisse. L'arrêt vient de l'absence de progrès, pas
+d'un délai : c'est elle qui prouve qu'il ne reste rien à tenter.
+
+---
+
+## Le mot de la confirmation de destruction
+
+Détruire un objet de valeur demande d'écrire un mot dans la zone de saisie du
+dialogue. Le mot est publié par le client (`DELETE_ITEM_CONFIRM_STRING`), donc
+juste dans toutes les langues.
+
+Le dialogue se reconnaît à son champ `which` : `DELETE_GOOD_ITEM` et
+`DELETE_GOOD_QUEST_ITEM` sont les deux qui portent une zone de saisie.
+
+Le hook se pose sur **`Show`** et non sur le script `OnShow` : le client vide la
+zone dans son `OnShow`, qui s'exécute *pendant* `Show`. Un hook posé sur `Show`
+se termine après lui, et c'est donc le dernier à écrire.
+
+---
+
+## La rotation de donjons et sa téléportation se demandent au client
+
+**Symptôme** — un menu de téléportation de donjons construit sur une liste
+d'identifiants écrite à la main est faux au premier changement de saison, et il
+est faux **en silence** : les donjons sortis restent proposés, les nouveaux
+manquent, et rien ne le signale.
+
+**Ce qu'on fait** — `Modules/Minimap.lua` ne tient aucune liste de donjons, et
+n'en construit même pas une : le contenu vient **entièrement du grimoire** (voir
+la note suivante). Le mode défi ne sert qu'à une chose, l'**ordre** :
+
+- `C_ChallengeMode.GetMapTable()` rend les cartes de la saison en cours ;
+- `C_ChallengeMode.GetMapUIInfo(mapID)` rend le nom du donjon, et sur les clients
+  qui le publient, **le sort de téléportation en septième valeur**.
+
+Un tiroir du grimoire dont **toutes** les destinations sont dans cet ensemble est
+celui de la saison : il passe en tête de menu. Le test doit rester strict — un
+donjon d'une vieille extension revient régulièrement dans la rotation, et « au
+moins une correspondance » ferait remonter Legion au-dessus de l'extension
+courante.
+
+Deux signaux valent pour une destination, et il suffit que l'un réponde : le sort
+publié en septième valeur, ou le **nom du donjon**, qui est publié partout. Le
+septième retour, lui, n'existe pas sur tous les clients — d'où le second signal,
+sans lequel aucun tiroir n'était reconnu.
+
+**Rien du contenu n'en dépend, et l'ordre non plus** — voir la note suivante.
+
+C'est ce qui permet de ne jamais nommer la saison : le tiroir s'appelle « Voie
+héroïque : Midnight – Saison 1 » parce que le jeu l'appelle ainsi, et il
+s'appellera autrement à la saison suivante sans qu'on y revienne.
+
+Un détail d'affichage qui en découle : la ligne porte le nom qui suit le
+deux-points — le donjon —, pas le nom complet du sort, qui répéterait le nom de
+la famille à chaque ligne.
+
+---
+
+## Les pierres de foyer se rangent en deux familles, pas en une liste
+
+Il existe une trentaine de « pierres de foyer » et elles ne sont pas
+interchangeables du point de vue d'un menu :
+
+- celles à **temps de recharge partagé** font toutes la même chose, retourner au
+  point de liaison, et ne diffèrent que par l'animation. Les lister toutes, c'est
+  écrire trente fois la même ligne : on en montre une, choisie par un réglage ;
+- celles à **temps de recharge propre** (Dalaran, Arcantina, fief) vont chacune
+  ailleurs et se rechargent séparément : elles se listent toutes.
+
+Rien dans l'API ne dit à quelle famille appartient un identifiant — c'est une
+donnée du jeu, et donc une liste à tenir.
+
+Une pierre se possède de deux façons selon son âge : jouet de la collection
+(`PlayerHasToy`) ou objet dans les sacs (`C_Item.GetItemCount`). On ne l'écrit
+pas dans la liste, on le redemande : le même identifiant a changé de camp d'une
+extension à l'autre.
+
+---
+
+## Les téléportations hors saison se relèvent dans le grimoire
+
+**Symptôme** — `C_ChallengeMode.GetMapTable()` ne rend que la saison en cours.
+Les donjons des autres extensions vers lesquels le personnage sait se téléporter
+n'apparaissent donc nulle part, alors qu'il les a bel et bien appris.
+
+**Cause** — il n'existe aucune API qui liste « toutes les téléportations de
+donjon ». Le seul endroit où elles vivent toutes est le **grimoire**, puisque ce
+sont des sorts appris comme les autres.
+
+**Ce qu'on fait** — `Modules/Minimap.lua` parcourt le grimoire :
+
+- `C_SpellBook.GetNumSpellBookSkillLines()` puis
+  `C_SpellBook.GetSpellBookSkillLineInfo(i)`, qui donne `itemIndexOffset` et
+  `numSpellBookItems` — les index sont **globaux**, une ligne de compétence ne
+  fait qu'y ouvrir une fenêtre ;
+- `C_SpellBook.GetSpellBookItemInfo(index, Enum.SpellBookSpellBank.Player)` pour
+  chaque index ;
+- le nom et l'icône sont déjà dans ce que rend le grimoire : on ne réinterroge
+  le sort que s'il les a tus.
+
+**Le piège est là : une téléportation de donjon n'est pas un sort.** Le grimoire
+range celles d'une extension dans un **tiroir** — un `flyout` —, et
+`Enum.SpellBookItemType.Flyout` n'a pas de `spellID` : il porte un `actionID`,
+qui est l'identifiant du tiroir. Un parcours qui ne retient que
+`Enum.SpellBookItemType.Spell` ne trouve donc **rien**, alors que le grimoire en
+montre une page entière. Le symptôme est trompeur : la section reste vide, ce
+qui ressemble exactement à un préfixe de nom mal orthographié.
+
+Le contenu d'un tiroir se lit par `GetFlyoutInfo(flyoutID)` — nom, description,
+nombre d'emplacements, connu — puis `GetFlyoutSlotInfo(flyoutID, slot)` — sort,
+sort de remplacement, connu. Les deux fonctions existent sous leur nom global et
+sous `C_SpellBook` selon le client, et rien ne garantit qu'elles rendent des
+valeurs plutôt qu'une table : on accepte les deux formes.
+
+Un tiroir par extension donne d'ailleurs la bonne disposition de menu — c'est
+celle du grimoire, donc celle que le joueur connaît déjà.
+
+Reste à reconnaître la famille, et le seul point d'accroche est le **nom** : ces
+sorts **commencent** par le nom de leur famille (« Voie héroïque : donjon »,
+« Voie temporelle : donjon »). Les préfixes sont donc des chaînes du client,
+rangées en locale (`Teleport spell prefixes`, séparées par des virgules) comme le
+marqueur de noyau du vide de la fiche de personnage. C'est la deuxième fois que
+ce motif sert, et il a la même propriété : une locale dont les préfixes sont faux
+montre une section vide, jamais une entrée fausse.
+
+Le nombre de préfixes dépend de la langue, et c'est pour ça que la locale en
+porte une **liste** : le français réunit toutes les familles sous « Voie », là où
+l'anglais les nomme chacune autrement. Un préfixe large ramasse un peu plus que
+les téléportations — une classe peut avoir un sort qui commence pareil — et c'est
+le compromis retenu : une ligne de trop se voit et s'ignore, un donjon manquant
+ne se voit pas.
+
+Le nom affiché est ce qui suit le deux-points — le donjon —, pour que la liste se
+lise et se trie comme celle de la saison en cours.
+
+---
+
+## Poser un marqueur au sol est une action protégée
+
+**Symptôme** — `PlaceRaidMarker(index)` appelé depuis un bouton ordinaire ne pose
+rien. Pas d'erreur en dehors du combat, juste aucun marqueur.
+
+**Cause** — c'est une action protégée, comme lancer un sort : le client exige que
+le clic vienne de son moteur, pas de notre code.
+
+**Ce qu'on fait** — `UI/Widgets/MarkerBar.lua` bâtit ses cases sur le template
+d'action sécurisée et les décrit par attributs :
+
+| Attribut | Valeur |
+|---|---|
+| `type` | `"worldmarker"` |
+| `marker` | 1 à 8, ou `0` pour tout effacer |
+| `action` | `"set"` ou `"clear"` |
+
+Les attributs sont écrits **une fois**, à la construction : un bouton de marqueur
+porte le même numéro toute sa vie. C'est la différence avec le menu de
+téléportation, dont les lignes sont recyclées et doivent donc être réécrites en
+entier (voir « Un bouton sécurisé recyclé garde l'action du précédent »).
+
+Conséquence héritée du même mécanisme : la barre **ne se montre ni ne se cache en
+combat**. `SetShownOutOfCombat` rend `false` dans ce cas, et l'appelant repasse à
+`PLAYER_REGEN_ENABLED`.
+
+**Les deux numérotations ne coïncident pas.** Le marqueur au sol n° 1 est le
+carré bleu, qui porte l'icône de ciblage n° 6. Rien dans le client ne relie les
+deux : `T.WORLD_MARKER_ICON` est donc une table de données, et elle ne façonne
+rien — l'index posé est celui de l'attribut, la table ne décide que de la
+vignette. Une entrée fausse met la mauvaise image sur un bouton qui pose quand
+même le bon marqueur.
+
+La vérification de présence (`DoReadyCheck`) et le décompte
+(`C_PartyInfo.DoCountdown`) ne sont **pas** protégés : ce sont des boutons
+ordinaires. Ils exigent en revanche d'être chef ou promu, et refusent en
+silence — d'où le message affiché à la place.
+
+---
+
+## Le compteur de résurrections de combat se lit sur un sort de druide
+
+**Symptôme** — aucune API ne s'appelle « charges de résurrection de combat ». Le
+nombre que le client affiche dans les instances qui les limitent semble n'exister
+nulle part.
+
+**Cause** — il existe, mais il est publié comme **les charges du sort de
+Rétablissement** (20484), et pour tout le monde : un mage y lit la réserve
+partagée du groupe aussi bien qu'un druide.
+
+**Ce qu'on fait** — `C_Spell.GetSpellCharges(20484)`, avec `GetSpellCharges` en
+repli. Le relevé rend `currentCharges`, `maxCharges`, `cooldownStartTime` et
+`cooldownDuration` ; hors instance, `maxCharges` vaut zéro, ce qui sert de test
+« y a-t-il une réserve à suivre ? ».
+
+La lecture se fait depuis un `OnUpdate` bridé : les deux tables du relevé sont
+donc réutilisées et jamais allouées (règle 7).
+
+---
+
+## Le lien d'une clé mythique ne se demande pas, il se cherche dans les sacs
+
+**Symptôme** — `C_MythicPlus.GetOwnedKeystoneMapID()` et `GetOwnedKeystoneLevel()`
+donnent le donjon et le niveau, mais **pas le lien**. Or c'est le lien qu'on veut
+envoyer dans le chat : lui seul est survolable.
+
+**Ce qu'on fait** — `Modules/Keystones.lua` parcourt les sacs et reconnaît la clé
+à son lien (`keystone:`), avec l'identifiant d'objet en second recours. Le texte
+« donjon + niveau » reste le repli quand la clé n'est pas dans les sacs — elle
+peut être en banque.
+
+**Poser la clé demande de la prendre en main.** `C_ChallengeMode.SlotKeystone()`
+pose ce que le curseur porte : la séquence est
+`C_Container.PickupContainerItem(bag, slot)` puis `SlotKeystone()`. Deux
+précautions évitent de faire tomber quelque chose : ne rien prendre si le curseur
+porte déjà un objet (`GetCursorInfo`), et vider le curseur si le socle a refusé
+la clé — sinon elle suit la souris.
+
+`C_ChallengeMode.HasSlottedKeystone()` dit si quelqu'un a déjà posé la sienne ; on
+ne remplace jamais celle d'un coéquipier.
+
+---
+
+## Le chrono d'une clé se demande au client, il ne se compte pas
+
+**Symptôme** — un chrono démarré sur `CHALLENGE_MODE_START` est faux dès qu'on
+recharge l'interface au milieu d'une clé, c'est-à-dire précisément au moment où
+l'on tient à ce qu'il soit juste.
+
+**Ce qu'on fait** — `GetWorldElapsedTimers()` rend les chronos de zone,
+`GetWorldElapsedTime(timerID)` rend leur type et leur temps écoulé. Le type
+cherché est `Enum.WorldElapsedTimerType.ChallengeMode` ; à défaut d'énumération,
+le premier chrono disponible fait l'affaire — il n'y en a pas d'autre en donjon
+mythique+. Le comptage maison ne sert plus que de repli.
+
+L'identifiant est relevé **sur événement** et retenu : `GetWorldElapsedTimers` est
+variadique, et l'énumérer dix fois par seconde coûterait des appels pour une
+valeur qui ne change qu'au départ de la clé.
+
+Le reste vient sans effort : `C_ChallengeMode.GetMapUIInfo(mapID)` rend le nom du
+donjon **et son chrono en troisième valeur**, `GetActiveKeystoneInfo()` le niveau,
+`GetCompletionInfo()` le temps final en millisecondes. Les paliers, eux, ne sont
+pas publiés : ce sont 80 % et 60 % du chrono, écrits une fois dans
+`UI/Widgets/KeyTimer.lua`.
+
+**Le comparatif ne se mémorise pas.** `C_MythicPlus.GetSeasonBestForMap(mapID)`
+rend le meilleur temps de la saison (`durationSec`, `level`) — tenir nos propres
+temps aurait créé une source de vérité concurrente de la sienne, et deux sources
+de vérité divergent toujours. `C_MythicPlus.RequestMapInfo()` est appelé à
+l'activation : ces données ne sont pas chargées à la connexion.
+
+**À la fin d'une clé, le client ne dit plus laquelle était active.** Le `mapID`
+est donc retenu au départ, faute de quoi le panneau disparaît à l'instant précis
+où l'on veut lire le comparatif.
+
+---
+
+## Une bannière qui porte un bouton sécurisé ne se cache pas en combat
+
+**Symptôme** — le rappel de file doit disparaître quand le combat commence. Or il
+porte un bouton de téléportation sécurisé, et un cadre protégé ne se cache pas en
+combat : `Hide` est refusé au moment exact où l'on en a besoin.
+
+**Fausse piste** — poser une opacité nulle. La bannière devient invisible, mais
+son bouton reste **cliquable** : une téléportation part toute seule sous le
+curseur au milieu d'un combat.
+
+**Ce qu'on fait** — on sort la bannière de l'écran
+(`SetClampedToScreen(false)`, puis un ancrage à deux hauteurs d'écran), ce qui
+passe puisque le panneau est à nous, là où cacher son bouton serait refusé. La
+fermeture est notée et terminée à `PLAYER_REGEN_ENABLED`.
+
+C'est la même leçon que pour la couleur de faction : quand le client refuse un
+geste sur un de ses objets, on cherche ce qu'on peut faire sur **le nôtre**.
+
+---
+
+## Contrôler les buffs : ce que le client publie, et pour qui
+
+| Besoin | Chemin | Portée |
+|---|---|---|
+| Nourriture, flacon | `C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")` | tout le groupe |
+| Expiration | `aura.expirationTime` | tout le groupe |
+| Enchantement d'arme | `GetWeaponEnchantInfo()` | **le personnage seul** |
+
+L'enchantement d'arme d'un coéquipier n'est publié nulle part : le contrôle ne
+porte que sur soi, et c'est une limite du client, pas un choix. Ses durées sont en
+**millisecondes**, là où une aura rend un instant absolu à comparer à `GetTime()`.
+
+**La reconnaissance passe par le nom de l'aura**, rangé en locale
+(`Well fed aura`, `Flask aura`, `Phial aura`). Aucun identifiant stable n'existe
+côté aura, et une liste d'identifiants de nourritures et de flacons est fausse à
+chaque extension — silencieusement. C'est le troisième endroit où ce motif sert,
+après le noyau du vide et les préfixes de téléportation, et il garde la même
+propriété : une locale fausse signale tout le monde comme non buffé, et se corrige
+à un seul endroit. Le français réunit d'ailleurs *flask* et *phial* sous
+« Flacon », d'où deux clés qui portent la même valeur.
+
+Un joueur **déconnecté** n'a aucune aura à lire : sans le test `UnitIsConnected`,
+son nom apparaît dans toutes les listes à la fois.
+
+---
+
+## Annoncer les morts sans faire couper la parole par le serveur
+
+**Symptôme** — une annonce par mort donne vingt messages en une seconde sur un
+wipe, et le serveur coupe alors la parole pour plusieurs dizaines de secondes.
+
+**Ce qu'on fait** — les noms sont accumulés et une seule ligne part une seconde
+plus tard (`U.Debounce`), avec un seul son. Le regroupement n'est pas une
+optimisation, c'est ce qui rend la fonctionnalité utilisable.
+
+**On lit les drapeaux du journal, pas les noms.** `COMBATLOG_OBJECT_TYPE_PLAYER`
+et les trois drapeaux d'affiliation (`MINE`, `PARTY`, `RAID`) disent si la mort
+concerne le groupe. Comparer des noms échouerait précisément sur les groupes
+formés par la recherche de groupe, où ils portent un suffixe de royaume.
+
+Le journal peut par ailleurs annoncer **deux fois** la même mort : la liste
+accumulée sert aussi à ne nommer personne deux fois.
+
+---
+
+## Journaliser un combat sans journalisation détaillée ne sert presque à rien
+
+`LoggingCombat(true)` suffit à écrire le journal, mais sans la CVar
+`advancedCombatLogging` il ne porte ni positions, ni ressources, ni la moitié de
+ce que les sites d'analyse lisent. Les deux vont donc ensemble, et la CVar est
+relevée avant d'être changée puis reposée, comme toutes les CVar de l'addon.
+
+On ne coupe la journalisation que si **c'est nous qui l'avions lancée** : couper
+celle qu'un joueur a lancée à la main serait défaire son geste.
+
+`GetInstanceInfo()` donne le type d'instance ;
+`C_ChallengeMode.IsChallengeModeActive()` reconnaît une clé plus sûrement qu'un
+numéro de difficulté — un numéro est une donnée qui bouge, une capacité non.
+
+---
+
+## Un cadre protégé ne se range pas dans un tiroir
+
+**Symptôme** — « BshamelUI a été bloqué à cause d'une action qui n'est utilisable
+que par l'IU de Blizzard », sans erreur Lua, alors qu'aucun cadre du client n'est
+touché volontairement.
+
+**Cause** — le tiroir de boutons d'addons emprunte ce qu'il trouve autour de la
+minicarte : il reparente, change la strate et le niveau. Ces trois gestes sont
+refusés sur un cadre **protégé**, et il y en a deux sortes autour de la carte :
+ceux du client — le client en ajoute à chaque extension, une liste de noms est
+donc périmée d'avance — et ceux des addons qui bâtissent leur bouton sur un
+template sécurisé, ce que fait tout bouton qui lance un sort.
+
+**Ce qu'on fait** — on pose la question au cadre lui-même,
+`frame:IsProtected()`, plutôt qu'à une liste de noms : la réponse est juste sur
+les deux sortes, et elle le restera. S'y ajoutent deux gardes de combat — le
+rangement ne se fait pas en combat et est rattrapé à `PLAYER_REGEN_ENABLED`, et
+le module est déclaré `secure = true` pour que son allumage comme son extinction
+soient différés hors combat (règle 6).
+
+**Pour identifier un blocage** — le client ne dit pas *quelle* action a été
+refusée tant que le journal n'est pas armé :
+
+    /console taintLog 1
+
+puis `/reload`, on reproduit, et `_retail_/Logs/taint.log` nomme la fonction et
+le fichier fautif. `/console taintLog 0` pour le couper — il grossit vite.
+
+---
+
+## L'identifiant d'un sort ne date pas son extension
+
+**Symptôme** — les tiroirs de téléportation, triés sur le plus grand identifiant
+de sort qu'ils contiennent, sortent dans un ordre qui n'est celui d'aucune
+chronologie : Legion, Cataclysme, Battle for Azeroth, Dragonflight, Shadowlands,
+Warlords of Draenor, Pandarie.
+
+**Cause** — le raisonnement paraissait solide : les identifiants sont attribués
+dans l'ordre où le jeu crée les sorts, donc le plus grand désigne le plus récent.
+Il l'est, mais il ne mesure pas ce qu'on croyait. Un donjon **revient** en saison
+des années après son extension, et il reçoit alors une téléportation neuve : le
+Siège du Triumvirat est un donjon Legion qui porte un sort Midnight, Bastion
+Cendregueule est un donjon Cataclysme qui porte un sort The War Within. Le plus
+grand identifiant d'un tiroir date donc son dernier **retour**, pas son âge.
+
+C'est un piège du genre le plus coûteux : la valeur est réellement croissante
+dans le temps, elle passe donc toutes les vérifications de bon sens — et elle
+répond à une autre question que celle qu'on pose.
+
+**Ce qu'on fait** — on demande le rang au client, qui le publie : les extensions
+sont énumérées **dans l'ordre** sous `EXPANSION_NAME0`, `EXPANSION_NAME1`… et
+`GetNumExpansions()` en donne le nombre. Le tiroir portant le nom de son
+extension, son rang se lit directement, et la prochaine extension prendra sa
+place en tête sans qu'on touche à quoi que ce soit.
+
+La comparaison se fait **dans les deux sens** : le tiroir de la saison porte le
+nom de l'extension plus un suffixe (« Midnight – Saison 1 »), et une extension
+peut être écrite sans son article (« Burning Crusade » pour « The Burning
+Crusade »). À rang égal, le nom le plus long passe devant — c'est celui qui porte
+le suffixe, donc la saison avant son extension.
+
+---
+
+## Le client ne dit pas quelle action il a bloquée
+
+**Symptôme** — « BshamelUI a été bloqué à cause d'une action qui n'est utilisable
+que par l'IU de Blizzard ». La fenêtre nomme l'addon et rien d'autre : ni la
+fonction refusée, ni le cadre en cause. `Logs/taint.log` reste vide même après
+`/console taintLog 1`, qui ne consigne pas ce cas.
+
+**Cause** — le nom de la fonction n'est pas dans la fenêtre, il est dans un
+**événement** : `ADDON_ACTION_BLOCKED` et `ADDON_ACTION_FORBIDDEN` sont émis avec
+`(addon, fonction)`.
+
+**Ce qu'on fait** — `/bui blocked` arme une veille qui écrit ces deux événements
+dans le chat (`BUI:ToggleActionWatch`, dans `Core/Init.lua`). Éteinte par défaut,
+et pour une raison de fond : la contamination est régulièrement imputée à l'addon
+qui a **lu** une valeur salie, pas à celui qui l'a salie. Laissée allumée, elle
+accuserait donc régulièrement le mauvais coupable devant un joueur qui n'a rien
+demandé.
+
+---
+
+## La veille des actions bloquées est muette si les erreurs sont masquées
+
+**Symptôme** — `/bui blocked` répond « veille activée », la fenêtre « action
+réservée à l'IU de Blizzard » continue de s'afficher, et **rien** n'arrive dans
+le chat. On en conclut que le blocage a disparu, ou que la veille ne marche pas.
+
+**Cause** — le client n'émet `ADDON_ACTION_BLOCKED` et `ADDON_ACTION_FORBIDDEN`
+que si l'affichage des erreurs de script est allumé (`scriptErrors`). La fenêtre,
+elle, s'affiche dans tous les cas : les deux ne viennent pas du même mécanisme.
+
+Le piège se referme d'autant mieux que **notre propre réglage** « masquer les
+erreurs Lua » (Général) coupe cette CVar. Un joueur qui l'a coché a donc une
+fenêtre sans le moindre moyen d'en connaître la cause.
+
+**Ce qu'on fait** — armer la veille vérifie la CVar et le dit quand elle est à
+zéro, avec les deux façons de la rallumer.
+
+---
+
+## Poser un menu d'addon sur une barre d'action
+
+Un emplacement de barre d'action n'accepte que ce que le jeu y range : sort,
+objet, macro, monture, tenue, tiroir de grimoire. **Jamais le cadre d'un addon**,
+et le déploiement au survol est le mécanisme de flyout de Blizzard, réservé à ses
+propres listes.
+
+Le seul chemin est donc la **macro**, qui est un contenu accepté et qui peut
+cliquer un bouton nommé (`/click <nom>`). D'où, dans `UI/Widgets/Base.lua`, un
+bouton invisible portant un nom global — l'exception « noms de frames » de la
+règle 3 — et, dans les options, un bouton qui **crée la macro** au lieu de
+l'expliquer : le nom du bouton à cliquer est un détail d'implémentation, et le
+premier joueur qui le recopie de travers croira que rien ne marche.
+
+Deux points relevés à l'écriture :
+
+- un nom de macro ne dépasse pas **seize caractères**, sinon la création échoue ;
+- le menu s'ouvre contre le **cadre survolé** (`GetMouseFoci`, `GetMouseFocus`
+  sur les clients plus anciens), donc contre l'emplacement cliqué. Ancré à la
+  minicarte alors qu'on vient de cliquer en bas de l'écran, il paraîtrait ne pas
+  s'être ouvert. L'écran et le monde sont écartés de ce test : s'y ancrer
+  poserait le menu dans un coin.
+
+---
+
+## Un nom d'événement inconnu lève, et emporte la moitié d'un module
+
+**Symptôme** — `Frame:RegisterEvent(): Attempt to register unknown event`, et le
+module concerné ne fait qu'une partie de ce qu'il promet. Le symptôme observé
+n'est pas l'erreur mais le manque : ce qui suit la ligne fautive dans `OnEnable`
+n'a jamais été branché.
+
+**Cause** — `RegisterEvent` **lève** sur un nom que le client ne connaît pas. Or
+citer un événement absent est un cas courant et légitime : ils changent de nom
+d'une extension à l'autre, et certains n'existent que sur certains clients.
+`OnEnable` s'exécute sous `safecall`, donc l'erreur est bien remontée — mais le
+reste de la fonction est perdu.
+
+**Ce qu'on fait** — `BUI:RegisterEvent` tente l'inscription sous `pcall`,
+signale le nom fautif, et rend la main. Le module continue de se brancher. C'est
+la même logique que les tests de capacité de la règle 1 : ce que le client
+n'expose pas ne doit pas emporter ce qu'il expose.
+
+**Cas rencontré** — l'ouverture de la fontaine de puissance s'appelle
+`CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN`. « Receptable » est une **coquille de
+Blizzard**, présente dans son API depuis toujours ; le mot correct
+(« receptacle ») ne désigne rien, et le nom au participe passé non plus.
+
+---
+
+## Une icône carrée dans un trou rond
+
+**Symptôme** — le bouton de minicarte de l'addon remplit son anneau, celui du
+menu de téléportation flotte au milieu, plus petit. Les deux utilisent pourtant
+le même widget.
+
+**Cause** — le logo porte son **disque dans sa texture** : posé à la taille du
+trou, il le remplit. Une icône d'objet ou de sort est carrée, et rien ne
+l'arrondit : à la taille du trou, ses quatre coins débordent sur l'anneau. On la
+réduisait donc au carré inscrit dans le cercle (côté = diamètre / √2, soit un
+tiers de surface en moins), d'où l'impression qu'elle flotte.
+
+**Ce qu'on fait** — un **masque circulaire** (`CreateMaskTexture` +
+`AddMaskTexture`) coupe les coins de l'icône, qui peut alors être posée à la
+taille du trou comme le logo. Le masque est celui du portrait de personnage : un
+disque plein, présent depuis toujours.
+
+Test de capacité et non pari : un client sans masque retombe sur le carré
+inscrit, plus petit mais jamais débordant. Et le masque ne s'applique qu'à une
+texture **non répétée** — ce qui est le cas ici, contrairement aux bandeaux de la
+navigation (voir « Un masque posé sur une texture répétée est ignoré en
+silence »).
+
+---
+
+## Relever la strate d'un cadre emprunté cache son icône
+
+**Symptôme** — les boutons rangés dans le tiroir n'affichent plus qu'un **disque
+noir** : leur anneau se dessine, leur icône a disparu. Sur la minicarte, les
+mêmes boutons sont normaux.
+
+**Cause** — le tiroir se mettait à la strate `DIALOG` et **imposait la sienne**
+aux boutons empruntés, pour qu'ils passent au-dessus de son fond. Mais un bouton
+de minicarte porte souvent son icône sur un **sous-cadre** dont la strate est
+fixée séparément : relever le bouton ne relève pas ses enfants, restés plus bas.
+Le fond du tiroir passait donc entre les deux — au-dessus de l'icône, sous
+l'anneau.
+
+Le symptôme trompe : on soupçonne la couleur ou le chargement de la texture,
+alors qu'il s'agit d'un ordre de dessin, et que le noir est notre propre fond.
+
+**Ce qu'on fait** — l'inverse : **le tiroir s'aligne sur la strate des boutons**
+(celle de la minicarte) et ne touche plus à la leur. Seul le niveau est imposé,
+qui s'applique, lui, sans surprise. C'est aussi une mutation de moins à défaire
+sur un cadre qui ne nous appartient pas.
+
+Règle générale à retenir : sur un cadre emprunté, **on ne change que ce qu'on
+sait rendre**, et une strate se propage moins bien qu'on ne le croit.
+
+---
+
+## Fermer une fenêtre au clic extérieur sans avaler le clic
+
+Le procédé habituel est un cadre transparent posé sur tout l'écran, sous la
+fenêtre, qui intercepte les clics. Il ferme bien, mais il **avale** le clic : il
+faut cliquer deux fois pour agir ailleurs, une fois pour fermer et une fois pour
+faire. Et il se règle mal — au-dessus de tout il masque la fenêtre elle-même,
+en dessous il rate les clics posés sur une strate supérieure.
+
+Le client annonce chaque appui de souris, où qu'il tombe : **`GLOBAL_MOUSE_DOWN`**.
+Il suffit alors de demander à la fenêtre si le curseur était sur elle
+(`IsMouseOver`). Le clic va où il allait, et la fenêtre se ferme en plus
+(`W.CloseOnOutsideClick`, dans `UI/Widgets/Base.lua`).
+
+Deux pièges tenus par le prédicat `isInside` :
+
+- un **sous-menu** est un cadre à part, posé à côté du sien : il sort du
+  rectangle de son parent, et `IsMouseOver` sur le parent seul le déclarerait
+  « ailleurs » ;
+- le **bouton qui a ouvert** la fenêtre n'est pas « ailleurs » non plus. L'appui
+  y ferme la fenêtre, et le relâchement la rouvrirait aussitôt — le bouton
+  paraîtrait ne plus répondre une fois sur deux.
+
+La veille n'est armée que pendant que la fenêtre est ouverte, et l'inscription
+passe par `pcall` : sur un client qui ne connaît pas l'événement, une fenêtre qui
+ne se ferme pas au clic vaut mieux qu'une erreur.
+
+---
+
+## Il y a deux façons de brancher un clic, et `Click()` n'en déclenche qu'une
+
+**Symptôme** — dans le tiroir, cliquer le **nom** d'un addon ouvre celui-ci pour
+certains et ne fait rien pour d'autres. Cliquer son **icône** marche dans tous
+les cas. Aucune erreur, aucun signe : le nom paraît mort.
+
+**Cause** — un bouton de minicarte peut brancher son clic de deux façons :
+
+- `OnClick`, la voie normale, celle des bibliothèques d'icônes ;
+- `OnMouseUp` (parfois `OnMouseDown`), ce que font les boutons écrits à la main.
+  Method Raid Tools est de cette famille, Mythic Dungeon Tools de la première.
+
+`Button:Click()` ne déclenche que la première. Sur un bouton de la seconde
+sorte, elle ne fait rien du tout — l'icône, elle, continue de répondre parce que
+c'est le vrai clic de la souris qui l'atteint.
+
+**Ce qu'on fait** — on regarde ce que le bouton **écoute** avant de le
+solliciter : `OnClick` s'il existe, sinon l'appui puis le relâchement. Jamais les
+deux : un bouton portant les deux scripts agirait deux fois.

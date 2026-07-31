@@ -14,6 +14,7 @@
 local ADDON, ns = ...
 
 ---@class BUI
+---@field Util table   rempli par `Core/Util.lua`, chargé juste après ce fichier
 local BUI = {}
 
 BUI.ADDON   = ADDON
@@ -76,11 +77,24 @@ end)
 ---@param fn fun(event: string, ...: any)
 function BUI:RegisterEvent(event, fn)
     if type(event) ~= "string" or type(fn) ~= "function" then return end
+
     local list = handlers[event]
     if not list then
+        -- Un nom d'événement que le client ne connaît pas **lève**. Sans cette
+        -- protection, un module qui en cite un de trop voit son `OnEnable`
+        -- s'arrêter à cette ligne : tout ce qui suit n'est jamais branché, et le
+        -- symptôme — « la moitié du module ne fait rien » — ne ressemble pas à sa
+        -- cause. Or le cas est courant et légitime : un événement peut n'exister
+        -- que sur certains clients, ou changer de nom d'une extension à l'autre.
+        --
+        -- On tente, on signale, et le reste du module continue de se brancher.
+        if not pcall(eventFrame.RegisterEvent, eventFrame, event) then
+            BUI:Warn("événement inconnu du client : " .. event)
+            return
+        end
+
         list = {}
         handlers[event] = list
-        eventFrame:RegisterEvent(event)
     end
     for i = 1, #list do
         if list[i] == fn then return end -- déjà abonné
@@ -192,4 +206,64 @@ end
 --- Message d'erreur destiné à l'utilisateur (pas une erreur Lua).
 function BUI:Warn(...)
     print(PREFIX .. "|cffff6060" .. strjoin(" ", tostringall(...)) .. "|r")
+end
+
+-- =========================================================================
+--  Veille des actions bloquées
+-- =========================================================================
+-- « BshamelUI a été bloqué à cause d'une action qui n'est utilisable que par
+-- l'IU de Blizzard » : le client affiche la fenêtre, mais il ne dit **pas**
+-- quelle fonction a été refusée. Sans ce nom, chercher la cause revient à
+-- deviner.
+--
+-- Le nom, lui, est publié — dans l'événement, pas dans la fenêtre. Cette veille
+-- l'écoute et l'écrit dans le chat. Elle est **éteinte par défaut** : ce qui
+-- s'affiche alors n'aide que celui qui cherche, et la contamination est souvent
+-- attribuée à l'addon qui a lu la valeur, pas à celui qui l'a salie — un joueur
+-- verrait donc passer des lignes qui accusent le mauvais coupable.
+--
+-- Elle vit ici plutôt que sous `dev/` parce qu'elle ne sert à rien hors du jeu :
+-- c'est en jeu, chez le joueur qui rencontre le blocage, qu'il faut le nom.
+
+--- Le client n'émet ces deux événements **que si l'affichage des erreurs de
+--- script est allumé**. La fenêtre, elle, s'affiche dans tous les cas : les deux
+--- ne viennent pas du même mécanisme. Une veille qui se contente d'écouter reste
+--- donc muette chez la moitié des gens — et le silence se lit comme « il n'y a
+--- plus de blocage », ce qui est exactement le contraire de ce qu'on cherche.
+---
+--- La veille allume donc la CVar elle-même, et la repose en s'éteignant. C'est
+--- une commande de diagnostic : elle est demandée explicitement, et elle ne
+--- laisse rien derrière elle.
+local ERRORS_CVAR = "scriptErrors"
+
+local watching = false
+local savedErrors
+
+local function onBlocked(event, addonName, functionName)
+    BUI:Warn(event, addonName or "?", functionName or "?")
+end
+
+--- Arme ou désarme la veille. Renvoie son nouvel état.
+---@return boolean watching
+function BUI:ToggleActionWatch()
+    watching = not watching
+    local U = BUI.Util
+
+    if watching then
+        savedErrors = U.GetCVar(ERRORS_CVAR)
+        U.SetCVar(ERRORS_CVAR, "1")
+
+        BUI:RegisterEvent("ADDON_ACTION_BLOCKED",   onBlocked)
+        BUI:RegisterEvent("ADDON_ACTION_FORBIDDEN", onBlocked)
+    else
+        if savedErrors ~= nil then
+            U.SetCVar(ERRORS_CVAR, savedErrors)
+            savedErrors = nil
+        end
+
+        BUI:UnregisterEvent("ADDON_ACTION_BLOCKED",   onBlocked)
+        BUI:UnregisterEvent("ADDON_ACTION_FORBIDDEN", onBlocked)
+    end
+
+    return watching
 end

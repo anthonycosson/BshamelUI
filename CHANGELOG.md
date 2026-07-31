@@ -2,6 +2,162 @@
 
 ## Non publié
 
+### Ajouté
+- **Minicarte**, page nouvelle, avec deux boutons qui se déplacent à la souris
+  autour de la carte :
+
+  - le **bouton BshamelUI**, qui était dans *Général*. Il a déménagé : une page
+    « Minicarte » qui ne contiendrait pas le bouton de l'addon obligerait à le
+    chercher ailleurs. Le réglage de ceux qui l'avaient allumé suit tout seul.
+    Il porte maintenant deux gestes — **clic droit** pour cette fenêtre, **clic
+    gauche** pour les boutons d'addons ;
+  - le **tiroir de boutons d'addons** : les boutons que les autres addons posent
+    autour de la carte sont rangés dans un tiroir qui s'ouvre **à côté du bouton
+    BshamelUI**, au clic gauche. Il n'a pas de bouton à lui : un addon qui en
+    ajouterait un pour ranger ceux des autres se moquerait du monde. Les boutons
+    du jeu ne sont pas touchés — ils font partie de la minicarte, pas de son
+    encombrement —, et éteindre le réglage rend chaque bouton à son parent, à ses
+    ancrages et à sa strate d'origine, c'est-à-dire exactement là où il était ;
+  - le **menu de téléportation**, en deux sections. Les **pierres de foyer** :
+    celle qu'on a choisie — elles partagent toutes un temps de recharge et vont
+    toutes au même endroit, le menu n'en montre donc qu'une, et un réglage dit
+    laquelle —, puis celles qui ont leur propre temps de recharge (Dalaran,
+    Arcantina, fief) et le rappel astral du chaman. Les **téléportations** ensuite,
+    en tiroirs qui s'ouvrent au survol : **un par extension**, portant le nom et
+    l'icône que leur donne le grimoire, celui de la saison en cours en tête.
+
+    Rien n'est écrit en dur, pas même le nom de la saison : les tiroirs sont
+    ceux du grimoire, donc débloquer une voie l'ajoute sans rien mettre à jour,
+    et la saison suivante s'appellera comme le jeu l'appellera. La rotation
+    publiée par le jeu ne sert qu'à savoir lequel des tiroirs est celui de la
+    saison, pour le poser en premier.
+
+    Le menu s'ouvre aussi **depuis une barre d'action** : un bouton des options
+    crée la macro, il ne reste qu'à la glisser sur un emplacement. Un emplacement
+    n'accepte que ce que le jeu y range — et une macro en fait partie, là où le
+    cadre d'un addon n'y entre jamais. Le menu s'ouvre alors contre
+    l'emplacement cliqué, pas à côté de la minicarte.
+
+    Le menu ne montre que ce que le personnage possède ou connaît réellement, et
+    un clic sur une ligne l'utilise. Il ne s'ouvre pas en combat : le jeu refuse
+    de confier un sort à un addon pendant un combat, et rien de ce qu'il
+    contient ne s'utilise en combat.
+
+- **Barres d'action** quitte l'avant-première avec **le moment où part une
+  action** : à l'enfoncement de la touche ou à son relâchement. Le réglage
+  existe dans le client, il n'est simplement pas là où on le cherche.
+
+  Trois choix et non une case à cocher, parce que le jeu a son propre défaut et
+  que d'autres addons écrivent la même valeur : « défaut du jeu » ne touche à
+  rien, les deux autres forcent dans un sens ou dans l'autre. C'est ce qui
+  permet de dire « je veux le relâchement » et d'être obéi, là où une case
+  décochée n'aurait fait que s'abstenir. La valeur d'origine est relevée avant
+  d'être changée et reposée si l'on éteint le module.
+
+- **Sacs** quitte l'avant-première avec ses deux conforts :
+
+  - **vendre la camelote** à chaque marchand. C'est la vente groupée du client
+    qui est appelée, donc sa définition de la camelote et non la nôtre. Elle
+    part sans accusé de réception et le serveur en écarte une partie quand elle
+    arrive trop vite : on recompte après chaque passe et on recommence tant que
+    le nombre baisse, ce qui évite les gris oubliés dans les sacs. Le total
+    encaissé est annoncé dans le chat ;
+  - **remplir la confirmation de destruction** : le mot à recopier pour détruire
+    un objet de valeur est écrit à votre place. Le geste qui engage reste le
+    vôtre — il reste à cliquer, et c'est ce clic qui détruit.
+
+### En avant-première
+
+La catégorie **Mythique+ / Raid** compte désormais quatre pages, et leur code est
+écrit. Elles restent **grisées** : rien ne s'y allume tant qu'elles n'ont pas été
+vérifiées en jeu. Ce qui suit décrit donc ce qu'elles feront, pas ce qu'elles
+font aujourd'hui.
+
+`Modules/Upcoming.lua` a disparu au passage : un module annoncé n'est plus une
+déclaration sans code, c'est son propre fichier avec un interrupteur en tête.
+
+  **Clés mythiques** :
+
+  - **répondre à !keys** dans le chat de groupe, de raid, d'instance ou de
+    guilde. La réponse est le **lien** de la clé dès qu'elle est trouvée dans les
+    sacs, donc survolable par ceux qui la lisent ; à défaut, le donjon et le
+    niveau sont écrits en toutes lettres. Une seule réponse par canal toutes les
+    dix secondes — cinq personnes qui demandent en même temps ne doivent pas
+    faire couper la parole par le serveur — et jamais de réponse à soi-même ;
+  - **insérer la clé automatiquement** dans la fontaine de puissance dès qu'elle
+    s'ouvre. Une clé déjà posée par quelqu'un d'autre n'est pas remplacée : le
+    choix de la clé appartient au groupe.
+
+  **Recherche de groupe** :
+
+  - la **note d'inscription est conservée** d'une candidature à l'autre. Elle est
+    relevée à la fermeture de la fenêtre, que la candidature soit partie ou non —
+    une note abandonnée est justement celle qu'on veut retrouver ;
+  - les **vérifications de rôle se valident** toutes seules, avec les rôles que
+    vous aviez déjà choisis en vous inscrivant ;
+  - l'**invitation attendue s'accepte** toute seule, et elle seule : le réglage
+    ne fait rien tant qu'aucune candidature n'est en cours, donc une invitation
+    reçue de n'importe qui reste à votre main ;
+  - un **rappel de ce que vous venez de rejoindre** s'affiche à l'écran, avec un
+    bouton de téléportation quand le personnage connaît celle qui mène à ce
+    donjon. Il reste jusqu'à l'entrée dans l'instance ou jusqu'au premier combat.
+
+  **Outils de raid** :
+
+  - le **suivi des résurrections de combat** : l'icône du sort, le nombre de
+    charges restantes et le délai avant la suivante. La taille se règle, le
+    panneau se déplace à la souris, et le mode sombre lui pose le même contour
+    qu'aux icônes d'auras ;
+  - une **barre de marqueurs au sol**, avec les huit marqueurs, un bouton pour
+    tout retirer, une vérification de présence et un **pull timer** qui déclenche
+    le décompte du jeu — celui que tout le monde voit, y compris sans addon — et
+    l'annonce dans le chat du groupe ;
+  - le **panneau de contrôle de raid du jeu se masque**, cet onglet collé au bord
+    gauche de l'écran dont notre barre reprend l'utile ;
+  - le **contrôle des buffs à la vérification de présence** : qui n'a pas de
+    nourriture, qui n'a pas de flacon, quels flacons expirent bientôt, et si
+    votre enchantement d'arme manque ou touche à sa fin. Le rapport n'est envoyé
+    à personne, vous seul le lisez ;
+  - l'**annonce des morts du groupe**, avec alerte sonore facultative. Un wipe
+    ne produit qu'une ligne qui nomme tout le monde : vingt messages en une
+    seconde, c'est le serveur qui coupe la parole ;
+  - la **journalisation automatique** des combats en raid et en clé mythique,
+    journalisation détaillée comprise — sans elle, le journal ne porte ni
+    positions ni ressources et les sites d'analyse n'en tirent presque rien. Elle
+    ne s'arrête que si c'est nous qui l'avions lancée.
+
+  **Chrono mythique+** : un panneau qui montre ce que le chrono du jeu ne montre
+  pas — les **paliers +2 et +3**, à 80 % et 60 % du temps accordé, avec le temps
+  qu'il reste pour chacun et de combien celui qui est passé a été manqué. Une
+  ligne de **comparatif** rappelle votre meilleur temps de la saison sur ce
+  donjon, et devient un écart signé à l'arrivée. Rien n'est mémorisé ici : ce
+  meilleur temps est celui que le jeu retient lui-même. Un **mode aperçu**
+  affiche le panneau hors donjon, rempli de valeurs d'exemple, pour le placer.
+
+### Interne
+
+- un **nom d'événement inconnu du client n'emporte plus le module** qui le cite.
+  `RegisterEvent` lève sur un nom qu'il ne connaît pas, et l'`OnEnable` s'arrêtait
+  là : tout ce qui suivait n'était jamais branché, pour un symptôme — « la moitié
+  du module ne fait rien » — qui ne ressemble pas à sa cause. Le core tente, le
+  signale, et continue ;
+- **`/bui blocked`** écrit dans le chat le nom de l'action refusée quand le
+  client affiche « BshamelUI a été bloqué ». La fenêtre ne le dit jamais, et sans
+  lui la cause se cherche à l'aveugle. La veille allume l'affichage des erreurs —
+  seule condition pour que le jeu émette l'événement — et le repose en
+  s'éteignant ;
+- un **menu déroulant accepte une liste calculée** et non plus seulement une
+  liste écrite : c'est ce qui permet de proposer les pierres de foyer que le
+  personnage possède réellement ;
+- deux pièces nouvelles dans la fabrique de widgets — un bouton nommé, cliquable
+  par une macro, et la fermeture au clic extérieur, qui écoute l'appui de souris
+  du client au lieu de poser un cadre qui avale les clics ;
+- une **quinzaine d'entrées** dans `dev/docs/API_NOTES.md`, dont plusieurs pièges
+  coûteux : l'identifiant d'un sort ne date pas son extension, une téléportation
+  de donjon est un tiroir et non un sort, relever la strate d'un cadre emprunté
+  cache son icône, et `Click()` ne déclenche qu'une des deux façons de brancher
+  un clic.
+
 ## 0.4.0 — 2026-07-31
 
 ### Ajouté

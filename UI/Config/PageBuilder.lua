@@ -11,6 +11,8 @@
 --      { type = "toggle",      key = ..., text = ..., tooltip = ... }
 --      { type = "slider",      key = ..., text = ..., min = , max = , step = , decimals = }
 --      { type = "dropdown",    key = ..., text = ..., values = { { value=, label= }, ... } }
+--          `values` accepte aussi une **fonction** qui rend cette liste, pour un
+--          choix qui dépend du personnage et n'est pas connu à la construction.
 --      { type = "button",      text = ..., label = ..., onClick = function() end }
 --      { type = "description", text = ... }
 --      { type = "spacer",      height = 10 }

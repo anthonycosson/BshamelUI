@@ -2,9 +2,14 @@
 --  Bshamel UI — Modules/General.lua
 --  Les réglages qui n'appartiennent à aucune fenêtre en particulier.
 --
---  Onze comportements, un seul module : ce sont tous des réglages que le joueur
---  cherche « quelque part dans les options », et les éclater en onze pages
+--  Dix comportements, un seul module : ce sont tous des réglages que le joueur
+--  cherche « quelque part dans les options », et les éclater en dix pages
 --  rendrait chacun introuvable.
+--
+--  Ce qui se voit sur la minicarte n'est plus ici : le bouton de l'addon a
+--  rejoint **Minicarte** le jour où cette page a existé, avec le tiroir de
+--  boutons d'addons et le menu de téléportation (voir le palier de migration
+--  dans `Core/DB.lua`).
 --
 --  Réversibilité (CLAUDE.md règle 6) : chaque comportement relève l'état du
 --  client **avant** de le changer, et `OnDisable` le repose. Les CVar sont
@@ -79,36 +84,6 @@ end
 
 local CVAR_ZOOM   = "cameraDistanceMaxZoomFactor"
 local CVAR_ERRORS = "scriptErrors"
-
--- =========================================================================
---  Bouton de la minicarte
--- =========================================================================
-
-local minimapButton
-
----@param mod table
-local function applyMinimapButton(mod)
-    if not mod:Get("minimapButton") then
-        if minimapButton then minimapButton:Hide() end
-        return
-    end
-
-    if not minimapButton then
-        minimapButton = W.MinimapButton({
-            tooltipTitle = L["Bshamel UI"],
-            tooltipText  = L["Minimap button tip"],
-            onClick      = function()
-                if BUI.Config and BUI.Config.Toggle then BUI.Config:Toggle() end
-            end,
-            getAngle     = function() return mod:Get("minimapAngle") end,
-            setAngle     = function(angle) mod:Set("minimapAngle", angle) end,
-        })
-        if not minimapButton then return end
-    end
-
-    minimapButton:Refresh()
-    minimapButton:Show()
-end
 
 -- =========================================================================
 --  Mode sombre
@@ -323,19 +298,6 @@ end
 --  Réparation automatique
 -- =========================================================================
 
---- Montant en pièces, avec les icônes du client. La fonction a migré dans
---- `C_CurrencyInfo` ; la globale existe encore, mais rien ne dit pour combien de
---- temps.
----@param amount number
----@return string
-local function money(amount)
-    if C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString then
-        return C_CurrencyInfo.GetCoinTextureString(amount)
-    end
-    if GetCoinTextureString then return GetCoinTextureString(amount) end
-    return tostring(amount)
-end
-
 ---@param mod table
 local function repairAtMerchant(mod)
     if not mod:Get("autoRepair") then return end
@@ -350,19 +312,19 @@ local function repairAtMerchant(mod)
         RepairAllItems(true)
         local remaining = GetRepairAllCost()
         if not remaining or remaining <= 0 then
-            mod:Print(string.format(L["Repaired from guild"], money(cost)))
+            mod:Print(string.format(L["Repaired from guild"], U.Money(cost)))
             return
         end
         cost = remaining
     end
 
     if GetMoney() < cost then
-        mod:Print(string.format(L["Repair too expensive"], money(cost)))
+        mod:Print(string.format(L["Repair too expensive"], U.Money(cost)))
         return
     end
 
     RepairAllItems(false)
-    mod:Print(string.format(L["Repaired from purse"], money(cost)))
+    mod:Print(string.format(L["Repaired from purse"], U.Money(cost)))
 end
 
 -- =========================================================================
@@ -563,7 +525,6 @@ end
 
 ---@param mod table
 local function applyAll(mod)
-    applyMinimapButton(mod)
     applyDarkMode(mod)
     applyCamera(mod)
     applyLuaErrors(mod)
@@ -574,7 +535,6 @@ end
 --- Réglage -> fonction qui le pose. Les réglages absents de cette table ne
 --- s'appliquent pas : ils se lisent au moment où l'événement arrive.
 local APPLIERS = {
-    minimapButton     = applyMinimapButton,
     darkMode          = applyDarkMode,
     maxCameraDistance = applyCamera,
     cameraZoomFactor  = applyCamera,
@@ -605,11 +565,6 @@ BUI:RegisterModule(MODULE, {
     secure   = true,
 
     defaults = {
-        minimapButton = false,
-        -- Angle du bouton sur le pourtour, en degrés. Réglage sans contrôle : il
-        -- se change en déplaçant le bouton, pas dans cette fenêtre.
-        minimapAngle  = 200,
-
         -- Le mode sombre est éteint, mais la liste de ce qu'il assombrit est
         -- cochée d'avance : l'allumer doit produire un effet visible tout de
         -- suite, décocher ensuite ce qu'on veut garder clair est le geste rare.
@@ -640,14 +595,6 @@ BUI:RegisterModule(MODULE, {
     },
 
     options = {
-        { type = "header", text = L["Minimap"] },
-        {
-            type    = "toggle",
-            key     = "minimapButton",
-            text    = L["Minimap button"],
-            tooltip = L["Minimap button tip"],
-        },
-
         { type = "header", text = L["Dark mode"] },
         {
             type    = "toggle",
@@ -841,8 +788,6 @@ BUI:RegisterModule(MODULE, {
         if auctionFilterSet and setAuctionFilter(false) then auctionFilterSet = false end
 
         stopCountdowns()
-
-        if minimapButton then minimapButton:Hide() end
     end,
 
     OnSettingChanged = function(self, key)

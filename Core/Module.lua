@@ -312,6 +312,20 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
+    -- `/bui blocked` : écrit dans le chat le nom de chaque action refusée par le
+    -- client. La fenêtre « action réservée à l'IU de Blizzard » ne le dit pas, et
+    -- sans lui il n'y a rien à chercher (voir `BUI:ToggleActionWatch`).
+    if arg == "blocked" then
+        local watching = BUI:ToggleActionWatch()
+        BUI:Print(L["Blocked action watch"], watching and L["On"] or L["Off"])
+
+        -- La veille allume l'affichage des erreurs, sans quoi le client
+        -- n'émettrait rien à écouter. On le dit : le joueur voit un réglage
+        -- changer, il doit savoir par qui et jusqu'à quand.
+        if watching then BUI:Print(L["Blocked action needs errors"]) end
+        return
+    end
+
 
     if BUI.Config and BUI.Config.Toggle then
         BUI.Config:Toggle()

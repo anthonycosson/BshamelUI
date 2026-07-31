@@ -103,9 +103,42 @@ function U.Clamp(value, min, max)
     return value
 end
 
+--- Montant en pièces, avec les icônes du client.
+--- La fonction a migré dans `C_CurrencyInfo` ; la globale existe encore, mais
+--- rien ne dit pour combien de temps.
+---@param amount number
+---@return string
+function U.Money(amount)
+    if C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString then
+        return C_CurrencyInfo.GetCoinTextureString(amount)
+    end
+    if GetCoinTextureString then return GetCoinTextureString(amount) end
+    return tostring(amount)
+end
+
 -- =========================================================================
 --  Temps
 -- =========================================================================
+
+--- Durée en `M:SS`, ou `H:MM:SS` au-delà de l'heure.
+---
+--- Les minutes ne sont pas ramenées sous soixante en dessous d'une heure : un
+--- chrono de donjon dépasse la demi-heure et se lit « 34:12 », pas « 0:34:12 ».
+--- Une durée négative se rend sans son signe : c'est à l'appelant de dire ce
+--- qu'un dépassement signifie, en le préfixant ou en le colorant.
+---@param seconds number
+---@return string
+function U.Clock(seconds)
+    seconds = math.floor(math.abs(seconds or 0) + 0.5)
+
+    local hours   = math.floor(seconds / 3600)
+    local minutes = math.floor(seconds / 60)
+
+    if hours > 0 then
+        return string.format("%d:%02d:%02d", hours, minutes % 60, seconds % 60)
+    end
+    return string.format("%d:%02d", minutes, seconds % 60)
+end
 
 --- Enveloppe `fn` de sorte qu'elle ne puisse pas tourner plus d'une fois par
 --- `interval` secondes. À utiliser pour tout ce qui est branché sur un
@@ -139,6 +172,29 @@ function U.Debounce(delay, fn)
             pending = false
             fn(unpack(args))
         end)
+    end
+end
+
+-- =========================================================================
+--  Réglages du client
+-- =========================================================================
+
+--- Les deux chemins existent, aucun des deux n'est garanti pour toujours : la
+--- fonction a migré dans `C_CVar`, la globale est encore là.
+---@param name string
+---@return string|nil
+function U.GetCVar(name)
+    if C_CVar and C_CVar.GetCVar then return C_CVar.GetCVar(name) end
+    return GetCVar and GetCVar(name) or nil
+end
+
+---@param name string
+---@param value any
+function U.SetCVar(name, value)
+    if C_CVar and C_CVar.SetCVar then
+        C_CVar.SetCVar(name, value)
+    elseif SetCVar then
+        SetCVar(name, value)
     end
 end
 

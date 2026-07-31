@@ -43,12 +43,21 @@ UI\Widgets\Slider.lua
 UI\Widgets\Dropdown.lua
 UI\Widgets\ScrollList.lua
 UI\Widgets\MinimapButton.lua
+UI\Widgets\Tray.lua
+UI\Widgets\SecureMenu.lua
 UI\Widgets\Countdown.lua
 UI\Widgets\ShadeBorder.lua
 UI\Widgets\SlotInfo.lua
 UI\Widgets\ItemLevelTag.lua
 UI\Widgets\Mover.lua
 UI\Widgets\ChatTools.lua
+# Panneaux posés à même l'écran. `Panel.lua` est leur socle commun : il vient
+# donc avant les quatre pièces qui s'appuient dessus.
+UI\Widgets\Panel.lua
+UI\Widgets\BattleRes.lua
+UI\Widgets\MarkerBar.lua
+UI\Widgets\KeyTimer.lua
+UI\Widgets\QueueReminder.lua
 # La fenêtre de copie assemble une fenêtre et une zone défilante : elle vient
 # après les deux.
 UI\Widgets\CopyWindow.lua
@@ -69,12 +78,20 @@ UI\Config\ConfigFrame.lua
 # Modules
 Modules\General.lua
 Modules\Character.lua
+Modules\ActionBars.lua
 Modules\UnitFrames.lua
 Modules\CooldownManager.lua
 Modules\Windows.lua
 Modules\Chat.lua
+Modules\Minimap.lua
+Modules\Bags.lua
 Modules\Quest.lua
+Modules\Keystones.lua
+Modules\GroupFinder.lua
+Modules\RaidTools.lua
+Modules\MythicTimer.lua
 
-# Modules annoncés, sans code derrière : ils se voient dans la fenêtre mais ne
-# s'allument pas. Chaque ligne disparaît d'ici le jour où le module est écrit.
-Modules\Upcoming.lua
+# `Modules/Upcoming.lua` a disparu : un module annoncé n'est plus une déclaration
+# sans code, c'est son propre fichier avec `preview = true` en tête. Les quatre
+# derniers de cette liste sont dans ce cas — écrits, pas encore vérifiés en jeu,
+# donc pas allumables. Retirer la ligne `preview` livre la page.

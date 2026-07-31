@@ -26,6 +26,8 @@ local W    = BUI.Widgets
 ---@field onClick fun(mouseButton: string)
 ---@field getAngle fun(): number   angle en degrés, 0 = est, sens trigonométrique
 ---@field setAngle fun(angle: number)
+---@field icon? string        chemin de texture ; le logo de l'addon par défaut
+---@field squareIcon? boolean l'icône a des angles : on l'inscrit dans le trou
 
 --- Rayon sur lequel se pose le bouton. Mesuré à chaque placement plutôt que
 --- calculé une fois : la minicarte change de taille avec les réglages du client
@@ -75,9 +77,40 @@ function W.MinimapButton(opts)
     button:SetMovable(true)
 
     local icon = button:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(T.SIZE.MINIMAP_ICON, T.SIZE.MINIMAP_ICON)
     icon:SetPoint("CENTER", button, "CENTER", T.SIZE.MINIMAP_ICON_X, T.SIZE.MINIMAP_ICON_Y)
-    icon:SetTexture(T.TEXTURE.MINIMAP_ICON)
+    icon:SetTexture(opts.icon or T.TEXTURE.MINIMAP_ICON)
+
+    -- Le logo de l'addon porte son disque **dans sa texture** : posé à la taille
+    -- du trou, il le remplit. Une icône d'objet ou de sort est carrée, et rien
+    -- ne l'arrondit — d'où le masque circulaire, qui lui coupe les coins et lui
+    -- permet de remplir le trou comme le logo. Sans lui, il faudrait la réduire
+    -- au carré inscrit dans le cercle et elle flotterait au milieu de l'anneau.
+    --
+    -- Test de capacité et non pari : un client qui ne sait pas masquer retombe
+    -- sur le carré inscrit, plus petit mais jamais débordant.
+    -- Une icône d'objet ou de sort porte un **liseré sombre dans son image**.
+    -- Agrandie pour remplir le trou, ce liseré devient un croissant noir sur le
+    -- bord — très visible en bas, où l'illustration est déjà foncée. On rogne
+    -- donc la même fraction que le mode sombre rogne avant de poser son contour.
+    local masked = false
+    if opts.squareIcon then
+        local crop = T.SIZE.SHADE_ICON_CROP
+        icon:SetTexCoord(crop, 1 - crop, crop, 1 - crop)
+    end
+
+    if opts.squareIcon and button.CreateMaskTexture and icon.AddMaskTexture then
+        local mask = button:CreateMaskTexture()
+        mask:SetTexture(T.TEXTURE.CIRCLE_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        mask:SetPoint("CENTER", icon, "CENTER")
+        mask:SetSize(T.SIZE.MINIMAP_ICON, T.SIZE.MINIMAP_ICON)
+        icon:AddMaskTexture(mask)
+        masked = true
+    end
+
+    local side = (opts.squareIcon and not masked)
+                 and T.SIZE.MINIMAP_ICON_SQUARE
+                 or T.SIZE.MINIMAP_ICON
+    icon:SetSize(side, side)
 
     -- La bordure se dessine **au-dessus** de l'icône : c'est elle qui découpe le
     -- rond. Une icône posée par-dessus déborderait de l'anneau.

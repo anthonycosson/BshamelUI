@@ -11,6 +11,18 @@ local BUI = ns.BUI
 local T    = BUI.Theme
 local W    = BUI.Widgets
 
+--- Valeurs proposées. `opts.values` peut être une **fonction** : la liste est
+--- alors relue à chaque ouverture du menu et à chaque rafraîchissement. C'est
+--- pour les listes qui dépendent du personnage — les pierres de foyer qu'il
+--- possède, par exemple —, qui ne sont pas connues à la construction de la page.
+---@param opts BUI.DropdownOpts
+---@return BUI.DropdownEntry[]
+local function valuesOf(opts)
+    local values = opts.values
+    if type(values) == "function" then return values() or {} end
+    return values or {}
+end
+
 --- Libellé associé à une valeur.
 ---@param values BUI.DropdownEntry[]
 ---@param value any
@@ -37,8 +49,9 @@ local function modernDropdown(row, opts)
     W.PlaceControl(row, control)
 
     control:SetupMenu(function(_, rootDescription)
-        for i = 1, #opts.values do
-            local entry = opts.values[i]
+        local values = valuesOf(opts)
+        for i = 1, #values do
+            local entry = values[i]
             rootDescription:CreateRadio(
                 entry.label,
                 function() return opts.get() == entry.value end,
@@ -53,16 +66,18 @@ end
 --- Repli : un bouton qui passe à la valeur suivante à chaque clic.
 local function cyclingButton(row, opts)
     local control = W.Button(row, "", function()
+        local values = valuesOf(opts)
+        if #values == 0 then return end
+
         local current = opts.get()
         local index = 1
-        for i = 1, #opts.values do
-            if opts.values[i].value == current then
+        for i = 1, #values do
+            if values[i].value == current then
                 index = i
                 break
             end
         end
-        local nextEntry = opts.values[(index % #opts.values) + 1]
-        opts.set(nextEntry.value)
+        opts.set(values[(index % #values) + 1].value)
     end)
     W.PlaceControl(row, control)
     return control
@@ -75,7 +90,7 @@ end
 ---@class BUI.DropdownOpts
 ---@field text string
 ---@field tooltip? string
----@field values BUI.DropdownEntry[]
+---@field values BUI.DropdownEntry[]|fun(): BUI.DropdownEntry[]
 ---@field get fun(): any
 ---@field set fun(value: any)
 
@@ -94,7 +109,7 @@ function W.Dropdown(parent, opts)
     W.Tooltip(control, opts.text, opts.tooltip)
 
     function row:Refresh()
-        setButtonText(control, labelFor(opts.values, opts.get()))
+        setButtonText(control, labelFor(valuesOf(opts), opts.get()))
     end
 
     row:Refresh()

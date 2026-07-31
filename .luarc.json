@@ -33,8 +33,16 @@
     "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
 
-    "Minimap", "GetCursorPosition", "GetCVar", "SetCVar",
+    "Minimap", "MinimapBackdrop", "MinimapCluster",
+    "GetCursorPosition", "GetCVar", "SetCVar",
     "IsMouseButtonDown", "GetScreenWidth", "GetScreenHeight",
+
+    "C_ToyBox", "PlayerHasToy", "C_Spell", "GetSpellInfo",
+    "IsSpellKnown", "IsPlayerSpell", "C_ChallengeMode", "C_SpellBook", "GetNumExpansions",
+    "GetFlyoutInfo", "GetFlyoutSlotInfo",
+    "CreateMacro", "EditMacro", "GetMacroIndexByName",
+    "GetMouseFoci", "GetMouseFocus", "WorldFrame",
+    "C_MerchantFrame", "DELETE_ITEM_CONFIRM_STRING", "STATICPOPUP_NUMDIALOGS",
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
     "LFGDungeonReadyPopup", "LFGDungeonReadyDialog", "PVPReadyDialog",
     "CinematicFrame_CancelCinematic", "GameMovieFinished",
@@ -69,7 +77,26 @@
     "GetQuestReward", "GetQuestID", "QuestGetAutoAccept", "IsQuestCompletable",
     "GetNumQuestChoices", "GetNumActiveQuests", "GetNumAvailableQuests",
     "GetActiveTitle", "SelectActiveQuest", "SelectAvailableQuest",
-    "IsActiveQuestTrivial", "IsAvailableQuestTrivial"
+    "IsActiveQuestTrivial", "IsAvailableQuestTrivial",
+
+    "IsInGroup", "IsInRaid", "GetNumGroupMembers", "UnitName", "UnitIsConnected",
+    "UnitIsGroupLeader", "UnitIsGroupAssistant", "SendChatMessage",
+    "DoReadyCheck", "C_PartyInfo", "LE_PARTY_CATEGORY_INSTANCE",
+    "CompactRaidFrameManager",
+
+    "CombatLogGetCurrentEventInfo", "bit", "LoggingCombat",
+    "COMBATLOG_OBJECT_TYPE_PLAYER", "COMBATLOG_OBJECT_AFFILIATION_MINE",
+    "COMBATLOG_OBJECT_AFFILIATION_PARTY", "COMBATLOG_OBJECT_AFFILIATION_RAID",
+
+    "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
+
+    "C_MythicPlus", "NUM_BAG_SLOTS", "GetCursorInfo", "ClearCursor",
+    "GetWorldElapsedTimers", "GetWorldElapsedTime",
+
+    "C_LFGList", "LFGListApplicationDialog", "CompleteLFGRoleCheck",
+    "AcceptGroup", "StaticPopup_Hide",
+
+    "GetInstanceInfo"
   ],
   "diagnostics.disable": [
     "lowercase-global"

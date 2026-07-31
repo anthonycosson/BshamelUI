@@ -92,6 +92,71 @@ function W.Hidden()
     return hidden
 end
 
+--- Bouton nommé et invisible, fait pour être cliqué **par une macro**
+--- (`/click <nom>`) ou par un raccourci clavier.
+---
+--- C'est le seul chemin par lequel un addon peut poser quelque chose sur une
+--- barre d'action : les emplacements n'acceptent que ce que le jeu y range —
+--- sort, objet, macro, monture, tenue —, jamais un cadre d'addon. La macro, elle,
+--- est un contenu que le jeu accepte, et elle clique ce bouton-ci.
+---
+--- Il exige un **nom global**, sans quoi la macro n'aurait rien à nommer : c'est
+--- l'exception « noms de frames » de la règle 3, et le nom doit donc être
+--- préfixé `BshamelUI`.
+---@param globalName string
+---@param onClick fun(mouseButton: string)
+---@return table
+function W.ClickTarget(globalName, onClick)
+    local button = CreateFrame("Button", globalName, UIParent)
+
+    -- Jamais montré : `Click()` n'a pas besoin de la souris, et un bouton
+    -- invisible ne prend de place nulle part.
+    button:Hide()
+    button:SetScript("OnClick", function(_, mouseButton)
+        onClick(mouseButton)
+    end)
+
+    return button
+end
+
+--- Ferme un panneau au premier clic posé **ailleurs**.
+---
+--- Le client annonce chaque appui de souris, où qu'il tombe
+--- (`GLOBAL_MOUSE_DOWN`) : il suffit alors de demander au panneau s'il était
+--- sous le curseur. C'est ce qui distingue cette approche du procédé habituel —
+--- un cadre transparent posé sur tout l'écran pour intercepter les clics —, qui
+--- **avale** le clic et oblige à cliquer deux fois pour agir ailleurs. Ici le
+--- clic va où il allait, et la fenêtre se ferme en plus.
+---
+--- La veille n'est armée que pendant que le panneau est ouvert : fermé, il ne
+--- coûte rien.
+---
+--- `isInside` couvre ce qui appartient au panneau sans être dedans : ses
+--- sous-menus, et le bouton qui l'a ouvert — sans quoi un clic sur ce bouton
+--- fermerait la fenêtre à l'appui puis la rouvrirait au relâchement.
+---@param panel table
+---@param close fun()
+---@param isInside? fun(): boolean
+function W.CloseOnOutsideClick(panel, close, isInside)
+    local watcher = CreateFrame("Frame")
+
+    watcher:SetScript("OnEvent", function()
+        if panel:IsMouseOver() then return end
+        if isInside and isInside() then return end
+        close()
+    end)
+
+    panel:HookScript("OnShow", function()
+        -- Sous `pcall` : un client qui ne connaît pas l'événement lèverait, et
+        -- une fenêtre qui ne se ferme pas au clic vaut mieux qu'une erreur.
+        pcall(watcher.RegisterEvent, watcher, "GLOBAL_MOUSE_DOWN")
+    end)
+
+    panel:HookScript("OnHide", function()
+        watcher:UnregisterAllEvents()
+    end)
+end
+
 --- Panneau creusé, comme les zones de contenu de l'interface Blizzard, mais
 --- réduit à sa bordure : on lui retire son fond.
 ---
