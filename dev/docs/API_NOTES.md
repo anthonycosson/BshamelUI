@@ -1270,6 +1270,48 @@ il faut `U.IsSecret`. Et tout ce qui interroge le client depuis un parcours doit
 (« la fonctionnalité entière ne marche plus ») ne ressemble en rien à sa cause
 (« une région sur vingt a refusé de répondre »).
 
+## Un booléen secret ne se teste pas, et l'ordre des gardes compte
+
+**Symptôme** — trois erreurs sans rapport apparent, relevées par BugSack dans la
+même session, dont une à **339 occurrences** :
+
+    UnitFrames.lua:400: attempt to perform boolean test on a secret boolean
+    value (execution tainted by 'BshamelUI')
+
+    Chat.lua:97: attempt to compare local 'text' (a secret string value,
+    while execution tainted by 'BshamelUI')
+
+**Cause** — c'est la même que celle de la note précédente, étendue à deux formes
+qu'on n'avait pas vues venir :
+
+- **le booléen.** `UnitIsUnit` répond en valeur secrète dès que l'identité d'une
+  des deux unités est protégée. Un booléen secret ne se compare pas *et ne se
+  teste pas* : `if UnitIsUnit(unit, "player") then` lève à lui seul. C'est la
+  seule famille de valeurs dont la simple lecture dans un `if` suffit à casser le
+  chemin — d'où le compteur à trois cent trente-neuf ;
+- **l'ordre des gardes.** `type(text) ~= "string" or text == ""` laisse passer
+  une chaîne secrète — elle *est* de type `string` — et lève sur la comparaison
+  suivante. Le garde de secret doit donc venir **avant** toute comparaison, pas
+  à la fin de la liste des tests, où il ne protège plus rien. Deux endroits
+  écrivaient déjà `U.IsSecret` en dernier (`Modules/Minimap.lua`) : ils
+  n'avaient pas encore levé, faute d'être passés sur une valeur secrète.
+
+Le texte d'une ligne de chat est secret dès que **notre propre hook** a teint
+l'exécution : `AddMessage` reçoit alors une chaîne qu'on ne peut ni comparer ni
+ranger. La ligne n'entre pas dans l'historique, et c'est aussi bien — rien de
+secret ne doit atterrir dans un SavedVariables.
+
+**Ce qu'on fait** — `U.IsTrue` (`Core/Util.lua`) est le seul test permis sur un
+booléen venu du client, et un secret y vaut « non » : le client cache ces
+réponses là où il refuse de nous laisser conclure, et conclure quand même serait
+plus faux que de s'abstenir.
+
+**La leçon générale** — la note précédente disait « avant d'indexer, de
+multiplier ou de servir de clé ». Il faut y ajouter : **avant de comparer, et
+avant de tester**. Autrement dit, un `U.IsSecret` (ou `U.IsTrue`) se place à la
+frontière — là où la valeur arrive du client — et jamais au milieu d'une
+conjonction dont un maillon antérieur touche déjà la valeur.
+
 ## Un cadre d'unité se rafraîchit en trois passages, pas en un
 
 **Symptôme** — le réglage s'applique, mais avec un temps de retard visible :
@@ -1717,9 +1759,42 @@ porte le même numéro toute sa vie. C'est la différence avec le menu de
 téléportation, dont les lignes sont recyclées et doivent donc être réécrites en
 entier (voir « Un bouton sécurisé recyclé garde l'action du précédent »).
 
-Conséquence héritée du même mécanisme : la barre **ne se montre ni ne se cache en
-combat**. `SetShownOutOfCombat` rend `false` dans ce cas, et l'appelant repasse à
-`PLAYER_REGEN_ENABLED`.
+Conséquence héritée du même mécanisme : le panneau **ne se montre ni ne se cache
+en combat**. `SetShownOutOfCombat` rend `false` dans ce cas, et l'appelant
+repasse à `PLAYER_REGEN_ENABLED`.
+
+**Le joueur règle l'échelle, pas la taille.** La disposition du panneau est
+arrêtée à sa construction ; sa poignée appelle `SetScale` sur le panneau et rien
+d'autre. C'est ce qui la rend inoffensive ici : `SetSize` et `SetPoint` sur un
+bouton sécurisé sont refusés en combat, `SetScale` sur leur parent ne les touche
+pas. La poignée reste malgré tout refusée en combat (`canScale`), par prudence et
+pour que la notice affichée au joueur reste vraie.
+
+---
+
+## Le décalage d'un ancrage s'exprime dans l'échelle du cadre ancré
+
+**Symptôme** — un panneau mis à l'échelle 2 se retrouve deux fois plus loin du
+centre de l'écran qu'il ne devrait, et il s'éloigne encore à chaque cran de la
+poignée.
+
+**Cause** — `frame:SetPoint("CENTER", UIParent, "CENTER", x, y)` interprète `x`
+et `y` dans l'échelle effective de **`frame`**, pas dans celle d'`UIParent`. Un
+décalage de cent pixels vaut donc deux cents pixels d'écran à l'échelle double.
+
+**Ce qu'on fait** — une position rangée est toujours en unités d'`UIParent`,
+c'est la seule qui reste vraie quand l'échelle change. `Panel:ApplyPosition` la
+convertit au moment de la poser :
+
+```lua
+local factor = UIParent:GetEffectiveScale() / self:GetEffectiveScale()
+self:SetPoint("CENTER", UIParent, "CENTER", x * factor, y * factor)
+```
+
+`Panel:ApplyScale` repose donc la position juste après l'échelle, et la poignée
+la repose à chaque cran du geste : sans cela le panneau glisserait sous le
+curseur au lieu de gonfler sur place. `savePosition` faisait déjà la conversion
+inverse — c'était la moitié aller du même trajet.
 
 **Les deux numérotations ne coïncident pas.** Le marqueur au sol n° 1 est le
 carré bleu, qui porte l'icône de ciblage n° 6. Rien dans le client ne relie les

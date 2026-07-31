@@ -10,6 +10,7 @@
 local _, ns = ...
 local BUI = ns.BUI
 local T   = BUI.Theme
+local U   = BUI.Util
 local L   = ns.L
 
 local W = {}
@@ -172,6 +173,25 @@ function W.Inset(parent)
     return inset
 end
 
+--- Contour ouvragé d'un dialogue du client, sans barre de titre ni bouton de
+--- fermeture.
+---
+--- C'est la bordure des fenêtres du jeu, réduite à ce qu'elle est : quatre côtés
+--- identiques. Les templates de *fenêtre* (`T.TEMPLATES.WINDOW`) portent la même
+--- bordure mais lui ajoutent une bande de titre en haut — utile sur une fenêtre
+--- qu'on remplit, encombrante sur un panneau de deux rangées.
+---
+--- Comme `W.Inset`, on lui retire son fond : celui du panneau suffit, et deux
+--- surfaces empilées éclaircissent la zone au lieu de la délimiter.
+---@param parent table
+---@return table
+function W.DialogBorder(parent)
+    local template = T.Template("DIALOG_BORDER")
+    local frame = CreateFrame("Frame", nil, parent, template)
+    T.ClearPanelBackground(frame)
+    return frame
+end
+
 --- Bandeau lumineux fort au centre et éteint sur les deux bords.
 ---
 --- Deux textures et non une : une texture ne porte qu'un dégradé à deux
@@ -260,6 +280,140 @@ function W.EdgeShade(frame)
     strip("BOTTOMLEFT", "BOTTOMRIGHT", "VERTICAL",  false)  -- min = bas
     strip("TOPLEFT",  "BOTTOMLEFT",   "HORIZONTAL", false)  -- min = gauche
     strip("TOPRIGHT", "BOTTOMRIGHT",  "HORIZONTAL", true)   -- max = droite
+end
+
+--- Poignée de redimensionnement, posée dans le coin bas-droit.
+---
+--- Construite sans template : les templates de poignée du client ont changé de
+--- nom plusieurs fois, une frame nue avec sa texture est plus stable.
+---
+--- `allow` existe pour les cadres qui portent des boutons **sécurisés** : le
+--- client refuse d'en changer la taille en combat, et une poignée qui accepte
+--- d'être tirée sans rien redimensionner est pire qu'une poignée inerte. On
+--- refuse donc le geste au lieu de le laisser échouer en silence.
+--- Le corps d'une poignée : sa vignette, son coin, sa réaction au survol. Ce que
+--- le geste **fait** est décidé par les deux fabriques qui s'en servent.
+---@param frame table
+---@return table
+local function newGrip(frame)
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(T.SIZE.GRIP, T.SIZE.GRIP)
+    grip:SetPoint("BOTTOMRIGHT", -T.SIZE.GRIP_INSET, T.SIZE.GRIP_INSET)
+    grip:SetFrameLevel(frame:GetFrameLevel() + 10)
+
+    local tex = grip:CreateTexture(nil, "OVERLAY")
+    tex:SetAllPoints()
+    tex:SetTexture(T.TEXTURE.RESIZE_GRIP)
+    tex:SetAlpha(T.ALPHA.GRIP)
+
+    grip:SetScript("OnEnter", function() tex:SetAlpha(T.ALPHA.GRIP_HOVER) end)
+    grip:SetScript("OnLeave", function() tex:SetAlpha(T.ALPHA.GRIP) end)
+
+    frame.ResizeGrip = grip
+    return grip
+end
+
+---@class BUI.GripOpts
+---@field side? string             coin ou bord tiré ; « BOTTOMRIGHT » par défaut
+---@field allow? fun(): boolean    le geste est-il permis en ce moment ?
+---@field onStop? fun()
+---@param frame table
+---@param opts? BUI.GripOpts
+---@return table
+function W.ResizeGrip(frame, opts)
+    opts = opts or {}
+    local side = opts.side or "BOTTOMRIGHT"
+
+    local grip = newGrip(frame)
+
+    grip:SetScript("OnMouseDown", function()
+        if opts.allow and not opts.allow() then return end
+        grip._sizing = true
+        frame:StartSizing(side)
+    end)
+
+    grip:SetScript("OnMouseUp", function()
+        if not grip._sizing then return end
+        grip._sizing = false
+        frame:StopMovingOrSizing()
+        if opts.onStop then opts.onStop() end
+    end)
+
+    return grip
+end
+
+--- Poignée qui change l'**échelle** d'un cadre au lieu de sa taille.
+---
+--- Deux gestes différents, et le choix entre eux n'est pas cosmétique :
+--- retailler un cadre laisse ses textes au corps où ils sont, agrandir son
+--- échelle emporte tout — vignettes, libellés, bordure. Pour un panneau dont la
+--- disposition est arrêtée et qu'on veut seulement voir de plus loin, c'est
+--- l'échelle qu'on cherche.
+---
+--- C'est aussi ce qui le rend inoffensif au milieu de boutons **sécurisés** :
+--- rien n'est mesuré ni réancré sur eux, seul leur parent change d'échelle.
+---
+--- La largeur intrinsèque du cadre ne bouge jamais : l'échelle visée est donc le
+--- rapport entre la largeur qu'on veut voir et celle-là.
+---@class BUI.ScaleGripOpts
+---@field min number
+---@field max number
+---@field setScale fun(scale: number)
+---@field onScale? fun()          appelé à chaque cran du geste, pas seulement à sa fin
+---@field allow? fun(): boolean
+---@param frame table
+---@param opts BUI.ScaleGripOpts
+---@return table
+function W.ScaleGrip(frame, opts)
+    local grip = newGrip(frame)
+    local originX, originWidth
+    local release
+
+    local function track()
+        -- Le relâchement ne revient pas toujours à la poignée : le curseur a pu
+        -- sortir du cadre, ou la fenêtre perdre le focus pendant le geste. On ne
+        -- s'en remet donc pas à `OnMouseUp` seul — on regarde le bouton.
+        if not IsMouseButtonDown("LeftButton") then
+            release()
+            return
+        end
+
+        local width = frame:GetWidth()
+        if not (originWidth and width and width > 0) then return end
+
+        -- `GetCursorPosition` répond en pixels de l'écran, pas dans l'échelle de
+        -- `UIParent` : on ramène l'écart dans la sienne avant de s'en servir,
+        -- sans quoi la poignée irait deux fois trop vite chez qui a réglé
+        -- l'échelle de l'interface.
+        local dx = (GetCursorPosition() - originX) / UIParent:GetEffectiveScale()
+        local scale = (originWidth + dx) / width
+
+        if scale < opts.min then scale = opts.min end
+        if scale > opts.max then scale = opts.max end
+        frame:SetScale(scale)
+        if opts.onScale then opts.onScale() end
+    end
+
+    local tick = U.Throttle(T.TIMING.SCALE_DRAG, track)
+
+    release = function()
+        if not originX then return end
+        originX, originWidth = nil, nil
+        grip:SetScript("OnUpdate", nil)
+        opts.setScale(frame:GetScale())
+    end
+
+    grip:SetScript("OnMouseDown", function()
+        if opts.allow and not opts.allow() then return end
+        originX     = GetCursorPosition()
+        originWidth = frame:GetWidth() * frame:GetScale()
+        grip:SetScript("OnUpdate", tick)
+    end)
+
+    grip:SetScript("OnMouseUp", release)
+    grip:SetScript("OnHide", release)
+
+    return grip
 end
 
 --- Séparateur vertical entre deux zones.

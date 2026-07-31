@@ -93,11 +93,6 @@ BUI:RegisterLocale("enUS", {
     ["Repair too expensive"]           = "Not enough money to repair: %s needed.",
     ["Auction current expansion"]      = "Auction house: current expansion only",
     ["Auction current expansion tip"]  = "Restricts auction house browsing to items from the current expansion.",
-    ["Announcements"]                  = "Announcements",
-    ["Announce group deaths"]          = "Announce group deaths",
-    ["Announce group deaths tip"]      = "Posts a message in group chat when a member of your party or raid dies.",
-    ["Death sound alert"]              = "Play a sound on death",
-    ["Death sound alert tip"]          = "Adds an audio alert to the death announcement.",
     ["Annoyances"]                     = "Annoyances",
     ["Skip cinematics"]                = "Skip cinematics",
     ["Skip cinematics tip"] =
@@ -317,7 +312,9 @@ BUI:RegisterLocale("enUS", {
         .. "slotted by someone else is left alone.",
     ["Keystones notice"] =
         "The reply is the keystone link itself whenever it can be found in your bags, so anyone "
-        .. "can hover it. Otherwise the dungeon and the level are written out.",
+        .. "can hover it. Otherwise the dungeon and the level are written out. Only party, raid, "
+        .. "instance and guild chat are listened to, never a whisper. Your own !keys is answered "
+        .. "too, which is the simplest way to check the setting works.",
     ["No keystone"]                    = "No keystone.",
 
     -- Module GroupFinder
@@ -329,37 +326,44 @@ BUI:RegisterLocale("enUS", {
     ["Auto role check"]                = "Confirm role checks",
     ["Auto role check tip"] =
         "Answers the role check automatically with the roles you already signed up with.",
-    ["Auto accept invite"]             = "Accept the invite you applied for",
-    ["Auto accept invite tip"] =
-        "Accepts a group invitation when you have a pending application. Invitations from anyone "
-        .. "else are left for you to answer.",
-    ["Queue reminder"]                 = "Remind me what I joined",
-    ["Queue reminder tip"] =
-        "Shows the dungeon or raid you just joined, with a teleport button when your character "
-        .. "knows the matching teleport.",
-    ["Queue reminder notice"] =
-        "The reminder stays on screen until you enter the instance or a fight starts. Drag it to "
-        .. "put it where you want it.",
-    ["Teleport"]                       = "Teleport",
-
     -- Module RaidTools
     ["Raid tools"]                     = "Raid tools",
     ["Combat"]                         = "Combat",
     ["Battle res tracker"]             = "Battle res tracker",
     ["Battle res tracker tip"] =
         "Shows how many battle resurrections are left and how long until the next one.",
-    ["Battle res size"]                = "Tracker size",
-    ["Battle res size tip"]            = "Side of the icon, in pixels. Drag the panel to move it.",
+    ["Battle res size"]                = "Icon size",
+    ["Battle res size tip"]            = "Side of the icon, in pixels. Drag the icon to move it.",
+    ["Battle res shaded"]              = "Dark border on the icon",
+    ["Battle res shaded tip"] =
+        "Draws the addon's dark border around the icon, like dark mode does on aura icons. This "
+        .. "one is its own setting: dark mode elsewhere does not decide it.",
+    ["Lock battle res"]                = "Lock the icon in place",
+    ["Lock battle res tip"]            = "Freezes the icon where it is. It keeps counting.",
+    ["Battle res preview"]             = "Preview mode",
+    ["Battle res preview tip"] =
+        "Shows the icon outside an instance, filled with sample values, so you can place it.",
 
     ["Group tools"]                    = "Group tools",
-    ["World markers"]                  = "World marker bar",
+    ["World markers"]                  = "Group tool panel",
     ["World markers tip"] =
-        "A bar with the eight world markers, a ready check and a pull timer. Drag it to move it.",
+        "A panel with the eight world markers, a red no-entry sign that clears them, a ready check and a "
+        .. "pull timer. Drag it to move it, drag its bottom right corner to scale it.",
+    ["Lock group tools"]               = "Lock the panel in place",
+    ["Lock group tools tip"] =
+        "Freezes the panel where it is and puts its resize handle away. The buttons keep working.",
+    ["Group tools on hover"]           = "Show only under the cursor",
+    ["Group tools on hover tip"] =
+        "Keeps the panel invisible until you move the mouse over it. It still takes the mouse "
+        .. "where it stands, so remember where you put it.",
     ["World marker number"]            = "World marker %d",
     ["World marker tip"]               = "Places this world marker where you are aiming.",
     ["Clear markers"]                  = "Clear markers",
     ["Clear markers tip"]              = "Removes every world marker.",
-    ["Ready check"]                    = "Ready check",
+    -- Le bouton porte « Ready » et non « Ready check » : c'est le mot que les
+    -- groupes emploient, et les deux boutons de la rangée se partagent une
+    -- largeur — un intitulé court y tient à toutes les tailles du panneau.
+    ["Ready"]                          = "Ready",
     ["Ready check tip"]                = "Starts a ready check. Needs lead or assist.",
     ["Pull"]                           = "Pull",
     ["Pull tip"]                       = "Starts the countdown and announces it in group chat. Needs lead or assist.",
@@ -371,48 +375,25 @@ BUI:RegisterLocale("enUS", {
     ["Hide raid manager tip"] =
         "Hides the tab the game puts against the left edge of the screen in a raid.",
     ["Group tools notice"] =
-        "The bar does not appear or disappear during combat: the game refuses to show or hide a "
-        .. "world marker button while you are fighting. It follows the setting again as soon as "
-        .. "the fight ends.",
+        "The panel does not appear, disappear or resize during combat: the game refuses to show, "
+        .. "hide or resize a world marker button while you are fighting. It follows the setting "
+        .. "again as soon as the fight ends.",
     ["Need lead"]                      = "You need lead or assist for that.",
-
-    ["Buffs"]                          = "Buffs",
-    ["Ready check buffs"]              = "Check buffs on ready check",
-    ["Ready check buffs tip"] =
-        "Reports who is missing food or a flask when a ready check starts, and how much longer "
-        .. "yours last. Only you see the report.",
-    ["Check food"]                     = "Check food",
-    ["Check food tip"]                 = "Lists everyone without a well fed buff.",
-    ["Check flask"]                    = "Check flasks",
-    ["Check flask tip"]                = "Lists everyone without a flask, and those whose flask is about to run out.",
-    ["Check weapon enchant"]           = "Check weapon enchants",
-    ["Check weapon enchant tip"] =
-        "Warns when your weapon enchant is missing or about to run out. Only your own weapon can "
-        .. "be read: the game does not publish anyone else's.",
-    ["Expiry warning"]                 = "Warn under",
-    ["Expiry warning tip"]             = "Minutes left below which a flask or a weapon enchant is reported.",
-    ["Missing food"]                   = "No food: %s",
-    ["Missing flask"]                  = "No flask: %s",
-    ["Flask expiring"]                 = "Flask running out: %s",
-    ["Weapon enchant missing"]         = "Your weapon has no enchant.",
-    ["Weapon enchant expiring"]        = "Your weapon enchant runs out in %d minutes.",
-
-    ["Death announce"]                 = "Down: %s",
 
     ["Logging"]                        = "Logging",
     ["Auto combat logging"]            = "Automatic combat logging",
     ["Auto combat logging tip"] =
-        "Starts combat logging when you enter a raid or a mythic+ dungeon, and stops it when you leave.",
-    ["Combat log started"]             = "Combat logging started.",
+        "Starts combat logging the moment you enter a dungeon or a raid, and stops it when you "
+        .. "leave. Advanced logging is turned on with it, and put back as it was.",
+    ["Combat log armed"] =
+        "Automatic combat logging is on. It starts by itself the moment you set foot in a dungeon "
+        .. "or a raid, and says so here.",
+    ["Combat log off"]                 = "Automatic combat logging is off.",
+    ["Combat log started"] =
+        "Combat logging started, advanced logging on. The file is Logs\\WoWCombatLog.txt.",
     ["Combat log stopped"]             = "Combat logging stopped.",
-
-    -- Noms d'auras cherchés par le contrôle des buffs. Ce sont les seules
-    -- chaînes du module qui dépendent de la langue du client : voir
-    -- `dev/docs/API_NOTES.md`. Une valeur fausse signale tout le monde comme non
-    -- buffé, et se corrige ici.
-    ["Well fed aura"]                  = "Well Fed",
-    ["Flask aura"]                     = "Flask",
-    ["Phial aura"]                     = "Phial",
+    ["Combat log already on"] =
+        "Combat logging was already running: left alone, and it will not be stopped on the way out.",
 
     -- Module MythicTimer
     ["Mythic+ timer"]                  = "Mythic+ timer",

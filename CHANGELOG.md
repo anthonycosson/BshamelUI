@@ -2,6 +2,54 @@
 
 ## Non publié
 
+### Ajouté
+- La catégorie **MM+ / Raid** s'allume. Ses quatre pages étaient annoncées et
+  grisées ; elles sont livrées, chaque réglage restant éteint par défaut.
+
+  - **Clés mythiques** — répondre à « !keys » avec le lien de sa clé, et la poser
+    sur le socle sans ouvrir ses sacs.
+  - **Recherche de groupe** — conserver la note d'inscription d'une candidature à
+    l'autre, et répondre aux vérifications de rôle.
+  - **Outils de raid** — le suivi des résurrections de combat, le panneau
+    d'outils de groupe, le masquage du panneau de contrôle du jeu et la
+    journalisation automatique.
+  - **Chrono mythique+** — le décompte de la clé et ses paliers.
+
+- Le **panneau d'outils de groupe** : les huit marqueurs au sol, un rond barré
+  rouge qui les retire tous, une vérification de présence et un pull qui lance le
+  décompte du jeu et l'annonce dans le chat du groupe. Il porte le contour ouvragé
+  des dialogues du jeu, sans bande de titre : un panneau de deux rangées n'a pas
+  de hauteur à perdre, et neuf vignettes n'ont pas besoin d'être légendées.
+
+  Son coin bas-droit règle son **échelle** et non sa taille — tout grossit d'un
+  coup, vignettes et libellés compris, entre la moitié et le double et demi. Deux
+  réglages l'accompagnent : **verrouiller sa position**, qui le fige et range sa
+  poignée sans toucher aux boutons, et **ne l'afficher qu'au survol**, où il reste
+  invisible jusqu'à ce que la souris le trouve.
+
+  Il ne se montre ni ne se cache en combat : le jeu refuse qu'on touche à un
+  bouton de marqueur pendant qu'on se bat. Il suit de nouveau le réglage dès la
+  fin du combat.
+
+- Le **suivi des résurrections de combat** : une icône de sort, le nombre de
+  charges dans son coin, le temps avant la suivante en son milieu — comme le jeu
+  habille un bouton d'action. Trois réglages là où on l'allume : le **contour
+  sombre**, le **verrou de position**, et un **mode aperçu** qui l'affiche hors
+  instance, rempli de valeurs d'exemple, le temps de le placer. Il ne se montre
+  autrement que là où il y a une réserve à compter, c'est-à-dire nulle part au
+  moment précis où l'on cherche où le poser.
+
+- La **journalisation automatique** part dès le seuil d'un donjon ou d'un raid,
+  active la journalisation détaillée dont les sites d'analyse ont besoin, et remet
+  le tout comme elle l'a trouvé en sortant. Chaque bascule laisse une ligne dans
+  le chat — armée, lancée avec le chemin du fichier, arrêtée, ou déjà en cours et
+  laissée tranquille. Une journalisation lancée à la main n'est jamais coupée :
+  l'addon ne s'éteint que ce qu'il a lui-même allumé.
+
+- **Masquer le panneau de contrôle du jeu**, seul réglage du module allumé par
+  défaut : il porte les mêmes outils que le nôtre, et les deux côte à côte ne
+  servent qu'à se demander lequel on regarde.
+
 ### Corrigé
 - Plus d'erreurs à répétition sur les **icônes de spécialisation** des cadres
   d'unités ni sur l'**historique du chat**. Le jeu répond désormais par des

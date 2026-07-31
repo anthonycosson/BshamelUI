@@ -100,12 +100,6 @@ BUI:RegisterLocale("frFR", {
     ["Auction current expansion"]      = "Hôtel des ventes : extension actuelle uniquement",
     ["Auction current expansion tip"] =
         "Limite la navigation de l'hôtel des ventes aux objets de l'extension actuelle.",
-    ["Announcements"]                  = "Annonces",
-    ["Announce group deaths"]          = "Annoncer les morts du groupe",
-    ["Announce group deaths tip"] =
-        "Publie un message dans le chat de groupe quand un membre du groupe ou du raid meurt.",
-    ["Death sound alert"]              = "Alerte sonore à la mort",
-    ["Death sound alert tip"]          = "Ajoute une alerte sonore à l'annonce des morts.",
     ["Annoyances"]                     = "Nuisances",
     ["Skip cinematics"]                = "Passer les cinématiques",
     ["Skip cinematics tip"] =
@@ -318,7 +312,10 @@ BUI:RegisterLocale("frFR", {
         .. "par quelqu'un d'autre n'est pas touchée.",
     ["Keystones notice"] =
         "La réponse est le lien de la clé lui-même dès qu'elle est trouvée dans les sacs : chacun "
-        .. "peut donc la survoler. Sinon, le donjon et le niveau sont écrits en toutes lettres.",
+        .. "peut donc la survoler. Sinon, le donjon et le niveau sont écrits en toutes lettres. "
+        .. "Seuls les canaux de groupe, de raid, d'instance et de guilde sont écoutés, jamais un "
+        .. "chuchotement. Votre propre !keys obtient une réponse lui aussi, ce qui est la façon "
+        .. "la plus simple de vérifier que le réglage marche.",
     ["No keystone"]                    = "Pas de clé.",
 
     -- Module GroupFinder
@@ -330,39 +327,44 @@ BUI:RegisterLocale("frFR", {
     ["Auto role check"]                = "Valider les vérifications de rôle",
     ["Auto role check tip"] =
         "Répond automatiquement à la vérification des rôles, avec ceux que vous aviez déjà choisis.",
-    ["Auto accept invite"]             = "Accepter l'invitation attendue",
-    ["Auto accept invite tip"] =
-        "Accepte une invitation de groupe quand une candidature est en cours. Les invitations de "
-        .. "n'importe qui d'autre restent à votre main.",
-    ["Queue reminder"]                 = "Rappeler ce que j'ai rejoint",
-    ["Queue reminder tip"] =
-        "Affiche le donjon ou le raid que vous venez de rejoindre, avec un bouton de "
-        .. "téléportation quand le personnage connaît celle qui va avec.",
-    ["Queue reminder notice"] =
-        "Le rappel reste à l'écran jusqu'à l'entrée dans l'instance ou jusqu'au premier combat. "
-        .. "Il se déplace à la souris.",
-    ["Teleport"]                       = "Téléportation",
-
     -- Module RaidTools
     ["Raid tools"]                     = "Outils de raid",
     ["Combat"]                         = true,
     ["Battle res tracker"]             = "Suivi des résurrections de combat",
     ["Battle res tracker tip"] =
         "Affiche le nombre de résurrections de combat restantes et le délai avant la suivante.",
-    ["Battle res size"]                = "Taille du suivi",
+    ["Battle res size"]                = "Taille de l'icône",
     ["Battle res size tip"] =
-        "Côté de l'icône, en pixels. Le panneau se déplace à la souris.",
+        "Côté de l'icône, en pixels. Elle se déplace à la souris.",
+    ["Battle res shaded"]              = "Contour sombre sur l'icône",
+    ["Battle res shaded tip"] =
+        "Pose le contour sombre de l'addon autour de l'icône, comme le mode sombre le fait sur "
+        .. "les icônes d'auras. Celui-ci est son propre réglage : le mode sombre ailleurs n'en "
+        .. "décide pas.",
+    ["Lock battle res"]                = "Verrouiller la position de l'icône",
+    ["Lock battle res tip"]            = "Fige l'icône où elle est. Elle continue de compter.",
+    ["Battle res preview"]             = "Mode aperçu",
+    ["Battle res preview tip"] =
+        "Affiche l'icône hors instance, remplie de valeurs d'exemple, pour pouvoir la placer.",
 
     ["Group tools"]                    = "Outils de groupe",
-    ["World markers"]                  = "Barre de marqueurs au sol",
+    ["World markers"]                  = "Panneau d'outils de groupe",
     ["World markers tip"] =
-        "Une barre avec les huit marqueurs au sol, une vérification de présence et un pull timer. "
-        .. "Elle se déplace à la souris.",
+        "Un panneau avec les huit marqueurs au sol, un rond barré rouge qui les retire tous, une "
+        .. "vérification de présence et un pull timer. Il se déplace à la souris, et son coin "
+        .. "bas-droit règle sa taille.",
+    ["Lock group tools"]               = "Verrouiller la position du panneau",
+    ["Lock group tools tip"] =
+        "Fige le panneau où il est et range sa poignée. Les boutons continuent de fonctionner.",
+    ["Group tools on hover"]           = "N'afficher qu'au survol",
+    ["Group tools on hover tip"] =
+        "Garde le panneau invisible tant que la souris n'est pas dessus. Il prend toujours la "
+        .. "souris là où il se trouve : retenez où vous l'avez posé.",
     ["World marker number"]            = "Marqueur au sol %d",
     ["World marker tip"]               = "Pose ce marqueur au sol là où vous visez.",
     ["Clear markers"]                  = "Retirer les marqueurs",
     ["Clear markers tip"]              = "Retire tous les marqueurs au sol.",
-    ["Ready check"]                    = "Vérif. de présence",
+    ["Ready"]                          = "Ready",
     ["Ready check tip"] =
         "Lance une vérification de présence. Demande d'être chef ou promu.",
     ["Pull"]                           = "Pull",
@@ -376,51 +378,27 @@ BUI:RegisterLocale("frFR", {
     ["Hide raid manager tip"] =
         "Masque l'onglet que le jeu colle contre le bord gauche de l'écran en raid.",
     ["Group tools notice"] =
-        "La barre n'apparaît ni ne disparaît en combat : le jeu refuse de montrer ou de cacher un "
-        .. "bouton de marqueur pendant qu'on se bat. Elle suit de nouveau le réglage dès la fin "
-        .. "du combat.",
+        "Le panneau n'apparaît pas, ne disparaît pas et ne se redimensionne pas en combat : le jeu "
+        .. "refuse de montrer, de cacher ou de retailler un bouton de marqueur pendant qu'on se "
+        .. "bat. Il suit de nouveau le réglage dès la fin du combat.",
     ["Need lead"]                      = "Il faut être chef ou promu pour ça.",
-
-    ["Buffs"]                          = true,
-    ["Ready check buffs"]              = "Contrôler les buffs au ready check",
-    ["Ready check buffs tip"] =
-        "Signale qui n'a ni nourriture ni flacon au lancement d'une vérification de présence, et "
-        .. "combien de temps tiennent encore les vôtres. Vous seul voyez le rapport.",
-    ["Check food"]                     = "Contrôler la nourriture",
-    ["Check food tip"]                 = "Liste tout le monde sans buff de nourriture.",
-    ["Check flask"]                    = "Contrôler les flacons",
-    ["Check flask tip"] =
-        "Liste tout le monde sans flacon, et ceux dont le flacon est sur le point d'expirer.",
-    ["Check weapon enchant"]           = "Contrôler l'enchantement d'arme",
-    ["Check weapon enchant tip"] =
-        "Prévient quand votre enchantement d'arme manque ou va expirer. Seule votre arme est "
-        .. "lisible : le jeu ne publie pas celle des autres.",
-    ["Expiry warning"]                 = "Alerter en dessous de",
-    ["Expiry warning tip"] =
-        "Minutes restantes en dessous desquelles un flacon ou un enchantement est signalé.",
-    ["Missing food"]                   = "Sans nourriture : %s",
-    ["Missing flask"]                  = "Sans flacon : %s",
-    ["Flask expiring"]                 = "Flacon bientôt fini : %s",
-    ["Weapon enchant missing"]         = "Votre arme n'est pas enchantée.",
-    ["Weapon enchant expiring"]        = "Votre enchantement d'arme expire dans %d minutes.",
-
-    ["Death announce"]                 = "À terre : %s",
 
     ["Logging"]                        = "Journalisation",
     ["Auto combat logging"]            = "Journalisation automatique des combats",
     ["Auto combat logging tip"] =
-        "Lance la journalisation en entrant en raid ou en donjon mythique+, et la coupe en sortant.",
-    ["Combat log started"]             = "Journalisation des combats lancée.",
+        "Lance la journalisation dès l'entrée dans un donjon ou un raid, et la coupe en sortant. "
+        .. "La journalisation détaillée est activée avec elle, puis remise comme elle était.",
+    ["Combat log armed"] =
+        "Journalisation automatique activée. Elle démarrera toute seule dès que vous mettrez les "
+        .. "pieds dans un donjon ou un raid, et le dira ici.",
+    ["Combat log off"]                 = "Journalisation automatique désactivée.",
+    ["Combat log started"] =
+        "Journalisation lancée, journalisation détaillée activée. Le fichier est "
+        .. "Logs\\WoWCombatLog.txt.",
     ["Combat log stopped"]             = "Journalisation des combats arrêtée.",
-
-    -- Noms d'auras cherchés par le contrôle des buffs. Relevés en jeu sur un
-    -- client français : ce sont les seules chaînes du module qui dépendent de la
-    -- langue. « Flacon » couvre les deux familles, le français ne distinguant pas
-    -- flask et phial.
-    ["Well fed aura"]                  = "Rassasié",
-    ["Flask aura"]                     = "Flacon",
-    ["Phial aura"]                     = "Flacon",
-
+    ["Combat log already on"] =
+        "La journalisation était déjà en cours : elle n'est pas touchée, et ne sera pas coupée en "
+        .. "sortant.",
     -- Module MythicTimer
     ["Mythic+ timer"]                  = "Chrono mythique+",
     ["Display"]                        = "Affichage",

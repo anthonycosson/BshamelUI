@@ -2,13 +2,13 @@
 --  Bshamel UI — Modules/RaidTools.lua
 --  Ce dont on a besoin pendant un raid ou une clé mythique.
 --
---  Six outils, une seule page : ils se cherchent tous au même moment — juste
---  avant un pull — et les éclater en six pages rendrait chacun introuvable.
+--  Quatre outils, une seule page : ils se cherchent tous au même moment — juste
+--  avant un pull — et les éclater en quatre pages rendrait chacun introuvable.
 --
 --  Le module ne dessine rien. Il dit *quoi* compter et *quoi* annoncer ; le
---  suivi des résurrections (`UI/Widgets/BattleRes.lua`) et la barre de marqueurs
---  (`UI/Widgets/MarkerBar.lua`) savent l'afficher. C'est la même séparation que
---  partout ailleurs dans l'addon.
+--  suivi des résurrections (`UI/Widgets/BattleRes.lua`) et le panneau d'outils
+--  de groupe (`UI/Widgets/MarkerBar.lua`) savent l'afficher. C'est la même
+--  séparation que partout ailleurs dans l'addon.
 --
 --  `secure = true` : la barre de marqueurs est faite de boutons d'action
 --  sécurisés — poser un marqueur au sol est une action protégée, refusée au code
@@ -57,28 +57,6 @@ local function groupChannel()
     return nil
 end
 
---- Unités du groupe, personnage compris. Table de travail réutilisée : la liste
---- se reconstruit à chaque vérification de présence (règle 7).
-local units = {}
-
----@return string[]
-local function groupUnits()
-    wipe(units)
-
-    if IsInRaid() then
-        for i = 1, GetNumGroupMembers() do
-            units[#units + 1] = "raid" .. i
-        end
-        return units
-    end
-
-    units[1] = "player"
-    for i = 1, GetNumGroupMembers() - 1 do
-        units[#units + 1] = "party" .. i
-    end
-    return units
-end
-
 --- Le personnage peut-il donner un ordre au groupe ? Le client refuse une
 --- vérification de présence ou un décompte à qui n'est ni chef ni promu, et il
 --- le refuse en silence : mieux vaut le dire.
@@ -108,75 +86,6 @@ local function inChallenge()
     return C_ChallengeMode ~= nil
         and C_ChallengeMode.IsChallengeModeActive ~= nil
         and C_ChallengeMode.IsChallengeModeActive() == true
-end
-
--- =========================================================================
---  Annonce des morts
--- =========================================================================
--- Le journal de combat est le seul endroit où la mort d'un membre du groupe est
--- annoncée pour tout le monde : `UNIT_HEALTH` ne parle que des unités affichées,
--- et un raid de vingt personnes n'en affiche pas vingt.
-
---- Noms accumulés depuis la dernière annonce. Table de travail : le journal de
---- combat est un chemin chaud, on n'y alloue rien (règle 7).
-local deaths = {}
-
---- La mort concerne-t-elle un joueur de notre groupe ?
----
---- On lit les **drapeaux** du journal plutôt que de comparer des noms : un nom
---- de joueur d'un autre royaume porte un suffixe, et la comparaison échouerait
---- précisément sur les groupes formés par la recherche de groupe.
----@param flags number
----@return boolean
-local function isGroupPlayer(flags)
-    if not (bit and flags) then return false end
-
-    local isPlayer = bit.band(flags, COMBATLOG_OBJECT_TYPE_PLAYER or 0) ~= 0
-    if not isPlayer then return false end
-
-    local mine = (COMBATLOG_OBJECT_AFFILIATION_MINE  or 0)
-    local party = (COMBATLOG_OBJECT_AFFILIATION_PARTY or 0)
-    local raid  = (COMBATLOG_OBJECT_AFFILIATION_RAID  or 0)
-
-    return bit.band(flags, mine + party + raid) ~= 0
-end
-
----@param mod table
-local function flushDeaths(mod)
-    if #deaths == 0 then return end
-
-    local channel = groupChannel()
-    if channel then
-        SendChatMessage(string.format(L["Death announce"], table.concat(deaths, ", ")), channel)
-    end
-
-    -- Un seul son pour la rafale, comme il n'y a qu'un seul message : vingt
-    -- alertes en une seconde ne sont plus une alerte.
-    if mod:Get("deathSound") and PlaySound and SOUNDKIT and SOUNDKIT.RAID_WARNING then
-        PlaySound(SOUNDKIT.RAID_WARNING)
-    end
-
-    wipe(deaths)
-end
-
----@param mod table
----@param settle function
-local function onCombatLog(mod, settle)
-    if not mod:Get("announceDeaths") then return end
-
-    local _, subevent, _, _, _, _, _, _, destName, destFlags = CombatLogGetCurrentEventInfo()
-    if subevent ~= "UNIT_DIED" then return end
-    if not (destName and isGroupPlayer(destFlags)) then return end
-
-    -- Le journal renvoie plusieurs fois la même mort dans certains cas (un
-    -- joueur qui meurt sous un effet à retardement) : on ne nomme personne deux
-    -- fois dans la même rafale.
-    for i = 1, #deaths do
-        if deaths[i] == destName then return end
-    end
-
-    deaths[#deaths + 1] = destName
-    settle()
 end
 
 -- =========================================================================
@@ -222,16 +131,29 @@ local function readBattleRes()
     return nil
 end
 
+--- Relevé d'exemple du mode aperçu. L'icône ne s'affiche que là où il y a une
+--- réserve à compter — c'est-à-dire nulle part au moment précis où l'on cherche
+--- où la poser. Même parti pris que le chrono mythique+ (`Modules/MythicTimer.lua`).
+local PREVIEW = { charges = 1, maxCharges = 1, remaining = 90, duration = 600 }
+
+---@param mod table
 ---@return BUI.BattleResInfo|nil
-local function battleResSource()
-    -- Hors instance, ou seul, il n'y a pas de réserve partagée à suivre : le
-    -- panneau n'a rien à dire et se cache de lui-même.
+local function battleResSource(mod)
+    -- Hors instance, ou seul, il n'y a pas de réserve partagée à suivre : l'icône
+    -- n'a rien à dire et se cache d'elle-même.
     local kind = instanceType()
-    if not (kind == "raid" or kind == "party" or inChallenge()) then return nil end
-    if not IsInGroup() then return nil end
+    local live = (kind == "raid" or kind == "party" or inChallenge()) and IsInGroup()
+
+    if not live then
+        if mod:Get("battleResPreview") then return PREVIEW end
+        return nil
+    end
 
     local raw = readBattleRes()
-    if not (raw and raw.max and raw.max > 0) then return nil end
+    if not (raw and raw.max and raw.max > 0) then
+        if mod:Get("battleResPreview") then return PREVIEW end
+        return nil
+    end
 
     resInfo.charges   = raw.charges or 0
     resInfo.maxCharges = raw.max
@@ -258,15 +180,6 @@ local function battleResIcon()
     return nil
 end
 
---- Le mode sombre est un réglage de **Général**, et un module n'appelle jamais
---- un autre module : on lit la valeur en base, et le message de changement de
---- réglage nous en avertit (voir `OnEnable`). Le suivi porte alors le même
---- contour sombre que les icônes d'auras.
----@return boolean
-local function darkModeOn()
-    return BUI.DB:Get("General", "darkMode") == true
-end
-
 ---@param mod table
 local function applyBattleRes(mod)
     if not mod:Get("battleResTracker") then
@@ -276,7 +189,8 @@ local function applyBattleRes(mod)
 
     if not tracker then
         tracker = W.BattleResTracker({
-            source = battleResSource,
+            source = function() return battleResSource(mod) end,
+            isLocked = function() return mod:Get("lockBattleRes") == true end,
             getPos = function() return mod:Get("battleResX"), mod:Get("battleResY") end,
             setPos = function(x, y)
                 mod:Set("battleResX", x)
@@ -288,13 +202,17 @@ local function applyBattleRes(mod)
     end
 
     tracker:SetIconSize(mod:Get("battleResSize"))
-    tracker:SetShaded(darkModeOn())
+    -- Le contour sombre est **son** réglage, pas celui du mode sombre général :
+    -- cette icône vit au milieu de l'écran d'un combat de raid, et le choix de
+    -- l'y détourer ou non n'a rien à voir avec celui d'assombrir les barres
+    -- d'action. Elle se règle donc là où on l'allume.
+    tracker:SetShaded(mod:Get("battleResShaded") == true)
     tracker:ApplyPosition()
     tracker:Start()
 end
 
 -- =========================================================================
---  Barre de marqueurs, vérification de présence et pull
+--  Panneau d'outils de groupe
 -- =========================================================================
 
 local markerBar
@@ -344,11 +262,14 @@ local function applyMarkerBar(mod)
                 mod:Set("markerX", x)
                 mod:Set("markerY", y)
             end,
+            getScale    = function() return mod:Get("markerScale") end,
+            setScale    = function(scale) mod:Set("markerScale", scale) end,
+            isLocked    = function() return mod:Get("lockMarkers") == true end,
             markerLabel = L["World marker number"],
             markerTip   = L["World marker tip"],
             clearLabel  = L["Clear markers"],
             clearTip    = L["Clear markers tip"],
-            readyLabel  = L["Ready check"],
+            readyLabel  = L["Ready"],
             readyTip    = L["Ready check tip"],
             pullLabel   = L["Pull"],
             pullTip     = L["Pull tip"],
@@ -359,6 +280,9 @@ local function applyMarkerBar(mod)
     end
 
     markerBar:SetPullLabel(string.format(L["Pull seconds"], mod:Get("pullTimer")))
+    markerBar:SetRevealOnHover(mod:Get("markersOnHover") == true)
+    markerBar:ApplyScale()
+    markerBar:ApplyLock()
     markerBar:ApplyPosition()
     markerBar:SetShownOutOfCombat(true)
 end
@@ -393,138 +317,6 @@ local function applyHideManager(mod)
 end
 
 -- =========================================================================
---  Contrôle des buffs à la vérification de présence
--- =========================================================================
--- Ce que le client publie et ce qu'il ne publie pas décide de ce qui est
--- vérifiable :
---
---   · les **auras** d'un membre du groupe se lisent (`C_UnitAuras`), donc la
---     nourriture et le flacon se vérifient pour tout le monde ;
---   · un **enchantement d'arme** ne se lit que sur soi (`GetWeaponEnchantInfo`).
---     Le contrôle ne porte donc que sur le personnage, et c'est une limite du
---     client, pas un choix.
---
--- La reconnaissance passe par le **nom** de l'aura, isolé dans les fichiers de
--- locale : aucun identifiant stable n'existe côté aura, et une liste
--- d'identifiants serait fausse à la première extension. Une locale dont
--- l'intitulé est faux signale tout le monde comme non buffé — c'est le seul
--- risque, et il se corrige à un seul endroit (même parti pris que le noyau du
--- vide dans `Modules/Character.lua`).
-
---- L'aura porte-t-elle ce mot ? Comparaison insensible à la casse, sur le nom
---- rendu par le client — donc déjà dans la langue du joueur.
----@param name string
----@param marker string
----@return boolean
-local function auraMatches(name, marker)
-    if not (name and marker and marker ~= "") then return false end
-    return string.find(string.lower(name), string.lower(marker), 1, true) ~= nil
-end
-
---- Relevé d'une unité : a-t-elle sa nourriture, son flacon, et pour combien de
---- temps ? Table de travail réutilisée.
-local status = {}
-
----@param unit string
----@return table
-local function readBuffs(unit)
-    status.food  = false
-    status.flask = false
-    status.flaskExpires = nil
-
-    if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex) then return status end
-
-    for i = 1, 40 do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-        if not aura then break end
-
-        local name = aura.name
-        if type(name) == "string" and not U.IsSecret(name) then
-            if auraMatches(name, L["Well fed aura"]) then
-                status.food = true
-            elseif auraMatches(name, L["Flask aura"]) or auraMatches(name, L["Phial aura"]) then
-                status.flask = true
-                status.flaskExpires = aura.expirationTime
-            end
-        end
-    end
-
-    return status
-end
-
---- Listes de noms à signaler. Réutilisées d'une vérification à l'autre.
-local missingFood, missingFlask, shortFlask = {}, {}, {}
-
----@param mod table
----@param list string[]
----@param message string
-local function report(mod, list, message)
-    if #list == 0 then return end
-    mod:Print(string.format(message, table.concat(list, ", ")))
-end
-
---- Enchantement d'arme du personnage. Deux réponses possibles : absent, ou sur
---- le point d'expirer.
----@param mod table
-local function reportWeaponEnchant(mod)
-    if not (mod:Get("checkWeaponEnchant") and GetWeaponEnchantInfo) then return end
-
-    local hasMain, mainExpires = GetWeaponEnchantInfo()
-    if not hasMain then
-        mod:Print(L["Weapon enchant missing"])
-        return
-    end
-
-    -- Le client rend des **millisecondes** ; le réglage est en minutes.
-    local minutes = (mainExpires or 0) / 60000
-    if minutes < mod:Get("expiryWarning") then
-        mod:Print(string.format(L["Weapon enchant expiring"], math.floor(minutes)))
-    end
-end
-
----@param mod table
-local function checkGroupBuffs(mod)
-    if not mod:Get("readyCheckBuffs") then return end
-
-    wipe(missingFood)
-    wipe(missingFlask)
-    wipe(shortFlask)
-
-    local warning = mod:Get("expiryWarning") * 60
-    local list    = groupUnits()
-
-    for i = 1, #list do
-        local unit = list[i]
-
-        -- Un joueur déconnecté n'a pas d'auras à lire : le signaler comme non
-        -- buffé serait faux, et le nom apparaîtrait dans les trois listes.
-        if UnitExists(unit) and (not UnitIsConnected or UnitIsConnected(unit)) then
-            local name  = UnitName(unit) or unit
-            local buffs = readBuffs(unit)
-
-            if mod:Get("checkFood") and not buffs.food then
-                missingFood[#missingFood + 1] = name
-            end
-
-            if mod:Get("checkFlask") then
-                if not buffs.flask then
-                    missingFlask[#missingFlask + 1] = name
-                elseif buffs.flaskExpires and buffs.flaskExpires > 0
-                       and (buffs.flaskExpires - GetTime()) < warning then
-                    shortFlask[#shortFlask + 1] = name
-                end
-            end
-        end
-    end
-
-    report(mod, missingFood,  L["Missing food"])
-    report(mod, missingFlask, L["Missing flask"])
-    report(mod, shortFlask,   L["Flask expiring"])
-
-    reportWeaponEnchant(mod)
-end
-
--- =========================================================================
 --  Journalisation automatique
 -- =========================================================================
 -- La journalisation détaillée est une CVar : sans elle, le journal produit ne
@@ -540,23 +332,55 @@ local CVAR_ADVANCED = "advancedCombatLogging"
 local loggingStarted = false
 local savedAdvanced
 
+--- Avons-nous déjà signalé qu'une journalisation étrangère était en cours ? Les
+--- événements de zone arrivent par deux ou trois à l'entrée d'un raid, et la même
+--- remarque répétée trois fois se lit comme un bug.
+local toldForeign = false
+
+--- Applique l'état voulu, et **dit ce qu'il a fait**.
+---
+--- Le fichier de journal est destiné à être déposé sur un site d'analyse : ce
+--- qui compte pour qui l'envoie n'est pas que la journalisation soit lancée,
+--- c'est de le **savoir**. Chaque bascule laisse donc une ligne dans le chat.
 ---@param mod table
+---@return boolean spoke  a-t-on écrit quelque chose ?
 local function applyLogging(mod)
-    local want = mod:Get("autoCombatLog")
-                 and (instanceType() == "raid" or inChallenge())
+    -- **Le seuil est la porte de l'instance**, pas le départ de la clé. Une clé
+    -- se pose après être entré, et souvent après un premier pack : tout ce qui
+    -- précède manquait au fichier. Le type d'instance suffit donc à décider —
+    -- « raid » ou « party » —, et il est vrai dès le chargement de la zone.
+    local kind = instanceType()
+    local want = mod:Get("autoCombatLog") and (kind == "raid" or kind == "party")
 
     if want then
-        if loggingStarted then return end
+        if loggingStarted then return false end
+
+        -- Déjà allumée à la main : on la laisse telle quelle, et surtout on ne
+        -- s'en déclare pas propriétaire. Sans ce test, `loggingStarted` passait à
+        -- vrai pour une journalisation qu'on n'avait pas lancée — et on la
+        -- coupait en sortant du raid, défaisant le geste de quelqu'un d'autre.
+        --
+        -- On le dit quand même : ne rien afficher laisserait croire que le
+        -- réglage n'a pas pris, alors que le combat s'enregistre bel et bien.
+        if LoggingCombat and LoggingCombat() then
+            if toldForeign then return false end
+            toldForeign = true
+            mod:Print(L["Combat log already on"])
+            return true
+        end
+
         if savedAdvanced == nil then savedAdvanced = U.GetCVar(CVAR_ADVANCED) end
         U.SetCVar(CVAR_ADVANCED, "1")
 
-        if LoggingCombat and not LoggingCombat() then LoggingCombat(true) end
+        if LoggingCombat then LoggingCombat(true) end
         loggingStarted = true
         mod:Print(L["Combat log started"])
-        return
+        return true
     end
 
-    if not loggingStarted then return end
+    toldForeign = false
+
+    if not loggingStarted then return false end
     if LoggingCombat then LoggingCombat(false) end
     if savedAdvanced ~= nil then
         U.SetCVar(CVAR_ADVANCED, savedAdvanced)
@@ -564,6 +388,17 @@ local function applyLogging(mod)
     end
     loggingStarted = false
     mod:Print(L["Combat log stopped"])
+    return true
+end
+
+--- Bascule du réglage lui-même. Il se coche presque toujours **hors** raid, là
+--- où `applyLogging` n'a rien à faire et donc rien à dire : sans cette ligne, le
+--- joueur coche une case et n'obtient aucune réponse, ce qui est exactement le
+--- doute qu'on cherche à lever.
+---@param mod table
+local function toggleLogging(mod)
+    if applyLogging(mod) then return end
+    mod:Print(mod:Get("autoCombatLog") and L["Combat log armed"] or L["Combat log off"])
 end
 
 -- =========================================================================
@@ -581,10 +416,15 @@ end
 local APPLIERS = {
     battleResTracker  = applyBattleRes,
     battleResSize     = applyBattleRes,
+    battleResShaded   = applyBattleRes,
+    battleResPreview  = applyBattleRes,
+    lockBattleRes     = applyBattleRes,
     worldMarkers      = applyMarkerBar,
+    lockMarkers       = applyMarkerBar,
+    markersOnHover    = applyMarkerBar,
     pullTimer         = applyMarkerBar,
     hideBlizzardPanel = applyHideManager,
-    autoCombatLog     = applyLogging,
+    autoCombatLog     = toggleLogging,
 }
 
 -- =========================================================================
@@ -597,34 +437,32 @@ BUI:RegisterModule(MODULE, {
     order    = 20,
     secure   = true,
 
-    -- En avant-première : le code est écrit, il n'a pas encore été vérifié en
-    -- jeu (CLAUDE.md règle 10, points 3 à 5). Tant que cette ligne est là, le
-    -- core refuse d'allumer le module — la retirer est le seul geste qui livre
-    -- la page.
-    preview  = true,
-
     defaults = {
         battleResTracker = false,
+        battleResShaded  = false,
+        battleResPreview = false,
+        lockBattleRes    = false,
         battleResSize    = T.SIZE.BATTLE_RES_ICON,
-        -- Position du panneau, en décalage de centre à centre. Réglages sans
-        -- contrôle : ils se changent en déplaçant le panneau à la souris.
+        -- Position de l'icône, en décalage de centre à centre. Réglages sans
+        -- contrôle : ils se changent en la déplaçant à la souris.
         battleResX = 0,
         battleResY = 0,
 
         worldMarkers = false,
         markerX      = 0,
         markerY      = -220,
-        pullTimer    = 8,
-        hideBlizzardPanel = false,
+        -- Échelle du panneau, elle aussi sans contrôle : elle se change en
+        -- tirant le coin. Sa disposition, elle, ne se règle pas.
+        markerScale    = 1,
+        lockMarkers    = false,
+        markersOnHover = false,
+        pullTimer      = 8,
 
-        readyCheckBuffs    = false,
-        checkFood          = true,
-        checkFlask         = true,
-        checkWeaponEnchant = true,
-        expiryWarning      = 30,
-
-        announceDeaths = false,
-        deathSound     = false,
+        -- Allumé par défaut, seul réglage du module dans ce cas : le panneau de
+        -- contrôle du client porte les mêmes outils que le nôtre, et les deux
+        -- côte à côte ne servent qu'à se demander lequel on regarde. Qui préfère
+        -- le sien l'éteint ici.
+        hideBlizzardPanel = true,
 
         autoCombatLog = false,
     },
@@ -647,6 +485,27 @@ BUI:RegisterModule(MODULE, {
             step     = 2,
             disabled = requires("battleResTracker"),
         },
+        {
+            type     = "toggle",
+            key      = "battleResShaded",
+            text     = L["Battle res shaded"],
+            tooltip  = L["Battle res shaded tip"],
+            disabled = requires("battleResTracker"),
+        },
+        {
+            type     = "toggle",
+            key      = "lockBattleRes",
+            text     = L["Lock battle res"],
+            tooltip  = L["Lock battle res tip"],
+            disabled = requires("battleResTracker"),
+        },
+        {
+            type     = "toggle",
+            key      = "battleResPreview",
+            text     = L["Battle res preview"],
+            tooltip  = L["Battle res preview tip"],
+            disabled = requires("battleResTracker"),
+        },
 
         { type = "header", text = L["Group tools"] },
         {
@@ -654,6 +513,20 @@ BUI:RegisterModule(MODULE, {
             key     = "worldMarkers",
             text    = L["World markers"],
             tooltip = L["World markers tip"],
+        },
+        {
+            type     = "toggle",
+            key      = "lockMarkers",
+            text     = L["Lock group tools"],
+            tooltip  = L["Lock group tools tip"],
+            disabled = requires("worldMarkers"),
+        },
+        {
+            type     = "toggle",
+            key      = "markersOnHover",
+            text     = L["Group tools on hover"],
+            tooltip  = L["Group tools on hover tip"],
+            disabled = requires("worldMarkers"),
         },
         {
             type     = "slider",
@@ -673,60 +546,6 @@ BUI:RegisterModule(MODULE, {
         },
         { type = "description", text = L["Group tools notice"] },
 
-        { type = "header", text = L["Buffs"] },
-        {
-            type    = "toggle",
-            key     = "readyCheckBuffs",
-            text    = L["Ready check buffs"],
-            tooltip = L["Ready check buffs tip"],
-        },
-        {
-            type     = "toggle",
-            key      = "checkFood",
-            text     = L["Check food"],
-            tooltip  = L["Check food tip"],
-            disabled = requires("readyCheckBuffs"),
-        },
-        {
-            type     = "toggle",
-            key      = "checkFlask",
-            text     = L["Check flask"],
-            tooltip  = L["Check flask tip"],
-            disabled = requires("readyCheckBuffs"),
-        },
-        {
-            type     = "toggle",
-            key      = "checkWeaponEnchant",
-            text     = L["Check weapon enchant"],
-            tooltip  = L["Check weapon enchant tip"],
-            disabled = requires("readyCheckBuffs"),
-        },
-        {
-            type     = "slider",
-            key      = "expiryWarning",
-            text     = L["Expiry warning"],
-            tooltip  = L["Expiry warning tip"],
-            min      = 5,
-            max      = 60,
-            step     = 5,
-            disabled = requires("readyCheckBuffs"),
-        },
-
-        { type = "header", text = L["Announcements"] },
-        {
-            type    = "toggle",
-            key     = "announceDeaths",
-            text    = L["Announce group deaths"],
-            tooltip = L["Announce group deaths tip"],
-        },
-        {
-            type     = "toggle",
-            key      = "deathSound",
-            text     = L["Death sound alert"],
-            tooltip  = L["Death sound alert tip"],
-            disabled = requires("announceDeaths"),
-        },
-
         { type = "header", text = L["Logging"] },
         {
             type    = "toggle",
@@ -738,13 +557,6 @@ BUI:RegisterModule(MODULE, {
 
     OnEnable = function(self)
         applyAll(self)
-
-        local settle = U.Debounce(T.TIMING.DEATH_SETTLE, function() flushDeaths(self) end)
-        self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED", function()
-            onCombatLog(self, settle)
-        end)
-
-        self:RegisterEvent("READY_CHECK", function() checkGroupBuffs(self) end)
 
         -- Ce qui décide de la journalisation et de l'affichage du suivi change
         -- au passage d'une frontière d'instance, et nulle part ailleurs.
@@ -764,15 +576,6 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
             applyHideManager(self)
             applyMarkerBar(self)
-        end)
-
-        -- Le mode sombre appartient à **Général** : on n'appelle pas ce
-        -- module-là, on écoute le message que le core émet quand un réglage
-        -- change (voir `Core/Init.lua`).
-        self:RegisterMessage(BUI.MESSAGES.SETTING_CHANGED, function(_, moduleName, key)
-            if moduleName == "General" and (key == "darkMode" or key == nil) then
-                if tracker then tracker:SetShaded(darkModeOn()) end
-            end
         end)
     end,
 
@@ -796,8 +599,6 @@ BUI:RegisterModule(MODULE, {
             end
             loggingStarted = false
         end
-
-        wipe(deaths)
     end,
 
     OnSettingChanged = function(self, key)

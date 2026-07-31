@@ -1,6 +1,7 @@
 -- =========================================================================
 --  Bshamel UI — UI/Widgets/MarkerBar.lua
---  Barre d'outils de groupe : marqueurs au sol, vérification de présence, pull.
+--  Panneau d'outils de groupe : marqueurs au sol, retrait des marqueurs,
+--  vérification de présence, pull.
 --
 --  **Poser un marqueur au sol est une action protégée.** Le client refuse
 --  `PlaceRaidMarker` depuis du code Lua ordinaire, exactement comme il refuse de
@@ -10,13 +11,21 @@
 --
 --  Conséquences, les mêmes que pour le menu de téléportation
 --  (`UI/Widgets/SecureMenu.lua`) : les attributs sont écrits **une fois**, à la
---  construction — ils ne changent jamais, un bouton de marqueur porte le même
---  numéro toute sa vie —, et la barre ne se montre ni ne se cache en combat.
---  D'où `SetShownOutOfCombat`, qui diffère ce que le combat refuse au lieu de
---  laisser l'appelant croire qu'il a caché quelque chose.
+--  construction — un bouton de marqueur porte le même numéro toute sa vie —, et
+--  le panneau ne se montre ni ne se cache en combat. D'où `SetShownOutOfCombat`,
+--  qui diffère ce que le client refuse au lieu de laisser l'appelant croire
+--  qu'il a agi.
 --
 --  La vérification de présence et le pull, eux, ne sont pas protégés : ce sont
 --  des boutons ordinaires, et c'est l'appelant qui décide ce qu'ils font.
+--
+--  **La disposition est fixe, seule l'échelle se règle.** Neuf cases sur une
+--  rangée, deux boutons sous elles : ces proportions sont arrêtées ici, et la
+--  poignée ne fait que dire de quelle taille on les regarde. Un panneau qu'on
+--  retaillait laissait ses libellés au corps où ils étaient pendant que ses
+--  vignettes grossissaient ; l'échelle emporte tout d'un coup. C'est aussi ce
+--  qui la rend inoffensive au milieu de boutons sécurisés : rien n'est mesuré ni
+--  réancré sur eux.
 -- =========================================================================
 
 local _, ns = ...
@@ -27,6 +36,21 @@ local W    = BUI.Widgets
 --- Nombre de marqueurs au sol. Huit depuis toujours, comme les icônes de
 --- ciblage dont ils empruntent les vignettes.
 local MARKER_COUNT = 8
+
+--- Cases de la rangée : les huit marqueurs, plus le retrait de tous.
+local CELL_COUNT = MARKER_COUNT + 1
+
+--- Largeur de la rangée de cases, et donc du contenu du panneau.
+local INNER_W = CELL_COUNT * T.SIZE.MARKER_CELL + (CELL_COUNT - 1) * T.SIZE.MARKER_GAP
+
+--- Largeur du panneau, marges comprises.
+local PANEL_W = INNER_W + T.SIZE.TOOL_PAD * 2
+
+--- Les deux boutons du bas se partagent la rangée **moins la place de la
+--- poignée** : elle vit dans le même coin et se dessine au-dessus. Sans ce
+--- retrait, le dernier centimètre du bouton de pull changerait l'échelle du
+--- panneau au lieu de lancer le décompte.
+local BUTTON_W = (INNER_W - T.SIZE.GRIP - T.SIZE.MARKER_GAP) / 2
 
 --- Une case de marqueur : un bouton sécurisé qui porte sa vignette.
 ---@param panel table
@@ -55,10 +79,11 @@ local function newMarkerButton(panel, index)
     if index then
         icon:SetTexture(T.TEXTURE.RAID_MARKERS)
         icon:SetTexCoord(T.RaidMarkerCoords(T.WORLD_MARKER_ICON[index] or index))
-    elseif not T.TrySetAtlas(icon, T.ATLAS.CLEAR) then
-        -- Sans vignette, le bouton reste utilisable : c'est son infobulle qui
-        -- dit ce qu'il fait.
-        icon:Hide()
+    else
+        -- Le rond barré du passage sur un butin : le signe de refus du jeu. Une
+        -- croix aurait été l'icône de ciblage n° 7, posée juste à côté de sa
+        -- propre case — on aurait lu « poser la croix », pas « tout retirer ».
+        icon:SetTexture(T.TEXTURE.LOOT_PASS)
     end
 
     button.Highlight = W.CenterGlow(button, T.COLOR.WHITE, T.ALPHA.ROW_HOVER)
@@ -68,20 +93,27 @@ local function newMarkerButton(panel, index)
     return button
 end
 
---- Barre d'outils de groupe, masquée au départ.
----@param opts table  { getPos, setPos, onReadyCheck, onPull, pullLabel, readyLabel }
+--- Panneau d'outils de groupe, masqué au départ.
+---@param opts table  { getPos, setPos, getScale, setScale, isLocked, libellés, onReadyCheck, onPull }
 ---@return table
 function W.MarkerBar(opts)
-    local cells = MARKER_COUNT + 1  -- les huit marqueurs, plus « tout effacer »
-    local width = T.SIZE.TOOL_PAD * 2
-                  + cells * T.SIZE.MARKER_CELL + (cells - 1) * T.SIZE.MARKER_GAP
-
     local panel = W.Panel({
-        width  = width,
-        height = T.SIZE.TOOL_PAD * 2 + T.SIZE.MARKER_CELL
-                 + T.SIZE.MARKER_ROW_GAP + T.SIZE.ROW_H,
-        getPos = opts.getPos,
-        setPos = opts.setPos,
+        width  = PANEL_W,
+        -- Hauteur provisoire : la rangée de boutons tient sa taille du thème par
+        -- l'intermédiaire de `W.Button`, on la relève donc sur le bouton une fois
+        -- construit plutôt que de réécrire ici la formule qui l'a produite.
+        height = PANEL_W,
+        chrome = "dialog",
+
+        getPos   = opts.getPos,
+        setPos   = opts.setPos,
+        isLocked = opts.isLocked,
+
+        getScale  = opts.getScale,
+        setScale  = opts.setScale,
+        minScale  = T.SIZE.MARKER_SCALE_MIN,
+        maxScale  = T.SIZE.MARKER_SCALE_MAX,
+        canScale  = function() return not InCombatLockdown() end,
     })
 
     -- ---------------------------------------------------------------------
@@ -89,25 +121,30 @@ function W.MarkerBar(opts)
     -- ---------------------------------------------------------------------
 
     local step = T.SIZE.MARKER_CELL + T.SIZE.MARKER_GAP
+    local top  = -T.SIZE.TOOL_PAD
     local placed = 0
+
+    ---@param button table
+    local function placeCell(button)
+        button:SetPoint("TOPLEFT", panel, "TOPLEFT",
+            T.SIZE.TOOL_PAD + placed * step, top)
+        placed = placed + 1
+    end
 
     for i = 1, MARKER_COUNT do
         local button = newMarkerButton(panel, i)
         if button then
-            button:SetPoint("TOPLEFT", panel, "TOPLEFT",
-                T.SIZE.TOOL_PAD + (i - 1) * step, -T.SIZE.TOOL_PAD)
+            placeCell(button)
             -- Le titre porte le numéro du marqueur : huit vignettes identiques
             -- au survol ne diraient pas laquelle on s'apprête à poser.
             W.Tooltip(button, string.format(opts.markerLabel or "%d", i), opts.markerTip)
-            placed = placed + 1
         end
     end
 
     if placed > 0 then
         local clear = newMarkerButton(panel, nil)
         if clear then
-            clear:SetPoint("TOPLEFT", panel, "TOPLEFT",
-                T.SIZE.TOOL_PAD + MARKER_COUNT * step, -T.SIZE.TOOL_PAD)
+            placeCell(clear)
             W.Tooltip(clear, opts.clearLabel, opts.clearTip)
         end
     end
@@ -116,17 +153,20 @@ function W.MarkerBar(opts)
     --  Vérification de présence et pull
     -- ---------------------------------------------------------------------
 
-    local top = -(T.SIZE.TOOL_PAD + T.SIZE.MARKER_CELL + T.SIZE.MARKER_ROW_GAP)
+    local buttonY = top - T.SIZE.MARKER_CELL - T.SIZE.MARKER_ROW_GAP
 
-    local ready = W.Button(panel, opts.readyLabel, opts.onReadyCheck, T.SIZE.MARKER_BUTTON_W)
-    ready:SetPoint("TOPLEFT", panel, "TOPLEFT", T.SIZE.TOOL_PAD, top)
+    local ready = W.Button(panel, opts.readyLabel, opts.onReadyCheck, BUTTON_W)
+    ready:SetPoint("TOPLEFT", panel, "TOPLEFT", T.SIZE.TOOL_PAD, buttonY)
     W.Tooltip(ready, opts.readyLabel, opts.readyTip)
     panel.readyButton = ready
 
-    local pull = W.Button(panel, opts.pullLabel, opts.onPull, T.SIZE.MARKER_BUTTON_W)
+    local pull = W.Button(panel, opts.pullLabel, opts.onPull, BUTTON_W)
     pull:SetPoint("TOPLEFT", ready, "TOPRIGHT", T.SIZE.MARKER_GAP, 0)
     W.Tooltip(pull, opts.pullLabel, opts.pullTip)
     panel.pullButton = pull
+
+    panel:SetHeight(T.SIZE.TOOL_PAD + T.SIZE.MARKER_CELL + T.SIZE.MARKER_ROW_GAP
+        + ready:GetHeight() + T.SIZE.TOOL_PAD)
 
     --- Libellé du bouton de pull, qui porte la durée choisie.
     ---@param text string
@@ -134,7 +174,7 @@ function W.MarkerBar(opts)
         pull:SetText(text or "")
     end
 
-    --- Montre ou cache la barre. Rend `false` si le combat l'interdit : les
+    --- Montre ou cache le panneau. Rend `false` si le combat l'interdit : les
     --- cases de marqueurs sont des cadres protégés, que le client refuse de
     --- montrer comme de cacher tant que le combat dure. L'appelant rappelle à la
     --- sortie de combat.
@@ -146,5 +186,6 @@ function W.MarkerBar(opts)
         return true
     end
 
+    panel:ApplyScale()
     return panel
 end

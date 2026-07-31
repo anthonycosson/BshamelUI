@@ -18,6 +18,7 @@
 
 local _, ns = ...
 local BUI = ns.BUI
+local U    = BUI.Util
 local L    = ns.L
 
 local MODULE = "Keystones"
@@ -120,20 +121,24 @@ end
 --  Répondre à « !keys »
 -- =========================================================================
 
+--- **On répond aussi à sa propre demande.** C'est le seul geste qui laisse
+--- vérifier le réglage sans avoir à trouver quelqu'un pour taper « !keys » à sa
+--- place — et en groupe, celui qui pose la question est souvent celui qui
+--- rappelle à tout le monde de répondre. La réponse ne peut pas relancer
+--- l'écoute : ni un lien de clé, ni « Donjon +N », ni « Pas de clé. » ne
+--- commencent par « !keys », et le sursis de `ANSWER_COOLDOWN` couvre le reste.
 ---@param mod table
 ---@param event string
 ---@param text string
-local function onChatMessage(mod, event, text, ...)
+local function onChatMessage(mod, event, text)
     if not mod:Get("answerKeysRequest") then return end
-    if type(text) ~= "string" then return end
 
-    -- Le douzième argument d'un événement de chat est le GUID de l'auteur —
-    -- onzième dans ce `...`, qui commence après le texte. On le compare plutôt
-    -- que le nom : un nom d'un autre royaume porte un suffixe, et c'est
-    -- justement en groupe formé par la recherche de groupe que la question se
-    -- pose. Se répondre à soi-même n'apprendrait rien à personne.
-    local guid = select(11, ...)
-    if guid and UnitGUID and guid == UnitGUID("player") then return end
+    -- **L'ordre des deux tests n'est pas indifférent.** Une chaîne secrète a bien
+    -- le type `string` : c'est `string.lower` qui lèverait, et l'erreur partirait
+    -- dans BugSack au lieu de se voir ici — le symptôme serait « !keys ne
+    -- répond pas », pas « une erreur ». Un message qu'on ne peut pas lire n'est
+    -- pas une demande qu'on peut reconnaître (voir `Modules/Chat.lua`).
+    if type(text) ~= "string" or U.IsSecret(text) then return end
 
     -- La demande est en début de message et rien d'autre ne compte : « !keys »,
     -- « !key », et la variante avec une majuscule. Un message qui *contient*
@@ -190,12 +195,6 @@ BUI:RegisterModule(MODULE, {
     category = "MythicRaid",
     order    = 10,
 
-    -- En avant-première : le code est écrit, il n'a pas encore été vérifié en
-    -- jeu (CLAUDE.md règle 10, points 3 à 5). Tant que cette ligne est là, le
-    -- core refuse d'allumer le module — la retirer est le seul geste qui livre
-    -- la page.
-    preview  = true,
-
     defaults = {
         answerKeysRequest = false,
         autoSlotKeystone  = false,
@@ -220,8 +219,10 @@ BUI:RegisterModule(MODULE, {
 
     OnEnable = function(self)
         for event in pairs(CHANNELS) do
-            self:RegisterEvent(event, function(name, ...)
-                onChatMessage(self, name, ...)
+            -- Le premier argument d'un événement de chat est le texte, et c'est
+            -- le seul qui compte ici : plus rien ne se lit sur l'auteur.
+            self:RegisterEvent(event, function(name, text)
+                onChatMessage(self, name, text)
             end)
         end
 

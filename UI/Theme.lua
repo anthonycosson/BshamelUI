@@ -61,6 +61,9 @@ T.SIZE = {
 
     DIVIDER_W       = 2,    -- séparateur vertical entre navigation et contenu
 
+    GRIP            = 16,   -- poignée de redimensionnement, coin bas-droit
+    GRIP_INSET      = 4,    -- retrait de la poignée par rapport au coin
+
     ICON            = 16,
     SCROLLBAR_W     = 20,   -- réservé à droite du contenu défilant
     THUMB_W         = 6,    -- largeur du curseur, une fois l'ascenseur dépouillé
@@ -261,20 +264,26 @@ T.SIZE = {
     -- Barre de marqueurs. La case est celle d'un bouton de barre d'action réduit :
     -- neuf cases doivent tenir sur une rangée sans que le panneau devienne une
     -- deuxième barre d'action.
+    --
+    -- Sa géométrie est **fixe** : c'est l'échelle du panneau que la poignée
+    -- change, pas la taille de ses pièces. Retailler la rangée laissait les
+    -- libellés à leur corps de police pendant que les vignettes grossissaient —
+    -- un panneau agrandi qui ne grossit qu'à moitié. L'échelle prend tout d'un
+    -- coup, texte compris, et c'est ce qu'on attend d'un « plus gros ».
     MARKER_CELL    = 26,
     MARKER_GAP     = 3,
     MARKER_ROW_GAP = 6,     -- écart entre la rangée de marqueurs et les boutons
-    MARKER_BUTTON_W = 110,  -- vérification de présence et pull
+
+    -- Bornes de l'échelle. Larges : la moitié tient dans un coin d'écran, le
+    -- double se lit depuis le fond d'un fauteuil. Au-delà on quitte le panneau
+    -- d'outils pour la décoration.
+    MARKER_SCALE_MIN = 0.5,
+    MARKER_SCALE_MAX = 2.5,
 
     -- Chrono mythique+. Assez large pour un nom de donjon complet à la police des
     -- libellés, comme le menu de téléportation.
     KEY_TIMER_W    = 220,
     KEY_ROW_H      = 16,    -- ligne de palier ou de comparatif
-
-    -- Rappel de la file. Une bannière, donc plus large que haute : elle porte un
-    -- nom de donjon et un bouton.
-    REMINDER_W     = 300,
-    REMINDER_ICON  = 20,
 
     -- Fraction rognée sur chaque bord d'une icône avant d'y poser le contour.
     --
@@ -377,12 +386,12 @@ T.TIMING = {
     BATTLE_RES    = 0.2,    -- charges de résurrection et temps avant la suivante
     KEY_TIMER     = 0.1,    -- chrono mythique+, qui affiche des dixièmes
 
-    -- Regroupement des morts annoncées. Un wipe tue vingt personnes en une
-    -- seconde : sans regroupement, c'est vingt lignes envoyées au groupe, donc
-    -- une coupure du chat par le serveur. Une seule ligne les nomme toutes.
-    DEATH_SETTLE  = 1.0,
+    -- Cadence de la poignée d'échelle, pendant qu'elle est tenue. Assez rapide
+    -- pour que le panneau colle au curseur, assez lente pour ne pas repeindre à
+    -- chaque image ce que l'œil ne suit pas (règle 7).
+    SCALE_DRAG    = 0.03,
 
-    HOVER         = 0.1,    -- sondage de la fenêtre survolée, pendant qu'un
+    HOVER         = 0.1,   -- sondage de la fenêtre survolée, pendant qu'un
                             -- modificateur est tenu. Assez court pour que le
                             -- capteur de molette paraisse instantané, assez long
                             -- pour ne rien coûter — et il ne tourne que pendant
@@ -430,6 +439,14 @@ local FONT_CANDIDATES = {
     -- décompte : le temps restant se lit par-dessus le décor d'un donjon, où une
     -- police sans contour se noie dès que le fond est clair.
     KEY_TIMER    = { "NumberFont_Outline_Large", "NumberFontNormalLarge",
+                     "GameFontNormalLarge" },
+
+    -- Les deux nombres posés sur l'icône des résurrections de combat : les
+    -- charges dans son coin, le temps restant en son milieu. Grasse et à contour,
+    -- comme tout ce que l'addon pose **sur** une image — l'icône d'un sort est
+    -- claire par endroits, et un chiffre sans contour y disparaît. C'est leur
+    -- couleur et leur place qui les distinguent l'un de l'autre, pas leur corps.
+    BATTLE_RES   = { "NumberFont_Outline_Large", "NumberFontNormalLarge",
                      "GameFontNormalLarge" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
@@ -591,6 +608,27 @@ function T.WindowSurface(target)
     else
         T.SetPanelFill(target, T.COLOR.WINDOW, T.ALPHA.WINDOW_BG)
     end
+end
+
+--- Fond d'un panneau qui doit se lire comme la fenêtre d'options : la pierre du
+--- client **multipliée** par la couleur des fenêtres.
+---
+--- C'est toute la différence entre le noir profond de la fenêtre d'options et le
+--- gris qu'un aplat de la même valeur produit. Un aplat *pose* la couleur ;
+--- posée telle quelle, `WINDOW` est un gris bleuté à mi-chemin. Sur un cadre du
+--- client, la même couleur **multiplie** une pierre déjà sombre, et le produit
+--- est presque noir. Un panneau qu'on assemble soi-même n'a pas cette pierre :
+--- on la lui donne.
+---@param texture table
+function T.WindowStone(texture)
+    texture:SetTexture(T.TEXTURE.SIDEBAR_BAND)
+    -- Tuilée plutôt qu'étirée : une pierre écrasée dans un panneau de soixante
+    -- pixels de haut donne une bouillie (même raison que les en-têtes de
+    -- catégorie).
+    texture:SetHorizTile(true)
+    texture:SetVertTile(true)
+    texture:SetVertexColor(T.COLOR.WINDOW:GetRGB())
+    texture:SetAlpha(T.ALPHA.WINDOW_BG)
 end
 
 --- Idem, pour le bandeau d'un en-tête de catégorie. Ce qui le fait lire est son
@@ -876,11 +914,6 @@ T.ATLAS = {
     ARROW_RIGHT = "NPE_ArrowRight",
     CHECK       = "common-icon-checkmark",
 
-    -- Croix des boutons « effacer ». Celle du client, pour la même raison que le
-    -- reste : un joueur la reconnaît sans qu'on ait à écrire le mot dessus, ce
-    -- qui laisse un bouton de la taille d'une case de marqueur.
-    CLEAR       = "common-icon-redx",
-
     -- Contour posé autour d'une icône par le mode sombre.
     --
     -- La bordure de sort du client, et pas un anneau quelconque : ses coins sont
@@ -944,6 +977,13 @@ T.TEXTURE = {
     -- elle existe depuis toujours. Une icône de presse-papier n'existe pas dans
     -- le jeu, l'inventer ferait une pièce rapportée de plus.
     CHAT_COPY         = "Interface\\Buttons\\UI-GuildButton-PublicNote-Up",
+
+    -- Vignette du bouton « retirer tous les marqueurs » : le rond barré rouge du
+    -- **passage sur un butin**. Le jeu s'en sert déjà pour dire « celui-ci, non »
+    -- ; c'est le seul signe de refus qu'il ait, et il ne ressemble à aucune des
+    -- huit icônes de ciblage — une croix, elle, était la n° 7, posée juste à côté
+    -- de sa propre case.
+    LOOT_PASS         = "Interface\\Buttons\\UI-GroupLoot-Pass-Up",
 
     -- Planche des huit icônes de ciblage, celle que le client utilise partout —
     -- sur les unités marquées, dans son propre menu de marqueurs et sur la
@@ -1074,6 +1114,12 @@ T.TEMPLATES = {
     -- panneaux nous-mêmes.
     WINDOW     = { "BasicFrameTemplate", "BasicFrameTemplateWithInset", "UIPanelDialogTemplate" },
     INSET      = { "InsetFrameTemplate3", "InsetFrameTemplate2", "InsetFrameTemplate" },
+
+    -- La bordure des dialogues du client, seule : quatre côtés identiques, sans
+    -- la bande de titre que `WINDOW` ajoute en haut. Repli sur le creux — moins
+    -- ouvragé, jamais cassé.
+    DIALOG_BORDER = { "DialogBorderTemplate", "DialogBorderDarkTemplate",
+                      "InsetFrameTemplate3" },
     BUTTON     = { "UIPanelButtonTemplate" },
     CHECKBOX   = { "UICheckButtonTemplate", "InterfaceOptionsCheckButtonTemplate" },
     SLIDER     = { "OptionsSliderTemplate" },

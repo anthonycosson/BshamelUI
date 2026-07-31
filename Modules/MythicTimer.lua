@@ -234,12 +234,6 @@ BUI:RegisterModule(MODULE, {
     category = "MythicRaid",
     order    = 30,
 
-    -- En avant-première : le code est écrit, il n'a pas encore été vérifié en
-    -- jeu (CLAUDE.md règle 10, points 3 à 5). Tant que cette ligne est là, le
-    -- core refuse d'allumer le module — la retirer est le seul geste qui livre
-    -- la page.
-    preview  = true,
-
     defaults = {
         timer       = false,
         previewMode = false,

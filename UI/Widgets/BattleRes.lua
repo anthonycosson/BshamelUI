@@ -2,7 +2,12 @@
 --  Bshamel UI — UI/Widgets/BattleRes.lua
 --  Suivi des résurrections de combat.
 --
---  Une icône, un compteur de charges, et le temps avant la charge suivante.
+--  **Une icône de sort, et rien autour.** Le nombre de charges se pose dans son
+--  coin, le temps avant la suivante en son milieu — exactement comme le client
+--  habille un bouton d'action. Un cadre, un fond, un panneau : c'est ce que le
+--  jeu ne met jamais autour d'une icône, et c'est ce qui faisait ressembler ce
+--  suivi à une pièce rapportée.
+--
 --  Comme `W.Countdown`, le widget ne sait pas d'où vient l'information : on lui
 --  donne une fonction qui la rend, il l'interroge et l'affiche. Quand elle rend
 --  `nil` — hors instance, hors groupe —, il se cache.
@@ -31,32 +36,45 @@ local W    = BUI.Widgets
 ---@field duration? number       durée pleine de cette recharge
 
 --- Suivi des résurrections de combat, masqué au départ.
----@param opts table  { getPos, setPos, source: fun(): BUI.BattleResInfo|nil }
+---@param opts table  { getPos, setPos, isLocked, source: fun(): BUI.BattleResInfo|nil }
 ---@return table
 function W.BattleResTracker(opts)
+    -- Le panneau **est** l'icône : mêmes bords, aucune marge. Il ne sert plus
+    -- qu'à ce que `W.Panel` sait faire et qu'une texture ne sait pas — prendre la
+    -- souris, se déplacer, retenir sa position.
     local panel = W.Panel({
-        width  = T.SIZE.BATTLE_RES_ICON + T.SIZE.TOOL_PAD * 2,
-        height = T.SIZE.BATTLE_RES_ICON + T.SIZE.TOOL_PAD * 2 + T.SIZE.KEY_ROW_H,
-        getPos = opts.getPos,
-        setPos = opts.setPos,
+        width    = T.SIZE.BATTLE_RES_ICON,
+        height   = T.SIZE.BATTLE_RES_ICON,
+        chrome   = "none",
+        getPos   = opts.getPos,
+        setPos   = opts.setPos,
+        isLocked = opts.isLocked,
     })
 
     local icon = panel:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("TOP", panel, "TOP", 0, -T.SIZE.TOOL_PAD)
-    icon:SetSize(T.SIZE.BATTLE_RES_ICON, T.SIZE.BATTLE_RES_ICON)
+    icon:SetAllPoints()
     panel.icon = icon
 
     -- Le nombre de charges est posé **sur** l'icône, dans son coin : c'est la
-    -- valeur qu'on lit d'un coup d'œil, et la sortir de l'icône la ferait
-    -- disputer la place au temps restant.
-    local count = panel:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_BADGE)
+    -- valeur qu'on lit d'un coup d'œil, et c'est là que le jeu met déjà le
+    -- nombre de charges d'un sort.
+    local count = panel:CreateFontString(nil, "OVERLAY", T.FONT.BATTLE_RES)
     count:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 0, 0)
     count:SetJustifyH("RIGHT")
     panel.count = count
 
-    local timer = panel:CreateFontString(nil, "ARTWORK", T.FONT.LABEL_SMALL)
-    timer:SetPoint("BOTTOM", panel, "BOTTOM", 0, T.SIZE.TOOL_PAD / 2)
+    -- Le temps restant au milieu, là encore comme un temps de recharge de barre
+    -- d'action. Il ne s'affiche que lorsqu'il y en a un : une réserve pleine ne
+    -- porte aucun nombre au centre.
+    --
+    -- **Blanc, et d'une seule couleur.** Ce qui alerte ici est le nombre de
+    -- charges, pas le temps qui reste : une réserve vide est un problème dès la
+    -- première seconde, et un chiffre qui vire au rouge en fin de recharge dirait
+    -- l'inverse — que le danger arrive quand la charge, elle, approche.
+    local timer = panel:CreateFontString(nil, "OVERLAY", T.FONT.BATTLE_RES)
+    timer:SetPoint("CENTER", icon, "CENTER", 0, 0)
     timer:SetJustifyH("CENTER")
+    timer:SetTextColor(T.COLOR.LABEL:GetRGB())
     panel.timer = timer
 
     local border = W.ShadeBorder(icon)
@@ -86,12 +104,6 @@ function W.BattleResTracker(opts)
         local minutes = math.floor(remaining / 60)
         local seconds = math.floor(remaining % 60)
         timer:SetFormattedText("%d:%02d", minutes, seconds)
-
-        -- Sans durée pleine, le temps restant garde la couleur d'échéance : un
-        -- rouge constant vaut mieux qu'un dégradé qui ne mesure rien.
-        local total = info.duration
-        local ratio = (total and total > 0) and (1 - remaining / total) or 0
-        timer:SetTextColor(T.CountdownColor(ratio))
     end
 
     local tick = U.Throttle(T.TIMING.BATTLE_RES, update)
@@ -109,13 +121,11 @@ function W.BattleResTracker(opts)
         self:Hide()
     end
 
-    --- Côté de l'icône, en pixels. Le panneau se remesure autour d'elle.
+    --- Côté de l'icône, en pixels.
     ---@param side number
     function panel:SetIconSize(side)
         side = U.Clamp(side or T.SIZE.BATTLE_RES_ICON, T.SIZE.BATTLE_RES_MIN, T.SIZE.BATTLE_RES_MAX)
-        icon:SetSize(side, side)
-        self:SetSize(side + T.SIZE.TOOL_PAD * 2,
-                     side + T.SIZE.TOOL_PAD * 2 + T.SIZE.KEY_ROW_H)
+        self:SetSize(side, side)
 
         -- Le débordement du contour est proportionnel à l'icône : il se retrace
         -- après chaque changement de taille, sinon l'anneau reste calé sur

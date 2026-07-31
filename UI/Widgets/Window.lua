@@ -21,34 +21,6 @@ local function findTitleText(frame)
     return nil
 end
 
---- Poignée de redimensionnement en bas à droite. Construite sans template :
---- les templates de poignée ont changé de nom plusieurs fois, une frame nue
---- avec deux textures est plus stable.
----@param frame table
-local function addResizeGrip(frame)
-    local grip = CreateFrame("Button", nil, frame)
-    grip:SetSize(16, 16)
-    grip:SetPoint("BOTTOMRIGHT", -4, 4)
-    grip:SetFrameLevel(frame:GetFrameLevel() + 10)
-
-    local tex = grip:CreateTexture(nil, "OVERLAY")
-    tex:SetAllPoints()
-    tex:SetTexture(T.TEXTURE.RESIZE_GRIP)
-    tex:SetAlpha(T.ALPHA.GRIP)
-
-    grip:SetScript("OnEnter", function() tex:SetAlpha(T.ALPHA.GRIP_HOVER) end)
-    grip:SetScript("OnLeave", function() tex:SetAlpha(T.ALPHA.GRIP) end)
-    grip:SetScript("OnMouseDown", function()
-        frame:StartSizing("BOTTOMRIGHT")
-    end)
-    grip:SetScript("OnMouseUp", function()
-        frame:StopMovingOrSizing()
-        if frame._onResize then frame._onResize(frame) end
-    end)
-
-    frame.ResizeGrip = grip
-end
-
 --- Crée la fenêtre principale de l'addon.
 ---@param globalName string   nom global (préfixé `BshamelUI`), requis par UISpecialFrames
 ---@param titleText string
@@ -91,7 +63,11 @@ function W.Window(globalName, titleText, width, height)
     if frame.SetResizeBounds then
         frame:SetResizeBounds(T.SIZE.WINDOW_MIN_W, T.SIZE.WINDOW_MIN_H)
     end
-    addResizeGrip(frame)
+    W.ResizeGrip(frame, {
+        onStop = function()
+            if frame._onResize then frame._onResize(frame) end
+        end,
+    })
 
     -- Titre.
     local title = findTitleText(frame)
