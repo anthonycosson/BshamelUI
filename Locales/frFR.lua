@@ -115,15 +115,30 @@ BUI:RegisterLocale("frFR", {
     -- Module Character
     ["Character sheet"]                = "Fiche de personnage",
     ["Item details"]                   = "Détails des objets",
+    -- Voir enUS : le libellé est déclaré avec le module Bags.
+    ["Show item level on slots tip"] =
+        "Affiche le niveau d'objet de chaque pièce équipée sur son emplacement, mise à l'échelle comprise.",
     ["Show upgrade level"]             = "Afficher le niveau d'amélioration",
-    ["Show upgrade level tip"]         = "Affiche la voie et le rang d'amélioration sur chaque objet équipé.",
+    ["Show upgrade level tip"]         = "Affiche le rang d'amélioration de chaque pièce équipée.",
+    ["Warn partial upgrade"]           = "Signaler les améliorations incomplètes",
+    ["Warn partial upgrade tip"] =
+        "Passe le rang en orange tant que la pièce n'est pas au maximum. Décoché, tous les rangs restent verts.",
     ["Show enchants"]                  = "Afficher les enchantements",
     ["Show enchants tip"] =
-        "Affiche l'enchantement de chaque emplacement qui peut en recevoir un, et signale ceux qui n'en ont pas.",
+        "Vert sur chaque emplacement qui peut recevoir un enchantement et en a un, rouge sur ceux qui n'en ont pas.",
     ["Show gems"]                      = "Afficher les gemmes",
-    ["Show gems tip"]                  = "Affiche les gemmes serties et signale les châsses vides.",
+    ["Show gems tip"] =
+        "Vert quand toutes les châsses sont serties, rouge dès qu'il en reste une vide.",
     ["Show void core"]                 = "Afficher le noyau du vide",
-    ["Show void core tip"]             = "Affiche le noyau du vide monté sur chaque objet qui peut en recevoir un.",
+    ["Show void core tip"] =
+        "Signale les armes et les bijoux qui n'ont pas encore reçu la forge du vide ascendant.",
+    ["Enchant badge"]                  = "Enchantement",
+    ["Gem badge"]                      = "Gemme",
+    ["Void core badge"]                = "Noyau du vide",
+
+    -- Relevé en jeu sur une arme portant un noyau. Voir enUS pour ce que cette
+    -- clé décide.
+    ["Void core marker"]               = "Forge du vide ascendant",
 
     -- Modules ActionBars et UnitFrames
     ["Action bars"]                    = "Barres d'action",
@@ -135,15 +150,55 @@ BUI:RegisterLocale("frFR", {
         "Le mode sombre se règle désormais dans Général, avec un interrupteur par élément d'interface.",
     ["Class-colored health"]           = "Barres de vie aux couleurs de classe",
     ["Class-colored health tip"]       = "Colore chaque barre de vie selon la classe de l'unité.",
+    ["Hide reputation color"]          = "Masquer la couleur de réputation",
+    ["Hide reputation color tip"] =
+        "Retire la plaque aux couleurs de la faction posée derrière le nom, sur le cadre de la " ..
+        "cible et sur celui du focus.",
+    ["Specialization"]                 = "Spécialisation",
+    ["Show spec icon"]                 = "Afficher l'icône de spécialisation",
+    ["Show spec icon tip"] =
+        "Remplace le portrait par l'icône de spécialisation sur les cadres du joueur, de la cible, " ..
+        "du focus et de la cible de la cible. La spécialisation d'un autre joueur n'est connue que " ..
+        "lorsque le jeu peut l'inspecter, ce qui suppose qu'il soit à proximité ; d'ici là le " ..
+        "portrait est laissé tel quel.",
+    ["Party frames"]                   = "Cadres de groupe",
+    ["Enlarge party frames"]           = "Agrandir les cadres de groupe",
+    ["Enlarge party frames tip"] =
+        "Agrandit les cadres de groupe au-delà du maximum qu'autorise le curseur du mode Édition.",
+    ["Party frame scale"]              = "Échelle des cadres de groupe",
+    ["Party frame scale tip"] =
+        "Pourcentage de la taille d'origine. 100 % est la taille que les cadres ont déjà.",
+
+    -- Module CooldownManager
+    ["Tracked buffs"]                  = "Suivi des améliorations",
+    ["Center tracked buffs"]           = "Garder les améliorations groupées au centre",
+    ["Center tracked buffs tip"] =
+        "Le jeu réserve une place par amélioration suivie et la laisse vide quand l'amélioration "
+        .. "tombe : celles qui restent affichées demeurent écartées. Ce réglage les retasse "
+        .. "ensemble, au milieu de la rangée.",
 
     -- Module Chat
     ["Chat"]                           = true,
     ["History"]                        = "Historique",
     ["Keep history"]                   = "Conserver l'historique après un rechargement",
     ["Keep history tip"]               = "Restaure les derniers messages après un /reload ou une reconnexion.",
-    ["Drag to resize"]                 = "Ajuster la hauteur à la volée",
+    ["Chat history separator"]         = "----- session précédente -----",
+    ["Drag to resize"]                 = "Ajuster la hauteur en tirant l'onglet",
     ["Drag to resize tip"] =
-        "Ajoute une poignée pour changer la hauteur du chat sans passer par ses réglages.",
+        "Tirez un onglet du chat vers le haut ou vers le bas pour en changer la hauteur. "
+        .. "Un simple clic continue de changer d'onglet, et la nouvelle taille est retenue "
+        .. "par le jeu lui-même.",
+    ["Unify group colors"]             = "Une seule couleur pour le groupe",
+    ["Unify group colors tip"] =
+        "Groupe, instance et raid prennent la couleur du chat de groupe : une conversation "
+        .. "avec les mêmes gens garde la même couleur partout. Les avertissements de raid "
+        .. "gardent la leur.",
+    ["Copy"]                           = "Copie",
+    ["Copy button"]                    = "Afficher un bouton de copie sur le chat",
+    ["Copy button tip"] =
+        "Ajoute un bouton discret dans le coin haut-droit de chaque fenêtre de chat.",
+    ["Copy chat"]                      = "Copier le chat",
+    ["Copy chat hint"]                 = "Tout est sélectionné : Ctrl+C pour copier.",
 
     -- Module Bags
     ["Bags"]                           = "Sacs",
@@ -178,4 +233,30 @@ BUI:RegisterLocale("frFR", {
     ["Auto combat logging"]            = "Journalisation automatique des combats",
     ["Auto combat logging tip"] =
         "Lance la journalisation en entrant en raid ou en donjon mythique+, et la coupe en sortant.",
+
+    -- Module Windows
+    ["Windows"]                        = "Fenêtres",
+    ["Moving"]                         = "Déplacement",
+    ["Move windows"]                   = "Déplacer les fenêtres",
+    ["Move windows tip"] =
+        "Faites glisser une fenêtre du jeu : elle reste où vous la posez, "
+        .. "d'une session à l'autre. Seules les fenêtres qui reçoivent déjà "
+        .. "la souris peuvent être prises.",
+    ["Move modifier"]                  = "Déplacer avec",
+    ["Move modifier tip"] =
+        "Touche à maintenir pour faire glisser une fenêtre. Sans touche, "
+        .. "un glisser n'importe où dans le corps d'une fenêtre la déplace.",
+    ["No modifier"]                    = "Aucune touche",
+    ["Size"]                           = "Taille",
+    ["Scale windows"]                  = "Redimensionner à Ctrl + molette",
+    ["Scale windows tip"] =
+        "Maintenez Ctrl et tournez la molette au-dessus d'une fenêtre pour "
+        .. "l'agrandir ou la réduire. La taille est mémorisée comme la position.",
+    ["Reset"]                          = "Réinitialiser",
+    ["Reset window layout"]            = "Tout remettre en place",
+    ["Reset window layout tip"] =
+        "Renvoie chaque fenêtre là où Blizzard la met. %d déplacée(s) en ce moment.",
+    ["Reset windows confirm"] =
+        "Remettre chaque fenêtre à sa position et à sa taille d'origine ?",
+    ["Window layout reset"]            = "Toutes les fenêtres ont retrouvé leur place.",
 })

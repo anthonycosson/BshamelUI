@@ -39,7 +39,7 @@ globals = {
 -- API du client : lecture seule.
 read_globals = {
     -- Lua étendu par le client
-    "strjoin", "strtrim", "strlower", "strupper", "strsplit",
+    "strjoin", "strtrim", "strlower", "strupper", "strsplit", "strfind",
     "tostringall", "wipe", "tinsert", "tremove", "unpack", "select",
     "format", "date", "time",
 
@@ -47,19 +47,26 @@ read_globals = {
     "CreateFrame", "UIParent", "GameTooltip", "GameFontNormal",
     "GameTooltip_SetTitle", "GameTooltip_AddNormalLine", "GameTooltip_AddErrorLine",
     "StaticPopup_Show", "HideUIPanel", "PlaySound", "SOUNDKIT",
-    "CreateColor", "NORMAL_FONT_COLOR", "HIGHLIGHT_FONT_COLOR",
+    "CreateColor", "ITEM_QUALITY_COLORS", "NORMAL_FONT_COLOR", "HIGHLIGHT_FONT_COLOR",
     "DISABLED_FONT_COLOR", "WHITE_FONT_COLOR", "RED_FONT_COLOR", "GREEN_FONT_COLOR",
+    "ORANGE_FONT_COLOR",
     "SettingsPanel", "Settings", "Menu", "NineSliceUtil",
 
     -- Espaces de noms
     "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
+    "C_Item", "C_TooltipInfo", "TooltipUtil", "ItemLocation",
 
-    -- Minicarte et curseur
-    "Minimap", "GetCursorPosition",
+    -- Minicarte, curseur et écran
+    "Minimap", "GetCursorPosition", "IsMouseButtonDown",
+    "GetScreenWidth", "GetScreenHeight",
 
     -- Réglages du client
     "GetCVar", "SetCVar",
+
+    -- Équipement du personnage. `GetItemStats` et `GetItemGem` ont migré dans
+    -- `C_Item` ; les globales existent encore et servent de repli.
+    "GetInventoryItemLink", "GetInventorySlotInfo", "GetItemStats", "GetItemGem",
 
     -- Marchands et réparation
     "CanMerchantRepair", "GetRepairAllCost", "CanGuildBankRepair", "RepairAllItems",
@@ -73,14 +80,32 @@ read_globals = {
     -- globale absente vaut `nil`, ce qui est exactement le test de capacité
     -- voulu (CLAUDE.md règle 1).
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
+    "CharacterFrame",
     "CinematicFrame_CancelCinematic", "GameMovieFinished",
     "TalkingHeadFrame", "TalkingHeadFrame_CloseImmediately",
+
+    -- Chat
+    "NUM_CHAT_WINDOWS", "ChatTypeInfo", "ChangeChatColor",
+    "FCF_SavePositionAndDimensions", "GENERAL_CHAT_DOCK",
 
     -- Divers moteur
     "GetLocale", "GetTime", "GetBuildInfo", "InCombatLockdown",
     "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown", "IsModifierKeyDown",
     "hooksecurefunc", "geterrorhandler", "CallErrorHandler", "securecallfunction", "issecretvalue",
     "debugstack", "issecurevariable",
+
+    -- Cadres d'unités
+    "TargetFrameToT", "FocusFrameToT", "PartyFrame",
+    "UnitFrameHealthBar_Update", "UnitFramePortrait_Update",
+    "UnitExists", "UnitIsPlayer", "UnitIsUnit", "UnitClass", "UnitGUID",
+    "RAID_CLASS_COLORS", "C_ClassColor",
+
+    -- Spécialisations. Le chemin `C_SpecializationInfo` est le récent, les
+    -- globales sont celles qu'on essaie ensuite : on cite les deux parce qu'on
+    -- teste les deux.
+    "C_SpecializationInfo", "GetSpecialization", "GetSpecializationInfo",
+    "GetSpecializationInfoByID",
+    "CanInspect", "NotifyInspect", "GetInspectSpecialization",
 
     -- API de quête
     "AcceptQuest", "ConfirmAcceptQuest", "CloseQuest", "CompleteQuest",

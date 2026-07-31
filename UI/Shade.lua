@@ -46,24 +46,18 @@
 local _, ns = ...
 local BUI = ns.BUI
 local T    = BUI.Theme
+local U    = BUI.Util
 
 local S = {}
 BUI.Shade = S
 
---- Une valeur « secrète » du client ne se lit ni ne se calcule : la multiplier
---- lève. Le test n'existe que sur les clients qui ont la notion, d'où le test de
---- capacité (CLAUDE.md règle 1).
----
---- Il ne sert qu'à écarter une **valeur** dont on s'apprête à faire un calcul,
---- jamais un cadre entier : écarter un cadre sur ce soupçon reviendrait à
+--- Voir `U.IsSecret`, où le prédicat vit depuis qu'un deuxième fichier s'en
+--- sert. Il n'écarte qu'une **valeur** dont on s'apprête à faire un calcul,
+--- jamais le cadre qui la porte : écarter un cadre sur ce soupçon reviendrait à
 --- décider qu'il est intouchable sans avoir essayé, et c'est précisément ce qui
 --- a fait disparaître les cadres d'unités d'un mode sombre qui les traitait
 --- très bien la veille.
----@param value any
----@return boolean
-local function secret(value)
-    return issecretvalue ~= nil and issecretvalue(value) == true
-end
+local secret = U.IsSecret
 
 --- Appelle une méthode du client et rend sa valeur, ou `nil` si l'appel lève.
 ---
@@ -290,11 +284,25 @@ end
 --- « icônes », habillage compris : le suivi des améliorations n'a jamais pris la
 --- teinte, alors que les trois autres visionneuses, aux noms sans « icon », la
 --- prenaient très bien. Le nom d'un cadre parle du cadre, pas de ce qu'il porte.
+---
+--- **`type(name) == "string"` ne suffit pas.** Le client rend ce nom en valeur
+--- *secrète* dès que l'exécution est teintée par un addon — et une chaîne
+--- secrète est bel et bien une chaîne, donc le test de type la laisse passer.
+--- L'indexer pour appeler `match` lève alors, et l'erreur remonte hors du seul
+--- appel fautif : elle interrompt tout le parcours de l'élément. C'est ainsi
+--- qu'un module qui se contentait de poser une couleur de classe sur une barre
+--- de vie a éteint le mode sombre des cadres d'unités entiers — le module
+--- teintait l'exécution, le nom devenait secret, et le parcours mourait à la
+--- première texture. Rien dans le symptôme ne désignait le coupable.
+---
+--- Sans nom, on ne perd que le rattrapage : le classement retombe sur les clés
+--- que le cadre publie, et le nom n'a jamais servi qu'à **écarter**, jamais à
+--- décider qu'une texture est touchable.
 ---@param region table
 ---@return string|nil
 local function debugName(region)
     local name = ask(region, "GetDebugName")
-    if type(name) ~= "string" then return nil end
+    if type(name) ~= "string" or secret(name) then return nil end
     return name:match("[^.]+$") or name
 end
 
@@ -387,7 +395,14 @@ local function collectFrom(frame, out, seen, rules)
     local function take(region)
         if type(region) ~= "table" or informs(region) then return end
         if type(region.SetVertexColor) ~= "function" then return end
-        if signalsState(frame, region) then return end
+
+        -- Protégé comme le classement plus bas, et pour la même raison : un
+        -- échec ici ne doit coûter que cette texture. Sans cela, une seule
+        -- région récalcitrante emporte le parcours entier et l'élément reste
+        -- clair — le défaut se lit alors comme « le mode sombre ne marche plus »,
+        -- ce qui n'oriente vers rien. Un doute se tranche en ne touchant pas.
+        local known, signals = pcall(signalsState, frame, region)
+        if not known or signals then return end
 
         if rules.reskins and publishedAs(frame, region, BORDER_KEYS) then return end
         if rules.keepBackground and publishedAs(frame, region, BACKGROUND_KEYS) then return end

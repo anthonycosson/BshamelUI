@@ -9,7 +9,10 @@
 --      }
 --
 --  Forme du SavedVariables (personnage) :
---      BshamelUICharDB = { profile = "Default" }
+--      BshamelUICharDB = {
+--          profile = "Default",
+--          data    = { Chat = { history = { ... } } },   -- voir DB:CharData
+--      }
 --
 --  Deux invariants tenus par ce fichier :
 --    1. Les valeurs par défaut ne sont **jamais** écrites sur le disque. Elles
@@ -181,6 +184,35 @@ function DB:ResetModule(moduleName)
     local defaults = defaultsRegistry[moduleName]
     if defaults then U.MergeDefaults(settings, defaults) end
     BUI:SendMessage(BUI.MESSAGES.SETTING_CHANGED, moduleName, nil, nil)
+end
+
+-- =========================================================================
+--  Données de module
+-- =========================================================================
+
+--- Espace de rangement d'un module pour ce qui **n'est pas un réglage** : une
+--- donnée qui n'a ni défaut, ni contrôle, ni raison de voyager d'un personnage
+--- à l'autre. L'historique de chat en est le premier cas.
+---
+--- Trois différences avec un réglage, et elles justifient le chemin séparé :
+--- ces données vivent dans le SavedVariables du **personnage** et non dans un
+--- profil partagé ; elles ne passent pas par le mécanisme de défauts, donc rien
+--- ne leur est retiré à la déconnexion ; et les écrire n'émet aucun message,
+--- puisque personne n'a à s'en rafraîchir.
+---
+--- La table est rendue par référence : le module y écrit directement. C'est la
+--- seule exception à « un module n'écrit que par `Set` » (CLAUDE.md règle 4), et
+--- elle vaut pour ce qui s'écrit ligne à ligne — passer par `Set` émettrait un
+--- message par message de chat reçu.
+---@param moduleName string
+---@return table
+function DB:CharData(moduleName)
+    BshamelUICharDB = BshamelUICharDB or {}
+    BshamelUICharDB.data = BshamelUICharDB.data or {}
+
+    local data = BshamelUICharDB.data
+    if not data[moduleName] then data[moduleName] = {} end
+    return data[moduleName]
 end
 
 -- =========================================================================

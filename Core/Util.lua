@@ -143,6 +143,25 @@ function U.Debounce(delay, fn)
 end
 
 -- =========================================================================
+--  Valeurs secrètes du client
+-- =========================================================================
+
+--- Une valeur « secrète » du client ne se lit ni ne se calcule : la multiplier,
+--- la comparer ou s'en servir comme clé de table lève. Le client en rend là où
+--- il protège une information (une instance, un adversaire d'arène), et la
+--- notion n'existe pas sur tous les clients — d'où le test de capacité
+--- (CLAUDE.md règle 1).
+---
+--- Le prédicat ne sert qu'à écarter une **valeur** dont on s'apprête à faire
+--- quelque chose, jamais un cadre entier : décider qu'un cadre est intouchable
+--- sur ce soupçon revient à le perdre sans avoir essayé.
+---@param value any
+---@return boolean
+function U.IsSecret(value)
+    return issecretvalue ~= nil and issecretvalue(value) == true
+end
+
+-- =========================================================================
 --  Entrées clavier / souris
 -- =========================================================================
 
@@ -203,4 +222,32 @@ function U.GuardedHook(target, methodOrFn, bodyOrGuard, guard)
     else
         hooksecurefunc(target, wrapped)
     end
+end
+
+--- Même chose pour un **script** d'une frame du client (`OnMouseDown`,
+--- `OnHide`…). `HookScript` ne se dépose pas plus que `hooksecurefunc` : on pose
+--- le hook une fois, et sa garde le rend inerte quand le module s'éteint.
+---
+--- `HookScript` et non `SetScript` : le second effacerait le gestionnaire du
+--- client, qui ne nous appartient pas — sur un onglet de chat, ce serait le clic
+--- qui change d'onglet.
+---
+---     U.GuardedScript(tab, "OnMouseDown", function(_, button) ... end,
+---                     function() return mod:IsEnabled() end)
+---
+---@param frame table
+---@param script string
+---@param body function
+---@param guard? fun(): boolean
+function U.GuardedScript(frame, script, body, guard)
+    if type(frame) ~= "table" or type(frame.HookScript) ~= "function" then return end
+
+    local key = tostring(frame) .. "::script::" .. script
+    if posted[key] then return end
+    posted[key] = true
+
+    frame:HookScript(script, function(...)
+        if guard and not guard() then return end
+        body(...)
+    end)
 end

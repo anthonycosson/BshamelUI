@@ -631,3 +631,673 @@ ce décompte depuis des années font tous la même chose, faute d'API.
 
 Le cadre à coiffer est `LFGDungeonReadyDialog`, **pas** `LFGDungeonReadyPopup` :
 le second est le conteneur, et un décompte posé dessus ne s'affiche jamais.
+
+---
+
+## Le suivi des améliorations garde la place des améliorations tombées
+
+**Symptôme** — deux améliorations actives s'affichent écartées de plusieurs
+largeurs d'icône, une de chaque côté du centre. Elles devraient être côte à
+côte.
+
+**Cause** — le suivi des améliorations réserve **une place par amélioration
+suivie**, et il garde la grille entière quelle que soit la quantité affichée.
+Une amélioration qui tombe laisse sa place vide ; celles qui restent ne bougent
+pas. Le client ne recalcule rien à cet instant — c'est bien pourquoi le trou
+reste.
+
+**Fausse piste, et elle a coûté un aller-retour** — le symptôme se raconte
+naturellement comme « la rangée n'est pas centrée », ce qui conduit à la
+**déplacer**. C'est faux et sans effet : la rangée *est* déjà centrée, trous
+compris. Ce qu'il faut, c'est retasser les emplacements affichés à l'intérieur
+d'une grille qui, elle, ne bouge pas. Deux mesures sur une capture d'écran le
+tranchent — le milieu des deux icônes tombait pile sur le centre de l'écran —
+là où le raisonnement a mené droit à un décalage nul.
+
+**Ce qu'on fait** — `Modules/CooldownManager.lua` relève la grille du client,
+puis repose les améliorations affichées serrées les unes contre les autres,
+centrées sur le milieu de cette grille.
+
+Ce que le client publie, et qui suffit :
+
+- `viewer:GetItemFrames()` — **tous** les emplacements, y compris ceux des
+  améliorations tombées, qui gardent leur position. Ce sont eux qui disent où la
+  grille commence, où elle finit et à quel pas ;
+- `IsShown()` et l'opacité distinguent les places occupées. L'opacité n'est pas
+  facultative : le client efface en fondu, et un emplacement en train de
+  disparaître est encore affiché ;
+- `viewer.isHorizontal` — l'orientation. Absente, elle vaut horizontal.
+
+**La grille se calcule, elle ne se mémorise pas.** Relevé sur un client à jour,
+avec dix améliorations suivies et aucune active :
+
+```
+V 725.538 499.400   C 725.538 499.400   pad 10   stride 10   h true
+1  false 1  659.580  TOPLEFT TOPLEFT    0  0
+2  false 1  705.580  TOPLEFT TOPLEFT   46  0
+…
+10 false 1 1073.580  TOPLEFT TOPLEFT  414  0
+```
+
+Tout y est :
+
+- les **dix places existent** en permanence, y compris quand rien n'est actif, et
+  la liste les rend **dans l'ordre des places** — c'est de là que vient l'ordre
+  d'affichage, jamais des positions ;
+- le pas vaut **46** exactement, et la boîte du conteneur couvre exactement la
+  grille : 9 × 46 + 40 = 454. Le pas se déduit donc du conteneur,
+  `(largeur - côté) / (places - 1)`, sans rien mesurer sur des emplacements
+  qu'on a peut-être déplacés soi-même ;
+- accessoirement, `iconPadding` vaut 10 pour un écart réel de 6 : l'emplacement
+  déborde de deux points de chaque côté de son icône. On ne s'en sert pas — le
+  conteneur donne le pas sans cette subtilité — mais c'est ce qui explique le
+  `- 4` qu'on trouve dans d'autres addons.
+
+**Le conteneur et les emplacements ne sont pas dans la même échelle**, et c'est
+le piège de cette section : `V` et `C` sont à 725,5 quand la première place est à
+659,6, soit un rapport de 1,1 pile. Le client agrandit ses icônes sans agrandir
+le conteneur, et un décalage d'ancrage s'exprime dans l'échelle du cadre qu'il
+place. Comparer les deux sans convertir (`GetEffectiveScale`) fausse tout de dix
+pour cent — silencieusement, puisque le résultat reste plausible.
+
+**Trois points d'accroche, et le troisième est le seul indispensable** :
+`RefreshLayout` et `Layout` sont les deux façons dont le client défait notre
+tassement, `OnUnitAura` est la seule façon d'apprendre qu'une amélioration est
+tombée. Sans lui, le trou resterait affiché jusqu'à ce qu'autre chose fasse
+bouger la visionneuse. Un quatrième passage, différé de `T.TIMING.CDM_SETTLE`,
+rattrape la fin du fondu : à l'instant où le client annonce la chute, l'icône
+est encore opaque, donc encore comptée.
+
+**Une mémoire de positions a été écrite, puis jetée, et c'est la leçon
+principale de cette entrée.** Le raisonnement paraissait sans faille : puisqu'on
+écrase les positions du client, il faut bien retenir celles qu'il avait posées.
+Chaque emplacement gardait donc deux nombres — sa place chez le client, la
+dernière qu'on lui avait donnée — et la grille se relisait dans cette mémoire.
+
+Elle s'est désynchronisée deux fois, de deux façons différentes :
+
+1. il manquait une **troisième** position, *là où le cadre est vraiment*, qui
+   n'est ni l'une ni l'autre dès que l'ensemble affiché a changé depuis le
+   dernier tassement. Un cadre déjà à sa place théorique était déclaré « rien à
+   déplacer » et noté comme étant chez le client, alors qu'il était resté au
+   tassement précédent ; au passage suivant, cette position-là était relue comme
+   une place de la grille ;
+2. corrigé ce point, il restait que le pas se mesurait sur des emplacements dont
+   certains avaient été déplacés par nous — l'espacement se mettait alors à
+   varier d'un instant à l'autre, et le centre à glisser.
+
+Le symptôme arrive **tard**, après plusieurs cycles d'apparition et de chute,
+donc jamais au premier essai : chaque correctif semblait tenir, puis dérivait.
+
+La sortie n'a pas été un troisième correctif mais un **relevé** — les vingt
+lignes ci-dessus, obtenues en deux `/run` — qui a montré que la grille se calcule
+intégralement à partir de cadres qu'on ne touche jamais. Il n'y a alors plus rien
+à mémoriser : le tassement vise des positions absolues, il est idempotent par
+construction, et la restitution est le même calcul avec la place `i` à `i` fois
+le pas.
+
+La leçon, qui vaut bien au-delà d'ici : **une mémoire de l'état d'un cadre du
+client est une source de vérité concurrente de la sienne, et deux sources de
+vérité divergent toujours.** Avant d'en tenir une, chercher ce qui, dans ce que
+le client publie, permet de recalculer la même chose — et si on ne le trouve pas,
+aller le mesurer en jeu plutôt que le déduire. Une demi-journée de correctifs
+aurait tenu dans les trente secondes qu'a pris le relevé.
+
+Deux garde-fous restent, parce qu'une lecture peut échouer : **le pas doit tenir
+entre une place et deux** (le client ne fait ni chevaucher deux emplacements, ni
+laisser une place vide entre eux), et une grille illisible ne fait rien déplacer
+du tout.
+
+**Trouvé en lisant** BetterBlizzFrames (`midnight/modules/cdManager.lua`), qui
+traite le même défaut. Aucun code repris (règle 8) : il en sort la liste des
+membres publiés par une visionneuse, le fait qu'un emplacement inactif reste
+dans la liste, et `OnUnitAura` comme point d'accroche. Notre implémentation ne
+reconstruit pas la disposition à partir d'un sens de remplissage et d'un
+`iconPadding` supposés : elle mesure la grille que le client vient de poser, ce
+qui la rend indifférente à l'ordre, au sens et au retour à la ligne.
+
+---
+
+## Lire l'équipement du personnage sans monter d'infobulle
+
+**Symptôme** — pour poser un niveau d'objet, un rang d'amélioration et l'état des
+enchantements et des gemmes sur les seize emplacements de la fiche, la voie
+évidente est de monter une infobulle cachée et d'en lire les lignes. C'est aussi
+la voie qui coûte le plus cher et qui casse à chaque refonte des infobulles.
+
+**Ce que le client publie directement** — presque tout, sans infobulle :
+
+| Besoin | Chemin |
+|---|---|
+| Niveau d'objet **réel** | `C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(slot))` |
+| Rang d'amélioration | `C_Item.GetItemUpgradeInfo(link)` → `currentLevel`, `maxLevel`, `trackString` |
+| Enchantement présent | 2ᵉ champ du lien : `link:match("item:%d+:(%d*)")` |
+| Châsses | `C_Item.GetItemStats(link)`, clés `EMPTY_SOCKET_*` |
+| Gemme sertie | `C_Item.GetItemGem(link, index)` |
+| Arme ou bouclier | `select(6, C_Item.GetItemInfoInstant(link)) == Enum.ItemClass.Weapon` |
+
+Le niveau d'objet se prend **par l'emplacement et non par le lien** : c'est le
+seul chemin qui tienne compte de la mise à l'échelle. Un objet mis à l'échelle
+affiche sinon le niveau écrit dans son lien, qui n'est pas celui que le
+personnage porte.
+
+Le champ d'enchantement du lien est **vide, pas absent**, quand il n'y a pas
+d'enchantement : le motif doit donc capturer `(%d*)` et non `(%d+)`, sans quoi il
+ne trouve rien du tout et tout paraît enchanté.
+
+---
+
+## `GetItemStats` compte les châsses **totales**, pas les vides
+
+**Symptôme** — malgré son nom, la clé `EMPTY_SOCKET_PRISMATIC` ne vaut pas zéro
+quand la châsse est sertie. Compter les châsses vides à partir de cette clé donne
+un objet entièrement gemmé signalé comme incomplet.
+
+**Ce qu'on fait** — le nombre rendu est le nombre de châsses de ce type,
+serties ou non. Les vides se déduisent : `total − serties`, les serties étant les
+index pour lesquels `C_Item.GetItemGem(link, index)` rend un lien.
+
+On somme **tous** les types de châsse par un motif `^EMPTY_SOCKET_` plutôt que par
+une liste de clés connues : une liste est fausse au premier type introduit par
+une extension, et l'oubli est silencieux — la pièce paraît simplement ne pas
+avoir de châsse.
+
+**Ne pas tendre de table de travail.** L'ancienne globale acceptait un second
+paramètre, `GetItemStats(link, statTable)`, qu'elle remplissait au lieu d'allouer.
+Rien ne dit que la variante `C_Item` respecte ce contrat, et le pari se perd en
+silence : au mieux l'argument est ignoré, au pire la fonction lève et le
+rafraîchissement de l'emplacement meurt dans son `safecall` sans rien afficher.
+L'économie d'une table sur un chemin groupé ne vaut pas ce risque.
+
+**Ne pas déduire non plus le nombre de châsses du total pour interroger
+`GetItemGem`.** Les deux lectures sont indépendantes : on interroge les quatre
+champs de gemme que réserve un lien d'objet, et on retient le plus grand des deux
+décomptes. Une gemme visible reste ainsi affichée même si le décompte des châsses
+échoue — on perd la connaissance des châsses vides, pas l'affichage entier.
+
+---
+
+## Le noyau du vide ne se lit ni dans le lien ni dans les statistiques
+
+**Symptôme** — savoir si une arme ou un bijou a reçu son noyau du vide. Ce n'est
+ni une châsse (`GetItemStats` n'expose rien), ni un enchantement (le champ du
+lien reste vide), ni un rang d'amélioration.
+
+**Cause** — le noyau se manifeste par un **effet nommé** sur l'objet, « Forge du
+vide ascendant », que seule l'infobulle publie.
+
+**Ce qu'on fait** — `C_TooltipInfo.GetInventoryItem("player", slot)` rend des
+**données** et non des `FontString`, donc sans créer la moindre frame. Deux
+pièges :
+
+- les champs d'une ligne ne sont peuplés qu'après `TooltipUtil.SurfaceArgs(data)`.
+  Sans cet appel, `line.leftText` est absent et la boucle ne trouve jamais rien ;
+- `leftText` porte des échappements de couleur, y compris la forme récente
+  `|cn<nom>:<texte>|r`. Ils se retirent avant toute comparaison.
+
+**Limite assumée** — la comparaison porte sur une **chaîne traduite**
+(`L["Void core marker"]`). Aucun identifiant stable n'étant exposé côté objet, il
+n'y a pas de solution indépendante de la langue ; une locale dont l'intitulé est
+faux montre les armes et les bijoux en rouge à tort. La clé est donc isolée dans
+les fichiers de locale, à corriger en un seul endroit. Si le client publie un
+jour un identifiant de sort pour cet effet, le passage à
+`C_Spell.GetSpellName(id)` rendrait la lecture indépendante de la langue.
+
+---
+
+## Aucune API ne dit qu'un emplacement peut être enchanté
+
+Il n'existe pas de fonction « cet emplacement accepte-t-il un enchantement ? », et
+la liste **change d'une extension à l'autre** : la cape et les bracelets
+s'enchantaient hier et ne s'enchantent plus, le casque et les épaules ont fait le
+chemin inverse. Elle se relève en jeu, pas par déduction.
+
+`Modules/Character.lua` porte donc deux tables, `ENCHANTABLE` et `VOID_SLOTS`,
+qui sont des faits de jeu et les deux seules choses du module qui puissent
+afficher du rouge à tort.
+
+Un cas se déduit quand même, et il vaut la peine : la **main gauche** ne
+s'enchante — et ne reçoit de noyau — que si c'est une arme. Un bouclier ou un
+objet tenu occupe le même emplacement et n'accepte rien.
+
+---
+
+## Déplacer une fenêtre du client sans la tainter
+
+**Symptôme** — après avoir rendu déplaçable le cadre de recherche de groupe,
+des erreurs tombent ailleurs et plus tard : `attempt to compare a secret number`
+dans du code de Blizzard, des actions bloquées « interface action failed because
+of an AddOn ». Rien ne les relie au déplacement, et elles ne se produisent pas
+sur les autres fenêtres.
+
+**Cause** — certaines fenêtres du client sont **protégées**. Sur celles-là,
+`SetMovable`, `StartMoving`, `SetClampedToScreen`, `EnableMouseWheel`,
+`SetFrameStrata`, `Raise` et `SetPoint` appelés depuis un addon *taintent* leur
+arbre. L'appel ne lève pas : il réussit, et c'est le code de Blizzard qui
+échouera plus tard, sur une comparaison de valeur secrète, sans rien qui remonte
+jusqu'à nous.
+
+Le point commun de ces appels, et c'est lui qu'il faut retenir plutôt que la
+liste : ce sont tous des **écritures d'état** sur un cadre qui ne nous appartient
+pas. Lire (`GetPoint`, `GetScale`, `IsMouseOver`) ne taint jamais.
+
+**Ce qu'on fait** — trois substitutions, une par classe d'appel :
+
+1. **Positionner et mettre à l'échelle** passent par un
+   `SecureHandlerBaseTemplate` et un snippet `Execute` (`UI/Widgets/Mover.lua`).
+   L'environnement restreint s'exécute de façon sûre par construction : il ne
+   voit que ce qu'on lui passe par `SetFrameRef` et `SetAttribute`, il n'a donc
+   rien à tainter. Il **refuse en combat** — c'est à l'appelant de différer, ce
+   que fait `PLAYER_REGEN_ENABLED`.
+
+2. **La molette** ne s'active sur aucun cadre du client. Une frame à nous se pose
+   par-dessus celui qu'on survole, avec `EnableMouse(false)` pour que les clics
+   la traversent, et ne prend que la molette. Elle n'existe que pendant que le
+   modificateur est tenu.
+
+3. **Le glisser** ne se fait pas par `StartMoving` : on relève la position du
+   curseur à chaque image et on repose la fenêtre soi-même. C'était le chemin
+   qu'un cadre protégé imposait de toute façon ; l'appliquer à *tous* les cadres
+   supprime la moitié du code, et surtout ne laisse **rien à défaire** à
+   l'extinction — pas de `SetMovable` à retirer, donc rien qui puisse rester.
+
+**Une position est un décalage de centre à centre, jamais un ancrage.** On
+mémorise de combien le centre de la fenêtre s'écarte du centre de `UIParent`, et
+on repose toujours en `CENTER`/`CENTER`. Cela vaut trois choses d'un coup : le
+chemin protégé et le chemin ordinaire deviennent identiques, un changement
+d'échelle se rattrape par une division, et aucun ancrage relatif à un cadre tiers
+ne vient surprendre. Relire l'ancrage du client pour le rejouer était la première
+approche ; elle casse dès qu'une fenêtre s'ancre sur sa voisine.
+
+**Les offsets sont en unités locales du cadre**, c'est-à-dire divisés par son
+échelle effective. Une fenêtre mise à l'échelle sans que son décalage soit
+multiplié par `ancienne/nouvelle` saute d'autant. Le calcul juste : relever le
+décalage en **pixels d'écran** avant, et le retraduire après.
+
+**Poser une position une fois ne suffit pas.** Le gestionnaire de panneaux du
+client réancre ses fenêtres à l'ouverture, au changement d'onglet, à l'apparition
+d'une fenêtre voisine. La position doit être **réimposée** depuis un hook sur
+`SetPoint` — avec un drapeau pour que notre propre écriture ne réveille pas le
+hook, sinon il réécrit par-dessus lui-même. Même chose pour `SetScale` : certaines
+fenêtres se remettent à l'échelle sur un changement d'état, sans cycle
+masquer/afficher qui aurait rejoué `OnShow`.
+
+**Redimensionner une fenêtre jamais déplacée doit lui donner une position.**
+Sans elle, le gestionnaire de panneaux la rassoit à sa place d'origine au
+prochain recalcul, et elle saute sans raison visible. Mettre à l'échelle « prend
+donc la place » comme le ferait un glisser.
+
+**`OnMouseUp` n'est pas ce qui termine un glisser.** Le bouton peut être relâché
+hors du cadre, où l'événement ne nous parvient pas — la fenêtre reste alors
+collée au curseur. Le test qui termine vraiment est
+`IsMouseButtonDown("LeftButton")`, interrogé dans la boucle de suivi.
+`OnMouseUp` reste posé, mais comme raccourci, pas comme garantie.
+
+**La carte du monde se prend par sa barre de titre.** Son corps se déplace au
+glisser et zoome à la molette : un glisser posé dessus ferait les deux à la fois.
+`WorldMapTitleButton` est la poignée que le client utilise lui-même. C'est le
+seul cas rencontré, mais il en existera d'autres — d'où une table
+(`DRAG_HANDLES`) plutôt qu'une exception écrite dans le code.
+
+**On n'appelle jamais `EnableMouse` sur un cadre du client.** Une fenêtre qui ne
+reçoit pas la souris ne sera donc pas déplaçable. C'est une limite assumée : la
+rendre telle serait exactement l'écriture d'état qui taint.
+
+**Deux fenêtres sont volontairement hors du registre** :
+
+- les **sacs**, dont le client réancre les cadres à chaque recalcul de
+  disposition. Notre réimposition entrerait dans un bras de fer avec lui ; il
+  leur faut un traitement à part, pas une ligne de plus dans la liste ;
+- le **menu Échap** (`GameMenuFrame`), que `Modules/General.lua` sait déjà mettre
+  à l'échelle. Deux moteurs sur la même frame se contrediraient à chaque
+  ouverture.
+
+**Trouvé en lisant** EllesmereUIQoL (`EllesmereUIQoL_Shifter.lua`). Aucun code
+n'en a été repris (règle 8) : ce qu'on y a lu, ce sont les *classes d'appels* qui
+taintent et l'existence du chemin par environnement restreint. L'architecture
+retenue ici en diverge — un seul chemin de glisser au lieu de deux, une position
+toujours centrée au lieu de l'ancrage relu, et une restitution à l'extinction que
+le Shifter ne fait pas.
+
+## Barres de vie : un seul point de passage
+
+`UnitFrameHealthBar_Update(statusbar, unit)` est la fonction par laquelle passent
+tous les cadres d'unités **classiques** — joueur, cible, focus, boss, membres du
+groupe hors style raid. S'y accrocher couvre les cadres d'un coup et, surtout, au
+bon moment : le client repose sa propre couleur à chaque mise à jour, un
+rafraîchissement périodique ne ferait que courir derrière lui.
+
+**Une barre de vie se désature avant de se teinter.** La texture de remplissage
+du client n'est pas blanche, elle est **verte**. Une couleur de sommet posée
+dessus la *multiplie* au lieu de la remplacer : le bleu d'un chaman donne un vert
+sombre. Le symptôme est traître, parce que la couleur *change* — on croit que le
+réglage fonctionne et se trompe de teinte, alors qu'il ne s'agit pas du tout d'un
+problème de couleur. `SetStatusBarDesaturated(true)` rend la texture grise, et la
+couleur de sommet redevient la couleur affichée.
+
+La désaturation d'origine se relève avec la couleur et se repose avec elle :
+reposer l'une sans l'autre laisse une barre pâle que le client n'a jamais
+dessinée.
+
+Deux autres pièges :
+
+- **les cadres de cible de la cible n'y passent pas.** `TargetFrameToT` et
+  `FocusFrameToT` sont mis à jour autrement, et rien n'annonce leur changement.
+  On les reprend donc à chaque fois qu'une *autre* barre bouge — c'est le seul
+  moment gratuit où l'on sait que quelque chose s'est passé ;
+- **la barre ne se publie pas sous la même clé partout.** Les cadres montés par
+  `UnitFrame_Initialize` publient `healthbar` ; les cadres de cible de la cible
+  publient `HealthBar`. Chercher la seule première laisse les deux petits cadres
+  en vert, ce qui ressemble à un oubli et n'en est pas un.
+
+Les cadres de groupe en **style raid** ont leur propre réglage de couleurs de
+classe dans le client : on ne le double pas.
+
+## La couleur de faction se repeint à chaque cible
+
+La plaque colorée derrière le nom de la cible est
+`TargetFrame.TargetFrameContent.TargetFrameContentMain.ReputationColor`, et
+`FocusFrame` porte la même sous le même chemin. La cacher une fois ne suffit
+pas : `CheckFaction` la repeint à chaque changement de cible.
+
+Pour la **rendre**, on n'appelle pas `Show` : on rappelle `CheckFaction`. Lui
+seul sait si cette cible-là a une faction à montrer, et la rallumer à l'aveugle
+en poserait une derrière des cibles qui n'en avaient pas.
+
+## La spécialisation d'un autre joueur passe par le serveur
+
+Celle du joueur se demande au client : `C_SpecializationInfo.GetSpecialization()`
+puis `GetSpecializationInfo(index)`. Les globales `GetSpecialization` /
+`GetSpecializationInfo` existent encore, mais l'espace de noms est le chemin
+récent — on essaie les deux, dans cet ordre.
+
+Celle d'un autre joueur n'existe **que** par une inspection :
+`CanInspect(unit)`, `NotifyInspect(unit)`, puis `INSPECT_READY(guid)` et
+`GetInspectSpecialization(unit)`. Deux limites qu'aucune astuce ne lève :
+
+- l'unité doit être à **portée d'inspection**. Hors de portée, il n'y a pas
+  d'icône, et il ne peut pas y en avoir ;
+- le serveur ne traite **qu'une demande à la fois**. En dessous d'environ une
+  seconde et demie, les demandes rapprochées sont ignorées en silence — d'où un
+  intervalle de garde, et un cache par GUID pour ne jamais redemander ce qu'on
+  sait déjà.
+
+`ClearInspectPlayer` n'est pas appelé : il fermerait aussi la fenêtre
+d'inspection que le joueur aurait ouverte lui-même.
+
+Il existe un autre chemin, lu chez BetterBlizzFrames : reconstituer la spé en
+lisant l'infobulle de l'unité (`C_TooltipInfo.GetUnit`) et en comparant sa ligne
+de classe à une table de noms de spés localisés. Il a l'avantage de la portée,
+et deux inconvénients qui l'ont fait écarter : il dépend de chaînes traduites —
+avec des formes genrées, et des cas particuliers par langue — et il lit un
+affichage au lieu d'interroger une API.
+
+## Les cadres de groupe se règlent par une échelle
+
+Le mode Édition borne son curseur de taille ; l'échelle qu'il pose, elle, n'est
+pas bornée. `CompactPartyFrame:SetScale()` (style raid) et `PartyFrame:SetScale()`
+(cadres classiques) acceptent ce qu'on leur donne.
+
+Trois précautions :
+
+- ce sont des **cadres protégés** : `SetScale` en combat lève une erreur
+  d'action bloquée. On se garde par `InCombatLockdown` et on rattrape à
+  `PLAYER_REGEN_ENABLED` ;
+- le mode Édition **repose sa taille** en se refermant et à tout changement de
+  disposition. Sans un hook sur `UpdateSystemSettingFrameSize`, le réglage a
+  l'air de « ne pas tenir » ;
+- l'échelle posée est **absolue**, elle ne se multiplie pas à celle du mode
+  Édition. Deux valeurs qui se multiplieraient donneraient un résultat que ni
+  l'une ni l'autre des deux fenêtres n'annonce.
+
+**Trouvé en lisant** BetterBlizzFrames. Aucun code n'en a été repris (règle 8) :
+ce qu'on y a lu, ce sont les noms de fonctions et les chemins de cadres —
+`UnitFrameHealthBar_Update`, `ReputationColor`, `CompactPartyFrame:SetScale`.
+
+---
+
+## Historique de chat : relever ce qui est affiché, pas ce qui est reçu
+
+**Symptôme** — reconstruire l'historique à partir des événements `CHAT_MSG_*`
+donne des lignes qui ne ressemblent pas à celles qu'on a lues : pas
+d'horodatage, pas de couleurs de classe, pas de numéros de canal, et rien de ce
+que les autres addons ont ajouté.
+
+**Cause** — le texte d'une ligne de chat n'est pas le message : c'est le produit
+du message, des réglages du joueur et de tous les filtres posés par
+`ChatFrame_AddMessageEventFilter`. Ce produit se fabrique dans
+`ChatFrame_MessageEventHandler`, qui appelle ensuite `frame:AddMessage`.
+
+**Ce qu'on fait** — on se raccroche à `AddMessage` de chaque fenêtre permanente
+(`U.GuardedHook`, seul motif de hook autorisé). On y relève le texte final et sa
+couleur, et on le rejoue tel quel à la connexion suivante. C'est la même leçon
+que pour les auras de la cible : **on s'accroche à la fonction qui produit la
+donnée, on ne la refabrique pas**.
+
+Deux pièges qui vont avec :
+
+- **le rejeu se relève lui-même.** Rejouer l'historique appelle `AddMessage`,
+  donc notre propre relevé : sans un drapeau qui le fait taire pendant le rejeu,
+  chaque session recopie la précédente et l'historique se duplique à l'infini.
+  Le drapeau retombe **après** un appel protégé, sinon une erreur au milieu du
+  rejeu laisse le relevé muet pour le reste de la session ;
+- **les fenêtres temporaires sont écartées** (`frame.isTemporary`) : leur numéro
+  est réattribué au chuchotement suivant, ce qui mélangerait deux historiques.
+
+L'historique n'est pas un réglage : il vit dans le SavedVariables du personnage
+via `DB:CharData`, hors du mécanisme de défauts. Passer par `Set` émettrait un
+message interne par ligne de chat reçue.
+
+---
+
+## Couleurs de discussion : `ChangeChatColor` s'annonce, donc se rappelle
+
+**Symptôme** — aligner les couleurs de groupe, d'instance et de raid marche, puis
+l'interface repeint sans fin dès qu'on écoute `UPDATE_CHAT_COLOR` pour suivre les
+changements du joueur.
+
+**Cause** — `ChangeChatColor(type, r, g, b)` émet `UPDATE_CHAT_COLOR`. Un
+gestionnaire qui repeint sur cet événement se rappelle donc lui-même, et un
+drapeau « je suis en train de peindre » ne suffit pas : la rafale du client
+arrive après lui.
+
+**Ce qu'on fait** — on ne repeint que ce qui **diffère** de la couleur voulue,
+relue dans `ChatTypeInfo`. Un rappel qui n'a rien à changer n'émet rien, et le
+va-et-vient converge de lui-même. Le drapeau reste, pour ignorer nos propres
+annonces pendant la passe.
+
+`ChatTypeInfo[type]` porte `r`, `g`, `b` — c'est la source de vérité, y compris
+pour relever les couleurs d'origine avant d'y toucher. `RAID_WARNING` est
+volontairement hors de la famille unifiée : il est fait pour interrompre la
+lecture, l'aligner sur le reste le ferait taire.
+
+---
+
+## Redimensionner une fenêtre de chat
+
+**Symptôme** — `StartSizing` sur la fenêtre qu'on tire ne donne rien de durable :
+la taille revient à la précédente dès que le client remet ses fenêtres en place.
+
+**Cause** — les fenêtres **arrimées** partagent la taille du meneur de leur dock.
+Redimensionner une fenêtre arrimée revient à demander une taille que le dock
+écrase aussitôt.
+
+**Ce qu'on fait** — le cadre réellement redimensionné est
+`GENERAL_CHAT_DOCK.primary` quand `frame.isDocked` est vrai, et résolu **à chaque
+prise** : une fenêtre peut être arrimée ou détachée entre deux glissers.
+`FCF_SavePositionAndDimensions(frame)` range ensuite la nouvelle taille dans la
+disposition du client — elle survit alors au rechargement sans que nous ayons
+rien à mémoriser, et même si l'addon est désinstallé.
+
+**La poignée, c'est l'onglet.** Le placement est le vrai sujet de cette note, et
+quatre formes ont été essayées dans cet ordre — les trois premières ont été
+écrites puis retirées :
+
+1. une **bande le long du bord haut, à l'intérieur** : elle couvre les premiers
+   pixels de la ligne la plus haute et y rend un lien inatteignable ;
+2. un **maintien du clic sur toute la fenêtre** : ça marche, mais rien ne
+   l'annonce, et il faut une boucle pour distinguer le clic du maintien ;
+3. une **poignée qui dépasse au-dessus du coin haut-droit**, avec la texture de
+   grabber du client : rien n'est recouvert, mais c'est une pièce de plus à
+   l'écran pour un geste qu'on fait deux fois par mois ;
+4. l'**onglet lui-même** (`ChatFrame1Tab`), qu'on tire vers le haut ou vers le
+   bas. Aucune texture ajoutée, aucune surface disputée, et la souris est déjà
+   dessus quand on veut changer la fenêtre de chat.
+
+La leçon vaut au-delà : **avant d'ajouter une poignée, chercher la surface du
+client qui ne sert pas à lire.** L'onglet est le seul endroit du chat dans ce cas.
+
+Trois points qui font que le geste ne casse rien :
+
+- **`HookScript` et non `SetScript`** : le clic qui change d'onglet appartient au
+  client et doit continuer d'arriver. Le hook ne se dépose pas plus que
+  `hooksecurefunc` — d'où `U.GuardedScript`, qui le pose une fois et le rend
+  inerte par une garde (CLAUDE.md règle 6) ;
+- **le clic court ne redimensionne rien** : sans mouvement du curseur, le
+  `StartSizing` posé sur `OnMouseDown` et le `StopMovingOrSizing` posé sur
+  `OnMouseUp` s'annulent. Aucun délai de maintien n'est donc nécessaire ;
+- **le relâchement revient toujours à l'onglet** qui a reçu l'appui, même si le
+  curseur l'a quitté : le moteur le garantit, c'est ce qui rend le motif
+  `OnMouseDown` / `OnMouseUp` correct sans boucle de surveillance. `OnHide`
+  reste en filet, un onglet pouvant disparaître à un arrimage.
+
+**Fenêtre déverrouillée** : le client fait de son onglet une poignée de
+déplacement (`FCF_Tab_OnDragStart`), qui démarre au seuil de glisser, donc après
+notre `StartSizing`. Un cadre ne peut ni bouger ni se redimensionner en même
+temps : le dernier appel gagne, et c'est celui du client. Le déplacement l'emporte
+donc là où le joueur l'a explicitement autorisé, ce qui est le bon ordre.
+
+---
+
+## Sortir du texte d'une fenêtre de chat
+
+**Symptôme** — rien ne se sélectionne dans le chat : ses lignes sont dessinées,
+pas saisies.
+
+**Cause** — une `ScrollingMessageFrame` peint son texte. Il n'existe aucune
+sélection à la souris, et donc aucun presse-papier.
+
+**Ce qu'on fait** — on relit les lignes (`GetNumMessages` / `GetMessageInfo`) et
+on les repose dans une zone de saisie multiligne, tout sélectionné. Trois détails
+qui ne se devinent pas :
+
+- la zone de saisie est **l'enfant défilant lui-même** et non le contenu d'une
+  frame intermédiaire : une zone multiligne calcule sa propre hauteur d'après son
+  texte, un parent obligerait à mesurer ce texte à sa place ;
+- les échappements se retirent dans l'ordre : un lien garde ce qu'il
+  **affichait** (`|H.-|h(.-)|h` → `%1`), les textures et atlas en ligne n'ont pas
+  d'équivalent en texte et disparaissent ;
+- le rappel « Ctrl+C » vit **hors** de la zone de texte, faute de quoi il est
+  sélectionné avec le reste et part dans le presse-papier.
+
+## Le portrait d'un cadre d'unité se repeint sans arrêt
+
+`UnitFramePortrait_Update(frame)` est la fonction qui décide de ce qui remplit la
+case du portrait : un visage, ou une icône de classe si le joueur préfère. Elle
+est rappelée à chaque changement de cible, à chaque entrée en véhicule, à chaque
+fois que l'unité change sous le cadre. Y poser une image sans s'accrocher à cette
+fonction donne une icône qui disparaît au premier changement de cible.
+
+Deux détails qui se paient cher si on les oublie :
+
+- **remettre les coordonnées de texture à plein cadre.** Quand le client dessine
+  une icône de classe, il découpe une vignette dans une planche commune et laisse
+  ce découpage sur la texture. Une image entière posée derrière n'en montrerait
+  alors qu'un coin ;
+- **pour rendre le portrait, rappeler `UnitFramePortrait_Update`** plutôt que de
+  reposer une texture à la main. Lui seul sait ce que le joueur a choisi de voir
+  dans cette case — reposer un visage choisirait à sa place.
+
+Le portrait se trouve sous `frame.portrait` sur les cadres montés par
+`UnitFrame_Initialize`, sous `frame.Portrait` sur les cadres de cible de la
+cible, et sous `PlayerFrame.PlayerFrameContainer.PlayerPortrait` pour le joueur.
+
+## `CheckFaction` recolore la plaque de faction, il ne la réaffiche pas
+
+**Symptôme** — masquer la couleur de réputation derrière le nom de la cible
+fonctionne ; décocher le réglage ne la ramène pas. Elle ne revient qu'au
+`/reload`.
+
+**Cause** — `CheckFaction` recalcule la **couleur** de `ReputationColor` et rien
+d'autre. Le client ne l'affiche jamais explicitement, parce qu'il ne la cache
+jamais : un `Hide` posé par un addon est donc sans retour, et lui demander de
+recalculer ne défait pas ce qu'il n'a pas fait.
+
+**Ce qu'on fait** — on pose une **opacité nulle** au lieu de masquer. La
+visibilité reste entre les mains du client, on ne fait que rendre invisible ce
+qu'il montre ; reposer l'opacité relevée rend exactement son état.
+
+C'est la règle générale quand on veut effacer un élément d'un cadre du client
+sans lui disputer sa logique d'affichage : `SetAlpha(0)` se rend, `Hide` se
+dispute.
+
+## Une chaîne secrète est une chaîne : `type()` ne la trie pas
+
+**Symptôme** — le mode sombre cesse de s'appliquer aux **cadres d'unités** le
+jour où un module se met à poser une couleur de classe sur les barres de vie.
+Les autres éléments — barres d'action, auras, infobulle — continuent très bien.
+Rien dans le symptôme ne relie les deux : le module ne touche ni à l'habillage,
+ni au moteur d'assombrissement, et son diff ne croise celui du moteur nulle part.
+
+Le message, obtenu en rejouant le passage à la main :
+
+    Shade.lua: attempt to index local 'name' (a secret string value,
+    while execution tainted by 'BshamelUI')
+
+**Cause** — `GetDebugName()` rend son nom en **valeur secrète** dès que
+l'exécution est teintée par un addon. Un module qui se branche sur les cadres
+d'unités (`UnitFrameHealthBar_Update`, `UnitFramePortrait_Update`) teinte
+précisément le chemin par lequel le moteur les parcourt ensuite.
+
+Le garde en place — `if type(name) ~= "string" then return nil end` — ne voit
+rien passer : **une chaîne secrète a bien le type `string`**. C'est l'indexation
+suivante, `name:match(...)`, qui lève. Et comme le nom était lu hors de tout
+appel protégé, l'erreur ne coûtait pas une texture mais **tout le parcours de
+l'élément**.
+
+**Ce qu'on fait** — deux choses, et il faut les deux :
+
+- `debugName` écarte les valeurs secrètes en plus des non-chaînes
+  (`U.IsSecret`). Sans nom on ne perd que le rattrapage : le classement retombe
+  sur les clés que le cadre publie, et le nom n'a jamais servi qu'à *écarter* ;
+- la reconnaissance des textures d'état est appelée sous `pcall`, comme le
+  classement l'était déjà. Un échec ne coûte plus que la texture concernée.
+
+**La leçon générale** — dès qu'une valeur vient du client et qu'on s'apprête à
+l'indexer, à la multiplier ou à s'en servir comme clé, `type()` ne suffit pas :
+il faut `U.IsSecret`. Et tout ce qui interroge le client depuis un parcours doit
+échouer **par élément parcouru**, jamais en bloc — sinon le symptôme visible
+(« la fonctionnalité entière ne marche plus ») ne ressemble en rien à sa cause
+(« une région sur vingt a refusé de répondre »).
+
+## Un cadre d'unité se rafraîchit en trois passages, pas en un
+
+**Symptôme** — le réglage s'applique, mais avec un temps de retard visible :
+on cible quelqu'un, le cadre s'affiche un court instant dans son état par
+défaut, puis se corrige. Le même symptôme s'était déjà produit avec le mode
+sombre.
+
+**Cause** — un rafraîchissement groupé (`U.Debounce`) est le bon outil pour
+**ne pas repasser vingt fois**, et le mauvais pour **arriver à l'heure**. Tout
+regrouper revient à ne rien faire avant que la rafale ne retombe. Et un
+changement de cible n'a pas un seul instant utile, il en a trois :
+
+1. l'annonce (`PLAYER_TARGET_CHANGED`) ;
+2. cinq centièmes plus tard, le moment où le client a fini de **rhabiller** le
+   cadre — il le fait *après* avoir annoncé ;
+3. deux dixièmes plus tard, quand ce qui dépend d'une réponse est arrivé : la
+   cible de la cible n'est pas résolue quand la cible l'est, et une inspection
+   revient quand elle revient.
+
+**Ce qu'on fait** — les trois passages, dans cet ordre : immédiat, court délai,
+puis groupé. C'est ce que fait `refresher` dans `Modules/General.lua` pour le
+mode sombre, et `Modules/UnitFrames.lua` pour ses réglages.
+
+La condition qui rend ce motif praticable est que chaque passage soit
+**idempotent** : il relit l'état voulu et le repose, sans partir de l'état
+courant. Repasser ne coûte alors que le passage — jamais un clignotement (voir
+« Repeindre ne doit jamais repasser par l'état d'origine »).
+
+Effet de bord à ne pas oublier : ce qui **déclenche une requête** doit partir au
+premier passage. Une demande d'inspection posée seulement dans le passage groupé
+ajoute le retard du rafraîchissement à celui du serveur, et les deux se voient.

@@ -2,6 +2,133 @@
 
 ## Non publié
 
+### Ajouté
+- **Chat** quitte l'avant-première, avec quatre conforts qui laissent le chat du
+  jeu à sa place — ses onglets, son arrimage et ses filtres restent les siens :
+
+  - l'**historique survit au rechargement**. Les dernières lignes de chaque
+    fenêtre sont relues à la connexion, sous un séparateur qui dit où finit la
+    session précédente. C'est ce qui a été **affiché** qui est conservé, pas les
+    messages reçus : l'horodatage, les couleurs de classe et les filtres des
+    autres addons sont donc restitués tels qu'on les avait lus. Éteindre le
+    réglage efface ce qui avait été gardé ;
+  - la **hauteur s'ajuste en tirant l'onglet** — « Général », « Journal de
+    combat » — vers le haut ou vers le bas. Rien n'est ajouté à l'écran pour ça :
+    l'onglet est la poignée que la souris a déjà sous elle, et la seule surface
+    du chat qui ne serve pas à lire. Un simple clic continue de changer d'onglet,
+    et la nouvelle taille est rangée par le jeu lui-même, donc elle survit sans
+    l'addon ;
+  - **une seule couleur pour le groupe** : groupe, chef de groupe, instance et
+    raid prennent la couleur du chat de groupe. Une conversation avec les mêmes
+    gens garde ainsi la même couleur qu'on soit dehors, en donjon ou en raid.
+    Les avertissements de raid gardent la leur — ils sont faits pour couper la
+    lecture. Les couleurs d'origine sont relevées avant d'être touchées et
+    reposées si l'on éteint le réglage ;
+  - **copier le chat** : un bouton discret dans le coin haut-droit de chaque
+    fenêtre ouvre son contenu dans une fenêtre de texte, tout sélectionné, prêt
+    pour un Ctrl+C. Les liens y gardent ce qu'ils affichaient, les icônes en
+    ligne disparaissent.
+
+- **Fiche de personnage** quitte l'avant-première. Le client affiche un niveau
+  d'objet moyen et rien d'autre ; savoir quelle pièce traîne demandait de survoler
+  seize emplacements l'un après l'autre.
+
+  Le **niveau d'objet** se pose sur l'icône de la pièce, mise à l'échelle
+  comprise — c'est celui que le personnage porte, pas celui qui est écrit dans
+  le lien. À côté de la case — au-dessus pour les armes, qui n'ont pas de côté
+  libre —, une colonne de **pastilles, une par ligne**, verte quand c'est fait et
+  rouge quand ça ne l'est pas :
+
+  - le **rang d'amélioration** (« 6/8 »), vert une fois au maximum et orange
+    d'ici là. Le rang est le seul à échapper au rouge, et c'est voulu : une pièce
+    améliorable *est* améliorée, elle ne l'est simplement pas à fond — dire
+    « il manque quelque chose » serait faux. Un réglage permet de garder tous les
+    rangs verts pour qui ne veut pas être relancé là-dessus ;
+  - l'**enchantement**, sur les emplacements qui en acceptent un ;
+  - les **gemmes** : vert quand toutes les châsses sont serties ;
+  - le **noyau du vide**, sur les armes et les bijoux.
+
+  C'est la couleur qui informe, le mot ne fait que nommer la question. Chacune
+  des cinq lignes a son interrupteur, et toutes sont éteintes au départ.
+
+  Le parti pris est d'**afficher aussi quand c'est bon** : ne signaler que les
+  manques donne une fiche qui a l'air correcte dès qu'une lecture échoue,
+  puisque l'absence de rouge ne se distingue plus de l'absence d'information.
+  Une pastille ne se pose en revanche jamais si la question ne se pose pas —
+  une pièce sans châsse n'a pas de gemme manquante.
+
+  Rien n'est modifié sur la fiche du client : le module ajoute une frame par
+  emplacement et la cache quand on l'éteint.
+
+- **Gestionnaire de temps de recharge** — nouvelle page, avec un premier
+  réglage : le **suivi des améliorations reste groupé**. Le client réserve une
+  place par amélioration suivie et la garde vide quand l'amélioration tombe :
+  deux améliorations actives sur cinq suivies s'affichaient aux deux bouts, à
+  trois places l'une de l'autre. Elles sont désormais retassées ensemble, au
+  milieu de la place que le suivi occupe.
+
+  Rien n'est ajouté ni masqué : les emplacements que le client vient de poser
+  sont reposés quelques pixels plus loin, et la position qu'il leur avait donnée
+  est relevée pour être rendue à l'extinction.
+
+- **Fenêtres** — nouvelle page. Les fenêtres du jeu se déplacent où l'on veut,
+  se redimensionnent, et y restent d'une session à l'autre.
+
+  - **Déplacer** : un glisser sur la fenêtre, et elle reste où on la pose.
+    La touche à maintenir se choisit — Maj par défaut, Ctrl, Alt, ou aucune.
+    Un modificateur au départ parce que sans lui, un glisser dans le corps
+    d'une fenêtre la déplace, y compris quand on visait autre chose.
+  - **Redimensionner** : Ctrl et la molette au-dessus d'une fenêtre, de la
+    moitié au double de sa taille. La fenêtre ne bouge pas de l'écran en
+    changeant de taille.
+  - **Tout remettre en place** : un bouton renvoie chaque fenêtre là où
+    Blizzard la met, position et taille comprises.
+
+  Une soixantaine de fenêtres sont couvertes, y compris celles qui arrivent en
+  cours de session (hôtel des ventes, métiers, hauts faits, carte du monde,
+  journal des rencontres…). Les sacs et le menu Échap sont volontairement
+  laissés de côté — le client réancre les premiers en permanence, et le second
+  est déjà réglé depuis la page Général.
+
+  Rien n'est rendu déplaçable au sens du client : aucun appel à `SetMovable`,
+  aucune écriture d'état d'entrée sur un cadre de Blizzard. C'est ce qui permet
+  à l'extinction du module de rendre chaque fenêtre exactement où elle était.
+
+- **Cadres d'unités** quitte l'avant-première, avec quatre réglages :
+
+  - les **barres de vie aux couleurs de classe**, sur le joueur, la cible, la
+    cible de la cible, le focus et les membres du groupe. Les unités qui ne sont
+    pas des joueurs gardent la couleur du client : un sanglier n'a pas de classe ;
+  - la **couleur de réputation masquée** derrière le nom de la cible et du focus.
+    La plaque aux couleurs de la faction disparaît, le nom se lit sur le cadre ;
+  - l'**icône de spécialisation à la place du portrait**, sur les cinq cadres.
+    Le portrait est déjà la case où l'on regarde pour savoir qui est en face :
+    la spécialisation y répond plus précisément que le visage ou que l'icône de
+    classe. La spécialisation d'un autre joueur n'est connue que lorsque le jeu
+    peut l'inspecter — donc quand il est à proximité ; d'ici là son portrait est
+    laissé tel quel. En donjon, en raid et en arène, c'est-à-dire là où elle
+    compte, le groupe est à portée ;
+  - l'**agrandissement des cadres de groupe** au-delà du maximum qu'autorise le
+    curseur du mode Édition, de 100 à 250 %. Les deux styles de cadres de groupe
+    sont couverts, et le réglage tient : le mode Édition repose sa taille en se
+    refermant, on repose la nôtre derrière lui.
+
+  Rien n'est reconstruit : les couleurs d'origine des barres et l'échelle des
+  cadres de groupe sont relevées avant d'être changées, et reposées quand le
+  module s'éteint. La couleur de réputation, elle, n'est pas rallumée à
+  l'aveugle — on demande au client de la recalculer, lui seul sait quelles cibles
+  en ont une.
+
+### Corrigé
+- **Mode sombre** — les cadres d'unités s'assombrissent de nouveau lorsqu'un
+  module se branche sur eux. Le client rend le nom de débogage d'une région en
+  valeur **secrète** dès que l'exécution est teintée par un addon, et une chaîne
+  secrète a bien le type `string` : le garde en place la laissait passer, et
+  l'indexer levait. L'erreur tombant hors de tout appel protégé, elle
+  n'interrompait pas une texture mais le parcours de l'élément entier — d'où un
+  mode sombre qui semblait s'être éteint tout seul, sur les seuls cadres
+  d'unités et le jour où un autre module s'y est branché.
+
 ## 0.3.1 — 2026-07-31
 
 ### Corrigé

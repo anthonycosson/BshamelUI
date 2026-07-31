@@ -25,52 +25,6 @@ local BUI = ns.BUI
 local L   = ns.L
 
 -- =========================================================================
---  Jeu
--- =========================================================================
-
-BUI:RegisterModule("Character", {
-    title    = L["Character sheet"],
-    category = "Game",
-    order    = 20,
-    preview  = true,
-
-    defaults = {
-        showUpgradeLevel = false,
-        showEnchants     = false,
-        showGems         = false,
-        showVoidCore     = false,
-    },
-
-    options = {
-        { type = "header", text = L["Item details"] },
-        {
-            type    = "toggle",
-            key     = "showUpgradeLevel",
-            text    = L["Show upgrade level"],
-            tooltip = L["Show upgrade level tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "showEnchants",
-            text    = L["Show enchants"],
-            tooltip = L["Show enchants tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "showGems",
-            text    = L["Show gems"],
-            tooltip = L["Show gems tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "showVoidCore",
-            text    = L["Show void core"],
-            tooltip = L["Show void core tip"],
-        },
-    },
-})
-
--- =========================================================================
 --  Interface
 -- =========================================================================
 
@@ -93,59 +47,7 @@ BUI:RegisterModule("ActionBars", {
     },
 })
 
-BUI:RegisterModule("UnitFrames", {
-    title    = L["Unit frames"],
-    category = "Interface",
-    order    = 20,
-    preview  = true,
-    -- Idem : frames sécurisées.
-
-    defaults = {
-        classColorHealth = false,
-    },
-
-    options = {
-        { type = "header", text = L["Appearance"] },
-        {
-            type    = "toggle",
-            key     = "classColorHealth",
-            text    = L["Class-colored health"],
-            tooltip = L["Class-colored health tip"],
-        },
-        -- Mode sombre : voir la note du module ActionBars ci-dessus.
-        { type = "description", text = L["Dark mode moved"] },
-    },
-})
-
-BUI:RegisterModule("Chat", {
-    title    = L["Chat"],
-    category = "Interface",
-    order    = 30,
-    preview  = true,
-
-    defaults = {
-        keepHistory  = false,
-        dragToResize = false,
-    },
-
-    options = {
-        { type = "header", text = L["History"] },
-        {
-            type    = "toggle",
-            key     = "keepHistory",
-            text    = L["Keep history"],
-            tooltip = L["Keep history tip"],
-        },
-
-        { type = "header", text = L["Appearance"] },
-        {
-            type    = "toggle",
-            key     = "dragToResize",
-            text    = L["Drag to resize"],
-            tooltip = L["Drag to resize tip"],
-        },
-    },
-})
+-- Le module Chat est écrit : il vit dans `Modules/Chat.lua`.
 
 BUI:RegisterModule("Bags", {
     title    = L["Bags"],

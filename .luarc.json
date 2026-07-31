@@ -34,6 +34,7 @@
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
 
     "Minimap", "GetCursorPosition", "GetCVar", "SetCVar",
+    "IsMouseButtonDown", "GetScreenWidth", "GetScreenHeight",
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
     "LFGDungeonReadyPopup", "LFGDungeonReadyDialog", "PVPReadyDialog",
     "CinematicFrame_CancelCinematic", "GameMovieFinished",
@@ -42,9 +43,25 @@
     "GetMoney", "GetCoinTextureString",
     "GetMaxBattlefieldID", "GetBattlefieldStatus", "GetBattlefieldPortExpiration",
 
+    "NUM_CHAT_WINDOWS", "ChatTypeInfo", "ChangeChatColor",
+    "FCF_SavePositionAndDimensions", "GENERAL_CHAT_DOCK",
+
+    "strfind", "ORANGE_FONT_COLOR",
+    "C_TooltipInfo", "TooltipUtil", "ItemLocation",
+    "CharacterFrame", "GetInventorySlotInfo", "GetInventoryItemLink",
+    "GetItemStats", "GetItemGem",
+
     "GetLocale", "GetTime", "GetBuildInfo", "InCombatLockdown",
     "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown", "IsModifierKeyDown",
     "hooksecurefunc", "geterrorhandler", "CallErrorHandler", "securecallfunction", "issecretvalue",
+
+    "TargetFrameToT", "FocusFrameToT", "PartyFrame",
+    "UnitFrameHealthBar_Update", "UnitFramePortrait_Update",
+    "UnitExists", "UnitIsPlayer", "UnitIsUnit", "UnitClass", "UnitGUID",
+    "RAID_CLASS_COLORS", "C_ClassColor", "C_Item", "ITEM_QUALITY_COLORS",
+    "C_SpecializationInfo", "GetSpecialization", "GetSpecializationInfo",
+    "GetSpecializationInfoByID",
+    "CanInspect", "NotifyInspect", "GetInspectSpecialization",
 
     "AcceptQuest", "ConfirmAcceptQuest", "CloseQuest", "CompleteQuest",
     "GetQuestReward", "GetQuestID", "QuestGetAutoAccept", "IsQuestCompletable",

@@ -73,6 +73,14 @@ function ModuleMixin:IsEnabled()
     return self._active == true
 end
 
+--- Espace de rangement du module pour ce qui n'est pas un réglage : propre au
+--- personnage, hors du mécanisme de défauts, écrit directement (voir
+--- `DB:CharData`, qui explique pourquoi ce chemin est séparé de `Get`/`Set`).
+---@return table
+function ModuleMixin:CharData()
+    return BUI.DB:CharData(self.name)
+end
+
 --- Abonnement à un événement du client, révoqué automatiquement à la
 --- désactivation du module.
 ---@param event string

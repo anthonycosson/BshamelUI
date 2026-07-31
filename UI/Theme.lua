@@ -113,6 +113,18 @@ T.SIZE = {
 
     COUNTDOWN_PAD  = 4,     -- retrait du décompte dans la fenêtre qu'il coiffe
 
+    -- Pièces posées sur les cadres de chat du client. La hauteur, elle, se
+    -- règle en saisissant l'onglet : rien n'est ajouté pour elle.
+    CHAT_BUTTON    = 16,    -- côté du bouton de copie
+    CHAT_BUTTON_PAD = 4,
+
+    -- Fenêtre de copie. Plus large que haute : on y lit des lignes de chat, et
+    -- une ligne coupée se recolle mal une fois dans le presse-papier.
+    -- Elle reste au-dessus des minimums de `W.Window`, qui borne tout
+    -- redimensionnement.
+    COPY_W         = 800,
+    COPY_H         = 520,
+
     -- De combien le contour sombre d'une icône déborde de ses quatre bords.
     --
     -- Une **proportion** du côté de l'icône, avec un plancher et un plafond :
@@ -143,6 +155,30 @@ T.SIZE = {
     SHADE_BORDER_PAD_RATIO = 0.06,
     SHADE_BORDER_PAD_MAX   = 8,
 
+    -- Fiche de personnage : la colonne de pastilles posée à côté de chaque
+    -- emplacement. Une pastille par ligne.
+    --
+    -- La hauteur de ligne est le seul nombre qui façonne quelque chose ici : la
+    -- colonne est centrée sur la case, donc quatre pastilles la débordent de
+    -- deux lignes, une en haut et une en bas. Au-delà de dix pixels, elles
+    -- commencent à mordre sur les cases voisines, qui ne sont espacées que d'une
+    -- quarantaine de pixels d'axe en axe.
+    SLOT_LINE_H     = 10,
+    SLOT_INFO_W     = 120,  -- emprise du conteneur ; les pastilles se
+                            -- dimensionnent sur leur texte, la largeur ne
+                            -- façonne rien
+    SLOT_INFO_GAP   = 9,    -- écart entre l'emplacement et sa colonne. Il doit
+                            -- rester supérieur à l'épaisseur du liseré que le
+                            -- client dessine autour d'une icône d'objet, sans
+                            -- quoi les pastilles paraissent collées au cadre
+    SLOT_TEXT_INSET = 2,    -- retrait du niveau d'objet posé sur l'icône
+
+
+    -- De combien le bandeau passe au-dessus de son emplacement. La scène du
+    -- personnage occupe la même strate que les emplacements : sans ce relèvement,
+    -- le texte qui déborde sur le modèle passe dessous et disparaît.
+    SLOT_INFO_LEVEL = 10,
+
     -- Fraction rognée sur chaque bord d'une icône avant d'y poser le contour.
     --
     -- Les icônes de sort portent un liseré sombre **dans leur image**. Sans
@@ -168,6 +204,42 @@ T.TIMING = {
     SHADE_SETTLE  = 0.2,    -- délai avant de repasser le mode sombre sur les
                             -- cadres apparus après coup (auras, fenêtres
                             -- chargées à la demande)
+
+    UNIT_QUICK    = 0.05,   -- second passage sur les cadres d'unités, juste
+                            -- après le premier. Même délai et même raison que
+                            -- `SHADE_QUICK` : le client rhabille un cadre
+                            -- **après** avoir annoncé le changement de cible, et
+                            -- sans ce rattrapage on voit le cadre passer par son
+                            -- état par défaut avant de prendre nos réglages
+    UNIT_SETTLE   = 0.2,    -- troisième passage, une fois la rafale retombée :
+                            -- la cible de la cible n'est pas résolue au moment
+                            -- où la cible l'est, et la réponse du serveur à une
+                            -- demande d'inspection arrive quand elle arrive
+
+    CHAT_SETTLE   = 0.2,    -- regroupement des passages sur les cadres de chat :
+                            -- le client annonce une couleur par type de
+                            -- discussion et rouvre ses fenêtres une par une
+
+    SLOT_INFO     = 0.1,    -- regroupement des relectures de l'équipement :
+                            -- changer une pièce émet plusieurs événements
+                            -- coup sur coup, et chacun relit les seize
+                            -- emplacements
+    SLOT_INFO_SETTLE = 0.5, -- la même relecture, quand elle ne sert qu'à
+                            -- rattraper des données d'objet arrivées en retard.
+                            -- L'événement qui la déclenche est émis pour
+                            -- n'importe quel objet interrogé dans l'interface,
+                            -- donc en rafale et sans rapport avec la fiche
+
+    CDM_SETTLE    = 0.15,   -- second passage sur le gestionnaire de temps de
+                            -- recharge. Une amélioration qui tombe s'efface en
+                            -- fondu : au moment où le client l'annonce, son
+                            -- emplacement est encore opaque, donc encore compté
+
+    HOVER         = 0.1,    -- sondage de la fenêtre survolée, pendant qu'un
+                            -- modificateur est tenu. Assez court pour que le
+                            -- capteur de molette paraisse instantané, assez long
+                            -- pour ne rien coûter — et il ne tourne que pendant
+                            -- que la touche est enfoncée
 }
 
 -- =========================================================================
@@ -193,6 +265,19 @@ local FONT_CANDIDATES = {
     -- se noie dès que le fond est clair.
     COUNTDOWN    = { "NumberFont_Outline_Huge", "NumberFontNormalHuge", "GameFontNormalHuge",
                      "GameFontNormalLarge" },
+
+    -- Nombres posés sur l'icône d'un objet équipé (niveau d'objet, rang
+    -- d'amélioration). Une police à contour, pour la même raison que le
+    -- décompte : le chiffre se lit par-dessus une illustration.
+    SLOT_BADGE   = { "NumberFont_Outline_Med", "NumberFontNormalSmall", "GameFontNormalSmall" },
+
+    -- Texte du bandeau posé à côté d'un emplacement. La plus petite police
+    -- lisible du client : seize bandeaux tiennent dans la hauteur de la fiche.
+    SLOT_INFO    = { "GameFontHighlightSmall" },
+
+    -- Texte de la fenêtre de copie. La police du chat d'abord : on y relit ce
+    -- qu'on vient de lire dans le chat, à la même largeur de caractère.
+    COPY         = { "ChatFontNormal", "GameFontHighlight" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
     LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },
@@ -236,6 +321,15 @@ T.COLOR = {
     WHITE    = WHITE_FONT_COLOR,
     RED      = RED_FONT_COLOR,
     GREEN    = GREEN_FONT_COLOR,
+
+    -- Le troisième terme du feu tricolore : « fait, mais pas fini ». Il ne sert
+    -- qu'entre le vert et le rouge — jamais à la place de l'un des deux — et
+    -- c'est ce qui lui permet de garder un sens.
+    --
+    -- La globale du client d'abord, comme pour les autres : la teinte suit alors
+    -- sa direction artistique. Le repli est un orange franc, choisi pour se
+    -- distinguer du doré de l'interface, qui structure et n'alerte pas.
+    ORANGE   = ORANGE_FONT_COLOR or CreateColor(1.00, 0.58, 0.20),
     SHADE    = CreateColor(0.00, 0.00, 0.00),            -- voile des bords
 
     -- Teinte du bandeau des en-têtes de catégorie. Un gris franc : la pierre du
@@ -295,6 +389,13 @@ T.ALPHA = {
     CONTROL_OFF    = 0.50,  -- contrôle grisé
     GRIP           = 0.70,  -- poignée de redimensionnement au repos
     GRIP_HOVER     = 1.00,
+
+    -- Pièces posées sur le chat du client, au repos. Plus discrètes que nos
+    -- propres poignées : elles vivent par-dessus le texte que le joueur lit, et
+    -- ce texte prime sur elles. Elles reviennent à pleine opacité au survol,
+    -- qui est le seul moment où elles ont quelque chose à dire.
+    CHAT_TOOL       = 0.35,
+    CHAT_TOOL_HOVER = 1.00,
 }
 
 -- =========================================================================
@@ -468,6 +569,93 @@ function T.Colorize(color, text)
     return color:WrapTextInColorCode(text)
 end
 
+--- Couleur d'un niveau d'objet, prise sur la qualité de l'objet.
+---
+--- Trois chemins, du plus récent au plus ancien : la fonction a migré dans
+--- `C_Item`, la globale existe encore, et la table de couleurs est là depuis
+--- toujours. Aucun n'est garanti pour toujours, aucun n'est nommé en dur
+--- ailleurs qu'ici.
+---@param quality? number
+---@return number r, number g, number b
+function T.ItemQualityColor(quality)
+    if quality then
+        if C_Item and C_Item.GetItemQualityColor then
+            local r, g, b = C_Item.GetItemQualityColor(quality)
+            if r then return r, g, b end
+        end
+        local entry = ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+        if entry and entry.r then return entry.r, entry.g, entry.b end
+    end
+    return T.COLOR.WHITE:GetRGB()
+end
+
+--- Couleur d'un état « fait / pas fait ».
+---
+--- Les deux couleurs que porte une pastille de la fiche de personnage, et elles
+--- se choisissent ici plutôt que dans le module : c'est le vocabulaire visuel de
+--- l'addon, pas une décision propre à l'équipement.
+---@param ok boolean
+---@return number r, number g, number b
+function T.StatusColor(ok)
+    local color = ok and T.COLOR.GREEN or T.COLOR.RED
+    return color:GetRGB()
+end
+
+--- Couleur d'un rang d'amélioration.
+---
+--- Trois états et non deux, parce que la question n'est pas la même : une pièce
+--- améliorable **est** améliorée, elle ne l'est simplement pas à fond. Le rouge
+--- des autres pastilles dirait « il manque quelque chose », ce qui est faux et
+--- ferait crier toute une colonne pour un travail en cours.
+---
+--- Sans l'avertissement, le rang non maximal reste **vert** plutôt que gris ou
+--- neutre : le joueur qui coupe ce réglage dit qu'il ne veut pas être relancé
+--- là-dessus, pas qu'il veut une pastille de moins.
+---@param maxed boolean
+---@param warn boolean  teinter les rangs non maximaux ?
+---@return number r, number g, number b
+function T.UpgradeColor(maxed, warn)
+    if maxed or not warn then return T.COLOR.GREEN:GetRGB() end
+    return T.COLOR.ORANGE:GetRGB()
+end
+
+--- jeton de classe -> sa couleur, ou `false` si le client n'en connaît pas.
+local classColors = {}
+
+--- Couleur d'une classe de personnage, ou `nil` si la classe est inconnue.
+---
+--- On ne recopie pas les onze couleurs ici : ce sont celles du jeu, elles
+--- changent avec lui, et un joueur qui reconnaît un mage à son bleu clair le
+--- reconnaîtra dans notre teinte ou nulle part. Deux chemins, du plus récent au
+--- plus ancien, aucun garanti pour toujours.
+---
+--- Le jeton attendu est le nom **anglais** de la classe (`"MAGE"`), celui que
+--- rend le second retour de `UnitClass` — le premier est traduit et ne sert
+--- qu'à l'affichage.
+---
+--- Le résultat est retenu par jeton. La fonction est appelée depuis un chemin
+--- chaud — une barre de vie se met à jour à chaque coup reçu — et rien ne dit
+--- que le client rend la même table à chaque appel (règle 7).
+---@param class? string
+---@return ColorMixin|nil
+function T.ClassColor(class)
+    if type(class) ~= "string" then return nil end
+
+    local cached = classColors[class]
+    if cached ~= nil then return cached or nil end
+
+    local color
+    if C_ClassColor and C_ClassColor.GetClassColor then
+        color = C_ClassColor.GetClassColor(class)
+    end
+    if not color then
+        color = RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] or nil
+    end
+
+    classColors[class] = color or false
+    return color
+end
+
 --- Teinte du texte d'un widget selon son état actif/inactif.
 ---@param fontString table
 ---@param enabled boolean
@@ -522,6 +710,12 @@ T.TEXTURE = {
     -- la bordure de minicarte est rond, et un masque posé à l'exécution serait
     -- une dépendance de plus, qui peut ne pas prendre (voir `API_NOTES.md`).
     MINIMAP_ICON      = "Interface\\AddOns\\BshamelUI\\media\\logo",
+
+    -- Bouton de copie posé sur le cadre de chat : l'icône de note du client.
+    -- C'est déjà ce qu'il met sur « du texte qu'on lit et qu'on recopie », et
+    -- elle existe depuis toujours. Une icône de presse-papier n'existe pas dans
+    -- le jeu, l'inventer ferait une pièce rapportée de plus.
+    CHAT_COPY         = "Interface\\Buttons\\UI-GuildButton-PublicNote-Up",
 }
 
 -- =========================================================================
@@ -626,6 +820,11 @@ T.TEMPLATES = {
     DROPDOWN   = { "WowStyle1DropdownTemplate" },
     SCROLLPANE = { "UIPanelScrollFrameTemplate" },
     EDITBOX    = { "InputBoxTemplate" },
+
+    -- Environnement restreint, seul moyen de repositionner un cadre **protégé**
+    -- du client sans le tainter (voir `UI/Widgets/Mover.lua`). Sans candidat
+    -- disponible, les cadres protégés ne se déplacent pas ; les autres, si.
+    SECURE_HANDLER = { "SecureHandlerBaseTemplate" },
 }
 
 local templateCache = {}

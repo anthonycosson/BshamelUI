@@ -45,10 +45,20 @@ UI\Widgets\ScrollList.lua
 UI\Widgets\MinimapButton.lua
 UI\Widgets\Countdown.lua
 UI\Widgets\ShadeBorder.lua
+UI\Widgets\SlotInfo.lua
+UI\Widgets\Mover.lua
+UI\Widgets\ChatTools.lua
+# La fenêtre de copie assemble une fenêtre et une zone défilante : elle vient
+# après les deux.
+UI\Widgets\CopyWindow.lua
 
 # Le moteur du mode sombre trace des bords d'icônes : il vient après la fabrique
 # de widgets, dont il dépend.
 UI\Shade.lua
+
+# Le moteur de déplacement des fenêtres emprunte lui aussi des frames à la
+# fabrique : repositionneur sécurisé, capteur de molette, boucle de suivi.
+UI\Move.lua
 
 # Fenêtre d'options
 UI\Config\PageBuilder.lua
@@ -57,6 +67,11 @@ UI\Config\ConfigFrame.lua
 
 # Modules
 Modules\General.lua
+Modules\Character.lua
+Modules\UnitFrames.lua
+Modules\CooldownManager.lua
+Modules\Windows.lua
+Modules\Chat.lua
 Modules\Quest.lua
 
 # Modules annoncés, sans code derrière : ils se voient dans la fenêtre mais ne

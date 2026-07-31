@@ -27,8 +27,12 @@ end
 ---
 --- Écrit défensivement : la structure interne des ascenseurs de Blizzard a déjà
 --- changé plusieurs fois. Toute pièce absente est simplement sautée.
+---
+--- Publié : toute zone défilante de l'addon doit avoir le même ascenseur, y
+--- compris celles qui ne passent pas par `W.ScrollPane` (voir `W.CopyWindow`,
+--- dont l'enfant défilant est une zone de saisie et non une frame de contenu).
 ---@param bar table
-local function stripScrollBar(bar)
+function W.StripScrollBar(bar)
     if bar.ScrollUpButton then bar.ScrollUpButton:Hide() end
     if bar.ScrollDownButton then bar.ScrollDownButton:Hide() end
 
@@ -62,8 +66,10 @@ end
 ---    est une barre qui ment.
 --- 2. Sinon, le curseur prend la hauteur de la part visible. Le template du
 ---    client donne un curseur de taille fixe, qui n'informe de rien.
+---
+--- Publié pour la même raison que `W.StripScrollBar`.
 ---@param scrollFrame table
-local function updateThumb(scrollFrame)
+function W.UpdateScrollThumb(scrollFrame)
     local bar = scrollFrame.ScrollBar
     if not bar then return end
 
@@ -111,14 +117,14 @@ function W.ScrollPane(parent, hideBar)
             bar:Hide()
             bar.Show = bar.Hide
         else
-            stripScrollBar(bar)
+            W.StripScrollBar(bar)
 
             -- `OnScrollRangeChanged` appartient au template ; on s'y accroche.
             -- Notre gestionnaire passe donc **après** le sien, et c'est le nôtre
             -- qui décide en dernier si la barre se montre.
             -- `OnSizeChanged` est à nous, on l'écrit plus bas — un HookScript
             -- ici serait effacé par le SetScript qui suit.
-            scrollFrame:HookScript("OnScrollRangeChanged", updateThumb)
+            scrollFrame:HookScript("OnScrollRangeChanged", W.UpdateScrollThumb)
             scrollFrame._sizeThumb = true
         end
     end
@@ -131,7 +137,7 @@ function W.ScrollPane(parent, hideBar)
 
     scrollFrame:SetScript("OnSizeChanged", function(self)
         self:UpdateContentWidth()
-        if self._sizeThumb then updateThumb(self) end
+        if self._sizeThumb then W.UpdateScrollThumb(self) end
     end)
 
     --- Remet le défilement en haut. Appelé à chaque changement de page pour que

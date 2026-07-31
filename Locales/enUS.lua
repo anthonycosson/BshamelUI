@@ -103,15 +103,39 @@ BUI:RegisterLocale("enUS", {
     -- Module Character
     ["Character sheet"]                = "Character sheet",
     ["Item details"]                   = "Item details",
+    -- Le libellé « Show item level » est déclaré avec le module Bags : les deux
+    -- modules proposent le même réglage, seule l'infobulle diffère.
+    ["Show item level on slots tip"] =
+        "Shows the item level of every equipped piece on its own slot, scaling included.",
     ["Show upgrade level"]             = "Show upgrade level",
-    ["Show upgrade level tip"]         = "Shows the upgrade track and rank on each equipped item.",
+    ["Show upgrade level tip"]         = "Shows the upgrade rank of each equipped piece.",
+    ["Warn partial upgrade"]           = "Warn on partial upgrades",
+    ["Warn partial upgrade tip"] =
+        "Turns the rank orange until the piece reaches its maximum. Off, every rank stays green.",
     ["Show enchants"]                  = "Show enchants",
     ["Show enchants tip"] =
-        "Shows the enchant on every slot that can take one, and flags those that are missing it.",
+        "Green on every slot that can take an enchant and has one, red on those that are missing it.",
     ["Show gems"]                      = "Show gems",
-    ["Show gems tip"]                  = "Shows socketed gems, and flags empty sockets.",
+    ["Show gems tip"]                  = "Green when every socket is filled, red as soon as one is empty.",
     ["Show void core"]                 = "Show void core",
-    ["Show void core tip"]             = "Shows the void core fitted to each item that can take one.",
+    ["Show void core tip"]             = "Flags weapons and trinkets that have not been voidforged yet.",
+
+    -- Pastilles posées à côté d'un emplacement, une par ligne. C'est leur
+    -- couleur qui informe, le mot ne fait que nommer la question — il gagne donc
+    -- à être lisible plutôt que court, quitte à empiéter sur le modèle du
+    -- personnage, qu'aucune information ne recouvre.
+    ["Enchant badge"]                  = "Enchant",
+    ["Gem badge"]                      = "Gem",
+    ["Void core badge"]                = "Void core",
+
+    -- Intitulé cherché dans l'infobulle d'une pièce pour savoir si elle porte un
+    -- noyau du vide. Aucun identifiant stable n'étant exposé côté objet, c'est la
+    -- seule chose du module qui dépende de la langue du client : une locale dont
+    -- l'intitulé est faux montre les armes et bijoux en rouge à tort.
+    --
+    -- La forme française est relevée en jeu. **La forme anglaise est une
+    -- supposition** et reste à vérifier sur un client anglais.
+    ["Void core marker"]               = "Ascendant Voidforge",
 
     -- Modules ActionBars et UnitFrames
     ["Action bars"]                    = "Action bars",
@@ -123,14 +147,50 @@ BUI:RegisterLocale("enUS", {
         "Dark mode now lives on the General page, with one switch per interface element.",
     ["Class-colored health"]           = "Class-colored health bars",
     ["Class-colored health tip"]       = "Colors each health bar with the class color of the unit.",
+    ["Hide reputation color"]          = "Hide the reputation color",
+    ["Hide reputation color tip"] =
+        "Removes the faction-colored plate behind the name on the target and focus frames.",
+    ["Specialization"]                 = "Specialization",
+    ["Show spec icon"]                 = "Show the specialization icon",
+    ["Show spec icon tip"] =
+        "Replaces the portrait with the specialization icon on the player, target, focus and " ..
+        "target-of-target frames. Another player's specialization is only known once the game can " ..
+        "inspect them, which needs them to be nearby; until then the portrait is left alone.",
+    ["Party frames"]                   = "Party frames",
+    ["Enlarge party frames"]           = "Enlarge the party frames",
+    ["Enlarge party frames tip"] =
+        "Scales the party frames past the maximum the Edit Mode slider allows.",
+    ["Party frame scale"]              = "Party frame scale",
+    ["Party frame scale tip"] =
+        "Percentage of the original size. 100% is the size the frames already have.",
+
+    -- Module CooldownManager
+    ["Tracked buffs"]                  = "Tracked buffs",
+    ["Center tracked buffs"]           = "Keep tracked buffs grouped in the middle",
+    ["Center tracked buffs tip"] =
+        "The game keeps one slot per tracked buff, and leaves it empty when the buff falls off, so "
+        .. "the ones still up stay spread apart. This packs them together in the middle of the row.",
 
     -- Module Chat
     ["Chat"]                           = "Chat",
     ["History"]                        = "History",
     ["Keep history"]                   = "Keep history across reloads",
     ["Keep history tip"]               = "Restores the last messages after a /reload or a relog.",
-    ["Drag to resize"]                 = "Drag to resize the height",
-    ["Drag to resize tip"]             = "Adds a handle to change the chat height without opening its settings.",
+    ["Chat history separator"]         = "----- previous session -----",
+    ["Drag to resize"]                 = "Drag the tab to resize the height",
+    ["Drag to resize tip"] =
+        "Drag a chat tab up or down to change the chat height. A plain click still switches "
+        .. "tabs, and the new size is kept by the game itself.",
+    ["Unify group colors"]             = "One color for group chat",
+    ["Unify group colors tip"] =
+        "Party, instance and raid chat all take the party color, so a conversation with the same "
+        .. "people keeps the same color everywhere. Raid warnings keep their own.",
+    ["Copy"]                           = "Copy",
+    ["Copy button"]                    = "Show a copy button on the chat",
+    ["Copy button tip"] =
+        "Adds a discreet button to the top-right corner of every chat window.",
+    ["Copy chat"]                      = "Copy chat",
+    ["Copy chat hint"]                 = "Everything is selected: press Ctrl+C to copy.",
 
     -- Module Bags
     ["Bags"]                           = "Bags",
@@ -162,4 +222,29 @@ BUI:RegisterLocale("enUS", {
     ["Auto combat logging"]            = "Automatic combat logging",
     ["Auto combat logging tip"] =
         "Starts combat logging when you enter a raid or a mythic+ dungeon, and stops it when you leave.",
+
+    -- Module Windows
+    ["Windows"]                        = "Windows",
+    ["Moving"]                         = "Moving",
+    ["Move windows"]                   = "Move windows",
+    ["Move windows tip"] =
+        "Drag a Blizzard window and it stays where you dropped it, session after session. "
+        .. "Only windows that already take mouse input can be picked up.",
+    ["Move modifier"]                  = "Move with",
+    ["Move modifier tip"] =
+        "Which key must be held to drag a window. With no key, dragging anywhere "
+        .. "inside a window body moves it.",
+    ["No modifier"]                    = "No key",
+    ["Size"]                           = "Size",
+    ["Scale windows"]                  = "Resize with Ctrl + wheel",
+    ["Scale windows tip"] =
+        "Hold Ctrl and scroll over a window to make it bigger or smaller. "
+        .. "The size is remembered like the position.",
+    ["Reset"]                          = "Reset",
+    ["Reset window layout"]            = "Reset every window",
+    ["Reset window layout tip"] =
+        "Sends every window back where Blizzard puts it. %d moved right now.",
+    ["Reset windows confirm"] =
+        "Send every window back to its default position and size?",
+    ["Window layout reset"]            = "Every window is back in its default place.",
 })
