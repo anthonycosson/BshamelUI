@@ -2,6 +2,25 @@
 
 ## Non publié
 
+### Corrigé
+- **Mode sombre** — le contour sombre des petites icônes flottait au large au
+  lieu d'épouser leur bord. Son débordement est proportionnel à l'icône, mais la
+  proportion valait le double de ce qu'il fallait ; le plafond la ramenait à la
+  bonne valeur pour une icône de 50 px, et pour elle seule. Visible sur la
+  visionneuse utilitaire du gestionnaire de temps de recharge, réglée à 30 px,
+  quand celle juste au-dessus est à 50.
+- **Mode sombre** — le **suivi des améliorations** s'assombrit enfin. Il en était
+  exclu par son propre nom : le client rend le chemin complet d'une texture, et
+  chercher « icon » dedans faisait passer tout ce que porte
+  `BuffIconCooldownViewer` pour une icône, donc pour intouchable.
+- **Mode sombre** — les icônes qui apparaissent en cours de partie prennent la
+  teinte sans attendre. Les visionneuses de temps de recharge créent leurs
+  emplacements au fur et à mesure ; ceux nés après la connexion n'étaient jamais
+  repris, ce qui laissait les améliorations suivies en clair.
+- **Mode sombre** — la texture « hors de portée » du gestionnaire de temps de
+  recharge n'est plus assombrie. C'est un signal, pas de l'habillage : l'éteindre
+  revenait à le faire taire au moment où il a quelque chose à dire.
+
 ## 0.3.0 — 2026-07-31
 
 ### Ajouté

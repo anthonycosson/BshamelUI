@@ -324,21 +324,37 @@ exclue du parcours et son contour est teinté comme le reste de l'habillage.
 
 **L'exception, et elle est réelle** — une icône d'aura n'a *pas* de contour :
 le client ne lui en dessine aucun. Il n'y a donc rien à teinter, et le contour
-doit bien être posé (`W.ShadeBorder`). C'est le **seul** cas, déclaré dans
-`ICON_BORDERS`.
+doit bien être posé (`W.ShadeBorder`). Les emplacements du gestionnaire de temps
+de recharge sont dans le même cas. Ces cas-là sont déclarés dans `ICON_BORDERS`,
+et l'entrée s'y ajoute après avoir **relevé** les régions du cadre, jamais
+d'après ce qu'on suppose qu'il porte.
+
+**`GetDebugName` rend un chemin, pas un nom.** Il vaut
+`BuffIconCooldownViewer.…12ab.…34cd` : le nom de la région n'en est que le
+dernier segment, tout le reste appartient à ses ancêtres. Chercher un mot dans
+la chaîne entière fait donc porter à une texture le nom du cadre qui la contient.
+Le symptôme a été un mode sombre qui marchait sur trois visionneuses de temps de
+recharge et pas sur la quatrième — celle dont le nom contient « Icon », dont
+*toutes* les textures passaient pour des icônes, donc pour intouchables. Ne
+comparer que le dernier segment.
 
 **On emprunte avant de créer, et on ne masque jamais pour ajouter.** C'est la
 règle de fond, et elle vaut au-delà du mode sombre : quand le client a déjà
 l'élément qu'on veut modifier, on le rhabille. On ne le cache pas pour en poser
 un autre par-dessus, et on n'en ajoute pas un second à côté.
 
-Trois conséquences concrètes, qui sont les trois cas rencontrés :
+Deux conséquences concrètes, qui sont les deux cas rencontrés :
 
 1. un bouton d'action a un contour → on le **teinte**, rien n'est ajouté ;
-2. un cadre du gestionnaire de temps de recharge publie `Border` → on **rhabille
-   cette texture-là** avec l'atlas et la teinte communs, ce qui l'aligne sur les
-   auras sans rien créer ;
-3. une icône d'aura n'a rien → c'est le seul cas où l'on **crée** une texture.
+2. une icône d'aura, comme un emplacement du gestionnaire de temps de recharge,
+   n'a rien → on **crée** une texture.
+
+Le chemin « emprunter le contour du client pour le rhabiller » existe dans
+`W.ShadeBorder` et reste juste, mais **aucun cadre rencontré ne l'emprunte pour
+l'instant** : il attend un cadre qui publie `Border` ou `IconBorder`. Une note
+antérieure attribuait ce cas au gestionnaire de temps de recharge — c'était
+faux, relevé à l'appui : un emplacement ne porte que son icône, un masque,
+`OutOfRange` et l'atlas `UI-HUD-CoolDownManager-IconOverlay`.
 
 **Emprunter une texture n'est pas hériter de sa géométrie.** Elle était taillée
 pour l'image du client ; appliquée à la nôtre, qui n'a pas les mêmes
@@ -353,6 +369,26 @@ cas — mais pas au même écart :
 Confondre les deux se voit tout de suite, et dans les deux sens : l'écart
 proportionnel appliqué à une texture empruntée l'élargit, l'écart d'un pixel
 appliqué à une texture créée fait tomber l'anneau à l'intérieur de l'icône.
+
+**Deux erreurs qui se compensent ne se voient qu'à une seule taille.** L'écart
+de `T.ShadeBorderPad` valait 12 % du côté de l'icône, plafonné à 3 px. Le ratio
+était deux fois trop grand — l'écart qui colle l'anneau vaut 6 % — et le plafond
+le ramenait à 3 px, c'est-à-dire pile à la bonne valeur, mais **pour une icône
+de 50 px et pour elle seule**. Toutes les autres tailles recevaient 3 px aussi,
+donc trop, donc un anneau décollé : visible sur les icônes de 30 px du
+gestionnaire de temps de recharge, invisible sur celles de 50 px juste au-dessus.
+
+La leçon vaut au-delà de ce réglage : quand une valeur bornée rend le bon
+résultat, vérifier **si c'est la formule ou la borne** qui l'a produit. Ici,
+monter le plafond en croyant libérer la proportion a décollé l'anneau partout,
+y compris là où il était correct. Le symptôme d'une compensation qu'on casse
+n'est jamais local.
+
+Se méfier aussi du sens : l'anneau tombe **en dehors** du bord de la texture, si
+bien qu'agrandir l'écart éloigne le trait de l'icône. Le raisonnement inverse
+— « l'atlas a une marge, il faut donc pousser plus loin » — est intuitif et faux.
+Deux mesures à deux tailles le tranchent en une minute, un raisonnement ne le
+tranche pas du tout.
 
 Une texture empruntée exige par ailleurs de relever tout ce qu'on va changer —
 image, coordonnées, teinte, désaturation, opacité, visibilité — pour pouvoir le

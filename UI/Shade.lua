@@ -18,9 +18,10 @@
 --      — une texture d'habillage distincte de l'icône, avec ses coins arrondis.
 --      La teinter fonce le contour et rien d'autre. Y ajouter un trait poserait
 --      un carré derrière une forme ronde (voir `dev/docs/API_NOTES.md`) ;
---    · une icône d'aura, elle, est un carré nu : le client ne lui dessine aucun
---      contour, il n'y a donc rien à teinter et le trait doit être tracé. C'est
---      le seul cas, et il est déclaré dans `ICON_BORDERS`.
+--    · une icône d'aura, comme un emplacement du gestionnaire de temps de
+--      recharge, est un carré nu : le client ne lui dessine aucun contour, il
+--      n'y a donc rien à teinter et le trait doit être tracé. Ces cas-là sont
+--      déclarés dans `ICON_BORDERS`, et ils y sont tous.
 --
 --  Réversibilité : couleur et désaturation d'origine sont relevées avant la
 --  première teinte et conservées. `Restore` les repose telles quelles — c'est ce
@@ -161,9 +162,11 @@ end
 --- le nôtre par-dessus. Le rendu n'est pas franchement cassé, il est seulement
 --- *différent* du reste, ce qui est plus long à diagnostiquer.
 ---
---- Les cadres du gestionnaire de temps de recharge, par exemple, publient
---- `Border`, `Shadow` et `IconShadow` : ils n'ont besoin de rien de plus que la
---- teinte. Une icône d'aura, elle, est nue.
+--- Un emplacement du gestionnaire de temps de recharge est nu de cette
+--- façon-là : relevé sur le client, il ne porte que son icône, un masque, la
+--- texture d'état `OutOfRange` et l'atlas `UI-HUD-CoolDownManager-IconOverlay`.
+--- Aucune texture de contour à emprunter, d'où son entrée ici. Une icône d'aura
+--- est nue pour la même raison.
 local ICON_BORDERS = {
     auras           = true,
     cooldownManager = true,
@@ -254,6 +257,17 @@ local STATE_TEXTURES = {
     "GetHighlightTexture", "GetPushedTexture", "GetCheckedTexture", "GetDisabledTexture",
 }
 
+--- Textures d'état que le cadre ne rend par aucune méthode et qu'il faut donc
+--- reconnaître autrement.
+---
+--- Un emplacement du gestionnaire de temps de recharge publie `OutOfRange` :
+--- c'est le voile qui dit au joueur que la cible est hors de portée. Aucun
+--- `Get…Texture` ne le rend, il échappe donc à `STATE_TEXTURES` et se retrouvait
+--- classé comme habillage — donc assombri, donc éteint au moment précis où il a
+--- quelque chose à dire. Le défaut ne se voit qu'à distance, ce qui explique
+--- qu'il ait tenu.
+local STATE_KEYS = { "OutOfRange" }
+
 ---@param owner table
 ---@param region table
 ---@param keys string[]
@@ -268,11 +282,41 @@ end
 --- Nom de débogage d'une région, quand le client sait le donner. Les cadres du
 --- client nomment leurs textures : « …Portrait », « …Icon » s'y lisent, ce qui
 --- rattrape les textures qu'aucune clé ne publie.
+---
+--- **Le dernier segment, et lui seul.** `GetDebugName` rend le chemin complet —
+--- `BuffIconCooldownViewer.…12ab.…34cd` — et chercher un mot dans tout ce chemin
+--- fait porter à une texture le nom de ses ancêtres. Une visionneuse qui
+--- s'appelle `BuffIconCooldownViewer` rendait ainsi *toutes* ses textures
+--- « icônes », habillage compris : le suivi des améliorations n'a jamais pris la
+--- teinte, alors que les trois autres visionneuses, aux noms sans « icon », la
+--- prenaient très bien. Le nom d'un cadre parle du cadre, pas de ce qu'il porte.
 ---@param region table
 ---@return string|nil
 local function debugName(region)
     local name = ask(region, "GetDebugName")
-    return type(name) == "string" and name or nil
+    if type(name) ~= "string" then return nil end
+    return name:match("[^.]+$") or name
+end
+
+--- Cette texture dit-elle un état au joueur, plutôt que de décorer ?
+---
+--- La clé d'abord, le nom ensuite : le cadre qui publie sa texture sous une clé
+--- d'état est le cas sûr, et le nom rattrape celle qu'aucune clé ne publie.
+--- C'est le même partage que pour les portraits et les icônes, et le nom y a le
+--- même rôle — il ne sert qu'à **écarter**, jamais à décider qu'on peut toucher.
+---@param owner table
+---@param region table
+---@return boolean
+local function signalsState(owner, region)
+    if publishedAs(owner, region, STATE_KEYS) then return true end
+
+    local name = debugName(region)
+    if not name then return false end
+
+    for i = 1, #STATE_KEYS do
+        if name:find(STATE_KEYS[i], 1, true) then return true end
+    end
+    return false
 end
 
 --- « portrait » (jamais touché), « icon » (jamais teintée, éventuellement
@@ -343,6 +387,7 @@ local function collectFrom(frame, out, seen, rules)
     local function take(region)
         if type(region) ~= "table" or informs(region) then return end
         if type(region.SetVertexColor) ~= "function" then return end
+        if signalsState(frame, region) then return end
 
         if rules.reskins and publishedAs(frame, region, BORDER_KEYS) then return end
         if rules.keepBackground and publishedAs(frame, region, BACKGROUND_KEYS) then return end

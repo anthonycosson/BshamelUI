@@ -184,6 +184,13 @@ local refreshUnitFrames = refresher("unitFrames", true)
 local refreshBars       = refresher("actionBars")
 local refreshShade      = refresher(nil)
 
+-- Groupé, et non traité cadre par cadre comme les auras : `RefreshLayout`
+-- reconstruit l'ensemble d'un coup, et un passage complet sur quatre
+-- visionneuses reste bon marché. Surtout, `Refresh` **remplace** la liste des
+-- textures teintes là où `ApplyTo` y ajoute — à cette fréquence-là, ajouter
+-- ferait grossir la liste sans fin (règle 7).
+local refreshCooldowns  = refresher("cooldownManager")
+
 --- S'accroche à la reconstruction des auras d'un cadre d'unité.
 ---
 --- C'est le seul moyen d'être à l'heure. Les auras de la cible sortent d'un pool
@@ -219,6 +226,45 @@ local function hookAuraUpdates(mod)
         local frame = frames[i]
         if frame and type(frame.UpdateAuras) == "function" then
             U.GuardedHook(frame, "UpdateAuras", styleAuras, guard)
+        end
+    end
+end
+
+--- Visionneuses du gestionnaire de temps de recharge, par nom global.
+---
+--- La liste double celle de `UI/Shade.lua`, et c'est assumé : là-bas elle dit
+--- *quoi teinter*, ici *quand y revenir*. Les deux se remplissent en regardant le
+--- même client, mais rien n'oblige la seconde à couvrir la première — une
+--- visionneuse qui ne reconstruit jamais rien n'aurait pas sa place ici.
+local COOLDOWN_VIEWERS = {
+    "EssentialCooldownViewer", "UtilityCooldownViewer",
+    "BuffIconCooldownViewer", "BuffBarCooldownViewer",
+}
+
+--- S'accroche à la reconstruction des visionneuses de temps de recharge.
+---
+--- Même piège que pour les auras de la cible, et il coûte plus cher ici parce
+--- qu'il est plus discret. Les visionneuses sortent leurs emplacements d'un
+--- pool, et **un pool crée ses cadres au moment où il en a besoin** : ceux du
+--- suivi des améliorations apparaissent quand une amélioration monte, donc bien
+--- après la connexion. Un cadre qui n'existe pas encore n'est l'enfant de
+--- personne, aucun parcours ne peut le trouver, et rien n'annonce sa naissance.
+---
+--- Les visionneuses à liste fixe — essentielle, utilitaire — masquaient le
+--- défaut : leurs cadres existent tous dès la connexion, donc le passage de
+--- `PLAYER_ENTERING_WORLD` les attrapait et tout semblait fonctionner.
+---
+--- `RefreshLayout` et non `RefreshData` : la première ne s'exécute que lorsque
+--- l'ensemble affiché change, la seconde à chaque tic de temps de recharge. On
+--- se raccroche à ce qui bouge, pas à ce qui bat.
+---@param mod table
+local function hookCooldownViewers(mod)
+    local guard = function() return mod:IsEnabled() end
+
+    for i = 1, #COOLDOWN_VIEWERS do
+        local viewer = _G[COOLDOWN_VIEWERS[i]]
+        if viewer and type(viewer.RefreshLayout) == "function" then
+            U.GuardedHook(viewer, "RefreshLayout", refreshCooldowns, guard)
         end
     end
 end
@@ -735,6 +781,7 @@ BUI:RegisterModule(MODULE, {
     OnEnable = function(self)
         applyAll(self)
         hookAuraUpdates(self)
+        hookCooldownViewers(self)
 
         self:RegisterEvent("MERCHANT_SHOW",    function() repairAtMerchant(self) end)
         self:RegisterEvent("CINEMATIC_START",  function() skipCinematic(self) end)

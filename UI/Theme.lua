@@ -115,20 +115,33 @@ T.SIZE = {
 
     -- De combien le contour sombre d'une icône déborde de ses quatre bords.
     --
-    -- Une **proportion** du côté de l'icône, avec un plancher : l'atlas de
-    -- bordure porte une marge transparente autour de son trait, si bien qu'étiré
-    -- pile sur l'icône, l'anneau tombe à l'intérieur au lieu de l'entourer. Le
-    -- débordement compense cette marge, et il doit donc grandir avec l'icône.
+    -- Une **proportion** du côté de l'icône, avec un plancher et un plafond :
+    -- l'atlas de bordure porte une marge transparente autour de son trait, si
+    -- bien qu'étiré pile sur l'icône, l'anneau tombe à l'intérieur au lieu de
+    -- l'entourer. Le débordement compense cette marge, et il doit donc grandir
+    -- avec l'icône.
     --
-    -- C'est le réglage à bouger si l'anneau mord sur l'image (monter) ou flotte
-    -- au large (descendre).
-    -- Le plafond compte autant que la proportion : au-delà de quelques pixels,
-    -- l'anneau sort de son icône et vient mordre sur ses voisines, qui sont
-    -- serrées les unes contre les autres dans une rangée d'auras ou de temps de
-    -- recharge.
+    -- C'est le réglage à bouger si l'anneau mord sur l'image (descendre) ou
+    -- flotte au large (descendre aussi). Il ne se monte que si l'anneau passe
+    -- **sous** le bord de l'icône, ce qu'on n'a jamais vu.
+    --
+    -- La valeur est mesurée, pas déduite : à 3 px de débordement, une icône de
+    -- 50 px porte un anneau collé et une icône de 30 px un anneau visiblement
+    -- décollé. Le débordement qui colle vaut donc 3 pour 50, soit 6 %. Le ratio
+    -- a longtemps valu le double, et le plafond de 3 px le masquait pour la
+    -- seule taille où on le regardait — les deux erreurs se compensaient à
+    -- 50 px et à 50 px seulement. Monter le plafond sans corriger le ratio
+    -- décolle l'anneau partout ; c'est arrivé, et ça se voit tout de suite.
+    --
+    -- Plancher et plafond ne façonnent rien : ce sont des garde-fous, et ils
+    -- doivent rester **hors** des tailles que le joueur peut choisir. Le
+    -- gestionnaire de temps de recharge et les auras se règlent en jeu, et une
+    -- borne qui mord ramène l'anneau à une épaisseur fixe, c'est-à-dire fausse
+    -- partout sauf à une taille. Le plancher vaut 1 px parce qu'en dessous le
+    -- trait disparaît sous le pixel.
     SHADE_BORDER_PAD       = 1,
-    SHADE_BORDER_PAD_RATIO = 0.12,
-    SHADE_BORDER_PAD_MAX   = 3,
+    SHADE_BORDER_PAD_RATIO = 0.06,
+    SHADE_BORDER_PAD_MAX   = 8,
 
     -- Fraction rognée sur chaque bord d'une icône avant d'y poser le contour.
     --
