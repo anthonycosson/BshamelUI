@@ -28,6 +28,12 @@
   éteints sont remontés d'autant — un voile blanc sur un fond moins noir ajoute
   moins de lumière, il fallait les rendre pour que les trois états d'une ligne
   restent aussi séparés qu'avant.
+- Une catégorie de la navigation dont **tous** les modules sont annoncés porte la
+  mention *(Prochainement)*, ce qui évite d'ouvrir quatre pages pour découvrir
+  qu'aucune n'est allumable. Tous, et non certains : une catégorie où un module
+  sur trois fonctionne ne s'annonce pas comme à venir.
+- *Mythique+ / Raid* devient **MM+ / Raid** en français : c'est ainsi que les
+  joueurs l'écrivent, et la colonne est étroite.
 
 ## 0.5.0 — 2026-07-31
 

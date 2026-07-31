@@ -33,6 +33,10 @@ BUI:RegisterLocale("enUS", {
     ["Coming soon"]             = "Coming soon",
     ["Coming soon notice"]      = "This module is not written yet. The settings below show what it will offer.",
     ["Coming soon tooltip"]     = "Not available yet.",
+    -- Accolé à l'intitulé d'une catégorie dont **tous** les modules sont
+    -- annoncés : l'espace fait partie de la chaîne, la langue décide de la
+    -- ponctuation.
+    ["Coming soon suffix"]      = " (Coming soon)",
 
     -- Module Quest
     ["Quest"]                   = "Quest",

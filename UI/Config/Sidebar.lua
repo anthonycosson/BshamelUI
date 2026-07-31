@@ -19,6 +19,23 @@ BUI.Sidebar = Sidebar
 local items = {}      --- moduleName -> bouton
 local built = false
 
+--- Intitulé d'une catégorie, suivi d'une mention quand **tous** ses modules sont
+--- en avant-première.
+---
+--- Tous, et non certains : une catégorie où un module sur trois est écrit
+--- fonctionne, et la coiffer d'un « prochainement » ferait passer à côté des
+--- deux autres. Quand la catégorie entière est à venir, en revanche, la mention
+--- évite d'avoir à ouvrir quatre pages pour découvrir qu'aucune n'est allumable.
+---@param category table
+---@param modules table[]
+---@return string
+local function categoryLabel(category, modules)
+    for i = 1, #modules do
+        if not modules[i].preview then return L[category.label] end
+    end
+    return L[category.label] .. L["Coming soon suffix"]
+end
+
 --- Construit la liste. Appelé une fois, après PLAYER_LOGIN, quand tous les
 --- modules se sont enregistrés.
 ---@param content table  frame de contenu de la zone défilante de la colonne
@@ -33,7 +50,7 @@ function Sidebar:Build(content, onSelect)
         local modules = BUI.Modules:GetByCategory(category.key)
 
         if #modules > 0 then
-            local header = W.SidebarItem(content, L[category.label], false)
+            local header = W.SidebarItem(content, categoryLabel(category, modules), false)
             header:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
             header:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, y)
             y = y - header:GetHeight()

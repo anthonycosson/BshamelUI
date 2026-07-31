@@ -13,7 +13,9 @@ BUI:RegisterLocale("frFR", {
     ["Game"]                    = "Jeu",
     ["Interface"]               = true,
     ["QoL"]                     = true,
-    ["Mythic+ / Raid"]          = "Mythique+ / Raid",
+    -- « MM+ » et non « Mythique+ » : c'est ainsi que les joueurs francophones
+    -- l'écrivent, et la colonne est étroite.
+    ["Mythic+ / Raid"]          = "MM+ / Raid",
     ["Search..."]               = "Rechercher...",
     ["Reset this page"]         = "Réinitialiser cette page",
     ["Reset page confirm"]      = "Remettre tous les réglages de cette page à leur valeur par défaut ?",
@@ -35,6 +37,7 @@ BUI:RegisterLocale("frFR", {
     ["Coming soon notice"] =
         "Ce module n'est pas encore écrit. Les réglages ci-dessous montrent ce qu'il proposera.",
     ["Coming soon tooltip"]     = "Pas encore disponible.",
+    ["Coming soon suffix"]      = " (Prochainement)",
 
     -- Module Quest
     ["Quest"]                   = "Quête",
