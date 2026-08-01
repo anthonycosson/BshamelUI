@@ -163,8 +163,6 @@ BUI:RegisterLocale("frFR", {
     ["Appearance"]                     = "Apparence",
     ["Dark mode"]                      = "Mode sombre",
     ["Dark mode tip"]                  = "Assombrit l'habillage pour qu'il se fonde dans l'écran.",
-    ["Dark mode moved"] =
-        "Le mode sombre se règle désormais dans Général, avec un interrupteur par élément d'interface.",
     ["Class-colored health"]           = "Barres de vie aux couleurs de classe",
     ["Class-colored health tip"]       = "Colore chaque barre de vie selon la classe de l'unité.",
     ["Hide reputation color"]          = "Masquer la couleur de réputation",

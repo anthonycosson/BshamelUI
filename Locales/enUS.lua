@@ -224,8 +224,6 @@ BUI:RegisterLocale("enUS", {
     ["Appearance"]                     = "Appearance",
     ["Dark mode"]                      = "Dark mode",
     ["Dark mode tip"]                  = "Darkens the artwork so it sits back into the screen.",
-    ["Dark mode moved"] =
-        "Dark mode now lives on the General page, with one switch per interface element.",
     ["Class-colored health"]           = "Class-colored health bars",
     ["Class-colored health tip"]       = "Colors each health bar with the class color of the unit.",
     ["Hide reputation color"]          = "Hide the reputation color",

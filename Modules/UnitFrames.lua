@@ -978,9 +978,6 @@ BUI:RegisterModule(MODULE, {
             step     = 5,
             disabled = requires("enlargeParty"),
         },
-
-        -- Mode sombre : voir la note du module ActionBars dans `Upcoming.lua`.
-        { type = "description", text = L["Dark mode moved"] },
     },
 
     OnEnable = function(self)

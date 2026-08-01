@@ -126,12 +126,6 @@ BUI:RegisterModule(MODULE, {
             },
         },
         { type = "description", text = L["Cast on key down notice"] },
-
-        -- Le mode sombre des barres d'action est dans Général, avec le reste de
-        -- l'interface : un même effet réglé à deux endroits finit par se
-        -- contredire.
-        { type = "header",      text = L["Appearance"] },
-        { type = "description", text = L["Dark mode moved"] },
     },
 
     OnEnable = function(self)
