@@ -303,7 +303,8 @@ BUI:RegisterLocale("frFR", {
     ["Keystones"]                      = "Clés mythiques",
     ["Answer keys request"]            = "Répondre à !keys dans le chat",
     ["Answer keys request tip"] =
-        "Répond avec votre clé quand quelqu'un tape !keys dans le chat de groupe ou de raid.",
+        "Répond avec votre clé quand quelqu'un tape !keys en groupe, en raid, en instance ou en "
+        .. "guilde. Jamais à un chuchotement ni dans un canal public.",
     ["Auto slot keystone"]             = "Insérer la clé automatiquement",
     ["Auto slot keystone tip"] =
         "Place votre clé dans la fontaine de puissance dès qu'elle s'ouvre. Une clé déjà posée "

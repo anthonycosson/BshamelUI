@@ -31,6 +31,14 @@ local KEYSTONE_ITEM = 180653
 --- Événements écoutés -> canal de réponse. C'est aussi la liste de ce à quoi on
 --- accepte de répondre : un chuchotement n'y est pas, la question ne s'y pose
 --- pas, et répondre dans un canal public serait de la publicité.
+---
+--- La guilde y est, et c'est voulu : « !keys » s'y tape la veille d'une soirée
+--- pour savoir qui a quoi, et c'est même le seul endroit où la question serve
+--- vraiment à composer un groupe. La réponse part alors en guilde, pas ailleurs —
+--- le canal de la réponse est toujours celui de la demande.
+---
+--- Le canal officier (`CHAT_MSG_OFFICER`) n'y est pas : c'est un canal séparé de
+--- la guilde, et une réponse automatique n'a rien à y faire.
 local CHANNELS = {
     CHAT_MSG_PARTY                = "PARTY",
     CHAT_MSG_PARTY_LEADER         = "PARTY",

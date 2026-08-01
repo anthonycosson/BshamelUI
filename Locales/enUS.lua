@@ -303,7 +303,9 @@ BUI:RegisterLocale("enUS", {
     -- Module Keystones
     ["Keystones"]                      = "Keystones",
     ["Answer keys request"]            = "Answer !keys in chat",
-    ["Answer keys request tip"]        = "Replies with your keystone when someone types !keys in party or raid chat.",
+    ["Answer keys request tip"] =
+        "Replies with your keystone when someone types !keys in party, raid, instance or guild "
+        .. "chat. Never to a whisper, never in a public channel.",
     ["Auto slot keystone"]             = "Slot your keystone automatically",
     ["Auto slot keystone tip"] =
         "Puts your keystone into the font of power as soon as it opens. A keystone already "
