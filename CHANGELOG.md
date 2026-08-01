@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.6 — 2026-08-01
+
 ### Modifié
 - Le **chrono mythique+** n'est plus un panneau à nous. Il redisait le temps
   restant à côté de celui du jeu — deux chronos pour une clé, dont un seul est le
