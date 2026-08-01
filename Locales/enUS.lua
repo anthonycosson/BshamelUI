@@ -398,18 +398,33 @@ BUI:RegisterLocale("enUS", {
     -- Module MythicTimer
     ["Mythic+ timer"]                  = "Mythic+ timer",
     ["Display"]                        = "Display",
-    ["Show mythic timer"]              = "Show the timer",
-    ["Show mythic timer tip"] =
-        "A panel with the time left, the +2 and +3 thresholds, and your season best on that dungeon.",
+    ["Show key thresholds"]            = "Show the +2 / +3 timers",
+    ["Show key thresholds tip"] =
+        "Two times added right of the game's own clock: what is left before losing +3, in gold, "
+        .. "then before losing +2, in grey. Plus a mark on the bar at each threshold. A threshold "
+        .. "gone takes its number with it.",
+    ["Show death time"]                = "Show what deaths cost",
+    ["Show death time tip"] =
+        "The seconds your deaths added, small and in red, between the key level and the affixes. "
+        .. "The game counts them and only shows that number in a tooltip.",
+    ["Show boss times"]                = "Show boss times",
+    ["Show boss times tip"] =
+        "The time each boss went down, against its name in the tracker, and on the line below the "
+        .. "gap with your fastest timed run of the same dungeon at the same level: green when you "
+        .. "are ahead, red when behind.",
     ["Timer preview"]                  = "Preview mode",
     ["Timer preview tip"] =
-        "Shows the panel outside a dungeon, filled with sample numbers, so you can place it.",
+        "Shows the game's timer outside a dungeon, on a sample key with sample bosses and enemy "
+        .. "forces, so you can see how it reads. Turn the options off one by one to see the "
+        .. "tracker as the game draws it.",
     ["Mythic timer notice"] =
         "The thresholds are what the game grants: finishing under 80% of the timer is +2, under "
-        .. "60% is +3. The comparison is the season best the game itself records — nothing is "
-        .. "written down here.",
+        .. "60% is +3. Everything here is added to the game's own timer — the time left, the "
+        .. "level and the death count stay the game's. Boss times are kept per character, and "
+        .. "only for keys finished in time.",
     ["Preview dungeon"]                = "Sample dungeon",
-    ["Season best"]                    = "Best",
+    ["Preview boss"]                   = "Sample boss %d",
+    ["Preview forces"]                 = "Enemy Forces",
 
     -- Module Windows
     ["Windows"]                        = "Windows",

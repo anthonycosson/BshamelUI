@@ -140,6 +140,25 @@ function U.Clock(seconds)
     return string.format("%d:%02d", minutes, seconds % 60)
 end
 
+--- Écart entre deux durées, **signé**, en `±MM:SS`.
+---
+--- Deux différences avec `U.Clock`, et elles disent la même chose : un écart n'est
+--- pas une durée, c'est une comparaison. Le signe est donc porté par la chaîne — il
+--- est ce qu'on lit en premier — et les minutes sont cadrées sur deux chiffres,
+--- parce qu'un écart se lit toujours à côté d'un autre écart, ligne après ligne, et
+--- qu'une colonne de `+1:05` et de `-12:30` ne s'aligne pas.
+---
+--- Zéro se rend avec un plus : « pareil » est un résultat, et le rendre sans signe
+--- le ferait lire comme une durée.
+---@param seconds number
+---@return string
+function U.Delta(seconds)
+    local total = math.floor(math.abs(seconds or 0) + 0.5)
+    local sign  = ((seconds or 0) < 0) and "-" or "+"
+
+    return string.format("%s%02d:%02d", sign, math.floor(total / 60), total % 60)
+end
+
 --- Enveloppe `fn` de sorte qu'elle ne puisse pas tourner plus d'une fois par
 --- `interval` secondes. À utiliser pour tout ce qui est branché sur un
 --- événement à haute fréquence (CLEU, UNIT_AURA, OnUpdate…).

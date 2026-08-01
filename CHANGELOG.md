@@ -2,6 +2,90 @@
 
 ## Non publié
 
+### Modifié
+- Le **chrono mythique+** n'est plus un panneau à nous. Il redisait le temps
+  restant à côté de celui du jeu — deux chronos pour une clé, dont un seul est le
+  vrai —, et il fallait le placer. Tout s'ajoute désormais au chrono du jeu, et
+  chaque pièce s'allume séparément :
+
+  - **Les chronos +2 / +3.** Deux temps ajoutés à droite du chrono du jeu : ce
+    qu'il reste avant de perdre +3, en **or**, puis avant de perdre +2, en
+    **gris** — le +2 ne se regarde que quand le +3 est perdu, et il doit se taire
+    jusque-là. Le chrono du jeu, lui, garde son blanc : c'est le nombre principal,
+    et le teindre l'aurait rangé au même niveau que les deux autres alors qu'il les
+    commande. Un palier perdu retire son nombre, et le suivant se recale contre le
+    chrono.
+
+    Plus un repère sur la barre à chaque palier : une **lueur dorée** de huit
+    pixels, opaque sur le palier et éteinte sur ses deux bords, cadrée en haut de la
+    barre. Le bleu qu'on voit est plus court que le cadre de la barre, et pas
+    symétriquement — les trois pixels qu'on laisse sont ceux du bas.
+  - **Le coût des morts.** Les secondes que vos morts ont ajoutées, en rouge et en
+    petit, sur la rangée du niveau de clé — entre le niveau et les affixes. Le jeu
+    compte ce nombre et ne le montre que dans une infobulle. Son compteur de morts,
+    lui, ne bouge pas d'un pixel : il reste où le jeu le met.
+
+    Le nombre se cale **contre les affixes** et grandit vers la gauche. C'est le
+    seul sens qui tienne : le jeu pose ses affixes depuis le bord droit du bloc,
+    donc quatre affixes commencent plus à gauche que deux, et un nombre posé à la
+    suite du niveau leur monterait dessus.
+  - **Les temps de boss.** Le temps auquel chaque boss est tombé, contre son nom
+    dans le suivi.
+
+  Le temps restant, le niveau de la clé et le compteur de morts restent ceux du
+  jeu, écrits par ses propres fonctions.
+
+  Le réglage qui allumait le panneau allume les repères, et il garde votre choix.
+  Sa position, elle, n'a plus d'objet et disparaît.
+
+- Le **mode aperçu** montre désormais le suivi du jeu lui-même, hors donjon, sur
+  une clé d'exemple prise dans la saison en cours : le chrono, trois lignes de boss
+  et un décompte de troupes. Éteignez les réglages un à un pour voir le suivi tel
+  que le jeu le dessine.
+
+  L'exemple démarre à la moitié du chrono dépensé, ce qui met le remplissage juste
+  au-dessus des deux repères : les trois temps sont là d'un seul coup d'œil. Ses
+  trois boss couvrent les trois états du comparatif — devant, derrière, et sans
+  référence du tout, ce qui est le cas d'un boss jamais passé sur une clé réussie.
+  Et il compte trois morts, parce que le jeu cache son compteur à zéro mort : un
+  aperçu qui ne le montre pas laisse croire qu'on l'a perdu.
+
+  Ses lignes passent par la fabrique de lignes du jeu, avec ses pastilles et ses
+  teintes : un aperçu bâti autrement montrerait autre chose que ce qu'on verra.
+
+### Ajouté
+- Le **comparatif des temps de boss**. Sous le nom du boss, l'écart avec votre clé
+  la plus rapide déjà réussie **dans le chrono, au même niveau et dans le même
+  donjon** : `-00:30` en vert si vous êtes devant, `+00:30` en rouge sinon.
+
+  Sous le nom, et non à la suite : bout à bout, l'écart tombait après le nom, donc à
+  un endroit différent pour chaque boss selon la longueur de ce nom — le retour à la
+  ligne paraissait aléatoire et aucune colonne ne se formait. Forcé sur sa propre
+  ligne, il est au même endroit partout.
+
+  La plus rapide et non la dernière : un écart sert à savoir si on est en avance,
+  et on est en avance sur ce qu'on sait faire. Rien ne s'affiche tant qu'aucune clé
+  de ce niveau n'a été réussie — un écart avec une clé ratée ne voudrait rien dire.
+
+  C'est la seule mémoire de l'addon, et elle est assumée : le jeu ne garde d'une
+  clé réussie que sa durée totale, jamais ses temps de passage. Ils sont retenus
+  **par personnage**, à côté de l'historique de chat, et non dans les réglages.
+
+### Corrigé
+- L'infobulle de **« Répondre à !keys »** annonçait le groupe et le raid seulement.
+  Elle répondait déjà en instance et **en guilde** ; c'était l'infobulle qui
+  mentait, pas le code.
+
+### Retiré
+- Le **comparatif du meilleur temps de la saison** dans le chrono mythique+. Le
+  temps total qu'on avait mis la dernière fois ne change pas ce qu'on fait de celui
+  qui reste ; les temps de boss, eux, le changent, et ils le remplacent.
+
+- La mention **« le mode sombre a déménagé »** sur les pages *Barres d'action* et
+  *Cadres d'unités*. Elle datait du déplacement du réglage vers *Général* et n'avait
+  plus rien à signaler. Le bandeau *Apparence* des barres d'action part avec elle :
+  il ne servait qu'à l'introduire.
+
 ## 0.7.5 — 2026-08-01
 
 ### Ajouté

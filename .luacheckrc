@@ -173,10 +173,20 @@ read_globals = {
     -- Auras, charges de sort et enchantements d'arme
     "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
 
-    -- Clés mythiques et chrono de donjon
+    -- Clés mythiques et chrono de donjon. Le chrono affiché est celui du client :
+    -- `ScenarioObjectiveTracker` est le module de son suivi d'objectifs qui porte le
+    -- bloc, et `CHALLENGE_MODE_POWER_LEVEL` l'intitulé du niveau de clé. Les deux
+    -- fonctions de chrono de zone ne servent qu'à **horodater** un boss qui tombe :
+    -- le client dit qu'un critère est rempli, jamais quand il l'a été.
     "C_ChallengeMode", "C_MythicPlus", "NUM_BAG_SLOTS",
     "GetCursorInfo", "ClearCursor",
+    "ScenarioObjectiveTracker", "CHALLENGE_MODE_POWER_LEVEL",
     "GetWorldElapsedTimers", "GetWorldElapsedTime",
+    "C_Scenario", "C_ScenarioInfo",
+    -- Style de tiret et jeu de teintes d'une ligne du suivi d'objectifs : les
+    -- lignes d'exemple de l'aperçu passent par la fabrique de lignes du client, et
+    -- doivent donc lui parler dans son vocabulaire.
+    "OBJECTIVE_DASH_STYLE_HIDE", "OBJECTIVE_TRACKER_COLOR",
 
     -- Recherche de groupe
     "C_LFGList", "LFGListApplicationDialog", "CompleteLFGRoleCheck",

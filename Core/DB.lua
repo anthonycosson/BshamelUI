@@ -31,7 +31,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 3
+local SCHEMA_VERSION   = 4
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -143,6 +143,28 @@ function DB:RunMigrations()
             if general then general.windowIntensity = nil end
         end
         from = 3
+    end
+
+    -- Palier 4 — le chrono mythique+ n'est plus un panneau à nous : ce sont deux
+    -- repères posés sur le chrono du client. Le réglage qui l'allumait change donc
+    -- de nom pour dire ce qu'il fait, et sa position n'a plus d'objet.
+    --
+    -- Le nom est repris et non oublié : un joueur qui avait allumé le panneau
+    -- voulait voir ses paliers, et c'est toujours ce que la case fait. Retirer la
+    -- clé sans la reprendre aurait éteint son réglage sans le lui dire.
+    if from < 4 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local timer = profile.modules and profile.modules.MythicTimer
+            if timer then
+                if timer.timer ~= nil and timer.thresholds == nil then
+                    timer.thresholds = timer.timer
+                end
+                timer.timer  = nil
+                timer.timerX = nil
+                timer.timerY = nil
+            end
+        end
+        from = 4
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)

@@ -243,9 +243,9 @@ T.SIZE = {
     SLOT_INFO_LEVEL = 10,
 
     -- Panneaux autonomes de l'addon (suivi des résurrections de combat, barre de
-    -- marqueurs, chrono mythique+, rappel de file). Ce sont de petites fenêtres
-    -- posées à même l'écran : elles partagent une géométrie, sans quoi quatre
-    -- pièces du même addon auraient quatre marges différentes.
+    -- marqueurs, rappel de file). Ce sont de petites fenêtres posées à même
+    -- l'écran : elles partagent une géométrie, sans quoi trois pièces du même
+    -- addon auraient trois marges différentes.
     -- `PANEL_PAD` est déjà pris par le retrait d'un panneau creusé de la fenêtre
     -- d'options : ces trois-là portent donc leur propre préfixe.
     TOOL_PAD       = 8,
@@ -280,10 +280,43 @@ T.SIZE = {
     MARKER_SCALE_MIN = 0.5,
     MARKER_SCALE_MAX = 2.5,
 
-    -- Chrono mythique+. Assez large pour un nom de donjon complet à la police des
-    -- libellés, comme le menu de téléportation.
-    KEY_TIMER_W    = 220,
-    KEY_ROW_H      = 16,    -- ligne de palier ou de comparatif
+    -- Repères des paliers d'une clé, posés sur la barre de chrono du client.
+    --
+    -- Huit pixels de large sur dix de haut, **cadrés en haut** de la barre. Deux
+    -- tentatives maison ont précédé ces deux nombres — un trait de trois pixels sur
+    -- toute la hauteur du cadre, qui dépassait du bleu ; puis une proportion centrée,
+    -- qui dépassait encore. Ce sont les mesures d'Angry Keystones, et elles marchent
+    -- pour une raison qu'aucune des deux n'avait vue : la marge transparente de
+    -- l'atlas du remplissage n'est pas symétrique. Dix pixels depuis le **haut** en
+    -- laissent trois en bas, ce qui est exactement là où elle est.
+    --
+    -- La largeur n'est pas non plus un détail : un repère de huit pixels avec ses
+    -- bords en dégradé se lit comme une graduation ; un trait fin se lit comme une
+    -- nervure de plus du remplissage, qui en porte déjà.
+    KEY_TIER_W     = 8,
+    KEY_TIER_H     = 10,
+
+    -- Écart entre deux nombres de la rangée du chrono : entre le temps restant et
+    -- le premier palier, puis entre les deux paliers. Assez pour que deux nombres ne
+    -- se touchent pas, assez peu pour que les trois se lisent comme une rangée et
+    -- non comme trois colonnes.
+    KEY_NEXT_PAD   = 6,
+
+    -- Écart entre le temps perdu par les morts et ce contre quoi il se cale : le
+    -- premier affixe à sa droite, ou le niveau de clé à sa gauche à défaut. Plus
+    -- serré que celui des paliers, la rangée du niveau étant la plus étroite des
+    -- deux — et un nombre calé contre une vignette n'a pas besoin du même air qu'un
+    -- nombre calé contre un autre nombre.
+    KEY_DEATHS_PAD = 3,
+
+    -- Sous-calque des repères, dans le calque `OVERLAY` du bloc du client.
+    --
+    -- Au-dessus de ce que le client y dessine, et c'est tout ce que ce nombre
+    -- veut dire : son habillage passe par-dessus sa propre barre pour lui faire
+    -- un cadre, donc un repère au sous-calque zéro passerait dessous. La valeur
+    -- n'a pas à être serrée — elle doit seulement dépasser celles du client, et
+    -- rien ne se dessine entre les deux.
+    KEY_TIER_LEVEL = 7,
 
     -- Fraction rognée sur chaque bord d'une icône avant d'y poser le contour.
     --
@@ -384,7 +417,13 @@ T.TIMING = {
     -- Cadence des panneaux de raid. Ils affichent des secondes : les rafraîchir
     -- à chaque image serait payer soixante fois le même texte (règle 7).
     BATTLE_RES    = 0.2,    -- charges de résurrection et temps avant la suivante
-    KEY_TIMER     = 0.1,    -- chrono mythique+, qui affiche des dixièmes
+
+    -- Cadence du chrono d'aperçu des paliers de clé. Une seconde, parce que
+    -- c'est la vitesse à laquelle un chrono court : l'aperçu doit se lire comme
+    -- le vrai, et le vrai n'affiche pas de dixièmes. En donjon, rien ne tourne
+    -- de notre côté — c'est le client qui repose son chrono, et on ne fait que
+    -- suivre.
+    KEY_PREVIEW   = 1.0,
 
     -- Cadence de la poignée d'échelle, pendant qu'elle est tenue. Assez rapide
     -- pour que le panneau colle au curseur, assez lente pour ne pas repeindre à
@@ -435,11 +474,19 @@ local FONT_CANDIDATES = {
     -- qu'on vient de lire dans le chat, à la même largeur de caractère.
     COPY         = { "ChatFontNormal", "GameFontHighlight" },
 
-    -- Chrono mythique+. Une police à contour, pour la même raison que le
-    -- décompte : le temps restant se lit par-dessus le décor d'un donjon, où une
-    -- police sans contour se noie dès que le fond est clair.
-    KEY_TIMER    = { "NumberFont_Outline_Large", "NumberFontNormalLarge",
-                     "GameFontNormalLarge" },
+    -- Les deux paliers, posés en rangée à droite du temps restant.
+    --
+    -- Un cran sous le chrono du client, qui est en `Huge` : les trois nombres se
+    -- lisent comme une rangée, et c'est leur **corps** qui dit lequel est le
+    -- principal. À corps égal, les trois se disputeraient l'œil ; deux crans plus
+    -- bas, les paliers deviendraient une note de bas de page.
+    KEY_NEXT     = { "GameFontHighlightLarge", "GameFontHighlightMedium",
+                     "GameFontHighlight" },
+
+    -- Temps perdu par les morts, posé sur l'en-tête du suivi. Plus petit que les
+    -- paliers : il ne se lit pas en courant, il se consulte. Et l'en-tête est une
+    -- bande basse, que le corps des paliers déborderait.
+    KEY_DEATHS   = { "GameFontHighlightSmall", "GameFontHighlight" },
 
     -- Les deux nombres posés sur l'icône des résurrections de combat : les
     -- charges dans son coin, le temps restant en son milieu. Grasse et à contour,
@@ -502,6 +549,22 @@ T.COLOR = {
     ORANGE   = ORANGE_FONT_COLOR or CreateColor(1.00, 0.58, 0.20),
     SHADE    = CreateColor(0.00, 0.00, 0.00),            -- voile des bords
 
+    -- Or d'**habillage** : celui des cadres ouvragés que le client dessine, pas le
+    -- doré de ses textes.
+    --
+    -- La seconde couleur inventée de l'addon après l'accent, et pour la même
+    -- raison : celle-là n'est publiée nulle part. `NORMAL_FONT_COLOR` est le doré
+    -- des *libellés* du client — un jaune franc, presque pur, qui a été choisi pour
+    -- ressortir sur un fond noir. Posé sur un cadre de laiton, il ne s'accorde pas
+    -- avec lui, il le contredit.
+    --
+    -- La valeur est **mesurée** : c'est le ton le plus clair des repères de palier
+    -- d'Angry Keystones, relevé en décodant sa texture (230, 206, 99). Trois nombres
+    -- relevés ne sont ni du code ni une texture empruntée — voir CLAUDE.md règle 8 :
+    -- on lit un autre addon pour savoir ce qui marche, et on l'écrit soi-même. Sa
+    -- texture, elle, n'est pas embarquée ; le dégradé est refait avec `T.FadeTexture`.
+    FRAME_GOLD = CreateColor(0.90, 0.81, 0.39),
+
     -- Teinte du bandeau des en-têtes de catégorie. Un gris franc : la pierre du
     -- client est une pierre chaude, brun-doré, et un bandeau doré derrière un
     -- titre blanc se lit comme un surlignage, pas comme un en-tête. On la
@@ -520,6 +583,25 @@ T.COLOR = {
     -- compte est l'**écart** avec `WINDOW`, pas la valeur absolue.
     TITLE_BAND = CreateColor(0.20, 0.20, 0.24),
 }
+
+-- Code couleur des deux paliers d'une clé mythique+.
+--
+-- Ce n'est pas une donnée de jeu : le client ne teinte rien par palier et ne les
+-- mentionne nulle part. C'est donc un vocabulaire, et un vocabulaire se décide ici.
+-- Ni l'une ni l'autre n'est nouvelle — ce sont deux couleurs déjà nommées, dont on
+-- dit ici ce qu'elles veulent dire dans ce contexte-là.
+--
+--   +3  → l'or de l'habillage. C'est le palier qu'on regarde, et l'or est ce que
+--         le cadre a de plus clair.
+--   +2  → le gris d'un contrôle éteint. Le +2 ne se regarde que quand le +3 est
+--         perdu, et il doit se taire jusque-là.
+--
+-- **Il n'y a pas de troisième entrée.** Le temps restant garde le blanc que le
+-- client lui donne : c'est le nombre principal, le blanc est ce qu'il y a de plus
+-- lisible, et le teinter comme un palier le rangerait au même niveau que les deux
+-- autres alors qu'il les commande.
+T.COLOR.TIER_TWO   = T.COLOR.DISABLED
+T.COLOR.TIER_THREE = T.COLOR.FRAME_GOLD
 
 -- =========================================================================
 --  Opacités
@@ -582,6 +664,12 @@ T.ALPHA = {
     -- qui est le seul moment où elles ont quelque chose à dire.
     CHAT_TOOL       = 0.35,
     CHAT_TOOL_HOVER = 1.00,
+
+    -- Repère de palier, **au plus fort de son dégradé** : le centre du repère, celui
+    -- qui tombe pile sur le palier. Pleine, parce que ce qui l'estompe est le
+    -- dégradé lui-même, qui s'éteint vers les deux bords — la baisser ici pâlirait le
+    -- repère entier au lieu d'adoucir ses bords.
+    KEY_TIER        = 1.00,
 }
 
 -- =========================================================================
@@ -913,6 +1001,13 @@ end
 T.ATLAS = {
     ARROW_RIGHT = "NPE_ArrowRight",
     CHECK       = "common-icon-checkmark",
+
+    -- Pastilles des lignes du suivi d'objectifs : la coche d'un objectif rempli et
+    -- la puce d'un objectif en cours. Ce sont celles que le client pose lui-même sur
+    -- ses lignes ; l'aperçu du chrono mythique+ en pose sur ses lignes d'exemple,
+    -- qui doivent se lire comme les vraies.
+    OBJECTIVE_DONE = "ui-questtracker-tracker-check",
+    OBJECTIVE_TODO = "ui-questtracker-objective-nub",
 
     -- Contour posé autour d'une icône par le mode sombre.
     --

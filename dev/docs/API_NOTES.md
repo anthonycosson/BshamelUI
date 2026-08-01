@@ -1853,37 +1853,185 @@ ne remplace jamais celle d'un coéquipier.
 
 ---
 
-## Le chrono d'une clé se demande au client, il ne se compte pas
+## Le chrono d'une clé ne se compte pas — et ne se réaffiche pas non plus
 
 **Symptôme** — un chrono démarré sur `CHALLENGE_MODE_START` est faux dès qu'on
 recharge l'interface au milieu d'une clé, c'est-à-dire précisément au moment où
 l'on tient à ce qu'il soit juste.
 
-**Ce qu'on fait** — `GetWorldElapsedTimers()` rend les chronos de zone,
-`GetWorldElapsedTime(timerID)` rend leur type et leur temps écoulé. Le type
-cherché est `Enum.WorldElapsedTimerType.ChallengeMode` ; à défaut d'énumération,
-le premier chrono disponible fait l'affaire — il n'y en a pas d'autre en donjon
-mythique+. Le comptage maison ne sert plus que de repli.
+**Premier remède, insuffisant** — lire le chrono de zone du client :
+`GetWorldElapsedTimers()` rend les identifiants,
+`GetWorldElapsedTime(timerID)` leur type et leur temps écoulé, le type cherché
+étant `Enum.WorldElapsedTimerTypes.ChallengeMode`. C'est juste, mais ça ne fait
+que déplacer le problème : on affiche alors **un second chrono** à côté de celui
+du client, pour la même clé, et deux chronos ne peuvent qu'être en désaccord d'une
+seconde ou d'un dixième.
 
-L'identifiant est relevé **sur événement** et retenu : `GetWorldElapsedTimers` est
-variadique, et l'énumérer dix fois par seconde coûterait des appels pour une
-valeur qui ne change qu'au départ de la clé.
+**Ce qu'on fait** — on n'affiche pas de chrono du tout. Le client en dessine un
+dans son suivi d'objectifs, et on lui **ajoute** ce qui manque :
 
-Le reste vient sans effort : `C_ChallengeMode.GetMapUIInfo(mapID)` rend le nom du
-donjon **et son chrono en troisième valeur**, `GetActiveKeystoneInfo()` le niveau,
-`GetCompletionInfo()` le temps final en millisecondes. Les paliers, eux, ne sont
-pas publiés : ce sont 80 % et 60 % du chrono, écrits une fois dans
-`UI/Widgets/KeyTimer.lua`.
+- `ScenarioObjectiveTracker.ChallengeModeBlock` est le bloc de chrono, un cadre
+  fixe du module de scénario (`FixedBlocks`), mixé de
+  `ScenarioObjectiveTrackerChallengeModeMixin`. Ses pièces utiles : `StatusBar`,
+  `TimeLeft`, `Level`, `DeathCount`, `StartedDepleted`, `TimesUpLootStatus`.
+- **La barre porte le temps restant, pas le temps écoulé** : `Activate` la borne
+  de `0` à `timeLimit` puis lui donne `timeLimit - elapsed`. Un palier accordé
+  « sous 60 % du chrono » se lit donc à **40 % de la barre**, et le remplissage le
+  franchit en descendant.
+- `block:UpdateTime(elapsed)` est la seule fonction qui repose le chrono, appelée
+  par `ScenarioTimerFrame`. S'y accrocher fait suivre ce qu'on a ajouté sans rien
+  compter de son côté ; `Activate` sert à replacer ce qui dépend de la largeur de
+  la barre.
+- Les repères sont posés sur le **bloc**, à un sous-calque `OVERLAY` plus haut que
+  celui du client, et ancrés sur la barre : l'habillage du bloc est dessiné
+  par-dessus sa propre barre pour lui faire un cadre, donc une texture posée sur
+  la barre passerait dessous.
+- **La barre est un cadre plus haut que son remplissage, et pas symétriquement.**
+  `StatusBar` mesure treize pixels ; l'atlas `ChallengeMode-TimerFill` porte une
+  marge transparente et n'en occupe pas la totalité. Un repère ancré sur `TOP` et
+  `BOTTOM` de la barre dépasse donc du bleu, et une hauteur *centrée* en proportion
+  du cadre en dépasse encore — les deux ont été essayées avant d'y voir clair.
 
-**Le comparatif ne se mémorise pas.** `C_MythicPlus.GetSeasonBestForMap(mapID)`
-rend le meilleur temps de la saison (`durationSec`, `level`) — tenir nos propres
-temps aurait créé une source de vérité concurrente de la sienne, et deux sources
-de vérité divergent toujours. `C_MythicPlus.RequestMapInfo()` est appelé à
-l'activation : ces données ne sont pas chargées à la connexion.
+  Ce qui marche : **huit pixels de large sur dix de haut, cadrés en haut**. Les
+  trois pixels laissés sont ceux du bas, qui est le côté où la marge se trouve.
+  Ces mesures sont celles d'Angry Keystones, relevées et non recopiées (règle 8) ;
+  sa texture, un DXT3 de 16×16 découpé en deux vignettes, n'est pas embarquée. Elle
+  a en revanche appris deux choses : le repère est une **lueur** et non un trait —
+  opaque sur le palier, éteinte sur ses deux bords, ce qui demande deux textures
+  dos à dos, un dégradé n'allant que dans un sens — et son ton le plus clair vaut
+  `(230, 206, 99)`.
 
-**À la fin d'une clé, le client ne dit plus laquelle était active.** Le `mapID`
-est donc retenu au départ, faute de quoi le panneau disparaît à l'instant précis
-où l'on veut lire le comparatif.
+Les paliers, eux, ne sont publiés par aucune fonction : ce sont 80 % et 60 % du
+chrono, écrits une fois dans `UI/Widgets/KeyThresholds.lua`.
+`C_ChallengeMode.GetMapUIInfo(mapID)` rend le nom du donjon **et son chrono en
+troisième valeur**, ce qui suffit à remplir un exemple.
+
+---
+
+## Faire poser un bloc du suivi d'objectifs là où le client ne le pose pas
+
+**Symptôme** — on veut montrer le bloc de chrono mythique+ hors donjon, pour voir
+ce qu'il donne. Le montrer à la main ne suffit pas : sans passer par la mise en
+page du module, le bloc n'a aucun ancrage, et le prochain passage le recache.
+
+**Cause** — `ScenarioObjectiveTrackerMixin:LayoutContents()` sort avant tout le
+reste quand `C_Scenario.GetInfo()` ne rend aucune étape. Et `EndLayout` appelle
+`FreeUnusedBlocks`, qui cache tout bloc fixe dont `used` n'a pas été mis à vrai
+pendant le passage.
+
+**Ce qu'on fait** — on demande la pose **après** son passage, dans un
+`hooksecurefunc` sur `LayoutContents` : un hook ne défait pas ce qu'une fonction
+du client a décidé, mais il ajoute ce qu'elle n'a pas fait.
+`module:LayoutBlock(block)` met `used = true`, ancre le bloc, l'affiche, et
+`InternalAddBlock` met `hasContents` à vrai — ce qui suffit à `EndLayout` pour
+montrer le module. Il ne reste qu'à demander un passage :
+`module:MarkDirty()`, celui-là même que le client s'appelle à lui-même quand son
+chrono s'arrête.
+
+Deux gardes s'imposent. `hasContents` **déjà vrai** signifie que le module a posé
+son propre contenu (un scénario, un delve) : y coller un bloc de chrono serait un
+exemple posé sur du vrai. Et `block:IsActive()` vrai signifie qu'une clé tourne —
+c'est alors le vrai chrono qu'on regarde.
+
+L'exemple lui-même passe par les fonctions du client : on remplit `timeLimit`,
+`Level`, les bornes de la barre, puis on appelle **son** `UpdateTime`. Un aperçu
+ne peut alors pas ressembler à autre chose que le vrai, puisque c'est le vrai qui
+dessine. `timerID` reste `nil` : le poser ferait croire au client qu'une clé
+tourne.
+
+Les **lignes** d'exemple suivent le même principe, un cran plus loin :
+`ObjectivesBlock:Reset()`, puis autant d'appels à son `AddObjective(key, texte,
+nil, nil, OBJECTIVE_DASH_STYLE_HIDE, OBJECTIVE_TRACKER_COLOR["Complete"])` que de
+lignes voulues, chacune recevant sa pastille (`line.Icon`), et un
+`module:LayoutBlock(objectivesBlock)` pour finir. Le décompte de troupes, lui, est
+posé en ligne de texte et non en barre de progression : une `AddProgressBar` va
+relire le scénario en cours pour se remplir, et hors donjon il n'y en a pas.
+
+---
+
+## Un critère dit qu'il est rempli, jamais quand il l'a été
+
+**Symptôme** — on veut le temps auquel chaque boss est tombé. Rien ne le publie.
+`C_ScenarioInfo.GetCriteriaInfo(index)` porte bien `duration` et `elapsed`, mais
+ces deux champs servent aux critères **chronométrés** (« survivre trois
+minutes ») et valent zéro pour un boss.
+
+**Ce qu'on fait** — on horodate soi-même, sur `SCENARIO_CRITERIA_UPDATE` (doublé
+de `SCENARIO_UPDATE`) : à chaque passage, tout critère `completed` qu'on n'avait
+pas encore vu reçoit le temps écoulé du client. C'est le seul endroit de l'addon
+qui écrive une seconde, et encore : elle est **demandée** au chrono de zone
+(`GetWorldElapsedTime`), pas tenue par nous.
+
+**La clé de rangement est `criteriaID`, pas le rang du critère.** Un rang se
+réordonne d'un patch à l'autre ; l'historique rangé par rang comparerait alors le
+troisième boss d'aujourd'hui au deuxième d'hier.
+
+Puis on redemande une passe au suivi (`module:MarkDirty()`) au lieu de compter sur
+la sienne : rien ne garantit l'ordre dans lequel deux cadres reçoivent le même
+événement, et un boss horodaté après le passage du suivi ne s'afficherait qu'au
+suivant.
+
+**La fin d'une clé est aussi la chute d'un boss.** `CHALLENGE_MODE_COMPLETED` doit
+donc horodater avant de ranger, sans quoi la ligne qui compte le plus manque.
+
+---
+
+## Ce que le client garde d'une clé finie, et ce qu'il n'en garde pas
+
+`C_ChallengeMode.GetChallengeCompletionInfo()` rend une **table** :
+`mapChallengeModeID`, `level`, `time` (en millisecondes), `onTime`,
+`keystoneUpgradeLevels`, et la liste des membres. C'est la forme à préférer — la
+variante positionnelle `GetCompletionInfo()`, que le client s'appelle encore à
+lui-même, ne figure plus dans sa documentation générée.
+
+Il ne garde en revanche **aucun temps de passage**. Retenir les nôtres ne crée donc
+pas de seconde source de vérité à côté de la sienne : il n'y en a pas de première.
+C'est la seule mémoire de l'addon, et elle vit dans les données du personnage
+(`DB:CharData`), pas dans ses réglages.
+
+**À la fin d'une clé, le client ne dit plus laquelle était active** : `mapID` et
+niveau sont donc relevés au départ et retenus, faute de quoi il n'y a plus rien
+sous quoi ranger au moment de ranger.
+
+`C_ChallengeMode.GetDeathCount()` rend `numDeaths, timeLost`. Le client affiche le
+premier nombre et réserve le second à une **infobulle**, c'est-à-dire à nulle part
+quand on court.
+
+---
+
+## Rallonger le texte d'une ligne du suivi d'objectifs oblige à refaire sa hauteur
+
+**Symptôme** — on ajoute un temps à la ligne d'un boss. Sur les noms courts tout
+va bien ; sur un nom long, le texte passe à la ligne et l'objectif suivant lui
+monte dessus.
+
+**Cause** — `ObjectiveTrackerBlockMixin:AddObjective` pose le texte **et en déduit
+la hauteur** : il appelle `SetStringText`, qui rend la hauteur du texte, la donne à
+la ligne et l'accumule dans `block.height`. Écrire par-dessus après coup laisse les
+deux valeurs sur l'ancien texte.
+
+**Ce qu'on fait** — on refait le calcul avec sa fonction, dans un post-hook de
+`AddObjective` : `block:SetStringText(line.Text, texte .. suffixe, useFullHeight,
+colorStyle, block.isHighlighted)` rend la nouvelle hauteur, qu'on donne à la ligne,
+et on reporte l'écart sur `block.height`. Le reste suit tout seul — les lignes
+s'ancrent l'une sous l'autre.
+
+Une ligne est un **seul texte**, donc une seule couleur : un suffixe qui en demande
+plusieurs passe par des codes couleur en ligne (`T.Colorize`).
+
+**Le plafond de rangs est dans `SetStringText`, pas dans la ligne.** Il vaut
+`SetMaxLines(2)` quand `useFullHeight` est faux, et `SetMaxLines(0)` — sans limite —
+quand il est vrai. Un suffixe qui occupe un rang à lui seul, par un `\n` dans le
+texte, oblige donc à passer `useFullHeight` vrai : sinon le nom qui passe à la ligne
+en demande trois, et c'est le troisième — le suffixe ajouté — qui est coupé.
+
+Le `\n` n'est pas un détail de présentation. Bout à bout, un suffixe tombe après le
+nom, donc à un endroit différent pour chaque ligne selon la longueur de ce nom : le
+retour à la ligne paraît aléatoire et aucune colonne ne se forme. Forcé, il est au
+même endroit partout.
+
+Et la réversibilité est gratuite : on ne retouche rien qui persiste. Éteindre le
+réglage et redemander une passe suffit — le client réécrit ses lignes sans nous.
 
 ---
 

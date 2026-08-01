@@ -401,19 +401,33 @@ BUI:RegisterLocale("frFR", {
     -- Module MythicTimer
     ["Mythic+ timer"]                  = "Chrono mythique+",
     ["Display"]                        = "Affichage",
-    ["Show mythic timer"]              = "Afficher le chrono",
-    ["Show mythic timer tip"] =
-        "Un panneau avec le temps restant, les paliers +2 et +3, et votre meilleur temps de la "
-        .. "saison sur ce donjon.",
+    ["Show key thresholds"]            = "Afficher les chronos +2 / +3",
+    ["Show key thresholds tip"] =
+        "Deux temps ajoutés à droite du chrono du jeu : ce qu'il reste avant de perdre +3, en or, "
+        .. "puis avant de perdre +2, en gris. Plus un repère sur la barre à chaque palier. Un "
+        .. "palier perdu retire son nombre.",
+    ["Show death time"]                = "Afficher le coût des morts",
+    ["Show death time tip"] =
+        "Les secondes que vos morts ont ajoutées, en rouge et en petit, entre le niveau de la clé "
+        .. "et les affixes. Le jeu les compte et ne montre ce nombre que dans une infobulle.",
+    ["Show boss times"]                = "Afficher les temps de boss",
+    ["Show boss times tip"] =
+        "Le temps auquel chaque boss est tombé, contre son nom dans le suivi, et sur la ligne du "
+        .. "dessous l'écart avec votre clé la plus rapide réussie dans le chrono au même niveau : "
+        .. "vert si vous êtes devant, rouge sinon.",
     ["Timer preview"]                  = "Mode aperçu",
     ["Timer preview tip"] =
-        "Affiche le panneau hors donjon, rempli de valeurs d'exemple, pour pouvoir le placer.",
+        "Affiche le chrono du jeu hors donjon, sur une clé d'exemple avec des boss et un décompte "
+        .. "de troupes d'exemple, pour voir ce que ça donne. Éteignez les options une à une pour "
+        .. "voir le suivi tel que le jeu le dessine.",
     ["Mythic timer notice"] =
         "Les paliers sont ceux du jeu : terminer sous 80 % du chrono donne +2, sous 60 % donne "
-        .. "+3. Le comparatif est le meilleur temps de la saison tel que le jeu le retient — rien "
-        .. "n'est mémorisé ici.",
+        .. "+3. Tout ici s'ajoute au chrono du jeu — le temps restant, le niveau et le compteur "
+        .. "de morts restent les siens. Les temps de boss sont retenus par personnage, et "
+        .. "seulement pour les clés réussies dans le chrono.",
     ["Preview dungeon"]                = "Donjon d'exemple",
-    ["Season best"]                    = "Record",
+    ["Preview boss"]                   = "Boss d'exemple %d",
+    ["Preview forces"]                 = "Forces ennemies",
 
     -- Module Windows
     ["Windows"]                        = "Fenêtres",
