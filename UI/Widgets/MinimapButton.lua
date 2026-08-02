@@ -60,6 +60,21 @@ local function angleUnderCursor()
     return math.deg(math.atan2((py / scale) - cy, (px / scale) - cx))
 end
 
+--- Nos propres boutons. Le tiroir des boutons d'addons parcourt le pourtour de
+--- la minicarte et range tout ce qui n'appartient pas au client : sans cette
+--- table, il rangerait les nôtres dans notre propre tiroir.
+---
+--- La question se pose ici et non chez l'appelant : la fabrique est le seul
+--- endroit qui sache, sans qu'on le lui rappelle, quels boutons sont de nous.
+local ours = {}
+
+--- Ce bouton est-il l'un des nôtres ?
+---@param frame table
+---@return boolean
+function W.IsMinimapButtonOurs(frame)
+    return ours[frame] == true
+end
+
 --- Bouton rond déplaçable autour de la minicarte.
 --- Renvoie `nil` si le client n'expose pas de minicarte — l'appelant doit alors
 --- se passer de bouton plutôt que d'échouer.
@@ -69,6 +84,7 @@ function W.MinimapButton(opts)
     if not Minimap then return nil end
 
     local button = CreateFrame("Button", nil, Minimap)
+    ours[button] = true
     button:SetSize(T.SIZE.MINIMAP_BUTTON, T.SIZE.MINIMAP_BUTTON)
     button:SetFrameStrata(Minimap:GetFrameStrata())
     button:SetFrameLevel(Minimap:GetFrameLevel() + 8)

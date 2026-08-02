@@ -105,7 +105,7 @@ end
 BUI:RegisterModule(MODULE, {
     title    = L["Action bars"],
     category = "Interface",
-    order    = 10,
+    order    = 20,
     secure   = true,
 
     defaults = {

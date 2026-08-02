@@ -9,10 +9,9 @@ local BUI = ns.BUI
 BUI:RegisterLocale("enUS", {
     -- Fenêtre d'options
     ["Bshamel UI"]              = "Bshamel UI",
-    ["Game"]                    = "Game",
     ["Interface"]               = "Interface",
-    ["QoL"]                     = "QoL",
-    ["Mythic+ / Raid"]          = "Mythic+ / Raid",
+    ["Quality of life"]         = "Quality of life",
+    ["Tools"]                   = "Tools",
     ["Search..."]               = "Search...",
     ["Reset this page"]         = "Reset this page",
     ["Reset page confirm"]      = "Reset every setting on this page to its default value?",
@@ -57,7 +56,9 @@ BUI:RegisterLocale("enUS", {
 
     -- Module General
     ["General"]                        = "General",
+    -- Module DarkMode
     ["Enable dark mode"]               = "Enable dark mode",
+    ["What it darkens"]                = "What it darkens",
     ["Dark action bars tip"]           = "Buttons, borders and the artwork behind every action bar.",
     ["Cast bar"]                       = "Cast bar",
     ["Dark cast bar tip"]              = "Your casting bar and the one on your target.",
@@ -69,6 +70,7 @@ BUI:RegisterLocale("enUS", {
     ["Dark tooltip tip"]               = "The tooltip border. Its background is left as the game set it.",
     ["Cooldown manager"]               = "Cooldown manager",
     ["Dark cooldown manager tip"]      = "The cooldown manager bars and their icons.",
+    -- Module General (suite)
     ["Camera"]                         = "Camera",
     ["Max camera distance"]            = "Raise the maximum camera distance",
     ["Max camera distance tip"] =
@@ -91,7 +93,8 @@ BUI:RegisterLocale("enUS", {
     ["Repaired from guild"]            = "Repaired for %s from guild funds.",
     ["Repaired from purse"]            = "Repaired for %s.",
     ["Repair too expensive"]           = "Not enough money to repair: %s needed.",
-    ["Auction current expansion"]      = "Auction house: current expansion only",
+    ["Auction house"]                  = "Auction house",
+    ["Auction current expansion"]      = "Current expansion only",
     ["Auction current expansion tip"]  = "Restricts auction house browsing to items from the current expansion.",
     ["Annoyances"]                     = "Annoyances",
     ["Skip cinematics"]                = "Skip cinematics",
@@ -102,6 +105,9 @@ BUI:RegisterLocale("enUS", {
     ["Hide talking heads tip"]         = "Hides the talking head frame that pops up during quests and dungeons.",
     ["Hide Lua errors"]                = "Hide Lua errors",
     ["Hide Lua errors tip"]            = "Suppresses the error popup. Errors are still reported to error handlers.",
+
+    -- Module InfoBar (annonce)
+    ["Info bar"]                       = "Info bar",
 
     -- Module Character
     ["Character sheet"]                = "Character sheet",
@@ -143,10 +149,11 @@ BUI:RegisterLocale("enUS", {
     -- supposition** et reste à vérifier sur un client anglais.
     ["Void core marker"]               = "Ascendant Voidforge",
 
-    -- Module Minimap
-    ["Minimap"]                        = "Minimap",
+    -- Bouton de l'addon (module General)
+    -- `Buttons` coiffe aussi les pages Addons et Téléportations : c'est le même
+    -- intitulé pour la même chose, un bouton posé sur le pourtour de la carte.
     ["Buttons"]                        = "Buttons",
-    ["Minimap button"]                 = "Show the BshamelUI button",
+    ["Minimap button"]                 = "Show the BshamelUI button on the minimap",
     -- Infobulle du bouton lui-même, en jeu : trois gestes, une ligne chacun.
     -- Ce n'est pas une phrase, c'est une antisèche — elle se lit d'un coup d'œil
     -- ou elle ne sert à rien.
@@ -154,6 +161,7 @@ BUI:RegisterLocale("enUS", {
         "Left click: addon list\n"
         .. "Right click: options\n"
         .. "Drag: move around the minimap",
+
     ["Addon buttons empty"]            = "No addon icon to show.",
     ["Group addon buttons"]            = "Group the addon buttons",
     ["Group addon buttons tip"] =
@@ -161,8 +169,11 @@ BUI:RegisterLocale("enUS", {
         .. "button, on left-click. The game's own buttons are left alone, and turning this off "
         .. "puts each button back exactly where it was. Needs the BshamelUI button: it is what "
         .. "opens the drawer.",
+
+    -- Module Teleports
     ["Teleports"]                      = "Teleports",
-    ["Teleport menu"]                  = "Show a teleport button",
+    ["Menu"]                           = "Menu",
+    ["Teleport menu"]                  = "Show a teleport button on the minimap",
     ["Teleport menu tip"] =
         "Adds a button next to the minimap: your hearthstones, and the dungeons of the current "
         .. "season under a submenu. Click a line to use it.",
@@ -286,7 +297,7 @@ BUI:RegisterLocale("enUS", {
     ["Copy chat hint"]                 = "Everything is selected: press Ctrl+C to copy.",
 
     -- Module Bags
-    ["Bags"]                           = "Bags",
+    ["Bags and repairs"]               = "Bags and repairs",
     ["Merchants"]                      = "Merchants",
     ["Auto-sell junk"]                 = "Auto-sell junk",
     ["Auto-sell junk tip"]             = "Sells grey items at every merchant.",
@@ -326,9 +337,9 @@ BUI:RegisterLocale("enUS", {
     ["Auto role check"]                = "Confirm role checks",
     ["Auto role check tip"] =
         "Answers the role check automatically with the roles you already signed up with.",
-    -- Module RaidTools
-    ["Raid tools"]                     = "Raid tools",
-    ["Combat"]                         = "Combat",
+    -- Module RaidCooldowns
+    ["Bloodlust and battle res"]       = "Bloodlust and battle res",
+    ["Battle resurrections"]           = "Battle resurrections",
     ["Battle res tracker"]             = "Battle res tracker",
     ["Battle res tracker tip"] =
         "Shows how many battle resurrections are left and how long until the next one.",
@@ -344,7 +355,34 @@ BUI:RegisterLocale("enUS", {
     ["Battle res preview tip"] =
         "Shows the icon outside an instance, filled with sample values, so you can place it.",
 
+    ["Bloodlust"]                      = "Bloodlust",
+    ["Lust tracker"]                   = "Bloodlust lockout tracker",
+    ["Lust tracker tip"] =
+        "Counts down the lockout debuff every bloodlust leaves behind. That debuff, and not the "
+        .. "haste itself, is what decides when the next pull can have one.",
+    ["Lust size"]                      = "Icon size",
+    ["Lust size tip"]                  = "Side of the icon, in pixels. Drag the icon to move it.",
+    ["Lust shaded"]                    = "Dark border on the icon",
+    ["Lust shaded tip"] =
+        "Draws the addon's dark border around the icon, like dark mode does on aura icons. This "
+        .. "one is its own setting: dark mode elsewhere does not decide it.",
+    ["Lock lust"]                      = "Lock the icon in place",
+    ["Lock lust tip"]                  = "Freezes the icon where it is. It keeps counting.",
+    ["Lust preview"]                   = "Preview mode",
+    ["Lust preview tip"] =
+        "Shows the icon with a sample countdown, so you can place it without waiting for a pull.",
+    ["Hide lust debuff"]               = "Hide the debuff from your debuff row",
+    ["Hide lust debuff tip"] =
+        "Takes the lockout debuff out of your debuff row, since the icon above already counts it "
+        .. "down. Turning this off puts it back.",
+    ["Lust notice"] =
+        "Every class that can give one leaves its own debuff — shaman, mage, hunter pet, evoker — "
+        .. "and the tracker follows them all. The icon is the shaman's, whoever cast it: what it "
+        .. "says is that a bloodlust went out, not which one.",
+
+    -- Module RaidPanel
     ["Group tools"]                    = "Group tools",
+    ["Blizzard panel"]                 = "The game's panel",
     ["World markers"]                  = "Group tool panel",
     ["World markers tip"] =
         "A panel with the eight world markers, a red no-entry sign that clears them, a ready check and a "
@@ -371,15 +409,21 @@ BUI:RegisterLocale("enUS", {
     ["Pull announce"]                  = "Pulling in %d seconds.",
     ["Pull timer"]                     = "Pull countdown",
     ["Pull timer tip"]                 = "How many seconds the pull button counts down.",
-    ["Hide raid manager"]              = "Hide the raid control panel",
-    ["Hide raid manager tip"] =
-        "Hides the tab the game puts against the left edge of the screen in a raid.",
     ["Group tools notice"] =
         "The panel does not appear, disappear or resize during combat: the game refuses to show, "
         .. "hide or resize a world marker button while you are fighting. It follows the setting "
         .. "again as soon as the fight ends.",
     ["Need lead"]                      = "You need lead or assist for that.",
 
+    ["Raid manager"]                   = "Raid control panel",
+    ["Hide raid manager"]              = "Hide the raid control panel",
+    ["Hide raid manager tip"] =
+        "Hides the tab the game puts against the left edge of the screen in a raid.",
+    ["Raid manager notice"] =
+        "The panel is a protected frame: it is not put away or brought back during combat. It "
+        .. "follows the setting again as soon as the fight ends.",
+
+    -- Module CombatLog
     ["Logging"]                        = "Logging",
     ["Auto combat logging"]            = "Automatic combat logging",
     ["Auto combat logging tip"] =
@@ -429,7 +473,7 @@ BUI:RegisterLocale("enUS", {
     -- Module Windows
     ["Windows"]                        = "Windows",
     ["Moving"]                         = "Moving",
-    ["Move windows"]                   = "Move windows",
+    ["Move windows"]                   = "Allow moving the game's windows",
     ["Move windows tip"] =
         "Drag a Blizzard window and it stays where you dropped it, session after session. "
         .. "Only windows that already take mouse input can be picked up.",

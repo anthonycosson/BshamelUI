@@ -892,7 +892,7 @@ end
 BUI:RegisterModule(MODULE, {
     title    = L["Unit frames"],
     category = "Interface",
-    order    = 20,
+    order    = 10,
     secure   = true,
 
     defaults = {

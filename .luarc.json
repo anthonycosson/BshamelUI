@@ -85,6 +85,9 @@
     "DoReadyCheck", "C_PartyInfo", "LE_PARTY_CATEGORY_INSTANCE",
     "CompactRaidFrameManager",
 
+    "DebuffFrame", "BuffFrame", "C_EventUtils",
+    "NUM_CONTAINER_FRAMES", "CreateFont",
+
     "CombatLogGetCurrentEventInfo", "bit", "LoggingCombat",
     "COMBATLOG_OBJECT_TYPE_PLAYER", "COMBATLOG_OBJECT_AFFILIATION_MINE",
     "COMBATLOG_OBJECT_AFFILIATION_PARTY", "COMBATLOG_OBJECT_AFFILIATION_RAID",

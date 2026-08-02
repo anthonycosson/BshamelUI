@@ -18,7 +18,7 @@
 --  qu'il portait lui-même lui est rendue.
 --
 --  Le tiroir ne connaît pas la base de données et ne choisit pas *quels* boutons
---  il range : l'appelant lui donne une liste (voir `Modules/Minimap.lua`).
+--  il range : l'appelant lui donne une liste (voir `UI/MinimapDock.lua`).
 -- =========================================================================
 
 local _, ns = ...

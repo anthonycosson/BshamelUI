@@ -200,8 +200,8 @@ end
 
 BUI:RegisterModule(MODULE, {
     title    = L["Keystones"],
-    category = "MythicRaid",
-    order    = 10,
+    category = "QoL",
+    order    = 70,
 
     defaults = {
         answerKeysRequest = false,

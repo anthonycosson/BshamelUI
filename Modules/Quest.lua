@@ -157,7 +157,7 @@ local MODIFIER_VALUES = {
 BUI:RegisterModule(MODULE, {
     title    = L["Quest"],
     category = "QoL",
-    order    = 10,
+    order    = 30,
 
     defaults = {
         autoAccept     = false,

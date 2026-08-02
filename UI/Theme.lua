@@ -30,12 +30,28 @@ BUI.Theme = T
 -- =========================================================================
 
 T.SIZE = {
-    WINDOW_W       = 900,   -- fenêtre d'options
-    WINDOW_H       = 620,
+    -- Fenêtre d'options. Ces deux nombres ne sont pas un goût : ils sont
+    -- **mesurés** sur ce qu'il y a à montrer.
+    --
+    -- La hauteur est décidée par la colonne de navigation, pas par les pages :
+    -- trois catégories et vingt entrées demandent environ 650 unités, là où la
+    -- page la plus chargée en demande 560. C'est donc elle qui déborde la
+    -- première, et une colonne qui défile oblige à chercher une page qu'on
+    -- devrait voir.
+    --
+    -- Le plafond est l'écran : `UIParent` fait 768 unités de haut sur un client
+    -- réglé par défaut. 720 laisse une marge de deux fois vingt-quatre, ce qui
+    -- est peu mais suffit — et la fenêtre reste déplaçable et redimensionnable
+    -- pour qui veut autre chose.
+    WINDOW_W       = 1040,
+    WINDOW_H       = 720,
     WINDOW_MIN_W   = 760,
     WINDOW_MIN_H   = 480,
 
-    SIDEBAR_W      = 230,   -- colonne de navigation
+    -- Colonne de navigation. Élargie avec la fenêtre : « Gestionnaire de temps de
+    -- recharge » et « Barre d'infos (Prochainement) » sont les deux plus longs
+    -- intitulés, et ils décident de cette largeur.
+    SIDEBAR_W      = 250,
 
     PADDING        = 16,    -- marge intérieure d'un pane
     GUTTER         = 10,    -- écart entre deux panes
@@ -161,6 +177,18 @@ T.SIZE = {
 
     COUNTDOWN_PAD  = 4,     -- retrait du décompte dans la fenêtre qu'il coiffe
 
+    -- Corps du décompte. Aucun objet de police du client ne l'a : il est posé au
+    -- milieu d'une icône de rôle et doit se lire d'un coup d'œil, sans qu'on
+    -- cherche où il est. C'est la seule police que l'addon fabrique (voir plus
+    -- bas), et ce nombre est la raison pour laquelle il la fabrique.
+    COUNTDOWN_TEXT = 36,
+
+    -- Le décompte se cale au centre de l'icône de rôle, et deux pixels plus bas.
+    -- Un cadre de texte centré met le milieu de sa **boîte** sur l'ancre, or la
+    -- boîte réserve la place des jambages que « 39 » n'a pas : les chiffres
+    -- flottent donc au-dessus du centre optique tant qu'on ne les redescend pas.
+    COUNTDOWN_Y    = -2,
+
     -- Pièces posées sur les cadres de chat du client. La hauteur, elle, se
     -- règle en saisissant l'onglet : rien n'est ajouté pour elle.
     CHAT_BUTTON    = 16,    -- côté du bouton de copie
@@ -257,9 +285,9 @@ T.SIZE = {
     -- d'œil n'a pas la même taille pour tout le monde. Les bornes tiennent les
     -- extrêmes hors de portée — en dessous le compteur n'est plus lisible,
     -- au-dessus l'icône couvre le champ de bataille.
-    BATTLE_RES_ICON = 40,
-    BATTLE_RES_MIN  = 24,
-    BATTLE_RES_MAX  = 80,
+    TRACKER_ICON = 40,
+    TRACKER_MIN  = 24,
+    TRACKER_MAX  = 80,
 
     -- Barre de marqueurs. La case est celle d'un bouton de barre d'action réduit :
     -- neuf cases doivent tenir sur une rangée sans que le panneau devienne une
@@ -416,7 +444,7 @@ T.TIMING = {
 
     -- Cadence des panneaux de raid. Ils affichent des secondes : les rafraîchir
     -- à chaque image serait payer soixante fois le même texte (règle 7).
-    BATTLE_RES    = 0.2,    -- charges de résurrection et temps avant la suivante
+    TRACKER       = 0.2,    -- décomptes posés sur une icône de suivi
 
     -- Cadence du chrono d'aperçu des paliers de clé. Une seconde, parce que
     -- c'est la vitesse à laquelle un chrono court : l'aperçu doit se lire comme
@@ -455,11 +483,12 @@ local FONT_CANDIDATES = {
     -- zone de droite, il doit primer sur les en-têtes de section.
     PAGE_TITLE   = { "GameFontHighlightLarge2", "GameFontHighlightHuge", "GameFontHighlightLarge" },
 
-    -- Décompte posé sur une fenêtre du client. Une police à contour d'abord :
-    -- le chiffre se lit par-dessus une illustration, où une police sans contour
-    -- se noie dès que le fond est clair.
-    COUNTDOWN    = { "NumberFont_Outline_Huge", "NumberFontNormalHuge", "GameFontNormalHuge",
-                     "GameFontNormalLarge" },
+    -- Décompte posé sur une fenêtre du client. Ce qu'on cherche ici n'est pas un
+    -- objet de police à utiliser tel quel mais le **fichier de police de
+    -- l'interface** : celui-ci sert de source à la police fabriquée plus bas.
+    -- D'où des `GameFont*` et non des `NumberFont*` — voir le commentaire de
+    -- `T.FONT.COUNTDOWN`.
+    COUNTDOWN    = { "GameFontNormalHuge", "GameFontNormalLarge", "GameFontNormal" },
 
     -- Nombres posés sur l'icône d'un objet équipé (niveau d'objet, rang
     -- d'amélioration). Une police à contour, pour la même raison que le
@@ -488,12 +517,12 @@ local FONT_CANDIDATES = {
     -- bande basse, que le corps des paliers déborderait.
     KEY_DEATHS   = { "GameFontHighlightSmall", "GameFontHighlight" },
 
-    -- Les deux nombres posés sur l'icône des résurrections de combat : les
-    -- charges dans son coin, le temps restant en son milieu. Grasse et à contour,
-    -- comme tout ce que l'addon pose **sur** une image — l'icône d'un sort est
-    -- claire par endroits, et un chiffre sans contour y disparaît. C'est leur
-    -- couleur et leur place qui les distinguent l'un de l'autre, pas leur corps.
-    BATTLE_RES   = { "NumberFont_Outline_Large", "NumberFontNormalLarge",
+    -- Les deux nombres posés sur une icône de suivi : le compteur dans son coin,
+    -- le temps restant en son milieu. Grasse et à contour, comme tout ce que
+    -- l'addon pose **sur** une image — l'icône d'un sort est claire par endroits, et
+    -- un chiffre sans contour y disparaît. C'est leur couleur et leur place qui
+    -- les distinguent l'un de l'autre, pas leur corps.
+    TRACKER      = { "NumberFont_Outline_Large", "NumberFontNormalLarge",
                      "GameFontNormalLarge" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
@@ -514,6 +543,47 @@ for key, candidates in pairs(FONT_CANDIDATES) do
         end
     end
     T.FONT[key] = resolved
+end
+
+-- -------------------------------------------------------------------------
+--  La seule police que l'addon fabrique
+-- -------------------------------------------------------------------------
+-- Le décompte des fenêtres de file est le seul nombre de l'addon qu'aucun objet
+-- du client ne sait écrire.
+--
+-- `NumberFont_*` — ce qu'il utilisait — est la police des **dégâts** : étroite,
+-- immédiatement reconnaissable, et étrangère à tout le reste de l'interface. Un
+-- nombre écrit avec elle au milieu d'une fenêtre de Blizzard se lit comme une
+-- pièce rapportée. Les `GameFont*` sont la bonne famille, celle de tout le texte
+-- que le joueur lit, mais aucune n'existe au corps qu'il faut.
+--
+-- On reprend donc le **fichier** de la police d'interface — pris sur un objet du
+-- client, ce qui est le contraire d'écrire un chemin de `.ttf`, et ce qui suit
+-- automatiquement la langue du client — et on lui donne notre corps et son
+-- contour. Le contour tient lieu de gras : c'est ainsi que le client épaissit
+-- ses propres nombres posés sur une image, et celui-ci se pose sur une icône.
+--
+-- Nom global, exception « noms de frames » de la règle 3 : `CreateFont` publie
+-- l'objet sous son nom, et `CreateFontString` ne sait le retrouver que par là.
+--
+-- Test de capacité de bout en bout : si le client ne sait pas fabriquer de
+-- police, ou si le fichier ne se pose pas, `T.FONT.COUNTDOWN` reste l'objet du
+-- client résolu ci-dessus. Un décompte plus petit, jamais pas de décompte.
+do
+    local source = _G[T.FONT.COUNTDOWN]
+    local file   = source and source.GetFont and source:GetFont()
+
+    if file and CreateFont then
+        local font = CreateFont("BshamelUICountdownFont")
+        if font then
+            font:SetFont(file, T.SIZE.COUNTDOWN_TEXT, "OUTLINE")
+
+            -- On **relit** au lieu de croire la valeur de retour : elle n'est
+            -- booléenne que sur les clients récents, et un objet sans police
+            -- passé à `CreateFontString` lèverait.
+            if font:GetFont() then T.FONT.COUNTDOWN = "BshamelUICountdownFont" end
+        end
+    end
 end
 
 -- =========================================================================
@@ -759,19 +829,32 @@ function T.ShadeBorderPad(side)
     return pad
 end
 
---- Couleur d'un décompte : vert au départ, rouge à l'échéance, dégradé entre
---- les deux. Les deux extrémités sont les couleurs du client.
+--- Couleur d'un décompte : vert au départ, rouge à l'échéance.
+---
+--- Le trajet passe par l'**orange**, et c'est tout l'intérêt de cette fonction.
+--- Aller du vert au rouge en droite ligne fait passer par leur moyenne, qui est
+--- un olive sombre : au milieu du décompte — exactement le moment où on le
+--- regarde — le chiffre est à son plus terne, alors qu'il devrait commencer à
+--- alerter. En deux segments, le milieu tombe sur l'orange franc que le thème
+--- garde pour ce rôle, et chaque étape reste vive.
 ---@param ratio number  1 au départ, 0 à l'échéance
 ---@return number r, number g, number b
 function T.CountdownColor(ratio)
     if ratio < 0 then ratio = 0 elseif ratio > 1 then ratio = 1 end
 
-    local r1, g1, b1 = T.COLOR.RED:GetRGB()
-    local r2, g2, b2 = T.COLOR.GREEN:GetRGB()
+    local from, to, t
+    if ratio >= 0.5 then
+        from, to, t = T.COLOR.ORANGE, T.COLOR.GREEN, (ratio - 0.5) * 2
+    else
+        from, to, t = T.COLOR.RED, T.COLOR.ORANGE, ratio * 2
+    end
 
-    return r1 + (r2 - r1) * ratio,
-           g1 + (g2 - g1) * ratio,
-           b1 + (b2 - b1) * ratio
+    local r1, g1, b1 = from:GetRGB()
+    local r2, g2, b2 = to:GetRGB()
+
+    return r1 + (r2 - r1) * t,
+           g1 + (g2 - g1) * t,
+           b1 + (b2 - b1) * t
 end
 
 --- Retire le fond d'un panneau, en lui laissant sa bordure.

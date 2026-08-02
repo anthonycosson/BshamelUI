@@ -520,8 +520,8 @@ local APPLIERS = {
 
 BUI:RegisterModule(MODULE, {
     title    = L["Chat"],
-    category = "Interface",
-    order    = 30,
+    category = "QoL",
+    order    = 40,
 
     defaults = {
         keepHistory      = false,

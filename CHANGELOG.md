@@ -2,6 +2,104 @@
 
 ## Non publié
 
+### Ajouté
+- **Barre d'infos** apparaît dans *Interface*, grisée et suivie de
+  « (Prochainement) » : elle n'est pas encore écrite, et l'entrée est là pour dire
+  ce qui vient plutôt que de le laisser deviner. Elle ne s'ouvre pas.
+- **Suivi de l'interdiction de Furie sanguinaire**, dans la nouvelle page *BL &
+  Résurrections*. Ce qu'il décompte n'est pas la BL — quarante secondes, qu'on
+  voit passer — mais le **débuff d'interdiction** qu'elle laisse derrière elle :
+  dix minutes, et c'est lui qui décide si le prochain pull en aura une.
+
+  Toutes les classes qui peuvent en donner une sont reconnues : chaman, mage,
+  familier de chasseur, évocateur. Chacune pose son propre débuff, sous son propre
+  nom ; l'icône du suivi reste celle du chaman, quelle que soit celle qui a
+  lancé — ce qu'elle dit est qu'une BL est partie, pas laquelle.
+
+  Une option retire ce débuff de votre rangée d'affaiblissements tant que le suivi
+  est allumé : la même information deux fois occupe la place de ce qu'on a
+  vraiment besoin d'y lire. Taille, contour sombre, verrouillage et mode aperçu se
+  règlent comme pour les résurrections de combat.
+
+- **Les fenêtres de sacs se déplacent.** Elles étaient les seules à ne pas suivre
+  le réglage de déplacement des fenêtres. C'est la **pile** qui se déplace, d'un
+  seul geste : le jeu continue de décider du nombre de colonnes, du sens de
+  remplissage et du mode « sacs combinés », on ne fait que la poser ailleurs. Elle
+  se prend par sa **barre de titre** comme n'importe quelle fenêtre, ou par le
+  fond de la grille. La molette ne les redimensionne pas — les écarts entre sacs
+  sont calculés par le jeu pour leur taille d'origine, et les agrandir les ferait
+  se chevaucher.
+
+### Modifié
+- **Les réglages ont été rangés.** La colonne de gauche disait où les choses
+  étaient posées à l'écran ; elle dit maintenant de quoi elles s'occupent.
+
+  - La catégorie *QoL* s'appelle **Qualité de vie** : **Fenêtres**, **Sacs &
+    Réparations**, **Quête**, **Chat**, **Hôtel des ventes**, **Recherche de
+    groupe**, **Clés mythiques**, **Téléportations** et **Nuisances**.
+  - *Interface* tient tout ce qui touche à l'écran : **Général**, **Mode sombre**,
+    cadres d'unité, **barre d'infos** (à venir), barres d'action, gestionnaire de
+    temps de recharge, **fiche de personnage** et **chrono mythique+**.
+  - *MM+ / Raid* s'appelle **Outils** et tient **Panneau de contrôle**, **BL &
+    Résurrections** et **Journalisation**.
+  - Les catégories **Jeu** et **Minicarte** ont disparu. La première ne tenait
+    plus que deux pages qui appartenaient ailleurs ; la seconde rassemblait trois
+    choses qui n'avaient en commun que l'endroit où elles se posent, et l'endroit
+    n'est pas un sujet de réglage.
+
+  Aucun réglage n'est perdu ni remis à zéro : tout ce qui avait été changé suit
+  son réglage à sa nouvelle place.
+
+- **Général** ne garde que trois choses : le bouton de l'addon, la caméra et le
+  menu Échap. Il servait de fourre-tout, et chaque départ s'est fait pour la même
+  raison — la **réparation automatique** se déclenche chez le marchand, donc elle
+  est dans *Sacs & Réparations* avec la vente de la camelote ; le filtre de
+  l'**hôtel des ventes** et les **nuisances** ont leur page.
+
+- Le **mode sombre** a sa page. Il occupait le haut de *Général* avec ses sept
+  cases, et il fallait descendre la moitié de la colonne pour atteindre le premier
+  réglage qui n'était pas lui.
+- **Outils de raid** tenait quatre choses que rien ne rassemblait qu'un même
+  moment de la soirée, et la page disparaît. Les deux suivis de réserve vont dans
+  *BL & Résurrections*, la journalisation a la sienne, et la barre d'outils de
+  groupe rejoint le **panneau de contrôle** du jeu — les deux portent exactement
+  les mêmes boutons, on choisit entre eux, et les séparer laissait deux pages dont
+  aucune ne le disait.
+- Le **menu de téléportation** a la sienne, dans *Qualité de vie*. Ce qu'on y
+  règle est le menu, pas la carte à côté de laquelle son bouton se pose.
+- Le **bouton BshamelUI** et le **regroupement des boutons d'addons** sont dans
+  *Général*, l'un sous l'autre. Ils ne se lisent pas séparément : le tiroir
+  s'ouvre sur le bouton, et la case est grisée tant que le bouton est éteint.
+- Le **minuteur des fenêtres de file** est passé dans *Recherche de groupe*, le
+  seul endroit où on pense à le chercher.
+- **La fenêtre d'options s'ouvre plus grande** : 1040 × 720 au lieu de 900 × 620.
+  La hauteur est décidée par la colonne de navigation et non par les pages — trois
+  catégories et vingt entrées ne tenaient plus, et une colonne qui défile oblige à
+  chercher une page qu'on devrait voir. La colonne s'élargit du même coup, pour
+  que « Gestionnaire de temps de recharge » tienne sur sa ligne.
+
+### Corrigé
+- **Installer l'addon ne change plus rien du tout.** Le masquage du panneau de
+  contrôle des cadres de raid était le seul réglage allumé par défaut : un joueur
+  qui découvrait Bshamel UI voyait un morceau de l'interface du jeu disparaître
+  sans l'avoir demandé. Le motif ne tenait d'ailleurs pas — ce réglage était censé
+  remplacer ce panneau par le nôtre, lui-même éteint au premier lancement.
+
+  Ceux qui l'avaient déjà ne perdent rien : le réglage qu'ils avaient est écrit
+  explicitement dans leur profil au premier chargement.
+- Le **décompte** posé sur la fenêtre d'instance était écrit avec la police des
+  dégâts : étroite, immédiatement reconnaissable, et étrangère au reste de
+  l'interface. Il reprend la police de l'interface, en plus gros et à contour, et
+  se cale au centre de l'icône de rôle plutôt qu'au centre de la fenêtre — où il
+  tombait entre le nom de l'instance et l'icône, donc sur rien.
+- Sa **couleur** passait du vert au rouge en droite ligne, donc par leur moyenne,
+  qui est un olive sombre : à mi-décompte — exactement le moment où on le
+  regarde — le chiffre était à son plus terne, alors qu'il devrait commencer à
+  alerter. Il passe maintenant par l'orange, et chaque étape reste vive.
+- Le clic gauche sur le bouton BshamelUI ouvrait un tiroir vide quand le
+  regroupement des boutons d'addons avait été éteint après avoir été allumé. Il
+  rend maintenant son clic à la fenêtre d'options.
+
 ## 0.7.6 — 2026-08-01
 
 ### Modifié

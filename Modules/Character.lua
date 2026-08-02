@@ -729,8 +729,8 @@ end
 
 BUI:RegisterModule(MODULE, {
     title    = L["Character sheet"],
-    category = "Game",
-    order    = 20,
+    category = "Interface",
+    order    = 30,
 
     defaults = {
         showItemLevel    = false,
@@ -836,7 +836,16 @@ BUI:RegisterModule(MODULE, {
         end)
         self:RegisterEvent("BANKFRAME_CLOSED", stopBankWatch)
         self:RegisterEvent("PLAYERBANKSLOTS_CHANGED",     refreshBags)
-        self:RegisterEvent("PLAYERBANKBAGSLOTS_CHANGED",  refreshBags)
+        -- Les emplacements de **sacs** de banque ont eu leur propre événement, que
+        -- la refonte de la banque a retiré : le client le refuse maintenant, et le
+        -- core l'écrit dans le chat à chaque connexion. On le demande donc au
+        -- client avant de s'y abonner — test de capacité, jamais de numéro de
+        -- patch (règle 1). `PLAYERBANKSLOTS_CHANGED`, lui, couvre déjà le cas sur
+        -- un client où celui-ci n'existe plus.
+        if not C_EventUtils or not C_EventUtils.IsEventValid
+           or C_EventUtils.IsEventValid("PLAYERBANKBAGSLOTS_CHANGED") then
+            self:RegisterEvent("PLAYERBANKBAGSLOTS_CHANGED", refreshBags)
+        end
         self:RegisterEvent("ITEM_LOCK_CHANGED",           refreshBags)
         self:RegisterEvent("GET_ITEM_INFO_RECEIVED",      refreshBags)
 

@@ -36,6 +36,20 @@ local function categoryLabel(category, modules)
     return L[category.label] .. L["Coming soon suffix"]
 end
 
+--- Intitulé d'une entrée de module, suivi de la même mention quand celui-ci est
+--- une annonce.
+---
+--- La mention est portée par l'entrée elle-même et pas seulement par sa
+--- catégorie : une catégorie qui mêle des modules écrits et des annonces n'en
+--- reçoit aucune, et sans cette ligne rien ne distinguerait les secondes des
+--- premières.
+---@param mod table
+---@return string
+local function moduleLabel(mod)
+    if not mod.preview then return mod.title end
+    return mod.title .. L["Coming soon suffix"]
+end
+
 --- Construit la liste. Appelé une fois, après PLAYER_LOGIN, quand tous les
 --- modules se sont enregistrés.
 ---@param content table  frame de contenu de la zone défilante de la colonne
@@ -56,13 +70,23 @@ function Sidebar:Build(content, onSelect)
             y = y - header:GetHeight()
 
             for _, mod in ipairs(modules) do
-                local item = W.SidebarItem(content, mod.title, true)
+                local item = W.SidebarItem(content, moduleLabel(mod), true)
                 item:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
                 item:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, y)
-                item:SetScript("OnClick", function()
-                    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
-                    onSelect(mod.name)
-                end)
+
+                -- Une annonce ne s'ouvre pas. Elle occupe sa place dans la
+                -- colonne pour dire ce qui vient, et rien de plus : lui donner un
+                -- clic mènerait à une page vide, ce qui se lit comme une panne
+                -- plutôt que comme une promesse.
+                if mod.preview then
+                    item:EnableMouse(false)
+                else
+                    item:SetScript("OnClick", function()
+                        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
+                        onSelect(mod.name)
+                    end)
+                end
+
                 items[mod.name] = item
                 y = y - item:GetHeight()
             end
@@ -98,15 +122,17 @@ end
 --- Un module **éteint** est grisé : son état se lit dans la navigation, sans
 --- avoir à ouvrir la page.
 ---
---- Un module **en avant-première** ne l'est pas, bien qu'il soit éteint lui
---- aussi. Ce n'est pas le même état : il n'a jamais été allumable, le griser
---- annoncerait un réglage que le joueur pourrait changer. Et tant qu'ils sont
---- majoritaires, les griser délave toute la colonne — le doré vire au gris et
---- rien ne ressort plus.
+--- Un module **en avant-première** l'est aussi, et pour une autre raison : il
+--- n'est pas éteint, il n'existe pas encore. Grisé et sans clic, il se lit comme
+--- ce qu'il est — une annonce —, là où une entrée pleinement lisible promet une
+--- page qui s'ouvrirait.
+---
+--- Les deux états se ressemblent donc à l'œil, et c'est acceptable tant qu'ils
+--- se distinguent au geste : l'un s'ouvre et se rallume, l'autre ne répond pas.
 ---@param mod table
 ---@return number
 local function itemAlpha(mod)
-    if mod.preview then return 1 end
+    if mod.preview then return T.ALPHA.ITEM_OFF end
     return mod:Get("enabled") and 1 or T.ALPHA.ITEM_OFF
 end
 

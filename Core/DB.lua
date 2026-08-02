@@ -31,7 +31,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 4
+local SCHEMA_VERSION   = 10
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -165,6 +165,248 @@ function DB:RunMigrations()
             end
         end
         from = 4
+    end
+
+    -- Palier 5 — la page « Minicarte » n'existe plus. Elle tenait trois choses
+    -- qui n'avaient en commun que l'endroit où elles se posent, et l'endroit
+    -- n'est pas un sujet de réglage : le menu de téléportation est devenu la page
+    -- *Téléportations*, tandis que le bouton de l'addon et le tiroir de boutons
+    -- d'addons sont retournés dans *Général*, d'où le palier 2 avait sorti le
+    -- premier. Ces deux-là ne se séparent pas : le tiroir s'ouvre sur le bouton.
+    --
+    -- Deux destinations pour une source : c'est le seul palier qui éclate un
+    -- module, et c'est pour cela qu'il ne peut pas être un renommage.
+    if from < 5 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            local minimap = modules and modules.Minimap
+
+            if minimap then
+                local function into(name)
+                    modules[name] = modules[name] or {}
+                    return modules[name]
+                end
+
+                --- Ne déplace que ce qui est **écrit**. Les défauts sont retirés
+                --- du fichier à la déconnexion : l'absence d'une clé signifie
+                --- « jamais touchée » et n'a rien à migrer.
+                local function move(target, key)
+                    if minimap[key] == nil then return end
+                    local dest = into(target)
+                    if dest[key] == nil then dest[key] = minimap[key] end
+                end
+
+                move("General",   "button")
+                move("General",   "angle")
+                move("General",   "tray")
+                move("Teleports", "teleport")
+                move("Teleports", "teleportAngle")
+                move("Teleports", "hearthstone")
+
+                -- La page éteinte éteignait les trois d'un coup. Le menu de
+                -- téléportation est devenu un module et hérite donc de son
+                -- interrupteur ; les deux autres ne sont plus que des cases de
+                -- *Général*, page qu'on ne peut pas éteindre sans éteindre le
+                -- reste avec — ce sont donc les cases qui prennent l'extinction.
+                if minimap.enabled == false then
+                    into("Teleports").enabled = false
+                    into("General").button    = false
+                    into("General").tray      = false
+                end
+
+                modules.Minimap = nil
+            end
+        end
+        from = 5
+    end
+
+    -- Palier 6 — le mode sombre quitte « Général » pour sa propre page. Sept
+    -- réglages sur une page qui en comptait quinze : il en occupait le haut
+    -- entier, et on descendait la moitié de la colonne pour atteindre le
+    -- premier réglage qui n'était pas lui.
+    if from < 6 then
+        local KEYS = {
+            "darkMode", "darkUnitFrames", "darkActionBars", "darkCastBar",
+            "darkAuras", "darkCooldownManager", "darkTooltip",
+        }
+
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            local general = modules and modules.General
+
+            if general then
+                local moved = modules.DarkMode or {}
+
+                for i = 1, #KEYS do
+                    local key = KEYS[i]
+                    if general[key] ~= nil and moved[key] == nil then
+                        moved[key] = general[key]
+                    end
+                    general[key] = nil
+                end
+
+                -- « Général » éteint éteignait le mode sombre avec le reste. Le
+                -- nouveau module hérite donc de son interrupteur : sans cela, une
+                -- page éteinte depuis des mois rallumerait le mode sombre au
+                -- premier `/reload` qui suit la mise à jour.
+                if general.enabled == false then moved.enabled = false end
+
+                if next(moved) then modules.DarkMode = moved end
+            end
+        end
+        from = 6
+    end
+
+    -- Palier 7 — le minuteur des fenêtres de file quitte « Général » pour
+    -- « Recherche de groupe ». Il était dans Général faute de page où le mettre ;
+    -- celle-ci existe, et c'est le seul endroit où on pense à le chercher.
+    if from < 7 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            local general = modules and modules.General
+
+            if general and general.queueTimer ~= nil then
+                local moved = modules.GroupFinder or {}
+
+                -- « Général » éteint tenait le minuteur éteint : on ne le rallume
+                -- pas en le déplaçant sur une page qui, elle, est allumée.
+                if moved.queueTimer == nil then
+                    moved.queueTimer = general.enabled ~= false and general.queueTimer or false
+                end
+                general.queueTimer = nil
+
+                if next(moved) then modules.GroupFinder = moved end
+            end
+        end
+        from = 7
+    end
+
+    -- Palier 8 — « Outils de raid » tenait quatre outils que rien ne rassemblait
+    -- qu'un même moment de la soirée, et le module disparaît entièrement. Les deux
+    -- suivis de réserve vont dans *BL & Résurrections* ; la barre d'outils de
+    -- groupe rejoint le panneau de contrôle du client dans *Panneau de contrôle*,
+    -- parce que c'est le même sujet — l'un remplace l'autre ; la journalisation a
+    -- sa page.
+    if from < 8 then
+        local MOVED = {
+            RaidCooldowns = {
+                "battleResTracker", "battleResShaded", "battleResPreview",
+                "lockBattleRes", "battleResSize", "battleResX", "battleResY",
+            },
+            RaidPanel = {
+                "hideBlizzardPanel",
+                "worldMarkers", "markerX", "markerY", "markerScale",
+                "lockMarkers", "markersOnHover", "pullTimer",
+            },
+            CombatLog = { "autoCombatLog" },
+        }
+
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            local tools   = modules and modules.RaidTools
+
+            if tools then
+                for target, keys in pairs(MOVED) do
+                    local moved = modules[target] or {}
+
+                    for i = 1, #keys do
+                        local key = keys[i]
+                        if tools[key] ~= nil and moved[key] == nil then
+                            moved[key] = tools[key]
+                        end
+                        tools[key] = nil
+                    end
+
+                    -- La page éteinte éteignait les quatre d'un coup : chacune de
+                    -- celles qui en sortent hérite de son interrupteur.
+                    if tools.enabled == false then moved.enabled = false end
+
+                    if next(moved) then modules[target] = moved end
+                end
+
+                -- Plus rien ne vit sous ce nom : le laisser en base y ferait
+                -- traîner un `enabled` que plus aucun module ne réclame.
+                modules.RaidTools = nil
+            end
+        end
+        from = 8
+    end
+
+    -- Palier 9 — « Général » servait de fourre-tout, et la catégorie « Jeu » ne
+    -- tenait plus que lui et la fiche de personnage. Chaque réglage rejoint la
+    -- page où on le cherche : la **réparation automatique** chez le marchand,
+    -- donc dans *Sacs & Réparations* ; le filtre de l'**hôtel des ventes** dans sa
+    -- page ; les **nuisances** dans la leur. La fiche de personnage ne change que
+    -- de catégorie, ce qui ne se migre pas.
+    if from < 9 then
+        local MOVED = {
+            Bags         = { "autoRepair" },
+            AuctionHouse = { "auctionCurrentXP" },
+            Annoyances   = { "skipCinematics", "hideTalkingHead", "hideLuaErrors" },
+        }
+
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            local general = modules and modules.General
+
+            if general then
+                for target, keys in pairs(MOVED) do
+                    local moved = modules[target] or {}
+
+                    for i = 1, #keys do
+                        local key = keys[i]
+                        if general[key] ~= nil and moved[key] == nil then
+                            moved[key] = general[key]
+                        end
+                        general[key] = nil
+                    end
+
+                    -- « Général » éteint tenait tout cela éteint. Les deux
+                    -- nouveaux modules en héritent ; *Sacs*, lui, existait déjà et
+                    -- a son propre interrupteur — c'est donc la case de la
+                    -- réparation qui prend l'extinction, sans quoi on éteindrait
+                    -- au passage la vente de la camelote.
+                    if general.enabled == false then
+                        if target == "Bags" then
+                            moved.autoRepair = false
+                        else
+                            moved.enabled = false
+                        end
+                    end
+
+                    if next(moved) then modules[target] = moved end
+                end
+            end
+        end
+        from = 9
+    end
+
+    -- Palier 10 — le masquage du panneau de contrôle du client était le **seul**
+    -- réglage allumé par défaut. Installer l'addon faisait donc disparaître un
+    -- morceau de l'interface du jeu sans que personne l'ait demandé, et le motif
+    -- ne tenait pas : il était censé remplacer ce panneau par le nôtre, lui-même
+    -- éteint sur une installation neuve. Il passe à `false`.
+    --
+    -- Ce palier existe pour ceux qui étaient déjà là. Un défaut n'est jamais
+    -- écrit sur le disque (voir l'en-tête de ce fichier) : sans cette ligne, le
+    -- panneau réapparaîtrait chez tous ceux qui n'avaient jamais touché à la
+    -- case — c'est-à-dire chez tous ceux à qui il convenait. On écrit donc
+    -- explicitement ce qu'ils avaient.
+    --
+    -- Les profils traversés ici sont **forcément** antérieurs au changement : une
+    -- installation neuve part au schéma courant, et aucun palier ne s'exécute.
+    if from < 10 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            if modules then
+                local panel = modules.RaidPanel or {}
+                if panel.hideBlizzardPanel == nil then
+                    panel.hideBlizzardPanel = true
+                    modules.RaidPanel = panel
+                end
+            end
+        end
+        from = 10
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)

@@ -1,12 +1,18 @@
 -- =========================================================================
---  Bshamel UI — UI/Widgets/BattleRes.lua
---  Suivi des résurrections de combat.
+--  Bshamel UI — UI/Widgets/IconTracker.lua
+--  Une icône de sort, un compteur, un décompte.
 --
---  **Une icône de sort, et rien autour.** Le nombre de charges se pose dans son
---  coin, le temps avant la suivante en son milieu — exactement comme le client
---  habille un bouton d'action. Un cadre, un fond, un panneau : c'est ce que le
---  jeu ne met jamais autour d'une icône, et c'est ce qui faisait ressembler ce
---  suivi à une pièce rapportée.
+--  **Une icône de sort, et rien autour.** Le compteur se pose dans son coin, le
+--  temps restant en son milieu — exactement comme le client habille un bouton
+--  d'action. Un cadre, un fond, un panneau : c'est ce que le jeu ne met jamais
+--  autour d'une icône, et c'est ce qui faisait ressembler ce suivi à une pièce
+--  rapportée.
+--
+--  Deux suivis s'en servent : les **résurrections de combat**, qui ont un
+--  compteur de charges et un temps avant la suivante, et le **débuff de
+--  Bloodlust**, qui n'a qu'un temps. Le compteur se tait de lui-même quand la
+--  source n'en donne pas — c'est ce qui permet au widget de servir les deux sans
+--  rien savoir de ce qu'il compte.
 --
 --  Comme `W.Countdown`, le widget ne sait pas d'où vient l'information : on lui
 --  donne une fonction qui la rend, il l'interroge et l'affiche. Quand elle rend
@@ -29,22 +35,22 @@ local T    = BUI.Theme
 local U    = BUI.Util
 local W    = BUI.Widgets
 
----@class BUI.BattleResInfo
----@field charges number         charges disponibles
----@field maxCharges number
----@field remaining? number      secondes avant la charge suivante
----@field duration? number       durée pleine de cette recharge
+---@class BUI.TrackerInfo
+---@field charges? number        compteur du coin ; absent, le coin reste vide
+---@field maxCharges? number
+---@field remaining? number      secondes restantes, affichées au centre
+---@field duration? number       durée pleine
 
---- Suivi des résurrections de combat, masqué au départ.
----@param opts table  { getPos, setPos, isLocked, source: fun(): BUI.BattleResInfo|nil }
+--- Suivi posé sur une icône de sort, masqué au départ.
+---@param opts table  { getPos, setPos, isLocked, source: fun(): BUI.TrackerInfo|nil }
 ---@return table
-function W.BattleResTracker(opts)
+function W.IconTracker(opts)
     -- Le panneau **est** l'icône : mêmes bords, aucune marge. Il ne sert plus
     -- qu'à ce que `W.Panel` sait faire et qu'une texture ne sait pas — prendre la
     -- souris, se déplacer, retenir sa position.
     local panel = W.Panel({
-        width    = T.SIZE.BATTLE_RES_ICON,
-        height   = T.SIZE.BATTLE_RES_ICON,
+        width    = T.SIZE.TRACKER_ICON,
+        height   = T.SIZE.TRACKER_ICON,
         chrome   = "none",
         getPos   = opts.getPos,
         setPos   = opts.setPos,
@@ -55,10 +61,10 @@ function W.BattleResTracker(opts)
     icon:SetAllPoints()
     panel.icon = icon
 
-    -- Le nombre de charges est posé **sur** l'icône, dans son coin : c'est la
-    -- valeur qu'on lit d'un coup d'œil, et c'est là que le jeu met déjà le
-    -- nombre de charges d'un sort.
-    local count = panel:CreateFontString(nil, "OVERLAY", T.FONT.BATTLE_RES)
+    -- Le compteur est posé **sur** l'icône, dans son coin : c'est la valeur
+    -- qu'on lit d'un coup d'œil, et c'est là que le jeu met déjà le nombre de
+    -- charges d'un sort. Un suivi qui n'a rien à compter le laisse vide.
+    local count = panel:CreateFontString(nil, "OVERLAY", T.FONT.TRACKER)
     count:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 0, 0)
     count:SetJustifyH("RIGHT")
     panel.count = count
@@ -71,7 +77,7 @@ function W.BattleResTracker(opts)
     -- charges, pas le temps qui reste : une réserve vide est un problème dès la
     -- première seconde, et un chiffre qui vire au rouge en fin de recharge dirait
     -- l'inverse — que le danger arrive quand la charge, elle, approche.
-    local timer = panel:CreateFontString(nil, "OVERLAY", T.FONT.BATTLE_RES)
+    local timer = panel:CreateFontString(nil, "OVERLAY", T.FONT.TRACKER)
     timer:SetPoint("CENTER", icon, "CENTER", 0, 0)
     timer:SetJustifyH("CENTER")
     timer:SetTextColor(T.COLOR.LABEL:GetRGB())
@@ -92,8 +98,15 @@ function W.BattleResTracker(opts)
 
         panel:Show()
 
-        count:SetText(tostring(info.charges or 0))
-        count:SetTextColor(T.StatusColor((info.charges or 0) > 0))
+        -- `nil` et non zéro : un suivi sans compteur — le débuff de Bloodlust —
+        -- ne doit pas afficher « 0 » dans le coin de son icône, ce qui se lirait
+        -- comme une réserve vide.
+        if info.charges then
+            count:SetText(tostring(info.charges))
+            count:SetTextColor(T.StatusColor(info.charges > 0))
+        else
+            count:SetText("")
+        end
 
         local remaining = info.remaining
         if not remaining or remaining <= 0 then
@@ -106,7 +119,7 @@ function W.BattleResTracker(opts)
         timer:SetFormattedText("%d:%02d", minutes, seconds)
     end
 
-    local tick = U.Throttle(T.TIMING.BATTLE_RES, update)
+    local tick = U.Throttle(T.TIMING.TRACKER, update)
 
     --- Branche le suivi sur sa source et l'allume.
     function panel:Start()
@@ -124,7 +137,7 @@ function W.BattleResTracker(opts)
     --- Côté de l'icône, en pixels.
     ---@param side number
     function panel:SetIconSize(side)
-        side = U.Clamp(side or T.SIZE.BATTLE_RES_ICON, T.SIZE.BATTLE_RES_MIN, T.SIZE.BATTLE_RES_MAX)
+        side = U.Clamp(side or T.SIZE.TRACKER_ICON, T.SIZE.TRACKER_MIN, T.SIZE.TRACKER_MAX)
         self:SetSize(side, side)
 
         -- Le débordement du contour est proportionnel à l'icône : il se retrace

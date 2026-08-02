@@ -1293,7 +1293,7 @@ qu'on n'avait pas vues venir :
   une chaîne secrète — elle *est* de type `string` — et lève sur la comparaison
   suivante. Le garde de secret doit donc venir **avant** toute comparaison, pas
   à la fin de la liste des tests, où il ne protège plus rien. Deux endroits
-  écrivaient déjà `U.IsSecret` en dernier (`Modules/Minimap.lua`) : ils
+  écrivaient déjà `U.IsSecret` en dernier (`Modules/Teleports.lua`) : ils
   n'avaient pas encore levé, faute d'être passés sur une valeur secrète.
 
 Le texte d'une ligne de chat est secret dès que **notre propre hook** a teint
@@ -1627,7 +1627,7 @@ d'identifiants écrite à la main est faux au premier changement de saison, et i
 est faux **en silence** : les donjons sortis restent proposés, les nouveaux
 manquent, et rien ne le signale.
 
-**Ce qu'on fait** — `Modules/Minimap.lua` ne tient aucune liste de donjons, et
+**Ce qu'on fait** — `Modules/Teleports.lua` ne tient aucune liste de donjons, et
 n'en construit même pas une : le contenu vient **entièrement du grimoire** (voir
 la note suivante). Le mode défi ne sert qu'à une chose, l'**ordre** :
 
@@ -1689,7 +1689,7 @@ n'apparaissent donc nulle part, alors qu'il les a bel et bien appris.
 donjon ». Le seul endroit où elles vivent toutes est le **grimoire**, puisque ce
 sont des sorts appris comme les autres.
 
-**Ce qu'on fait** — `Modules/Minimap.lua` parcourt le grimoire :
+**Ce qu'on fait** — `Modules/Teleports.lua` parcourt le grimoire :
 
 - `C_SpellBook.GetNumSpellBookSkillLines()` puis
   `C_SpellBook.GetSpellBookSkillLineInfo(i)`, qui donne `itemIndexOffset` et
@@ -2417,7 +2417,7 @@ l'addon qui la recycle à chaque pas du joueur. Elle ressort dans le tiroir sous
 un autre gisement, et son propriétaire ne peut plus la replacer, puisque le
 tiroir masque `SetPoint` pendant l'emprunt.
 
-**Ce qu'on fait** — trois signes dans `Modules/Minimap.lua`, et il en faut trois :
+**Ce qu'on fait** — trois signes dans `UI/MinimapDock.lua`, et il en faut trois :
 
 - un **pool** se reconnaît à ses numéros : plusieurs cadres qui partagent la même
   racine de nom une fois le numéro retiré. La famille entière est écartée, y
@@ -2540,3 +2540,110 @@ refusée). Il coûte donc un numéro de version à chaque fois.
 échoue sur la différence. Le sens du test compte : ce qui est déclaré dans
 `.luarc.json` doit l'être dans `.luacheckrc`, l'inverse restant permis — la
 seconde liste peut citer des noms que l'analyse locale connaît d'elle-même.
+
+---
+
+## L'interdiction de Furie sanguinaire n'a pas un débuff mais sept
+
+**Symptôme** — un suivi qui ne cherche que « Rassasié » (57724) reste muet dès
+qu'un mage, un évocateur ou un familier de chasseur a lancé la Furie. Le groupe
+est pourtant bel et bien sous interdiction : personne ne peut en relancer une, et
+rien ne l'affiche.
+
+**Cause** — chaque source pose **son propre débuff**, avec son propre nom et son
+propre identifiant. Ils se remplacent l'un l'autre et ont tous la même durée,
+mais aucun n'est l'alias d'un autre : il n'existe pas d'identifiant « canonique »
+de l'interdiction.
+
+Ceux que l'on connaît, et que `Modules/RaidCooldowns.lua` reconnaît :
+
+| ID | Débuff | Source |
+|---|---|---|
+| 57724 | Rassasié | Furie sanguinaire (chaman Horde) |
+| 57723 | Épuisement | Héroïsme (chaman Alliance) |
+| 80354 | Déplacement temporel | Distorsion temporelle (mage) |
+| 264689 | Fatigué | Rage primitive (familier du chasseur) |
+| 95809 | Démence | Hystérie ancestrale (familier du chasseur) |
+| 160455 | Fatigué | Vents inférieurs (familier du chasseur) |
+| 390435 | Épuisement | Furie des Aspects (évocateur) |
+
+**Ce qu'on fait** — une table d'identifiants, traitée comme une **donnée** et non
+comme du code : un identifiant inconnu ne se déclenche jamais, donc la liste est
+sûre à étendre, et une extension qui ajoute une source se règle en ajoutant une
+ligne. La lecture passe par `C_UnitAuras.GetPlayerAuraBySpellID`, qui répond
+débuff par débuff, avec un repli sur `GetDebuffDataByIndex` pour un client qui ne
+la publierait pas.
+
+L'**icône**, elle, est celle du chaman (sort 2825) quelle que soit la source. Ce
+que le suivi annonce est « une Furie est partie », pas « laquelle » : une icône
+qui changerait de classe en classe demanderait de la relire à chaque fois pour
+constater qu'elle dit toujours la même chose.
+
+---
+
+## Les sacs ne sont pas des fenêtres, mais une pile
+
+**Symptôme** — ajouter `ContainerFrame1` à la liste des fenêtres déplaçables les
+épingle **toutes au même endroit**, et le client les remet en place à la première
+ouverture.
+
+**Cause** — deux choses, et il faut les deux pour comprendre.
+
+Le client dispose ses sacs en pile depuis le coin bas-droit de l'écran, chaque
+cadre ancré à `UIParent` avec un décalage qu'il **recalcule en entier** à chaque
+ouverture, fermeture ou changement de réglage de sacs. Épingler chaque cadre à sa
+propre position détruit donc la pile.
+
+Et le hook sur `SetPoint` qui sert à réimposer la position des autres fenêtres se
+déclenche **cadre par cadre**, donc au milieu de la passe de disposition, quand
+la moitié de la pile est encore à son ancienne place. Tout décalage mesuré à ce
+moment-là l'est sur un état incohérent.
+
+**Ce qu'on fait** — on ne refait pas la disposition, on la **translate**, et on
+se branche sur la passe et non sur les cadres : `UpdateContainerFrameAnchors` est
+post-hookée, et à la fin de chaque passe tous les cadres portent une disposition
+cohérente. Il suffit alors de mesurer l'écart entre le coin bas-droit que le
+client a choisi et celui que le joueur veut, et de décaler tout le monde
+d'autant. Le nombre de colonnes, le sens de remplissage, le mode « sacs
+combinés » : tout continue de venir du client.
+
+Le **coin** et non le centre : une pile change de taille dès qu'on ouvre un sac de
+plus, et son centre bouge alors que son coin bas-droit non.
+
+La molette n'est pas branchée dessus, et c'est délibéré : les écarts entre sacs
+sont calculés par le client pour leur taille d'origine, agrandir les cadres sans
+agrandir les écarts les ferait se chevaucher, et recalculer les écarts serait
+refaire sa disposition.
+
+---
+
+## `DebuffFrame.auraFrames` n'est pas une liste
+
+**Symptôme** — le masquage d'un débuff du joueur ne fait rien, sans erreur. La
+table existe pourtant : `DebuffFrame.auraFrames ~= nil` répond `true`.
+
+**Cause** — deux pièges qui se cumulent, et le premier cache le second.
+
+`auraFrames` est **indexée par identifiant d'instance d'aura**, pas par un entier
+consécutif. `#auraFrames` vaut donc zéro, et un parcours de `1` à `#auraFrames`
+ne visite aucun cadre. Le test « la table existe » est vrai, la boucle tourne à
+vide, et rien ne le signale.
+
+Et `UNIT_AURA` arrive **avant** que le client n'ait rebâti sa rangée : ce qu'on
+masque à ce moment-là est réaffiché juste après. C'est le même piège que les
+auras de la cible (voir la note sur `UpdateAuras`), et il se traite de la même
+façon — on s'accroche à la reconstruction plutôt que de parier sur l'événement.
+
+Relevé sur un client 12.0 : `auraPool` est `nil`, `auraFrames` et `AuraContainer`
+existent.
+
+**Ce qu'on fait** — `pairs` et non une boucle numérique, et on essaie **tous** les
+chemins connus au lieu de s'arrêter au premier qui répond : `auraFrames`, un
+`auraPool`/`auraPools` s'il y en a un, les enfants d'`AuraContainer`, ceux du
+cadre lui-même. Masquer deux fois le même cadre ne coûte rien ; en manquer un
+coûte la fonctionnalité entière.
+
+L'identifiant du sort se lit d'abord par `auraInstanceID` et
+`C_UnitAuras.GetAuraDataByAuraInstanceID` : sur un client récent, le bouton ne
+retient que l'identifiant d'instance et c'est au client qu'il faut redemander de
+quel sort il s'agit.

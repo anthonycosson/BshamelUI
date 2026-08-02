@@ -1,17 +1,6 @@
 -- =========================================================================
---  Bshamel UI — Modules/Minimap.lua
---  Ce qui vit sur le pourtour de la minicarte.
---
---  Deux boutons, un seul endroit pour les régler. Le bouton de l'addon vivait
---  auparavant dans **Général** ; il est ici depuis que cette page existe, et un
---  palier de migration (`Core/DB.lua`) déplace le réglage de ceux qui l'avaient
---  changé. Le nom d'un module est une clé de base de données : déplacer un
---  réglage d'un module à l'autre se migre, ça ne se renomme pas.
---
---  Le module ne dessine rien. Il dit *quels* boutons ranger et *quoi* mettre
---  dans le menu ; le tiroir (`UI/Widgets/Tray.lua`) sait emprunter un cadre et
---  le rendre, le menu (`UI/Widgets/SecureMenu.lua`) sait faire cliquer une
---  action du jeu. C'est la même séparation que le mode sombre.
+--  Bshamel UI — Modules/Teleports.lua
+--  Un menu qui rassemble tout ce qui déplace le personnage.
 --
 --  Le menu tient en deux sections : les **pierres de foyer** — celle qu'on a
 --  choisie, plus celles qui ont leur propre temps de recharge —, et les
@@ -19,8 +8,19 @@
 --  La rotation vient du client, pas d'une liste écrite ici : elle suit donc les
 --  saisons sans qu'on y revienne.
 --
---  Réversibilité : les deux boutons se cachent, et le tiroir rend chaque bouton
---  emprunté à son parent, à ses ancrages et à sa strate d'origine.
+--  Il s'ouvre par un bouton posé sur le pourtour de la minicarte, ou par une
+--  macro que le module sait créer — c'est la raison pour laquelle le réglage vit
+--  ici et non dans une page de minicarte : ce qu'on règle, c'est le menu, pas la
+--  carte à côté de laquelle son bouton se pose.
+--
+--  Le module ne dessine rien : il dit *quoi* mettre dans le menu, et
+--  `UI/Widgets/SecureMenu.lua` sait faire cliquer une action du jeu.
+--
+--  `secure = true` : le menu est fait de boutons d'action **sécurisés**, qui ne
+--  se touchent pas en combat. Le core diffère donc l'allumage et l'extinction du
+--  module à la sortie de combat.
+--
+--  Réversibilité : le bouton se cache et le menu se ferme.
 -- =========================================================================
 
 local _, ns = ...
@@ -30,217 +30,10 @@ local U    = BUI.Util
 local W    = BUI.Widgets
 local L    = ns.L
 
-local MODULE = "Minimap"
+local MODULE = "Teleports"
 
 -- =========================================================================
---  Boutons d'addons : qui a le droit d'être rangé
--- =========================================================================
--- On ne range que ce qui appartient à un autre addon. Les boutons du client
--- restent où ils sont : ils font partie de la minicarte, pas de son encombrement.
---
--- Deux filtres se complètent. Le premier est la liste des cadres du client, qui
--- sont nommés et connus ; le second est un préfixe, parce que Blizzard nomme ses
--- pièces de minicarte d'après elle et qu'une nouvelle apparaît à chaque
--- extension — un cadre inconnu qui s'appelle « Minimap quelque chose » est
--- presque sûrement le sien.
---
--- Un troisième écarte ce qui n'appartient à personne : les **épingles** que les
--- addons de carte posent sur la minicarte (voir plus bas).
-
-local CLIENT_FRAMES = {
-    MinimapZoomIn = true, MinimapZoomOut = true,
-    MinimapBackdrop = true, MinimapCluster = true, MinimapNorthTag = true,
-    MinimapZoneTextButton = true, MinimapCompassTexture = true,
-    GameTimeFrame = true, TimeManagerClockButton = true,
-    QueueStatusMinimapButton = true, QueueStatusButton = true,
-    GarrisonLandingPageMinimapButton = true,
-    ExpansionLandingPageMinimapButton = true,
-    AddonCompartmentFrame = true,
-}
-
-local CLIENT_PREFIXES = { "Minimap", "MiniMap", "GameTime", "QueueStatus", "AddonCompartment" }
-
---- Bouton posé par une bibliothèque d'icônes. Il porte toujours ce préfixe, et
---- c'est le cas le plus fréquent — la moitié des addons passent par là.
-local LIB_PREFIX = "LibDBIcon10_"
-
----@param name string
----@return boolean
-local function isClientFrame(name)
-    if CLIENT_FRAMES[name] then return true end
-    if name:find(LIB_PREFIX, 1, true) == 1 then return false end
-
-    for i = 1, #CLIENT_PREFIXES do
-        if name:find(CLIENT_PREFIXES[i], 1, true) == 1 then return true end
-    end
-    return false
-end
-
--- =========================================================================
---  Épingles de carte : ce qui ressemble à un bouton sans en être un
--- =========================================================================
--- Un addon de récolte pose ses gisements **sur la minicarte**, et il les pose
--- exactement comme un bouton : des cadres `Button` nommés, enfants de la carte,
--- affichés. Rien ne les distingue d'un bouton d'addon pour qui regarde leur
--- type — et il y en a trente à l'écran. Le tiroir se remplissait donc de
--- « GatherMatePin1 », « GatherMatePin2 »… jusqu'à ce qu'on n'y trouve plus rien.
---
--- Pire que l'encombrement : une épingle rangée est une épingle **volée** à son
--- addon, qui la recycle à chaque pas du joueur. Elle ressortirait dans le tiroir
--- sous un autre gisement, et son propriétaire ne pourrait plus la replacer.
---
--- Trois signes, et il en faut trois : chacun rattrape ce que le précédent laisse
--- passer. Le pool ne se voit pas quand une seule épingle est affichée à
--- l'instant du parcours ; le vocabulaire ne voit que les mots auxquels on a
--- pensé — « GatherMateIcon12 » n'en contient aucun ; la taille, elle, ne demande
--- rien au nom.
-
---- Racine d'un nom, sans son numéro de série. Un pool nomme ses cadres
---- « <racine>1 », « <racine>2 »… : la racine est ce qui les rassemble.
----@param name string
----@return string
-local function nameStem(name)
-    return (name:gsub("%d+$", ""))
-end
-
---- Mots par lesquels se terminent les noms d'épingles. Ils disent ce que le
---- cadre **est**, là où un bouton d'addon dit à qui il appartient — et un addon
---- a un bouton, pas une collection.
-local PIN_WORDS = { "Pin", "Pins", "Node", "Nodes", "Waypoint", "POI" }
-
----@param name string
----@return boolean
-local function looksLikePin(name)
-    local stem = nameStem(name)
-    for i = 1, #PIN_WORDS do
-        local word = PIN_WORDS[i]
-        if stem:sub(-#word) == word then return true end
-    end
-    return false
-end
-
---- Le cadre a-t-il la taille d'un bouton ? C'est le signe qui ne demande rien au
---- nom, donc le seul qui vaille pour un addon dont on ignore les habitudes : une
---- épingle fait la moitié d'un bouton de minicarte — c'est ce qui la rend lisible
---- au milieu de la carte —, un panneau en fait le double.
----
---- Les bornes sont larges à dessein. Elles ne trient pas les boutons entre eux :
---- elles séparent ce qui est un bouton de ce qui n'en est pas un.
----@param frame table
----@return boolean
-local function buttonSized(frame)
-    if not (frame.GetWidth and frame.GetHeight) then return false end
-
-    local width, height = frame:GetWidth(), frame:GetHeight()
-    local min,   max    = T.SIZE.MINIMAP_BUTTON_MIN, T.SIZE.MINIMAP_BUTTON_MAX
-
-    return width  >= min and width  <= max
-       and height >= min and height <= max
-end
-
---- Nos propres boutons, qu'on ne range évidemment pas dans notre tiroir.
-local ours = {}
-
----@param frame table
----@return boolean
-local function isAddonButton(frame)
-    if not frame or ours[frame] then return false end
-
-    -- Un cadre interdit lève à la moindre question posée : on n'en pose aucune.
-    if frame.IsForbidden and frame:IsForbidden() then return false end
-
-    -- Un cadre **protégé** ne se range pas. Le déplacer, le reparenter ou changer
-    -- sa strate est réservé à l'interface de Blizzard : le client refuse et
-    -- affiche « BshamelUI a été bloqué à cause d'une action qui n'est utilisable
-    -- que par l'IU de Blizzard ».
-    --
-    -- La liste de noms ne suffit pas à les écarter tous : le client en ajoute à
-    -- chaque extension, et un addon peut très bien bâtir son bouton sur un
-    -- template sécurisé — un bouton qui lance un sort en est un. La question se
-    -- pose donc au cadre lui-même, qui répond juste dans tous les cas.
-    if frame.IsProtected and frame:IsProtected() then return false end
-
-    if not (frame.GetName and frame.IsShown and frame.IsObjectType) then return false end
-
-    local name = frame:GetName()
-    if not name then return false end
-
-    -- Le préfixe d'une bibliothèque d'icônes **est** une réponse : rien d'autre
-    -- ne s'appelle ainsi, et ce qui s'appelle ainsi est le bouton d'un addon.
-    local fromLibrary = name:find(LIB_PREFIX, 1, true) == 1
-
-    -- Un bouton, ou un cadre de bibliothèque qui n'en est pas tout à fait un :
-    -- certaines versions posent une frame et lui greffent les clics.
-    if not (frame:IsObjectType("Button") or fromLibrary) then
-        return false
-    end
-
-    -- Un bouton caché l'est parce que son addon l'a voulu. Le ranger le ferait
-    -- réapparaître dans le tiroir, ce qui défait le geste de quelqu'un d'autre.
-    if not frame:IsShown() then return false end
-
-    -- Les signes qui écartent les épingles ne valent que pour le reste : une
-    -- bibliothèque nomme d'après l'addon et jamais d'après une collection, et un
-    -- addon a le droit de vouloir son bouton plus petit que ceux du client.
-    if not fromLibrary and (looksLikePin(name) or not buttonSized(frame)) then
-        return false
-    end
-
-    return not isClientFrame(name)
-end
-
---- Cadres qui portent les boutons du pourtour. Trois, parce que le client a
---- déplacé les siens d'une extension à l'autre et que les addons suivent.
----@return table[]
-local function scanRoots()
-    return { Minimap, MinimapBackdrop, MinimapCluster }
-end
-
---- Tables de travail. Réutilisées : la recherche tourne à chaque addon chargé
---- (règle 7).
-local candidates = {}
-local families   = {}
-
----@return table[]
-local function findAddonButtons()
-    wipe(candidates)
-    wipe(families)
-
-    local roots = scanRoots()
-    for i = 1, #roots do
-        local root = roots[i]
-        if root and root.GetChildren then
-            for _, child in ipairs({ root:GetChildren() }) do
-                if isAddonButton(child) then
-                    local stem = nameStem(child:GetName())
-                    families[stem] = (families[stem] or 0) + 1
-                    candidates[#candidates + 1] = child
-                end
-            end
-        end
-    end
-
-    -- Une racine portée par plusieurs cadres est un **pool**, donc des épingles :
-    -- un addon pose un bouton, pas une famille numérotée. On écarte la famille
-    -- entière, y compris son premier membre — c'est tout ou rien, sans quoi le
-    -- tiroir volerait une épingle sur trente.
-    local kept = 0
-    for i = 1, #candidates do
-        local frame = candidates[i]
-        if families[nameStem(frame:GetName())] == 1 then
-            kept = kept + 1
-            candidates[kept] = frame
-        end
-    end
-    for i = #candidates, kept + 1, -1 do
-        candidates[i] = nil
-    end
-
-    return candidates
-end
-
--- =========================================================================
---  Menu de téléportation : ce qu'il propose
+--  Ce que le menu propose
 -- =========================================================================
 -- Des identifiants, et rien d'autre : le nom et l'icône viennent du client, donc
 -- dans la langue du joueur et avec l'illustration du patch courant.
@@ -867,97 +660,8 @@ local function buildEntries(mod)
 end
 
 -- =========================================================================
---  Les deux boutons
+--  Le bouton et le menu
 -- =========================================================================
-
-local addonButton, teleportButton, clickTarget
-local tray, menu
-
----@param mod table
-local function applyAddonButton(mod)
-    if not mod:Get("button") then
-        if addonButton then addonButton:Hide() end
-        return
-    end
-
-    if not addonButton then
-        addonButton = W.MinimapButton({
-            tooltipTitle = L["Bshamel UI"],
-            tooltipText  = L["Minimap button tip"],
-
-            -- Deux gestes sur un seul bouton, et le tiroir n'en demande plus un
-            -- à lui : un bouton d'addon qui en ajoute un second pour ranger ceux
-            -- des autres se moque du monde.
-            --
-            -- Le clic gauche ouvre le tiroir, **ou** la fenêtre d'options quand
-            -- il n'y a pas de tiroir : un clic qui ne fait rien se lit comme un
-            -- bouton cassé.
-            onClick = function(mouseButton)
-                -- Le tiroir s'ouvre même vide : il dit alors qu'il n'y a rien à
-                -- ranger, ce qui est une réponse. Refuser de s'ouvrir ne se
-                -- distinguerait pas d'un bouton cassé.
-                if mouseButton ~= "RightButton" and tray then
-                    tray:PlaceNear(addonButton)
-                    tray:Toggle()
-                    return
-                end
-                if BUI.Config and BUI.Config.Toggle then BUI.Config:Toggle() end
-            end,
-
-            getAngle = function() return mod:Get("angle") end,
-            setAngle = function(angle) mod:Set("angle", angle) end,
-        })
-        if not addonButton then return end
-        ours[addonButton] = true
-    end
-
-    addonButton:Refresh()
-    addonButton:Show()
-end
-
--- ---------------------------------------------------------------------------
---  Tiroir des boutons d'addons
--- ---------------------------------------------------------------------------
--- Le tiroir n'a pas de bouton à lui : il s'ouvre au clic gauche sur le bouton de
--- l'addon, et se pose à côté de lui.
---
--- Il **exige** donc ce bouton, et pas seulement pour s'ouvrir : sans lui, les
--- boutons rangés seraient invisibles et rien ne permettrait de les ressortir.
--- Éteindre le bouton de l'addon rend donc les boutons empruntés à la minicarte.
-
----@param mod table
----@return boolean
-local function trayWanted(mod)
-    return mod:Get("tray") and mod:Get("button") and true or false
-end
-
----@param mod table
-local function refreshTray(mod)
-    if not (tray and trayWanted(mod)) then return end
-
-    -- Reparenter un cadre en combat est refusé par le client, même quand le
-    -- cadre ne lui appartient pas. Ce qui est repoussé ici est rattrapé à la
-    -- sortie de combat, où cette même fonction est rappelée.
-    if InCombatLockdown() then return end
-
-    tray:Hold(findAddonButtons())
-end
-
----@param mod table
-local function applyTray(mod)
-    if not trayWanted(mod) then
-        if tray then tray:ReleaseAll() end
-        return
-    end
-
-    if not Minimap then return end
-    tray = tray or W.Tray(UIParent, L["Addon buttons empty"])
-    refreshTray(mod)
-end
-
--- ---------------------------------------------------------------------------
---  Menu de téléportation
--- ---------------------------------------------------------------------------
 
 -- Le menu ne dépend **pas** du bouton de minicarte. Le réglage `teleport` ne
 -- décide que de l'affichage de ce bouton-là ; le menu, lui, s'ouvre aussi depuis
@@ -966,6 +670,8 @@ end
 -- Il se construit donc à la demande : tant que personne ne l'a ouvert et que le
 -- bouton est éteint, il n'existe pas et ne coûte rien — ni parcours du grimoire,
 -- ni boutons sécurisés.
+
+local teleportButton, menu, clickTarget
 
 ---@param mod table
 local function refreshMenu(mod)
@@ -1122,7 +828,6 @@ local function applyTeleport(mod)
             setAngle   = function(angle) mod:Set("teleportAngle", angle) end,
         })
         if not teleportButton then return end
-        ours[teleportButton] = true
     end
 
     teleportButton:Refresh()
@@ -1130,27 +835,7 @@ local function applyTeleport(mod)
     refreshMenu(mod)
 end
 
--- =========================================================================
---  Application d'ensemble
--- =========================================================================
-
----@param mod table
-local function applyAll(mod)
-    applyAddonButton(mod)
-    applyTray(mod)
-    applyTeleport(mod)
-end
-
 local APPLIERS = {
-    -- Le bouton de l'addon entraîne le tiroir : c'est lui qui l'ouvre, donc
-    -- l'éteindre doit rendre les boutons empruntés plutôt que de les laisser
-    -- rangés dans un tiroir que plus rien ne déplie.
-    button = function(mod)
-        applyAddonButton(mod)
-        applyTray(mod)
-    end,
-
-    tray        = applyTray,
     teleport    = applyTeleport,
     hearthstone = refreshMenu,
 }
@@ -1160,28 +845,17 @@ local APPLIERS = {
 -- =========================================================================
 
 BUI:RegisterModule(MODULE, {
-    title    = L["Minimap"],
-    category = "Interface",
-    order    = 35,
-
-    -- Le menu est fait de boutons d'action **sécurisés**, et le tiroir reparente
-    -- des cadres. Ni l'un ni l'autre ne se touche en combat : le core diffère
-    -- donc l'allumage et l'extinction du module à la sortie de combat, ce qui
-    -- couvre aussi la restitution des boutons empruntés.
+    title    = L["Teleports"],
+    category = "QoL",
+    order    = 80,
     secure   = true,
 
     defaults = {
-        button = false,
-        -- Angles sur le pourtour, en degrés. Réglages sans contrôle : ils se
-        -- changent en déplaçant le bouton, pas dans cette fenêtre. Deux valeurs
-        -- distinctes, pour que les deux boutons allumés ensemble ne se
+        teleport = false,
+        -- Angle sur le pourtour, en degrés. Réglage sans contrôle : il se change
+        -- en déplaçant le bouton, pas dans cette fenêtre. Une valeur distincte de
+        -- celle du bouton de l'addon, pour que les deux allumés ensemble ne se
         -- superposent pas au premier affichage.
-        angle  = 200,
-
-        -- Le tiroir n'a pas de bouton : il s'ouvre sur celui de l'addon.
-        tray   = false,
-
-        teleport      = false,
         teleportAngle = 160,
 
         -- Pierre de foyer montrée par le menu. Toutes celles qui partagent le
@@ -1194,24 +868,12 @@ BUI:RegisterModule(MODULE, {
         { type = "header", text = L["Buttons"] },
         {
             type    = "toggle",
-            key     = "button",
-            text    = L["Minimap button"],
-            tooltip = L["Minimap button tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "tray",
-            text    = L["Group addon buttons"],
-            tooltip = L["Group addon buttons tip"],
-        },
-
-        { type = "header", text = L["Teleports"] },
-        {
-            type    = "toggle",
             key     = "teleport",
             text    = L["Teleport menu"],
             tooltip = L["Teleport menu tip"],
         },
+
+        { type = "header", text = L["Menu"] },
         {
             -- Pas de `disabled`, pour la même raison que la macro plus bas : le
             -- menu ne dépend pas du bouton de minicarte. Qui l'ouvre par sa
@@ -1243,13 +905,7 @@ BUI:RegisterModule(MODULE, {
     OnEnable = function(self)
         -- La macro doit trouver sa cible même quand aucun bouton n'est affiché.
         ensureClickTarget(self)
-        applyAll(self)
-
-        -- Les boutons d'addons apparaissent au chargement de leur addon, et rien
-        -- ne les annonce : on repasse une fois la rafale retombée.
-        local settle = U.Debounce(T.TIMING.TRAY_SETTLE, function() refreshTray(self) end)
-        self:RegisterEvent("ADDON_LOADED", settle)
-        self:RegisterEvent("PLAYER_ENTERING_WORLD", settle)
+        applyTeleport(self)
 
         -- Le menu suit ce que le personnage possède et connaît.
         local rebuild = U.Debounce(T.TIMING.MENU_SETTLE, function() refreshMenu(self) end)
@@ -1261,26 +917,19 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("CHALLENGE_MODE_MAPS_UPDATE", rebuild)
         self:RegisterEvent("PLAYER_ENTERING_WORLD",      rebuild)
 
-        -- Ni les attributs d'un bouton sécurisé ni un changement de parent ne
-        -- passent en combat : ce qui a été refusé pendant le combat est rattrapé
-        -- ici.
-        self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-            refreshMenu(self)
-            refreshTray(self)
-        end)
+        -- Les attributs d'un bouton sécurisé ne se posent pas en combat : ce qui
+        -- a été refusé pendant le combat est rattrapé ici.
+        self:RegisterEvent("PLAYER_REGEN_ENABLED", function() refreshMenu(self) end)
     end,
 
     OnDisable = function()
-        if tray then tray:ReleaseAll() end
         if menu then menu:Close() end
-
-        if addonButton    then addonButton:Hide() end
         if teleportButton then teleportButton:Hide() end
     end,
 
     OnSettingChanged = function(self, key)
         if key == nil then
-            applyAll(self)
+            applyTeleport(self)
             return
         end
 

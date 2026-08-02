@@ -74,9 +74,10 @@ local SCALE_MODIFIER = "CTRL"
 --- Général sait déjà le mettre à l'échelle (`compactGameMenu`). Deux moteurs sur
 --- la même frame se contrediraient à chaque ouverture.
 ---
---- Les sacs n'y sont pas non plus : le client réancre leurs cadres à chaque
---- recalcul de disposition, et notre réimposition entrerait dans un bras de fer
---- avec lui. Ils demandent un traitement à part, pas une ligne de plus ici.
+--- Les sacs n'y sont pas non plus, et c'est pour une autre raison : ils ne sont
+--- pas des fenêtres indépendantes mais une **pile**, que le client redispose en
+--- entier à chaque ouverture. Une ligne de plus ici les épinglerait chacun au
+--- même endroit. Ils ont leur propre section, plus bas.
 local PRELOADED = {
     "CharacterFrame",
     "FriendsFrame",
@@ -412,6 +413,11 @@ local drag = {}
 
 local dragTicker
 
+--- Renseignées par la section « sacs », plus bas. Le glisser doit savoir
+--- déplacer une pile, et la pile a besoin du glisser : l'un des deux doit être
+--- annoncé avant l'autre.
+local placeBagsAt, bagCornerScreen
+
 --- Le geste demandé est-il fait ?
 ---@return boolean
 local function gestureHeld()
@@ -427,6 +433,7 @@ local function stopDrag()
     local frame = drag.frame
     if not frame then return end
     drag.frame = nil
+    drag.bags  = nil
 
     -- On n'écrit le réglage qu'ici, et pas à chaque image : un message de
     -- changement par image inonderait tout ce qui écoute la base.
@@ -470,9 +477,18 @@ local function followCursor()
     sx = U.Clamp(sx, 0, GetScreenWidth() * ues)
     sy = U.Clamp(sy, 0, GetScreenHeight() * ues)
 
-    drag.x = (sx - ucx * ues) / es
-    drag.y = (sy - ucy * ues) / es
-    place(frame, drag.x, drag.y)
+    -- Une pile de sacs se mesure en unités de l'écran et non de l'un de ses
+    -- cadres : ce qu'on suit est son coin, qui n'appartient à aucun d'eux.
+    local unit = drag.bags and ues or es
+
+    drag.x = (sx - ucx * ues) / unit
+    drag.y = (sy - ucy * ues) / unit
+
+    if drag.bags then
+        placeBagsAt(drag.x, drag.y)
+    else
+        place(frame, drag.x, drag.y)
+    end
 end
 
 ---@param frame table
@@ -480,19 +496,30 @@ end
 local function startDrag(frame, entry)
     if protectedNow(frame) and InCombatLockdown() then return end
 
-    local fcx, fcy = frame:GetCenter()
-    if not fcx then return end
+    -- Le point suivi n'est pas le même selon ce qu'on tient. Une fenêtre est
+    -- suivie par son centre ; une pile de sacs par son **coin bas-droit**, celui
+    -- que le client lui-même prend pour appui — c'est le seul repère qui ne
+    -- bouge pas quand on ouvre ou ferme un sac de plus.
+    local startX, startY
+    if entry.bags then
+        startX, startY = bagCornerScreen()
+    else
+        local fcx, fcy = frame:GetCenter()
+        local es = frame:GetEffectiveScale()
+        if fcx and es then startX, startY = fcx * es, fcy * es end
+    end
+    if not startX then return end
 
-    local es = frame:GetEffectiveScale()
-    if not es then return end
-
-    captureOrigin(frame, entry)
+    -- Pas de relevé d'origine pour une pile : ce n'est pas un ancrage qu'on lui
+    -- rendra, c'est la disposition du client qu'on laissera reprendre la main.
+    if not entry.bags then captureOrigin(frame, entry) end
 
     drag.frame   = frame
     drag.name    = entry.name
+    drag.bags    = entry.bags
     drag.x, drag.y = nil, nil
     drag.cursorX, drag.cursorY = GetCursorPosition()
-    drag.startX, drag.startY   = fcx * es, fcy * es
+    drag.startX, drag.startY   = startX, startY
 
     if not dragTicker then
         dragTicker = W.Ticker(T.TIMING.DRAG, followCursor)
@@ -685,10 +712,256 @@ local function tryHook(name)
     hookFrame(_G[name], name)
 end
 
+-- =========================================================================
+--  Les sacs : une pile, et non des fenêtres
+-- =========================================================================
+-- Les sacs ne passent pas par `hookFrame`, et c'est le sujet entier de cette
+-- section.
+--
+-- **Ce ne sont pas des fenêtres indépendantes.** Le client les dispose en pile
+-- depuis le coin bas-droit de l'écran, chacune ancrée à `UIParent` avec un
+-- décalage qu'il recalcule à chaque ouverture, fermeture, ou changement de
+-- réglage de sacs. Épingler chaque cadre séparément les empilerait tous au même
+-- endroit : ce qu'on déplace est la **pile**, et un seul réglage la décrit.
+--
+-- **On ne refait pas sa disposition, on la translate.** Après chaque passe du
+-- client, tous les cadres portent une disposition cohérente ; il suffit de
+-- mesurer l'écart entre le coin qu'il a choisi et celui que le joueur veut, et
+-- de décaler tout le monde d'autant. Rien de la mise en page n'est réécrit —
+-- nombre de colonnes, sens de remplissage, sacs combinés ou non : tout continue
+-- de venir de lui, et une prochaine extension qui la change ne casse rien.
+--
+-- **On se branche sur la passe, pas sur les cadres.** C'est la raison pour
+-- laquelle les sacs n'ont jamais pu marcher avec le hook sur `SetPoint` des
+-- autres fenêtres : celui-ci se déclenche cadre par cadre, donc *au milieu* de
+-- la disposition, quand la moitié de la pile est encore à l'ancienne place. Le
+-- décalage y serait mesuré sur un état incohérent. On attend donc la fin de la
+-- passe, une seule fois, et on décale.
+--
+-- **Le coin et non le centre.** Une pile change de taille dès qu'on ouvre un sac
+-- de plus ; son centre bouge alors, son coin bas-droit non. C'est aussi l'appui
+-- que le client prend lui-même.
+--
+-- Ce qui n'est **pas** fait : la molette. Les écarts entre sacs sont calculés
+-- par le client pour leur taille d'origine ; agrandir les cadres sans agrandir
+-- les écarts les ferait se chevaucher, et recalculer les écarts serait refaire
+-- sa disposition — exactement ce que cette section évite. Les sacs se déplacent,
+-- ils ne se redimensionnent pas.
+
+--- Clé de la pile dans les réglages. Une seule pour tous les cadres.
+local BAGS_NAME = "Bags"
+
+--- Fonction de disposition du client. Le nom est un test de capacité comme un
+--- autre : absente, les sacs ne sont simplement pas déplaçables.
+local BAG_LAYOUT_FUNC = "UpdateContainerFrameAnchors"
+
+--- Cadre unique du mode « sacs combinés ». Quand il est affiché, c'est lui la
+--- pile entière.
+local COMBINED_BAGS = "ContainerFrameCombinedBags"
+
+--- Repli quand le client ne publie pas son propre compte. Une borne, pas une
+--- liste : un numéro qui n'existe pas rend `nil` et ne coûte rien.
+local BAG_FRAMES_MAX = 13
+
+--- Table de travail : la pile est relue à chaque passe de disposition (règle 7).
+local bags = {}
+
+--- Cadres de la pile actuellement affichés.
+---@return table[]
+local function bagFrames()
+    wipe(bags)
+
+    local combined = _G[COMBINED_BAGS]
+    if usable(combined) and combined:IsShown() then
+        bags[1] = combined
+        return bags
+    end
+
+    local count = NUM_CONTAINER_FRAMES or BAG_FRAMES_MAX
+    for i = 1, count do
+        local frame = _G["ContainerFrame" .. i]
+        if usable(frame) and frame:IsShown() then
+            bags[#bags + 1] = frame
+        end
+    end
+    return bags
+end
+
+--- Coin bas-droit de la pile, en pixels d'écran absolus.
+--- `nil` quand aucun sac n'est ouvert : il n'y a alors pas de pile.
+---@return number|nil right, number|nil bottom
+function bagCornerScreen()
+    local frames = bagFrames()
+    local right, bottom
+
+    for i = 1, #frames do
+        local frame = frames[i]
+        local es = frame:GetEffectiveScale()
+        local r, b = frame:GetRight(), frame:GetBottom()
+
+        if es and r and b then
+            r, b = r * es, b * es
+            if not right or r > right then right = r end
+            if not bottom or b < bottom then bottom = b end
+        end
+    end
+
+    return right, bottom
+end
+
+--- Le coin, exprimé comme les autres positions : un décalage depuis le centre de
+--- `UIParent`, dans ses unités à lui.
+---@return number|nil x, number|nil y
+local function bagCornerOffset()
+    local right, bottom = bagCornerScreen()
+    if not right then return nil, nil end
+
+    local ucx, ucy = UIParent:GetCenter()
+    local ues = UIParent:GetEffectiveScale()
+    if not (ucx and ues and ues > 0) then return nil, nil end
+
+    return (right - ucx * ues) / ues, (bottom - ucy * ues) / ues
+end
+
+--- Décale toute la pile pour que son coin tombe sur `x, y`.
+---
+--- Idempotente : rappelée sans que le client ait redisposé, l'écart est nul et
+--- rien ne bouge.
+---@param x number
+---@param y number
+function placeBagsAt(x, y)
+    local cx, cy = bagCornerOffset()
+    if not cx then return end
+
+    local ues = UIParent:GetEffectiveScale()
+    if not (ues and ues > 0) then return end
+
+    local dx, dy = (x - cx) * ues, (y - cy) * ues
+    if dx == 0 and dy == 0 then return end
+
+    local frames = bagFrames()
+    for i = 1, #frames do
+        local frame = frames[i]
+        local es = frame:GetEffectiveScale()
+        local sx, sy = screenOffset(frame)
+
+        if sx and es and es > 0 then
+            place(frame, (sx + dx) / es, (sy + dy) / es)
+        end
+    end
+end
+
+--- Où le **client** avait posé chaque sac, en unités du cadre. C'est ce qu'on
+--- lui rendra : on ne rappelle pas sa fonction de disposition pour cela, car
+--- l'appeler depuis notre code tainterait l'arbre des sacs, qui portent des
+--- boutons sécurisés.
+---
+--- Tables réutilisées d'une passe à l'autre (règle 7).
+local bagOrigin = {}
+
+--- Relève la disposition du client.
+---@param fresh boolean  vrai quand le client vient d'écrire, donc que ce qu'on
+---                      lit est bien de lui et non de nous
+local function captureBagLayout(fresh)
+    if not fresh and next(bagOrigin) then return end
+
+    local frames = bagFrames()
+    for i = 1, #frames do
+        local frame = frames[i]
+        local es = frame:GetEffectiveScale()
+        local sx, sy = screenOffset(frame)
+
+        if sx and es and es > 0 then
+            local origin = bagOrigin[frame] or {}
+            origin.x, origin.y = sx / es, sy / es
+            bagOrigin[frame] = origin
+        end
+    end
+end
+
+--- Repose la pile là où le joueur l'a mise.
+local function applyBags()
+    if not host then return end
+
+    local pos = host.GetPosition(BAGS_NAME)
+    if not pos then return end
+    if drag.bags then return end            -- ne pas se battre avec le glisser
+
+    captureBagLayout(false)
+    placeBagsAt(pos.x, pos.y)
+end
+
+--- Fin d'une passe de disposition du client : ce que portent les cadres est le
+--- sien, on le relève avant de le décaler.
+local function onBagLayout()
+    captureBagLayout(true)
+    applyBags()
+end
+
+--- Pièces du haut d'un sac par lesquelles on doit pouvoir le prendre.
+---
+--- La barre de titre d'un sac **prend la souris pour elle** : un clic dessus
+--- n'atteint jamais l'`OnMouseDown` du cadre parent, si bien que le seul endroit
+--- où le glisser répondait était le fond de la grille — c'est-à-dire partout sauf
+--- là où l'on est tenté de saisir une fenêtre.
+---
+--- Même remède que la carte du monde (`DRAG_HANDLES`) : on branche aussi le
+--- glisser sur l'enfant qui intercepte. Les noms sont des tests de capacité, un
+--- champ absent est simplement sauté.
+local BAG_HANDLES = { "TitleContainer", "PortraitContainer", "TopTileStreaks" }
+
+--- Branche la pile. Idempotent : `U.GuardedHook` ne pose jamais deux fois le
+--- même hook, et `attachDrag` est repoussé par `bagsHooked`.
+local bagsHooked = {}
+
+local function hookBags()
+    -- La disposition d'abord : sans elle, un glisser poserait la pile une fois
+    -- et le client la reprendrait à la première ouverture de sac.
+    U.GuardedHook(BAG_LAYOUT_FUNC, onBagLayout, function() return M:IsActive() end)
+
+    local count = NUM_CONTAINER_FRAMES or BAG_FRAMES_MAX
+    for i = 0, count do
+        local name  = (i == 0) and COMBINED_BAGS or ("ContainerFrame" .. i)
+        local frame = _G[name]
+
+        if usable(frame) and not bagsHooked[frame] then
+            bagsHooked[frame] = true
+
+            -- Une seule entrée d'état pour toute la pile : c'est le même réglage
+            -- qu'on écrit, quel que soit le sac qu'on a attrapé.
+            local entry = { name = BAGS_NAME, bags = true }
+            state[frame] = entry
+            attachDrag(frame, frame, entry)
+
+            for h = 1, #BAG_HANDLES do
+                attachDrag(frame[BAG_HANDLES[h]], frame, entry)
+            end
+
+            frame:HookScript("OnHide", function()
+                if drag.frame == frame then stopDrag() end
+            end)
+        end
+    end
+end
+
+--- Rend chaque sac là où le client l'avait posé, sans rien effacer en base.
+local function restoreBags()
+    for frame, origin in pairs(bagOrigin) do
+        if usable(frame) and frame:IsShown() then
+            BUI.safecall(place, frame, origin.x, origin.y)
+        end
+    end
+    wipe(bagOrigin)
+end
+
 --- Branche les fenêtres qu'un addon de Blizzard vient d'apporter.
 --- À appeler sur `ADDON_LOADED`.
 ---@param addonName string
 function M:OnAddonLoaded(addonName)
+    -- Les cadres de sacs sont là dès la connexion, mais rebrancher ne coûte rien
+    -- et couvre un client qui en créerait un de plus en cours de session.
+    hookBags()
+
     local frames = ON_DEMAND[addonName]
     if not frames then return end
     for i = 1, #frames do tryHook(frames[i]) end
@@ -711,6 +984,8 @@ function M:Start()
         end
     end
 
+    hookBags()
+
     self:Refresh()
 end
 
@@ -725,6 +1000,10 @@ function M:Refresh()
             BUI.safecall(applyStored, frame, entry)
         end
     end
+
+    -- La pile de sacs n'est pas dans `hooked` : elle ne se repose pas cadre par
+    -- cadre, mais d'un seul geste (voir la section « sacs »).
+    BUI.safecall(applyBags)
 end
 
 --- Rend toutes les fenêtres à leur état d'origine et range les frames de
@@ -751,6 +1030,11 @@ function M:Stop()
     end
 
     host = nil
+
+    -- **Après** le débranchement, et l'ordre est l'inverse de celui des autres
+    -- fenêtres. Rendre la pile, c'est faire redisposer le client ; tant que
+    -- l'hôte est là, notre propre hook sur sa disposition la reprendrait aussitôt.
+    restoreBags()
 end
 
 --- Rend toutes les fenêtres **et** efface ce que la base sait d'elles.
@@ -769,6 +1053,7 @@ function M:ResetAll()
                 host.SetScale(entry.name, nil)
             end
         end
+        host.SetPosition(BAGS_NAME, nil, nil)
     end
 
     for i = 1, #hooked do
@@ -778,6 +1063,10 @@ function M:ResetAll()
             BUI.safecall(restoreOrigin, frame, entry)
         end
     end
+
+    -- La position de la pile vient d'être effacée : `applyBags` ne trouvera plus
+    -- rien à reposer, et la disposition du client reprend la main pour de bon.
+    restoreBags()
 end
 
 --- Nombre de fenêtres actuellement épinglées, pour l'affichage des options.
@@ -792,5 +1081,10 @@ function M:CountPinned()
             count = count + 1
         end
     end
+
+    -- La pile compte pour une : c'est une position, et c'est ainsi qu'on la
+    -- déplace et qu'on la remet en place.
+    if host.GetPosition(BAGS_NAME) then count = count + 1 end
+
     return count
 end

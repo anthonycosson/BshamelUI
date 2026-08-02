@@ -34,11 +34,14 @@ BUI.Modules = Modules
 ---
 --- Aucune catégorie ne porte le nom d'un de ses modules : un intitulé répété
 --- juste sous lui-même donne une navigation qui a l'air cassée.
+--- La catégorie « Jeu » a disparu : chacun de ses modules a rejoint la page où on
+--- le cherche, et une catégorie ne se garde pas pour son nom.
 BUI.CATEGORIES = {
-    { key = "Game",       label = "Game" },
     { key = "Interface",  label = "Interface" },
-    { key = "QoL",        label = "QoL" },
-    { key = "MythicRaid", label = "Mythic+ / Raid" },
+    { key = "QoL",        label = "Quality of life" },
+    -- La clé reste `MythicRaid` : elle ne sert qu'à regrouper, et la renommer
+    -- toucherait cinq modules pour changer un intitulé.
+    { key = "MythicRaid", label = "Tools" },
 }
 
 --- name -> définition
@@ -141,7 +144,11 @@ function BUI:RegisterModule(name, definition)
 
     local mod = definition
     mod.name      = name
-    mod.category  = mod.category or "Game"
+    -- Repli sur la première catégorie déclarée : un module sans catégorie doit
+    -- s'afficher quelque part, et un nom écrit ici en dur deviendrait faux le jour
+    -- où cette catégorie-là disparaîtrait — c'est précisément ce qui est arrivé à
+    -- « Jeu ».
+    mod.category  = mod.category or BUI.CATEGORIES[1].key
     mod.title     = mod.title or name
     mod.order     = mod.order or 100
     mod._index    = registrationIndex

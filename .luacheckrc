@@ -162,6 +162,21 @@ read_globals = {
     -- le ranger, comme les autres cadres du client.
     "CompactRaidFrameManager",
 
+    -- Rangées d'auras du joueur : on y cherche le débuff d'interdiction de Furie
+    -- sanguinaire pour le masquer, par tous les chemins que le client publie.
+    "DebuffFrame", "BuffFrame",
+
+    -- Validité d'un événement. Sert à ne pas s'abonner à un événement que le
+    -- client a retiré, ce qu'il refuserait bruyamment.
+    "C_EventUtils",
+
+    -- Nombre de cadres de sacs. Une borne du client, avec repli écrit en dur.
+    "NUM_CONTAINER_FRAMES",
+
+    -- Fabrique d'objets de police. Le décompte des files est la seule police que
+    -- l'addon construit, faute d'objet du client au corps qu'il faut.
+    "CreateFont",
+
     -- Journal de combat. Les drapeaux disent à qui appartient une unité ; `bit`
     -- est la bibliothèque de manipulation de bits du client, absente du Lua 5.1
     -- standard sur lequel se base l'analyse.

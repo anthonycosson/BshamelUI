@@ -10,12 +10,9 @@ local BUI = ns.BUI
 BUI:RegisterLocale("frFR", {
     -- Fenêtre d'options
     ["Bshamel UI"]              = true,
-    ["Game"]                    = "Jeu",
     ["Interface"]               = true,
-    ["QoL"]                     = true,
-    -- « MM+ » et non « Mythique+ » : c'est ainsi que les joueurs francophones
-    -- l'écrivent, et la colonne est étroite.
-    ["Mythic+ / Raid"]          = "MM+ / Raid",
+    ["Quality of life"]         = "Qualité de vie",
+    ["Tools"]                   = "Outils",
     ["Search..."]               = "Rechercher...",
     ["Reset this page"]         = "Réinitialiser cette page",
     ["Reset page confirm"]      = "Remettre tous les réglages de cette page à leur valeur par défaut ?",
@@ -60,7 +57,9 @@ BUI:RegisterLocale("frFR", {
 
     -- Module General
     ["General"]                        = "Général",
+    -- Module DarkMode
     ["Enable dark mode"]               = "Activer le mode sombre",
+    ["What it darkens"]                = "Ce qu'il assombrit",
     ["Dark action bars tip"]           = "Boutons, bordures et habillage derrière chaque barre d'action.",
     ["Cast bar"]                       = "Barre d'incantation",
     ["Dark cast bar tip"]              = "Votre barre d'incantation et celle de votre cible.",
@@ -74,6 +73,7 @@ BUI:RegisterLocale("frFR", {
         "La bordure de l'infobulle. Son fond reste tel que le jeu l'a réglé.",
     ["Cooldown manager"]               = "Gestionnaire de temps de recharge",
     ["Dark cooldown manager tip"]      = "Les barres du gestionnaire de temps de recharge et leurs icônes.",
+    -- Module General (suite)
     ["Camera"]                         = "Caméra",
     ["Max camera distance"]            = "Augmenter la distance maximale de la caméra",
     ["Max camera distance tip"] =
@@ -97,7 +97,8 @@ BUI:RegisterLocale("frFR", {
     ["Repaired from guild"]            = "Réparé pour %s sur les fonds de guilde.",
     ["Repaired from purse"]            = "Réparé pour %s.",
     ["Repair too expensive"]           = "Pas assez d'argent pour réparer : il faut %s.",
-    ["Auction current expansion"]      = "Hôtel des ventes : extension actuelle uniquement",
+    ["Auction house"]                  = "Hôtel des ventes",
+    ["Auction current expansion"]      = "Extension actuelle uniquement",
     ["Auction current expansion tip"] =
         "Limite la navigation de l'hôtel des ventes aux objets de l'extension actuelle.",
     ["Annoyances"]                     = "Nuisances",
@@ -111,6 +112,9 @@ BUI:RegisterLocale("frFR", {
     ["Hide Lua errors"]                = "Masquer les erreurs Lua",
     ["Hide Lua errors tip"] =
         "Supprime la fenêtre d'erreur. Les erreurs restent transmises aux gestionnaires d'erreurs.",
+
+    -- Module InfoBar (annonce)
+    ["Info bar"]                       = "Barre d'infos",
 
     -- Module Character
     ["Character sheet"]                = "Fiche de personnage",
@@ -229,14 +233,14 @@ BUI:RegisterLocale("frFR", {
     ["Copy chat"]                      = "Copier le chat",
     ["Copy chat hint"]                 = "Tout est sélectionné : Ctrl+C pour copier.",
 
-    -- Module Minimap
-    ["Minimap"]                        = "Minicarte",
+    -- Bouton de l'addon (module General)
     ["Buttons"]                        = "Boutons",
-    ["Minimap button"]                 = "Afficher le bouton BshamelUI",
+    ["Minimap button"]                 = "Afficher le bouton BshamelUI sur la minicarte",
     ["Minimap button tip"] =
         "Clic gauche : liste d'addons\n"
         .. "Clic droit : options\n"
         .. "Glisser : déplacer autour de la minicarte",
+
     ["Addon buttons empty"]            = "Aucune icône d'addon à afficher.",
     ["Group addon buttons"]            = "Regrouper les boutons d'addons",
     ["Group addon buttons tip"] =
@@ -244,8 +248,11 @@ BUI:RegisterLocale("frFR", {
         .. "du bouton BshamelUI, au clic gauche. Les boutons du jeu ne sont pas touchés, et "
         .. "éteindre le réglage remet chaque bouton exactement où il était. Demande le bouton "
         .. "BshamelUI : c'est lui qui ouvre le tiroir.",
+
+    -- Module Teleports
     ["Teleports"]                      = "Téléportations",
-    ["Teleport menu"]                  = "Afficher un bouton de téléportation",
+    ["Menu"]                           = true,
+    ["Teleport menu"]                  = "Afficher un bouton de téléportation sur la minicarte",
     ["Teleport menu tip"] =
         "Ajoute un bouton à côté de la minicarte : vos pierres de foyer, et les donjons de la "
         .. "saison en cours dans un sous-menu. Un clic sur une ligne l'utilise.",
@@ -282,7 +289,7 @@ BUI:RegisterLocale("frFR", {
     ["Teleport spell prefixes"]        = "Voie",
 
     -- Module Bags
-    ["Bags"]                           = "Sacs",
+    ["Bags and repairs"]               = "Sacs & Réparations",
     ["Sold junk"]                      = "Camelote vendue pour %s.",
     ["Merchants"]                      = "Marchands",
     ["Auto-sell junk"]                 = "Vendre automatiquement la camelote",
@@ -326,9 +333,9 @@ BUI:RegisterLocale("frFR", {
     ["Auto role check"]                = "Valider les vérifications de rôle",
     ["Auto role check tip"] =
         "Répond automatiquement à la vérification des rôles, avec ceux que vous aviez déjà choisis.",
-    -- Module RaidTools
-    ["Raid tools"]                     = "Outils de raid",
-    ["Combat"]                         = true,
+    -- Module RaidCooldowns
+    ["Bloodlust and battle res"]       = "BL & Résurrections",
+    ["Battle resurrections"]           = "Résurrections de combat",
     ["Battle res tracker"]             = "Suivi des résurrections de combat",
     ["Battle res tracker tip"] =
         "Affiche le nombre de résurrections de combat restantes et le délai avant la suivante.",
@@ -346,7 +353,36 @@ BUI:RegisterLocale("frFR", {
     ["Battle res preview tip"] =
         "Affiche l'icône hors instance, remplie de valeurs d'exemple, pour pouvoir la placer.",
 
+    ["Bloodlust"]                      = "Furie sanguinaire",
+    ["Lust tracker"]                   = "Suivi de l'interdiction de BL",
+    ["Lust tracker tip"] =
+        "Décompte le débuff d'interdiction que toute BL laisse derrière elle. C'est lui, et non "
+        .. "la hâte, qui décide du moment où le prochain pull pourra en avoir une.",
+    ["Lust size"]                      = "Taille de l'icône",
+    ["Lust size tip"]                  = "Côté de l'icône, en pixels. Elle se déplace à la souris.",
+    ["Lust shaded"]                    = "Contour sombre sur l'icône",
+    ["Lust shaded tip"] =
+        "Pose le contour sombre de l'addon autour de l'icône, comme le mode sombre le fait sur "
+        .. "les icônes d'auras. Celui-ci est son propre réglage : le mode sombre ailleurs n'en "
+        .. "décide pas.",
+    ["Lock lust"]                      = "Verrouiller la position de l'icône",
+    ["Lock lust tip"]                  = "Fige l'icône où elle est. Elle continue de compter.",
+    ["Lust preview"]                   = "Mode aperçu",
+    ["Lust preview tip"] =
+        "Affiche l'icône avec un décompte d'exemple, pour pouvoir la placer sans attendre un pull.",
+    ["Hide lust debuff"]               = "Masquer le débuff dans les affaiblissements",
+    ["Hide lust debuff tip"] =
+        "Retire le débuff d'interdiction de votre rangée d'affaiblissements, puisque l'icône "
+        .. "ci-dessus le décompte déjà. Décocher le remet.",
+    ["Lust notice"] =
+        "Chaque classe qui peut en donner une laisse son propre débuff — chaman, mage, familier "
+        .. "de chasseur, évocateur — et le suivi les reconnaît tous. L'icône est celle du chaman, "
+        .. "quelle que soit la classe qui l'a lancée : ce qu'elle dit est qu'une BL est partie, "
+        .. "pas laquelle.",
+
+    -- Module RaidPanel
     ["Group tools"]                    = "Outils de groupe",
+    ["Blizzard panel"]                 = "Le panneau du jeu",
     ["World markers"]                  = "Panneau d'outils de groupe",
     ["World markers tip"] =
         "Un panneau avec les huit marqueurs au sol, un rond barré rouge qui les retire tous, une "
@@ -373,15 +409,21 @@ BUI:RegisterLocale("frFR", {
     ["Pull announce"]                  = "Pull dans %d secondes.",
     ["Pull timer"]                     = "Durée du pull",
     ["Pull timer tip"]                 = "Nombre de secondes décomptées par le bouton de pull.",
-    ["Hide raid manager"]              = "Masquer le panneau de contrôle du jeu",
-    ["Hide raid manager tip"] =
-        "Masque l'onglet que le jeu colle contre le bord gauche de l'écran en raid.",
     ["Group tools notice"] =
         "Le panneau n'apparaît pas, ne disparaît pas et ne se redimensionne pas en combat : le jeu "
         .. "refuse de montrer, de cacher ou de retailler un bouton de marqueur pendant qu'on se "
         .. "bat. Il suit de nouveau le réglage dès la fin du combat.",
     ["Need lead"]                      = "Il faut être chef ou promu pour ça.",
 
+    ["Raid manager"]                   = "Panneau de contrôle",
+    ["Hide raid manager"]              = "Masquer le panneau de contrôle du jeu",
+    ["Hide raid manager tip"] =
+        "Masque l'onglet que le jeu colle contre le bord gauche de l'écran en raid.",
+    ["Raid manager notice"] =
+        "Le panneau est un cadre protégé : il n'est ni rangé ni rendu pendant un combat. Il suit "
+        .. "de nouveau le réglage dès la fin du combat.",
+
+    -- Module CombatLog
     ["Logging"]                        = "Journalisation",
     ["Auto combat logging"]            = "Journalisation automatique des combats",
     ["Auto combat logging tip"] =
@@ -432,7 +474,7 @@ BUI:RegisterLocale("frFR", {
     -- Module Windows
     ["Windows"]                        = "Fenêtres",
     ["Moving"]                         = "Déplacement",
-    ["Move windows"]                   = "Déplacer les fenêtres",
+    ["Move windows"]                   = "Permettre le déplacement des fenêtres du jeu",
     ["Move windows tip"] =
         "Faites glisser une fenêtre du jeu : elle reste où vous la posez, "
         .. "d'une session à l'autre. Seules les fenêtres qui reçoivent déjà "
@@ -443,7 +485,7 @@ BUI:RegisterLocale("frFR", {
         .. "un glisser n'importe où dans le corps d'une fenêtre la déplace.",
     ["No modifier"]                    = "Aucune touche",
     ["Size"]                           = "Taille",
-    ["Scale windows"]                  = "Redimensionner à Ctrl + molette",
+    ["Scale windows"]                  = "Redimensionner avec Ctrl + Molette",
     ["Scale windows tip"] =
         "Maintenez Ctrl et tournez la molette au-dessus d'une fenêtre pour "
         .. "l'agrandir ou la réduire. La taille est mémorisée comme la position.",

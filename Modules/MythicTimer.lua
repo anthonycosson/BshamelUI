@@ -418,8 +418,8 @@ end
 
 BUI:RegisterModule(MODULE, {
     title    = L["Mythic+ timer"],
-    category = "MythicRaid",
-    order    = 30,
+    category = "Interface",
+    order    = 40,
 
     defaults = {
         thresholds  = false,

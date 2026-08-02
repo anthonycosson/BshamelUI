@@ -9,7 +9,7 @@ un seul addon, un seul dossier, zéro dépendance.
 
 | Module | Catégorie | État |
 |---|---|---|
-| Quête — acceptation et rendu automatiques | QoL | fonctionnel |
+| Quête — acceptation et rendu automatiques | Qualité de vie | fonctionnel |
 
 ---
 

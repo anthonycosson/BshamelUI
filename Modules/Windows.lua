@@ -127,8 +127,8 @@ end
 
 BUI:RegisterModule(MODULE, {
     title    = L["Windows"],
-    category = "Interface",
-    order    = 5,
+    category = "QoL",
+    order    = 10,
     secure   = true,
 
     defaults = {

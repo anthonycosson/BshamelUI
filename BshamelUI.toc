@@ -54,7 +54,7 @@ UI\Widgets\ChatTools.lua
 # Panneaux posés à même l'écran. `Panel.lua` est leur socle commun : il vient
 # donc avant les trois pièces qui s'appuient dessus.
 UI\Widgets\Panel.lua
-UI\Widgets\BattleRes.lua
+UI\Widgets\IconTracker.lua
 UI\Widgets\MarkerBar.lua
 # Les paliers d'une clé ne sont pas un panneau : ils se posent sur le bloc de
 # chrono du client. Ce fichier ne dépend donc pas de `Panel.lua`, il est rangé
@@ -72,6 +72,11 @@ UI\Shade.lua
 # fabrique : repositionneur sécurisé, capteur de molette, boucle de suivi.
 UI\Move.lua
 
+# Le pourtour de la minicarte : le bouton de l'addon et le tiroir qui range ceux
+# des autres. Un seul mécanisme, deux réglages — « Général » les porte tous les
+# deux, et le moteur reste hors du module comme celui du mode sombre.
+UI\MinimapDock.lua
+
 # Fenêtre d'options
 UI\Config\PageBuilder.lua
 UI\Config\Sidebar.lua
@@ -79,19 +84,25 @@ UI\Config\ConfigFrame.lua
 
 # Modules
 Modules\General.lua
+Modules\DarkMode.lua
 Modules\Character.lua
 Modules\ActionBars.lua
 Modules\UnitFrames.lua
+Modules\InfoBar.lua
 Modules\CooldownManager.lua
 Modules\Windows.lua
 Modules\Chat.lua
-Modules\Minimap.lua
 Modules\Bags.lua
+Modules\AuctionHouse.lua
 Modules\Quest.lua
 Modules\Keystones.lua
 Modules\GroupFinder.lua
-Modules\RaidTools.lua
+Modules\Teleports.lua
+Modules\RaidCooldowns.lua
 Modules\MythicTimer.lua
+Modules\RaidPanel.lua
+Modules\CombatLog.lua
+Modules\Annoyances.lua
 
 # `Modules/Upcoming.lua` a disparu : un module annoncé n'est plus une déclaration
 # sans code, c'est son propre fichier avec `preview = true` en tête. Le core

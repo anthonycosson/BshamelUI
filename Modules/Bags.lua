@@ -1,11 +1,18 @@
 -- =========================================================================
 --  Bshamel UI — Modules/Bags.lua
---  Les sacs : ce qu'on en sort chez le marchand, et ce qu'on y détruit.
+--  Les sacs : ce qu'on en sort chez le marchand, ce qu'on y détruit, et la
+--  réparation qui va avec.
 --
---  Deux comportements, tous deux éteints par défaut, tous deux entièrement
---  réversibles : le premier n'existe que le temps d'une visite chez un marchand,
---  le second est un hook gardé qui devient inerte quand le module s'éteint
---  (CLAUDE.md règle 6).
+--  La **réparation automatique** est ici et non dans *Général* pour la raison qui
+--  décide de tout le rangement de cet addon : elle se déclenche chez le marchand,
+--  exactement comme la vente de la camelote, et c'est là qu'on la cherche. Un
+--  palier de migration (`Core/DB.lua`) suit le réglage de ceux qui l'avaient
+--  changé.
+--
+--  Trois comportements, tous éteints par défaut, tous entièrement réversibles :
+--  la vente n'existe que le temps d'une visite chez un marchand, la réparation
+--  aussi, et les confirmations sont un hook gardé qui devient inerte quand le
+--  module s'éteint (CLAUDE.md règle 6).
 --
 --  Le niveau d'objet sur l'équipement rangé n'est pas ici : il est écrit, et il
 --  vit dans **Fiche de personnage**, avec l'autre affichage du même nombre.
@@ -234,16 +241,50 @@ local function hookConfirmations(mod)
 end
 
 -- =========================================================================
+--  Réparation automatique
+-- =========================================================================
+
+---@param mod table
+local function repairAtMerchant(mod)
+    if not mod:Get("autoRepair") then return end
+    if not (CanMerchantRepair and CanMerchantRepair()) then return end
+
+    local cost, canRepair = GetRepairAllCost()
+    if not canRepair or not cost or cost <= 0 then return end
+
+    -- Fonds de guilde d'abord. Le client ne dit pas si le paiement a abouti :
+    -- on redemande le coût, qui retombe à zéro quand la guilde a payé.
+    if CanGuildBankRepair and CanGuildBankRepair() then
+        RepairAllItems(true)
+        local remaining = GetRepairAllCost()
+        if not remaining or remaining <= 0 then
+            mod:Print(string.format(L["Repaired from guild"], U.Money(cost)))
+            return
+        end
+        cost = remaining
+    end
+
+    if GetMoney() < cost then
+        mod:Print(string.format(L["Repair too expensive"], U.Money(cost)))
+        return
+    end
+
+    RepairAllItems(false)
+    mod:Print(string.format(L["Repaired from purse"], U.Money(cost)))
+end
+
+-- =========================================================================
 --  Déclaration du module
 -- =========================================================================
 
 BUI:RegisterModule(MODULE, {
-    title    = L["Bags"],
-    category = "Interface",
-    order    = 40,
+    title    = L["Bags and repairs"],
+    category = "QoL",
+    order    = 20,
 
     defaults = {
         autoSellJunk    = false,
+        autoRepair      = false,
         fillDeleteInput = false,
 
         -- Éteint, et c'est le seul défaut possible : la fenêtre qu'on saute est
@@ -266,6 +307,12 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Skip sell confirmation tip"],
         },
         { type = "warning", text = L["Skip sell confirmation warning"] },
+        {
+            type    = "toggle",
+            key     = "autoRepair",
+            text    = L["Auto-repair"],
+            tooltip = L["Auto-repair tip"],
+        },
 
         { type = "header", text = L["Confirmations"] },
         {
@@ -282,7 +329,10 @@ BUI:RegisterModule(MODULE, {
         -- `MERCHANT_SHOW` et non l'affichage du cadre : c'est l'interaction avec
         -- le marchand qui autorise la vente, et le cadre peut n'être pas encore
         -- monté au moment où l'événement arrive.
-        self:RegisterEvent("MERCHANT_SHOW",   function() onMerchantShow(self) end)
+        self:RegisterEvent("MERCHANT_SHOW",   function()
+            onMerchantShow(self)
+            repairAtMerchant(self)
+        end)
         self:RegisterEvent("MERCHANT_CLOSED", function() onMerchantClosed(self) end)
     end,
 

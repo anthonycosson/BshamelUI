@@ -1,14 +1,20 @@
 -- =========================================================================
 --  Bshamel UI — Modules/GroupFinder.lua
---  Ce qui entoure une inscription : la note et la confirmation.
+--  Ce qui entoure une inscription : la note, la confirmation, le compte à rebours.
 --
---  Deux agacements de la recherche de groupe, qui n'ont en commun que le moment
+--  Trois agacements de la recherche de groupe, qui n'ont en commun que le moment
 --  où on les rencontre :
 --
 --   · la **note d'inscription** se retape à chaque candidature, alors que c'est
 --     la même depuis six mois ;
 --   · la **vérification des rôles** demande de cliquer sur un bouton pour dire
---     ce qu'on a déjà dit en s'inscrivant.
+--     ce qu'on a déjà dit en s'inscrivant ;
+--   · la fenêtre qui annonce l'instance **ne dit pas combien de temps il reste**
+--     pour la prendre, alors qu'elle se referme toute seule.
+--
+--  Le minuteur vivait dans *Général*, faute de page où le mettre. Il est ici
+--  depuis que celle-ci existe, et un palier de migration (`Core/DB.lua`) déplace
+--  le réglage de ceux qui l'avaient changé.
 --
 --  La note est une **donnée**, pas un réglage : elle vit dans le SavedVariables
 --  du personnage (`DB:CharData`), hors du mécanisme de défauts — c'est le même
@@ -16,13 +22,15 @@
 --
 --  Réversibilité : les deux scripts posés sur la fenêtre d'inscription passent
 --  par `U.GuardedScript`, donc deviennent inertes quand le module s'éteint
---  (règle 6).
+--  (règle 6) ; les décomptes posés sur les fenêtres du client s'arrêtent et se
+--  cachent.
 -- =========================================================================
 
 local _, ns = ...
 local BUI = ns.BUI
 local T    = BUI.Theme
 local U    = BUI.Util
+local W    = BUI.Widgets
 local L    = ns.L
 
 local MODULE = "GroupFinder"
@@ -97,17 +105,128 @@ local function onRoleCheck(mod)
 end
 
 -- =========================================================================
+--  Minuteur des fenêtres de file d'attente
+-- =========================================================================
+
+--- Durée d'une proposition de groupe, en secondes.
+---
+--- Le client publie l'échéance des invitations de champ de bataille
+--- (`GetBattlefieldPortExpiration`) mais **rien** pour une proposition de
+--- donjon : ni fonction, ni constante. Ce nombre est donc le délai que le client
+--- applique, mesuré et non déduit — voir `dev/docs/API_NOTES.md`. S'il change un
+--- jour, c'est ici et nulle part ailleurs.
+local PROPOSAL_SECONDS = 40
+
+--- fenêtre du client -> décompte qu'on lui a posé
+local countdowns = {}
+
+--- Cadre sur lequel poser le décompte : l'**icône du rôle** quand la fenêtre en
+--- porte une, la fenêtre elle-même sinon.
+---
+--- C'est le seul repère qui tienne dans les deux cas. Le centre de la fenêtre
+--- tombe entre le nom de l'instance et l'icône, donc sur rien ; l'icône, elle,
+--- est un disque vide au milieu, exactement de la taille d'un nombre.
+---
+--- Deux chemins, du plus général au plus ancien, et aucun n'est un pari : un
+--- champ absent ou un nom inconnu rend `nil`, et on retombe sur la fenêtre.
+---@param dialog table
+---@return table
+local function countdownAnchor(dialog)
+    local icon = dialog.roleIcon
+
+    if not icon then
+        local name = dialog.GetName and dialog:GetName()
+        icon = name and _G[name .. "RoleIcon"] or nil
+    end
+
+    if icon and icon.GetCenter and icon:GetCenter() then return icon end
+    return dialog
+end
+
+---@param parent table
+---@param source fun(): number|nil
+---@param total number  durée pleine, qui donne sa couleur au décompte
+local function watch(parent, source, total)
+    local countdown = countdowns[parent]
+    if not countdown then
+        countdown = W.Countdown(parent)
+        if not countdown then return end
+        countdown:SetPoint("CENTER", countdownAnchor(parent), "CENTER",
+            0, T.SIZE.COUNTDOWN_Y)
+        countdowns[parent] = countdown
+    end
+    countdown:Watch(source, total)
+end
+
+local function stopCountdowns()
+    for _, countdown in pairs(countdowns) do
+        countdown:Stop()
+    end
+end
+
+---@param mod table
+local function watchProposal(mod)
+    if not mod:Get("queueTimer") then return end
+
+    -- Le cadre qui s'affiche est le **dialogue**, pas le popup qui le porte :
+    -- coiffer le second poserait le décompte sur un conteneur invisible.
+    local dialog = LFGDungeonReadyDialog or LFGDungeonReadyPopup
+    if not dialog then return end
+
+    local total    = PROPOSAL_SECONDS
+    local deadline = GetTime() + total
+
+    watch(dialog, function()
+        local remaining = deadline - GetTime()
+        if remaining <= 0 then return nil end
+        return remaining
+    end, total)
+end
+
+--- Secondes restantes pour accepter une entrée en champ de bataille ou en
+--- arène, prises sur le client lui-même.
+---@return number|nil
+local function portExpiration()
+    if not (GetMaxBattlefieldID and GetBattlefieldStatus and GetBattlefieldPortExpiration) then
+        return nil
+    end
+    for i = 1, GetMaxBattlefieldID() do
+        if GetBattlefieldStatus(i) == "confirm" then
+            local remaining = GetBattlefieldPortExpiration(i)
+            if remaining and remaining > 0 then return remaining end
+        end
+    end
+    return nil
+end
+
+---@param mod table
+local function watchBattlefield(mod)
+    if not mod:Get("queueTimer") then return end
+
+    local dialog = PVPReadyDialog
+    if not (dialog and dialog:IsShown()) then return end
+
+    -- La durée pleine est ce qui reste au moment où la fenêtre s'ouvre : le
+    -- client ne publie que le temps restant, jamais le délai qu'il a accordé.
+    local remaining = portExpiration()
+    if not remaining then return end
+
+    watch(dialog, portExpiration, remaining)
+end
+
+-- =========================================================================
 --  Déclaration du module
 -- =========================================================================
 
 BUI:RegisterModule(MODULE, {
     title    = L["Group finder"],
-    category = "MythicRaid",
-    order    = 15,
+    category = "QoL",
+    order    = 60,
 
     defaults = {
         keepSignupNote = false,
         autoRoleCheck  = false,
+        queueTimer     = false,
     },
 
     options = {
@@ -124,6 +243,14 @@ BUI:RegisterModule(MODULE, {
             text    = L["Auto role check"],
             tooltip = L["Auto role check tip"],
         },
+
+        { type = "header", text = L["Queues"] },
+        {
+            type    = "toggle",
+            key     = "queueTimer",
+            text    = L["Queue popup timer"],
+            tooltip = L["Queue popup timer tip"],
+        },
     },
 
     OnEnable = function(self)
@@ -139,9 +266,20 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("LFG_LIST_AVAILABILITY_UPDATE",     settle)
 
         self:RegisterEvent("LFG_ROLE_CHECK_SHOW", function() onRoleCheck(self) end)
+
+        self:RegisterEvent("LFG_PROPOSAL_SHOW",         function() watchProposal(self) end)
+        self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS", function() watchBattlefield(self) end)
     end,
 
-    -- Pas d'`OnDisable` : le module ne pose rien à l'écran. Ses deux scripts
-    -- passent par `U.GuardedScript` et deviennent inertes d'eux-mêmes, ses
-    -- abonnements sont révoqués par le core (règle 6).
+    -- Les deux scripts d'inscription passent par `U.GuardedScript` et deviennent
+    -- inertes d'eux-mêmes ; les abonnements sont révoqués par le core (règle 6).
+    -- Restent les décomptes, qui sont posés à l'écran : eux se rendent.
+    OnDisable = stopCountdowns,
+
+    -- Décocher le minuteur pendant qu'une fenêtre de file est ouverte doit le
+    -- faire disparaître tout de suite, pas à la fenêtre suivante.
+    OnSettingChanged = function(self, key)
+        if key ~= nil and key ~= "queueTimer" then return end
+        if not self:Get("queueTimer") then stopCountdowns() end
+    end,
 })
