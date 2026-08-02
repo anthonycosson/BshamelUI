@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.7 — 2026-08-02
+
 ### Ajouté
 - **Barre d'infos** apparaît dans *Interface*, grisée et suivie de
   « (Prochainement) » : elle n'est pas encore écrite, et l'entrée est là pour dire
