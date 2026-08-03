@@ -179,11 +179,6 @@ T.SIZE = {
     -- et la valeur de départ le conserve.
     PLATE_CAST_BAR_H = 8,
 
-    -- Hauteur réservée à la maquette du client dans une page, quand elle ne dit
-    -- pas la sienne. Un repli, pas une mesure : si elle se dimensionne toute
-    -- seule, c'est sa hauteur qu'on garde.
-    PLATE_PREVIEW_H = 130,
-
     -- Replis des mesures d'aura, quand le client ne publie pas les siennes, et
     -- épaisseur du liseré coloré d'une vignette d'exemple. Ce liseré-là est le
     -- seul de ces trois nombres qui façonne quelque chose : c'est lui qui dit si
@@ -191,6 +186,12 @@ T.SIZE = {
     PLATE_AURA      = 25,
     PLATE_AURA_GAP  = 2,
     PLATE_AURA_EDGE = 1,
+
+    -- Corps du décompte posé sur une vignette d'aura, valeur de départ du
+    -- curseur. Volontairement plus petit que le texte d'une plaque : il s'écrit
+    -- **dans** une image de vingt-cinq pixels de côté, pas à côté d'elle, et
+    -- au-delà il couvre l'icône qu'il annote au lieu de la compléter.
+    PLATE_AURA_TIMER = 10,
 
 
     -- Plafond d'icônes de la rangée d'auras de l'addon. Huit : au-delà, la
@@ -598,18 +599,6 @@ T.TIMING = {
     -- chaque image ce que l'œil ne suit pas (règle 7).
     SCALE_DRAG    = 0.03,
 
-    -- Cadence du passage sur les barres de nom.
-    --
-    -- C'est la seule cadence de l'addon qui **sonde** au lieu d'écouter, et elle
-    -- le fait pour une raison précise : rien n'annonce qu'un adversaire vient de
-    -- passer derrière un mur. Le client le sait — il baisse l'opacité de la
-    -- plaque — mais il ne le dit pas (voir `Modules/Nameplates.lua`).
-    --
-    -- Un dixième de seconde : c'est le seuil au-dessous duquel un changement
-    -- d'état paraît instantané, et le passage ne parcourt qu'une quarantaine de
-    -- plaques au plus — le client n'en affiche jamais davantage.
-    NAMEPLATE     = 0.1,
-
     -- Barre de sorts d'exemple : la cadence de son remplissage, et le temps
     -- qu'elle met à se remplir.
     --
@@ -880,7 +869,9 @@ T.COLOR.TIER_THREE = T.COLOR.FRAME_GOLD
 --   mêlée/trivial  C2996B   rare(-élite)  7DFFBD
 --
 -- Le rare simple n'a pas reçu de teinte à lui : il prend celle du rare-élite —
--- un rare est un rare, et les deux lignes restent réglables séparément.
+-- un rare est un rare, et les deux lignes restent réglables séparément. Le
+-- miniboss est dans le même cas vis-à-vis du boss : même teinte de départ, deux
+-- réglages distincts.
 --
 -- La menace n'a pas de couleur d'état conforme : quand l'aggro est là où elle
 -- doit être, ce sont les couleurs par nature qui parlent. Ses deux alertes —
@@ -888,6 +879,7 @@ T.COLOR.TIER_THREE = T.COLOR.FRAME_GOLD
 -- réglable ensuite.
 T.COLOR.PLATE = {
     BOSS       = CreateColor(0.635, 0.000, 1.000),
+    MINIBOSS   = CreateColor(0.635, 0.000, 1.000),
     CASTER     = CreateColor(0.000, 0.749, 1.000),
     MELEE      = CreateColor(0.761, 0.600, 0.420),
     RARE       = CreateColor(0.490, 1.000, 0.741),
@@ -1305,24 +1297,6 @@ function T.ColorTable(color)
     return { r = r, g = g, b = b }
 end
 
---- Assombrit une couleur d'une fraction donnée.
----
---- On **multiplie**, on ne mélange pas vers le noir : ce sont deux opérations
---- différentes, et la première est celle qui conserve la teinte. Mélanger un
---- rouge vers le noir le fait virer brun avant de s'éteindre ; le multiplier le
---- garde rouge jusqu'au bout, de plus en plus sombre. Une barre de nom
---- assombrie doit rester reconnaissable — c'est même tout ce qu'on lui demande.
----@param r number
----@param g number
----@param b number
----@param amount number  0 = intacte, 1 = noire
----@return number r, number g, number b
-function T.Darken(r, g, b, amount)
-    local factor = 1 - (amount or 0)
-    if factor < 0 then factor = 0 elseif factor > 1 then factor = 1 end
-    return r * factor, g * factor, b * factor
-end
-
 --- Mesure que le client donne à ses barres d'infos, ou le repli fourni.
 ---
 --- `NamePlateConstants` est la table où il range ce qu'il dessine : côté d'une
@@ -1477,6 +1451,18 @@ T.TEXTURE = {
     -- minicarte. C'est une planche de quatre colonnes sur quatre rangées dont
     -- les huit icônes occupent les deux premières : voir `T.RaidMarkerCoords`.
     RAID_MARKERS      = "Interface\\TargetingFrame\\UI-RaidTargetingIcons",
+
+    -- Remplissages de barre de vie, au choix du joueur sur les barres d'infos.
+    -- Deux textures du client, aucune empruntée à un autre addon (règle 8) :
+    --
+    --   · le **plat** est le carré blanc du moteur — teinté par la couleur de la
+    --     barre, c'est l'aplat uniforme que les joueurs connaissent sous le nom
+    --     de « Flat » ou « Solid » dans Details et consorts. La page l'appelle
+    --     « couleur vive » : c'est ce qu'il fait à la teinte ;
+    --   · le **raid** est le remplissage des cadres de raid du client, plus
+    --     mat — la « couleur standard » de la page.
+    STATUSBAR_FLAT    = "Interface\\Buttons\\WHITE8x8",
+    STATUSBAR_RAID    = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
 }
 
 --- Coordonnées de l'icône de ciblage n° `index` dans la planche
@@ -1614,15 +1600,11 @@ T.TEMPLATES = {
     -- ouvragé, jamais cassé.
     DIALOG_BORDER = { "DialogBorderTemplate", "DialogBorderDarkTemplate",
                       "InsetFrameTemplate3" },
-    -- La maquette de barre d'infos du client, celle que son propre panneau
-    -- d'options affiche. On en fabrique une instance à nous plutôt que d'emprunter
-    -- la sienne — la lui prendre la retirerait de son panneau.
-    --
-    -- C'est le seul template de cette table qui ne soit pas un habillage mais un
-    -- **contenu** : ce qu'il dessine est ce que le jeu dessine, ce qui est
-    -- exactement ce qu'un aperçu doit montrer. Sans lui, il n'y a pas d'aperçu —
-    -- on n'en réinvente pas un, on a essayé et il mentait.
-    PLATE_PREVIEW = { "NamePlatePreviewTemplate" },
+    -- `NamePlatePreviewTemplate` a vécu ici. Le monter réveille le gestionnaire
+    -- de barres d'infos du panneau de réglages, qui repasse sur les **vraies**
+    -- plaques en étant teinté par nous : erreur dans le code du client, et
+    -- tailles rendues à celles de Blizzard à chaque ouverture de la fenêtre. Ne
+    -- pas le réintroduire (voir `UI/Widgets/PlatePreview.lua`).
 
     -- Balayage de temps de recharge, celui que le client pose sur ses icônes de
     -- sort. Sans lui, une aura de la rangée de l'addon n'aurait pas d'horloge —

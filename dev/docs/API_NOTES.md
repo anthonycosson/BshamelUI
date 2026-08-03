@@ -2718,24 +2718,41 @@ d'écouter, et il ne repeint que les plaques dont l'état a changé.
 
 ---
 
-## Le jeu ne sait pas qu'un PNJ est un caster
+## La classe d'une créature n'est fiable que sur une élite
 
-**Symptôme** — on veut colorier les casters d'un pack autrement que les mêlées.
-Ni `UnitClassification`, ni le grimoire, ni le journal des rencontres ne portent
-cette information : le journal ne connaît que les boss, et la classification ne
-parle que de rareté.
+**Symptôme** — un lynx d'extérieur s'affiche avec la couleur des casters. Il n'y
+a pourtant aucune erreur : le classement fonctionne comme il est écrit.
 
-**Cause** — ce n'est pas une donnée de jeu. C'est une observation de joueur, et
-les bases qui existent sont celles d'autres addons — donc les leurs
-(CLAUDE.md règle 8 : MythicDungeonTools est en GPL v2, incompatible avec notre
-licence fermée ; BetterBlizzPlates est *all rights reserved*).
+**Ce qu'on avait cru** — une entrée précédente de ce fichier concluait que « le
+jeu ne sait pas qu'un PNJ est un caster », et l'addon fabriquait sa propre base
+en retenant les PNJ vus en train d'incanter. `UnitClassBase` a rendu ce mécanisme
+inutile : une créature a bien une classe, comme un joueur, et la fonction la rend
+dès la première plaque.
 
-**Ce qu'on fait** — on fabrique la nôtre en jouant. `UNIT_SPELLCAST_START` et
-`UNIT_SPELLCAST_CHANNEL_START` sont émis pour les jetons `nameplateN` : un PNJ
-qui incante est retenu comme caster, par identifiant, dans la base compte.
-L'identifiant se lit dans le GUID (`Creature-0-…-<id>-<apparition>`, sixième
-champ) et jamais le nom, qui est traduit. La liste s'exporte et s'importe en
-texte, ce qui permet de la partager et d'en figer une de départ.
+**La conclusion était juste, la correction est allée trop loin.** `UnitClassBase`
+lit un champ du modèle de créature. Ce champ est renseigné avec soin là où
+quelqu'un avait une raison de le faire — le trash de donjon et de raid, dont la
+classe décide des sorts — et rempli au petit bonheur partout ailleurs. La faune
+en hérite d'une, et la donnée est alors une valeur qui existe sans rien dire.
+
+Le symptôme est trompeur pour cette raison : il ne ressemble pas à une donnée
+absente (`nil`, un repli, un cas non traité) mais à une donnée fausse, ce qui
+oriente vers la table `CASTER_CLASSES` au lieu de la question posée.
+
+**Ce qu'on fait** — la classe n'est interrogée que sur `UnitClassification(unit)
+== "elite"`. Un PNJ ordinaire n'est pas classé du tout, et garde la couleur du
+client. Le rang d'une élite se lit à son niveau **effectif** relatif au joueur :
+égal, c'est du trash qu'on classe par sa classe ; +1, un miniboss ; +2 ou hors
+échelle (`-1`), un boss.
+
+Corollaire général, et il vaut au-delà d'ici : **une API qui répond n'est pas une
+API qui sait.** Avant de se fier à un champ rendu pour toutes les unités, se
+demander qui l'a rempli et pourquoi. Là où personne n'avait de raison de le
+renseigner, il vaut mieux ne rien afficher que d'afficher ce qu'il contient.
+
+**Vérifié en lisant** BetterBlizzPlates, qui applique exactement cette borne
+(`UnitClassBase` sur les seules élites, et sur les joueurs). Aucun code repris
+(règle 8) : ce qu'on y a lu est la borne elle-même.
 
 ---
 
@@ -2957,6 +2974,133 @@ Deux autres choses relevées chez MiniCC en passant :
   c'est l'annonce « le client vient de reposer ses auras », si un jour on en a
   besoin.
 
+**Suite, et correction : le nom de la plaque n'était pas le bon repère non
+plus.** La conclusion ci-dessus — s'ancrer sur `unitFrame.name` — reste dans la
+bonne famille d'idées mais désigne encore une région du cadre d'unité. Voir
+l'entrée suivante.
+
+---
+
+## Une rangée posée sur une barre d'infos tient une demi-seconde
+
+**Symptôme** — les rangées d'auras de l'addon s'affichent au bon endroit sur un
+pull, puis le jeu « reprend la main » : elles sautent, ou disparaissent, sans
+erreur ni message. Les curseurs de taille et de décalage, eux, donnent des
+résultats qui varient selon la plaque et selon la cible.
+
+**Trois causes, et elles produisent le même symptôme** — ce qui explique qu'aucun
+correctif isolé n'ait tenu :
+
+1. **le porteur et l'ancrage.** Les rangées étaient créées sur le cadre d'unité
+   et ancrées sur sa barre de vie. Ce sont des régions restreintes, que le client
+   repose à chacun de ses passages de mise en page : ce qu'on y accroche est
+   défait sans que rien ne le dise, et l'ancrage ne se relit pas pour vérifier
+   (voir « L'ancrage d'une barre d'infos ne se lit pas ») ;
+2. **l'échelle.** Une rangée portée par la plaque hérite de son échelle. Celle de
+   la cible n'est pas celle des autres, et elle change au clic : un curseur posé
+   à trente donne trente fois autre chose selon la plaque, et la rangée respire à
+   chaque changement de cible ;
+3. **le bras de fer.** On effaçait le conteneur du client (`SetAlpha(0)`, tenu
+   par un hook) pour mettre les nôtres à sa place. Le client le remet à chaque
+   `RefreshAuras`, c'est-à-dire à chaque aura qui bouge.
+
+**Ce qu'on fait** — trois lignes, une par cause :
+
+- la rangée est portée **par la plaque** — le cadre que `C_NamePlate.GetNamePlateForUnit`
+  rend — et ancrée dessus. C'est le seul repère de cette famille qui soit à nous
+  d'accès : son niveau se lit, le client n'en refait pas la mise en page ;
+- `row:SetIgnoreParentScale(true)`. Le nombre du curseur redevient un nombre de
+  pixels d'écran, et il le reste quand la plaque de la cible grossit ;
+- on n'efface plus rien. Les rangées **s'ajoutent** à celle du client, qui se
+  règle dans sa moitié de la page. C'est la règle du dépôt appliquée là où elle
+  ne l'était pas : on emprunte avant de créer, on ne masque jamais pour ajouter.
+
+Le repli d'honnêteté qu'exigeait l'effacement — « si le client refuse de nous
+laisser lire ses auras, lui rendre sa rangée » — disparaît avec lui : sa rangée
+n'a pas été touchée, il n'y a rien à rendre.
+
+**Trouvé en lisant** MiniCC (`Modules/NameplatesModule.lua`), qui fait
+exactement cela : conteneur créé sur la plaque, `SetPoint` sur la plaque,
+`SetIgnoreParentScale`, `EnableMouse(false)`, niveau du parent + 10, et aucune
+touche à l'affichage du client. Aucun code repris (règle 8).
+
+**L'autre voie existe, et elle est celle de BetterBlizzPlates** : ne rien créer
+du tout et **reposer les vignettes du client**. Sur ce client, `NamePlateAurasMixin`
+publie `RefreshList(listFrame, auraList)` et `RefreshLossOfControl`, et chaque
+`unitFrame.AurasFrame` porte `BuffListFrame`, `CrowdControlListFrame`,
+`DebuffListFrame`, `LossOfControlFrame` et un `auraItemFramePool`. Un
+`hooksecurefunc` sur `RefreshList` permet de parcourir le pool et de réancrer les
+vignettes sur `HealthBarsContainer`. À noter pour plus tard : c'est la seule
+chose que BBP fait encore sur ce client — son module d'auras complet
+(`RunAuraModule`) commence par `if BBP.isMidnight then return end`. Réimplémenter
+la lecture des auras d'une barre d'infos est une voie que ceux qui l'avaient
+faite ont abandonnée.
+
+Les deux approches sont valides et ne se mélangent pas : l'une **ajoute** ce
+qu'on lit soi-même, l'autre **déplace** ce que le client a déjà trié. On tient la
+première, qui n'a rien à rendre à l'extinction.
+
+---
+
+## L'icône d'une aura est secrète, et c'est sans importance
+
+**Symptôme** — les rangées d'auras restent vides sur une vraie plaque alors que
+les mêmes rangées, nourries d'auras d'exemple, s'affichent parfaitement. Aucune
+erreur. Le mode aperçu et le mode réel ne diffèrent que par la source des
+données, ce qui désigne la lecture — mais `C_UnitAuras.GetUnitAuras` répond, et
+elle rend bien l'aura attendue.
+
+**Relevé en jeu** (`/bui auras`, un affaiblissement du joueur sur la cible) :
+
+```
+player HELPFUL: 6 (témoin)
+jetons: target | nameplate2
+HARMFUL|PLAYER: 1 | 1
+aura.icon: secret | .auraInstanceID: activée
+.applications: secret | .spellId: secret
+collect imp: 0 | dot: 0 | cc: 0 | refusé: 1
+```
+
+Tout y est : l'API répond, les deux jetons s'accordent, l'aura est là — et le
+tri la jette.
+
+**Cause** — sur une unité adverse, le client rend l'icône, les cumuls et
+l'identifiant de sort **secrets**. Notre tri les refusait sur ce constat, par une
+garde `issecretvalue` posée avant d'essayer.
+
+**Une valeur secrète se transmet, elle ne s'inspecte pas.** Passée telle quelle à
+`texture:SetTexture(...)`, l'icône secrète peint l'image exacte. C'est ce que
+fait le client, et c'est ce que font les addons qui affichent ces auras : ils ne
+gardent rien, ils passent la valeur au setter. Il en existe même des setters
+dédiés pour les cas où le type interdit tout le reste — `SetAlphaFromBoolean`
+consomme un booléen secret (`C_Spell.IsSpellImportant`), `GetAuraDispelTypeColor`
+rend une couleur depuis un identifiant sans exposer le type de dissipation.
+
+**Ce qu'on fait** — la garde ne porte plus que sur l'absence : `icon == nil` est
+un refus, `issecretvalue(icon)` n'en est pas un. Ce qu'on perd se perd alors
+précisément, et le reste marche :
+
+- les **cumuls** ne s'affichent pas — les écrire demande de comparer le nombre à
+  un, ce qui lève sur un secret ;
+- le **repli par identifiant de sort** (notre liste d'entraves) est mort : il
+  lisait `spellId`. Le filtre classé du client, lui, n'a jamais eu besoin qu'on
+  lise quoi que ce soit, et c'est le chemin qui reste ;
+- l'`auraInstanceID` **n'est pas secret**, et c'est lui qui fait tenir le reste :
+  dédoublonnage entre deux filtres, et horloge par `GetAuraDuration`.
+
+**C'est la deuxième fois que cette garde coûte un aller-retour** — voir « Une
+valeur secrète interrompt tout un passage », où elle avait fait disparaître les
+cadres d'unités du mode sombre. La règle y était déjà écrite et n'avait pas été
+appliquée ici : **une garde décide qu'une chose est intouchable sans avoir
+essayé.** `issecretvalue` ne sert que sur une valeur dont on s'apprête à faire un
+**calcul** — une comparaison, une concaténation, une indexation. Jamais sur une
+valeur qu'on se contente de faire suivre.
+
+Le symptôme est trompeur parce qu'il ressemble à une donnée absente. Ce qui
+tranche en une commande : demander à la donnée si elle est *là* avant de demander
+si elle est *lisible*. Les deux questions n'ont pas la même réponse, et seule la
+seconde était posée.
+
 ---
 
 ## Le lint local ne lance pas luacheck
@@ -2982,3 +3126,62 @@ Le `W122` lui-même : écrire les champs du protocole d'une frame du client
 (`ColorPickerFrame.func`…) est légitime — c'est son API ancienne — et se
 déclare au plus près par `-- luacheck: push ignore 122` / `pop`, jamais en
 rendant la frame inscriptible pour tout le dépôt.
+
+---
+
+## La boîte des plaques se fait réécrire sans événement
+
+**Symptôme** — la largeur posée par `C_NamePlate.SetNamePlateSize` revient à la
+valeur Blizzard en ouvrant une page qui montre la maquette
+(`NamePlatePreviewTemplate`), et parfois sans qu'on sache dire quel geste l'a
+provoqué. Aucun `CVAR_UPDATE` : ce n'est pas un CVar, c'est une fonction, et le
+pilote du client la rappelle quand il rejoue son calibre (`nameplateSize`).
+
+**Ce qu'on fait** — la leçon de la hauteur de barre, appliquée à la largeur :
+se brancher sur l'écriture elle-même. `hooksecurefunc(C_NamePlate,
+"SetNamePlateSize", ...)` fonctionne sur cette table, et le hook repose notre
+largeur dans le même souffle, drapeau de non-récursion compris. La pose du hook
+reste sous `pcall` : hooker une table `C_*` est un pari de capacité.
+
+Corollaire d'interface : tant que l'addon tient la taille en pixels, tout
+réglage du client qui fait rejouer sa mise en page (`nameplateSize`,
+`nameplateAuraScale`, `nameplateDebuffPadding`) se grise plutôt que de se
+battre avec lui.
+
+---
+
+## Monter `NamePlatePreviewTemplate` teinte le pilote de barres d'infos
+
+**Suite, et fin, des deux entrées sur l'aperçu.** Le template s'instancie et
+s'affiche : c'est ce qui avait fait conclure qu'il était sans danger, la
+maquette n'ayant pas d'unité et donc, croyait-on, aucune valeur secrète à
+comparer.
+
+**Le raisonnement était faux.** Ouvrir la page qui le portait produit :
+
+```
+attempted to iterate a table that cannot be accessed while tainted
+(execution tainted by 'BshamelUI')
+  CastingBarFrame.lua:722: StopFinishAnims <- StopAnims <- SetUnit
+  CompactUnitFrame_SetUnit <- ApplyFrameOptions <- NamePlateBase SetUnit
+  <- OnNamePlateAdded <- Blizzard_NamePlates OnEvent
+  <- Blizzard_SettingsDefinitions_Frame/Nameplates.lua:15
+  <- pcall <- UI/Widgets/PlatePreview.lua:50
+```
+
+**Cause** — monter ce template réveille le gestionnaire de barres d'infos du
+*panneau de réglages* du client, qui repasse `OnNamePlateAdded` puis
+`ApplyFrameOptions` sur les **vraies** plaques. Donc sur de vraies unités, avec
+de vraies valeurs secrètes, et toute la chaîne teintée par nous. C'est
+exactement le mur de « Appeler le pilote de barres d'infos teinte tout ce qu'il
+touche », atteint par une porte qu'on croyait dérobée.
+
+Le même appel expliquait un second symptôme qu'on cherchait ailleurs : **les
+plaques reprenaient leur taille Blizzard à chaque ouverture de la fenêtre
+d'options**, `ApplyFrameOptions` reposant la mise en page du client.
+
+**Ce qu'on fait** — l'aperçu est retiré, template compris. `pcall` n'en protège
+pas : ce n'est pas nous qui levons, c'est le client, parce que nous l'avons
+réveillé. Il n'y a pas de version prudente de cet appel — la règle reste **on
+n'entre pas dans le code de mise en page du client**, et un template qui le
+réveille en fait partie.

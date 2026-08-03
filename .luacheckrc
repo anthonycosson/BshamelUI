@@ -129,6 +129,7 @@ read_globals = {
     -- Divers moteur
     "GetLocale", "GetTime", "GetBuildInfo", "InCombatLockdown",
     "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown", "IsModifierKeyDown",
+    "IsInInstance",
     "hooksecurefunc", "geterrorhandler", "CallErrorHandler", "securecallfunction", "issecretvalue",
     "debugstack", "issecurevariable",
 

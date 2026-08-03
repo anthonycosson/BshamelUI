@@ -574,17 +574,17 @@ BUI:RegisterLocale("enUS", {
     ["Enemy NPC auras"]                = "Enemy NPC auras",
     ["Enemy player auras"]             = "Enemy player auras",
     ["Friendly player auras"]          = "Friendly player auras",
-    ["Auras"]                          = "Auras",
     ["Health bar size"]                = "Health bar",
     ["Cast bar size"]                  = "Cast bar",
     ["Preview mode"]                   = "Preview mode",
     ["Show cast bar"]                  = "Show what only appears in combat",
     ["Show cast bar tip"] =
-        "A cast bar only shows while something is casting, and an aura only once "
-        .. "a spell puts it there — neither can be sized by waiting for it. This "
-        .. "keeps the real cast bar up and filling, and adds a sample row of "
-        .. "auras: one helpful, one harmful, one crowd control. Remember to turn "
-        .. "it off.",
+        "A cast bar only shows while something is casting, an aura only once a "
+        .. "spell puts it there, a raid marker only on a marked unit — none of "
+        .. "them can be adjusted by waiting. This keeps the real cast bar up and "
+        .. "filling, adds a sample row of auras — one helpful, one harmful, one "
+        .. "crowd control — and shows the raid marker with a sample skull. "
+        .. "Remember to turn it off.",
     ["Sample cast"]                    = "Casting",
     ["Resize cast text"]               = "Set the cast text size",
     ["Resize cast text tip"] =
@@ -596,16 +596,26 @@ BUI:RegisterLocale("enUS", {
         .. "cast bar than on a health bar.",
     ["Taken over by the addon"] =
         "Bshamel UI is setting the size in pixels. Turn that off to get this back.",
+    ["Auras taken over"] =
+        "Bshamel UI is showing the auras. Untick \"Adjust the auras\" to get the "
+        .. "game's rows back — they are switched off, not lost.",
 
+    ["Auras and marker"]               = "Auras and marker",
     ["Auras paused"]                   = "Paused while size and offsets get fixed.",
     ["Auras paused notice"] =
-        "Paused: the rows do not follow their sliders faithfully enough yet. "
-        .. "Nothing here does anything for now.",
+        "Paused: the rows and the marker do not follow their sliders faithfully "
+        .. "enough yet. Nothing in this section does anything for now.",
+    ["Auras notice"] =
+        "Ticking \"Adjust the auras\" switches the game's rows off and greys "
+        .. "their boxes on the left-hand side of this page: two aura rows on one "
+        .. "nameplate means the same icons twice. Unticking gives them back "
+        .. "exactly as they were.",
     ["Own auras"]                      = "Adjust the auras",
     ["Own auras tip"] =
-        "The addon shows each nameplate's auras in three rows of its own — the "
-        .. "game's row steps aside. What preview mode shows is these exact rows: "
-        .. "same code, same place, same size. Every image is the game's own.",
+        "The addon shows each nameplate's auras in three rows of its own, and "
+        .. "switches the game's off while it holds them. What preview mode shows "
+        .. "is these exact rows: same code, same place, same size. Every image "
+        .. "is the game's own.",
     ["Important auras"]                = "Big offensives and defensives",
     ["Important auras notice"] =
         "To the left of the health bar. The game itself classes what counts as a "
@@ -620,7 +630,14 @@ BUI:RegisterLocale("enUS", {
     ["Own aura size tip"]              = "Side of an aura icon in this row.",
     ["Aura offset X"]                  = "Offset X (pixels)",
     ["Aura offset Y"]                  = "Offset Y (pixels)",
-    ["Aura offset tip"]                = "Nudges this row from its anchor on the health bar.",
+    ["Aura offset tip"]                = "Nudges this row from its anchor on the nameplate.",
+    ["Aura gap"]                       = "Spacing (pixels)",
+    ["Aura gap tip"]                   = "Gap between two icons of this row.",
+    ["Aura timer size"]                = "Timer size",
+    ["Aura timer size tip"] =
+        "Size of the time left written on this row's icons. Each row has its "
+        .. "own: a crowd control is read to the second, a debuff you keep up is "
+        .. "read out of the corner of your eye.",
     ["Auras tip"]                      = "Which auras the game shows above these nameplates.",
     ["Buffs"]                          = "Buffs",
     ["Debuffs"]                        = "Debuffs",
@@ -678,6 +695,19 @@ BUI:RegisterLocale("enUS", {
         "Thickness of the health bar. 11 is what the game uses. The name and the "
         .. "icons keep their size — they are not part of the bar.",
 
+    ["Bar texture"]                    = "Bar texture",
+    ["Set the bar texture"]            = "Set the bar texture",
+    ["Set the bar texture tip"] =
+        "Replaces the fill of enemy health bars. Your target and the others each "
+        .. "have their own choice below. Turning this off gives every bar its "
+        .. "image back.",
+    ["Others bar texture"]             = "Others — texture",
+    ["Others bar texture tip"]         = "Fill of every nameplate you are not targeting.",
+    ["Target bar texture"]             = "Target — texture",
+    ["Target bar texture tip"]         = "Fill of your current target's nameplate.",
+    ["Texture vivid"]                  = "Vivid colour",
+    ["Texture standard"]               = "Standard colour",
+
     ["Raid marker"]                    = "Raid marker",
     ["Place raid marker"]              = "Place the marker yourself",
     ["Place raid marker tip"] =
@@ -694,32 +724,25 @@ BUI:RegisterLocale("enUS", {
     ["Visibility"]                     = "Visibility",
     ["Visibility notice"] =
         "Three states, and a nameplate is always in exactly one of them: it is "
-        .. "your target, it is another one, or it is behind something. Opacity is "
-        .. "how much of it you see; darkness is how much colour is left in it.",
-    ["Tune visibility"]                = "Set opacity and darkness",
+        .. "your target, it is another one, or it is behind something. Each "
+        .. "state has its own opacity.",
+    ["Tune visibility"]                = "Set the opacity",
     ["Tune visibility tip"] =
         "Sets how visible each nameplate is while this is on, and hands the "
         .. "plates back to the game when you turn it off.",
     ["Target opacity"]                 = "Target — opacity",
     ["Target opacity tip"]             = "How visible the plate of your current target is.",
-    ["Target darkness"]                = "Target — darkness",
-    ["Darkness tip"]                   = "How far the health bar and the name are dimmed. Zero leaves them alone.",
     ["Others opacity"]                 = "Others — opacity",
     ["Others opacity tip"]             = "How visible the plates of everything you are not targeting are.",
-    ["Others darkness"]                = "Others — darkness",
     ["Occluded opacity"]               = "Behind cover — opacity",
     ["Occluded opacity tip"] =
         "How visible a plate is when its owner is behind a wall or a pillar.",
-    ["Occluded darkness"]              = "Behind cover — darkness",
-    ["Occluded darkness tip"] =
-        "The game never says an enemy went behind cover, it only dims the plate. "
-        .. "The darkening is worked back out from that, so it only kicks in while "
-        .. "the opacity above is lower than the game's own distance fade.",
 
     ["Enemy colors"]                   = "Enemy colours",
     ["Enemy colors notice"] =
         "The unit decides, not the zone: NPC enemies take the kind colours below, "
-        .. "enemy players take their class colour if you ask for it.",
+        .. "enemy players take their class colour if you ask for it. Ordinary "
+        .. "creatures are left alone — only ranks the game states are recoloured.",
     ["PvP class colors"]               = "Class colours on enemy players",
     ["PvP class colors tip"] =
         "An enemy player's health bar takes the colour of their class, wherever "
@@ -728,14 +751,23 @@ BUI:RegisterLocale("enUS", {
     ["Color enemies by kind tip"] =
         "Rarity first, then what the creature does: a rare that casts stays "
         .. "coloured as a rare.",
-    ["Boss color"]                     = "Boss and miniboss",
-    ["Boss color tip"]                 = "Bosses and elites — the game counts a miniboss as an elite.",
-    ["Caster color"]                   = "Caster",
+    ["NPC colors scope"]               = "Where it applies",
+    ["NPC colors scope tip"] =
+        "Everywhere, or only inside dungeons and raids — outside them the "
+        .. "game's own colours come back without unticking anything.",
+    ["Everywhere"]                     = "Everywhere",
+    ["Instances only"]                 = "In instances only",
+    ["Boss color"]                     = "Boss",
+    ["Boss color tip"] =
+        "World bosses, and any elite two levels or more above you.",
+    ["Miniboss color"]                 = "Miniboss",
+    ["Miniboss color tip"]             = "An elite exactly one level above you.",
+    ["Caster color"]                   = "Elite caster",
     ["Caster color tip"] =
-        "Learnt as you play: a creature counts as a caster the first time you "
-        .. "see it cast. Nothing in the game says so beforehand.",
-    ["Melee color"]                    = "Melee, trivial and minor",
-    ["Melee color tip"]                = "Everything that is neither rare, nor elite, nor known to cast.",
+        "Dungeon and raid trash that casts. Only elites are sorted this way: "
+        .. "outside, a creature's class means nothing.",
+    ["Melee color"]                    = "Elite melee",
+    ["Melee color tip"]                = "Dungeon and raid trash that does not cast.",
     ["Rare color"]                     = "Rare",
     ["Rare color tip"]                 = "Silver dragon, no elite border.",
     ["Rare elite color"]               = "Rare elite",
@@ -758,19 +790,29 @@ BUI:RegisterLocale("enUS", {
     ["Threat wrong"]                   = "Aggro taken or lost (by role)",
     ["Threat wrong tip"]               = "Tank: you lost it. Damage or healer: you took it.",
 
-    ["Preview"]                        = "Preview",
-    ["Preview notice"] =
-        "The game's own sample nameplate, the one its options panel shows. It is "
-        .. "not a drawing of ours: it follows the settings above, and it will "
-        .. "follow whatever the game changes about its nameplates.",
-
     ["Allied names only"]              = "Show only the name for allies",
     ["Allied names only tip"] =
         "Friendly players get a name and no health bar. Theirs is already on the "
         .. "party frames.",
+    ["Resize ally names"]              = "Enlarge allied names",
+    ["Resize ally names tip"] =
+        "Friendly players' names take the size below. Outside instances only: "
+        .. "the game locks friendly nameplates in dungeons and raids.",
+    ["Ally name size"]                 = "Allied name size (12 by default)",
     ["Allies"]                         = "Allies",
     ["Class colored ally names"]       = "Class-coloured names",
     ["Class colored ally names tip"]   = "Friendly player names take their class colour.",
     ["Aura scale"]                     = "Aura size",
     ["Aura scale tip"]                 = "Size of the aura icons, as a percentage of the game's own.",
+
+    -- Diagnostic `/bui auras` : les libellés de prose seulement — les noms de
+    -- filtres et de champs sont ceux de l'API, ils ne se traduisent pas.
+    ["Aura diagnostic"]                = "Nameplate diagnostic — target's plate",
+    ["Aura diagnostic needs target"]   = "Target something first: the diagnostic reads the target's nameplate.",
+    ["No nameplate for target"]        = "The target has no nameplate on screen.",
+    ["Refused"]                        = "refused",
+    ["Secret"]                         = "secret",
+    ["Control"]                        = "control",
+    ["Tokens"]                         = "tokens",
+    ["Aura diagnostic unavailable"]    = "The Nameplates module is not running.",
 })

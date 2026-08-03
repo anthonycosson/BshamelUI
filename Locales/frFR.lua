@@ -585,17 +585,17 @@ BUI:RegisterLocale("frFR", {
     ["Enemy NPC auras"]                = "Auras des PNJ adversaires",
     ["Enemy player auras"]             = "Auras des joueurs adverses",
     ["Friendly player auras"]          = "Auras des joueurs alliés",
-    ["Auras"]                          = true,
     ["Health bar size"]                = "Barre de vie",
     ["Cast bar size"]                  = "Barre des sorts",
     ["Preview mode"]                   = "Mode aperçu",
     ["Show cast bar"]                  = "Montrer ce qui n'apparaît qu'en combat",
     ["Show cast bar tip"] =
-        "Une barre de sorts ne se montre que pendant une incantation, et une aura "
-        .. "que lorsqu'un sort la pose : ni l'une ni l'autre ne se règle en "
-        .. "l'attendant. Ce mode maintient la vraie barre de sorts affichée et en "
-        .. "cours, et ajoute une rangée d'auras d'exemple : une qui aide, une qui "
-        .. "nuit, une qui immobilise. Pensez à l'éteindre.",
+        "Une barre de sorts ne se montre que pendant une incantation, une aura "
+        .. "que lorsqu'un sort la pose, un marqueur que sur une unité marquée : "
+        .. "rien de tout cela ne se règle en l'attendant. Ce mode maintient la "
+        .. "vraie barre de sorts affichée et en cours, ajoute une rangée d'auras "
+        .. "d'exemple — une qui aide, une qui nuit, une qui immobilise — et "
+        .. "montre le marqueur avec un crâne d'exemple. Pensez à l'éteindre.",
     ["Sample cast"]                    = "Incantation",
     ["Resize cast text"]               = "Régler la taille du texte des sorts",
     ["Resize cast text tip"] =
@@ -608,17 +608,27 @@ BUI:RegisterLocale("frFR", {
     ["Taken over by the addon"] =
         "Bshamel UI règle la taille en pixels. Éteignez-le pour récupérer ce "
         .. "réglage.",
+    ["Auras taken over"] =
+        "Bshamel UI affiche les auras. Décochez « Régler les auras » pour "
+        .. "récupérer les rangées du jeu — elles sont éteintes, pas perdues.",
 
+    ["Auras and marker"]               = "Auras et marqueur",
     ["Auras paused"]                   = "En pause, le temps de régler la taille et les décalages.",
     ["Auras paused notice"] =
-        "En pause : les rangées ne suivent pas encore leurs curseurs assez "
-        .. "fidèlement. Rien ici n'agit pour le moment.",
+        "En pause : les rangées et le marqueur ne suivent pas encore leurs "
+        .. "curseurs assez fidèlement. Rien dans cette section n'agit pour le "
+        .. "moment.",
+    ["Auras notice"] =
+        "Cocher « Régler les auras » éteint les rangées du jeu et grise leurs "
+        .. "cases, dans la moitié gauche de cette page : deux rangées d'auras "
+        .. "sur une plaque, ce sont deux fois les mêmes icônes. Décocher les lui "
+        .. "rend telles qu'elles étaient.",
     ["Own auras"]                      = "Régler les auras",
     ["Own auras tip"] =
         "L'addon affiche les auras de chaque barre d'infos dans trois rangées à "
-        .. "lui — celle du jeu s'efface. Ce que le mode aperçu montre est "
-        .. "exactement ces rangées : même code, même place, même taille. Chaque "
-        .. "image est un asset du jeu.",
+        .. "lui, et éteint celles du jeu le temps qu'il les tient. Ce que le "
+        .. "mode aperçu montre est exactement ces rangées : même code, même "
+        .. "place, même taille. Chaque image est un asset du jeu.",
     ["Important auras"]                = "Offensifs et défensifs importants",
     ["Important auras notice"] =
         "À gauche de la barre de vie. C'est le jeu lui-même qui classe ce qui "
@@ -634,7 +644,14 @@ BUI:RegisterLocale("frFR", {
     ["Own aura size tip"]              = "Côté d'une icône d'aura de cette rangée.",
     ["Aura offset X"]                  = "Décalage X (pixels)",
     ["Aura offset Y"]                  = "Décalage Y (pixels)",
-    ["Aura offset tip"]                = "Écarte cette rangée de son ancrage sur la barre de vie.",
+    ["Aura offset tip"]                = "Écarte cette rangée de son ancrage sur la plaque.",
+    ["Aura gap"]                       = "Espacement (pixels)",
+    ["Aura gap tip"]                   = "Écart entre deux icônes de cette rangée.",
+    ["Aura timer size"]                = "Corps du décompte",
+    ["Aura timer size tip"] =
+        "Taille du temps restant écrit sur les icônes de cette rangée. Chaque "
+        .. "rangée a le sien : une entrave se lit à la seconde près, un "
+        .. "affaiblissement qu'on entretient se lit du coin de l'œil.",
     ["Auras tip"]                      = "Les auras que le jeu affiche au-dessus de ces barres d'infos.",
     ["Buffs"]                          = "Améliorations",
     ["Debuffs"]                        = "Affaiblissements",
@@ -696,6 +713,19 @@ BUI:RegisterLocale("frFR", {
         "Épaisseur de la barre de vie. Le jeu utilise 11. Le nom et les icônes "
         .. "gardent leur taille — ils ne font pas partie de la barre.",
 
+    ["Bar texture"]                    = "Texture des barres",
+    ["Set the bar texture"]            = "Régler la texture des barres",
+    ["Set the bar texture tip"] =
+        "Remplace le remplissage des barres de vie adverses. La cible et les "
+        .. "autres ont chacune leur choix ci-dessous. En l'éteignant, chaque "
+        .. "barre retrouve son image.",
+    ["Others bar texture"]             = "Les autres — texture",
+    ["Others bar texture tip"]         = "Remplissage des plaques de ce que vous ne ciblez pas.",
+    ["Target bar texture"]             = "Cible — texture",
+    ["Target bar texture tip"]         = "Remplissage de la plaque de votre cible.",
+    ["Texture vivid"]                  = "Couleur vive",
+    ["Texture standard"]               = "Couleur standard",
+
     ["Raid marker"]                    = "Marqueur de ciblage",
     ["Place raid marker"]              = "Placer le marqueur soi-même",
     ["Place raid marker tip"] =
@@ -713,37 +743,26 @@ BUI:RegisterLocale("frFR", {
     ["Visibility notice"] =
         "Trois états, et une barre de nom est toujours dans exactement l'un des "
         .. "trois : c'est votre cible, c'en est une autre, ou elle est derrière "
-        .. "quelque chose. L'opacité dit combien on en voit ; l'assombrissement, "
-        .. "combien il lui reste de couleur.",
-    ["Tune visibility"]                = "Régler opacité et assombrissement",
+        .. "quelque chose. Chaque état a sa propre opacité.",
+    ["Tune visibility"]                = "Régler l'opacité",
     ["Tune visibility tip"] =
         "Décide de la visibilité de chaque barre de nom tant que c'est allumé, "
         .. "et rend les plaques au jeu quand on l'éteint.",
     ["Target opacity"]                 = "Cible — opacité",
     ["Target opacity tip"]             = "À quel point la plaque de votre cible est visible.",
-    ["Target darkness"]                = "Cible — assombrissement",
-    ["Darkness tip"] =
-        "De combien la barre de vie et le nom sont assombris. À zéro, on n'y "
-        .. "touche pas.",
     ["Others opacity"]                 = "Les autres — opacité",
     ["Others opacity tip"]             = "À quel point les plaques de ce que vous ne ciblez pas sont visibles.",
-    ["Others darkness"]                = "Les autres — assombrissement",
     ["Occluded opacity"]               = "Hors de vue — opacité",
     ["Occluded opacity tip"] =
         "À quel point une plaque est visible quand son porteur est derrière un "
         .. "mur ou un pilier.",
-    ["Occluded darkness"]              = "Hors de vue — assombrissement",
-    ["Occluded darkness tip"] =
-        "Le jeu ne dit jamais qu'un adversaire est passé derrière quelque chose, "
-        .. "il se contente de pâlir la plaque. L'assombrissement s'en déduit : il "
-        .. "ne se déclenche donc que tant que l'opacité ci-dessus reste plus basse "
-        .. "que le fondu par la distance du jeu.",
 
     ["Enemy colors"]                   = "Couleurs des adversaires",
     ["Enemy colors notice"] =
         "C'est l'unité qui décide, pas la zone : un PNJ ennemi prend les couleurs "
         .. "par nature ci-dessous, un joueur adverse prend celle de sa classe si "
-        .. "vous le demandez.",
+        .. "vous le demandez. Une créature ordinaire est laissée telle quelle — "
+        .. "seuls les rangs que le jeu déclare sont repeints.",
     ["PvP class colors"]               = "Couleurs de classe sur les joueurs adverses",
     ["PvP class colors tip"] =
         "La barre de vie d'un joueur adverse prend la couleur de sa classe, où "
@@ -752,14 +771,23 @@ BUI:RegisterLocale("frFR", {
     ["Color enemies by kind tip"] =
         "La rareté d'abord, ce que fait la créature ensuite : un rare qui incante "
         .. "reste colorié en rare.",
-    ["Boss color"]                     = "Boss et miniboss",
-    ["Boss color tip"]                 = "Boss et élites — le jeu range un miniboss parmi les élites.",
-    ["Caster color"]                   = "Caster",
+    ["NPC colors scope"]               = "Où l'appliquer",
+    ["NPC colors scope tip"] =
+        "Partout, ou seulement en donjon et en raid — dehors, les couleurs du "
+        .. "jeu reprennent la main sans rien décocher.",
+    ["Everywhere"]                     = "Partout",
+    ["Instances only"]                 = "En instance uniquement",
+    ["Boss color"]                     = "Boss",
+    ["Boss color tip"] =
+        "Boss de zone, et toute élite à deux niveaux ou plus au-dessus de vous.",
+    ["Miniboss color"]                 = "Miniboss",
+    ["Miniboss color tip"]             = "Une élite à exactement un niveau au-dessus de vous.",
+    ["Caster color"]                   = "Élite caster",
     ["Caster color tip"] =
-        "Appris en jouant : une créature devient un caster la première fois qu'on "
-        .. "la voit incanter. Rien dans le jeu ne le dit à l'avance.",
-    ["Melee color"]                    = "Mêlée, trivial et mineur",
-    ["Melee color tip"]                = "Tout ce qui n'est ni rare, ni élite, ni connu pour incanter.",
+        "Le trash de donjon et de raid qui incante. Seules les élites sont "
+        .. "classées ainsi : dehors, la classe d'une créature ne veut rien dire.",
+    ["Melee color"]                    = "Élite mêlée",
+    ["Melee color tip"]                = "Le trash de donjon et de raid qui n'incante pas.",
     ["Rare color"]                     = "Rare",
     ["Rare color tip"]                 = "Dragon argenté, sans le liseré d'élite.",
     ["Rare elite color"]               = "Rare-élite",
@@ -784,16 +812,16 @@ BUI:RegisterLocale("frFR", {
     ["Threat wrong tip"] =
         "Tank : vous l'avez perdue. DPS ou soigneur : vous l'avez prise.",
 
-    ["Preview"]                        = "Aperçu",
-    ["Preview notice"] =
-        "La barre d'infos d'exemple du jeu, celle que son panneau d'options "
-        .. "affiche. Ce n'est pas un dessin à nous : elle suit les réglages "
-        .. "ci-dessus, et elle suivra ce que le jeu changera à ses barres d'infos.",
-
     ["Allied names only"]              = "Afficher uniquement le nom pour les alliés",
     ["Allied names only tip"] =
         "Les joueurs alliés n'ont qu'un nom, sans barre de vie. La leur est déjà "
         .. "sur les cadres de groupe.",
+    ["Resize ally names"]              = "Agrandir le nom des alliés",
+    ["Resize ally names tip"] =
+        "Le nom des joueurs alliés prend la taille ci-dessous. Hors instance "
+        .. "uniquement : le jeu verrouille les plaques alliées en donjon et en "
+        .. "raid.",
+    ["Ally name size"]                 = "Taille du nom allié (12 par défaut)",
     ["Allies"]                         = "Alliés",
     ["Class colored ally names"]       = "Noms aux couleurs de classe",
     ["Class colored ally names tip"] =
@@ -801,4 +829,16 @@ BUI:RegisterLocale("frFR", {
     ["Aura scale"]                     = "Taille des auras",
     ["Aura scale tip"] =
         "Taille des icônes d'aura, en pourcentage de celle du jeu.",
+
+    -- Diagnostic `/bui auras` : les libellés de prose seulement — les noms de
+    -- filtres et de champs sont ceux de l'API, ils ne se traduisent pas.
+    ["Aura diagnostic"]                = "Diagnostic des barres d'infos — plaque de la cible",
+    ["Aura diagnostic needs target"] =
+        "Ciblez d'abord quelque chose : le diagnostic lit la plaque de la cible.",
+    ["No nameplate for target"]        = "La cible n'a pas de plaque à l'écran.",
+    ["Refused"]                        = "refusé",
+    ["Secret"]                         = "secret",
+    ["Control"]                        = "témoin",
+    ["Tokens"]                         = "jetons",
+    ["Aura diagnostic unavailable"]    = "Le module Barres d'infos n'est pas actif.",
 })

@@ -31,19 +31,11 @@
 --
 --  ## Ce que le client ne dit pas
 --
---  Deux informations manquent à l'appel, et elles décident chacune d'une partie
---  du code :
---
---    · **l'occultation** — qu'un adversaire soit passé derrière un mur. Le
---      client le sait : il baisse l'opacité de la plaque, par le multiplicateur
---      `nameplateOccludedAlphaMult`. Mais il ne l'annonce par aucun événement et
---      ne l'expose par aucune fonction. On le **déduit** donc de l'opacité qu'il
---      a posée — voir `isOccluded`, qui explique pourquoi la déduction est sûre ;
---    · **caster ou mêlée** — aucune API ne le rend, et aucune base publique sous
---      une licence compatible n'existe (règle 8 : celles des autres addons sont
---      les leurs). On fabrique donc la nôtre en jouant : un PNJ devient un
---      caster la première fois qu'on le voit incanter, et la liste s'exporte et
---      s'importe en texte.
+--  L'**occultation** — qu'un adversaire soit passé derrière un mur — n'est ni
+--  annoncée ni exposée : le client se contente de pâlir la plaque, par le
+--  multiplicateur `nameplateOccludedAlphaMult`. C'est ce multiplicateur qu'on
+--  règle, et rien d'autre : l'assombrissement, qui exigeait de *déduire*
+--  l'occultation plaque par plaque, est parti avec sa déduction.
 -- =========================================================================
 
 local _, ns = ...
@@ -86,10 +78,6 @@ end
 --
 -- Ordre de validation retenu : la taille d'abord, parce qu'elle ne touche que
 -- des CVars du client et ne dépend d'aucune plaque.
---- Deux d'entre elles ne sont pas seulement « pas encore validées » : `marker` et
---- `allies` déplacent une région, et **on ne sait pas rendre un déplacement** sur
---- une barre d'infos aujourd'hui. Voir la section « Rendre un ancrage qu'on n'a
---- pas le droit de lire » : les rallumer demande une idée, pas un test.
 local LIVE = {
     -- Les réglages du jeu repris dans la page. Rien à valider : ils ne modifient
     -- aucune plaque, ils écrivent des CVars que le client relit lui-même.
@@ -97,34 +85,36 @@ local LIVE = {
     own        = true,
 
     size       = true,
-    marker     = false,
 
-    -- L'opacité et l'assombrissement, validés puis endormis : la page s'est
-    -- resserrée sur la liste voulue, et ils n'y sont plus. Rallumer est un
-    -- booléen — rien n'a été défait.
-    visibility = false,
+    -- Le marqueur et les auras partagent une section, et le même état : livrés,
+    -- visibles, **en pause** (voir `AURAS_PAUSED`).
+    marker     = true,
+    auras      = true,
+
+    -- L'opacité, validée puis endormie quand la page s'était resserrée.
+    -- Rallumée : le réglage des non-ciblés est redemandé, et la section
+    -- remonte dans la partie barre de vie.
+    visibility = true,
+
+    -- La texture des barres de vie.
+    textures   = true,
+
     colors     = true,
     threat     = true,
-    auras      = true,    -- les trois rangées de l'addon — en pause, voir AURAS_PAUSED
     overlap    = true,    -- le chevauchement des plaques entre elles
 
     -- La distance, endormie quand la page s'est resserrée sur la liste voulue.
     -- Le code reste : rallumer est un booléen.
     spacing    = false,
-
-    -- L'aperçu n'est pas une section de réglages : c'est la maquette du client,
-    -- montrée telle quelle. Elle ne touche à aucune plaque et n'a donc rien à
-    -- valider avant d'être livrée.
-    preview    = true,
 }
 
---- Les rangées d'auras sont **en pause** : visibles, grisées, inertes. Ce n'est
---- ni un `LIVE` à `false` — la section disparaîtrait, et une fonctionnalité qui
---- disparaît a l'air abandonnée — ni un réglage : le joueur n'a pas à pouvoir
---- rallumer ce qui ne marche pas encore comme il l'a demandé. La taille et les
---- décalages ne suivent pas encore le curseur avec assez de fidélité ; tant que
---- ce n'est pas réglé, la section l'annonce au lieu de le faire découvrir.
-local AURAS_PAUSED = true
+--- Le verrou qui tenait les rangées d'auras et le marqueur en pause — visibles,
+--- grisés, inertes. Il est **levé** : ce qui les faisait mentir n'était pas une
+--- limite du client mais deux erreurs de notre côté, corrigées ensemble (voir
+--- « Les trois rangées d'auras de l'addon »). Le mécanisme reste écrit : c'est le
+--- seul moyen honnête d'annoncer une section qui ne tient pas sa promesse, et il
+--- resservira.
+local AURAS_PAUSED = false
 
 local function aurasPaused()
     return AURAS_PAUSED
@@ -138,7 +128,7 @@ end
 ---@return boolean
 local function needsPlates()
     return LIVE.size or LIVE.marker or LIVE.visibility
-        or LIVE.colors or LIVE.threat or LIVE.auras
+        or LIVE.colors or LIVE.threat or LIVE.auras or LIVE.textures
 end
 
 --- Ne garde de la liste d'options que les sections livrées.
@@ -185,9 +175,6 @@ end
 
 --- jeton d'unité (`nameplate3`) -> cadre de la plaque
 local plates = {}
-
---- plaque -> état peint au dernier passage (`"target"`, `"other"`, `"occluded"`)
-local paintedState = {}
 
 --- Le client peut déclarer un cadre **interdit** : rien de ce qu'on lui ferait ne
 --- prendrait, et l'essayer lève. C'est le cas des plaques d'une arène, dont il
@@ -262,11 +249,6 @@ local CVAR = {
     -- notre taille en pixels est allumée, parce que les deux décident de la même
     -- chose (voir « Le calibre du client et nos pixels »).
     SIZE = "nameplateSize",
-
-    -- Jamais écrit, seulement lu : c'est le plancher du fondu par la distance,
-    -- et il sert à savoir ce qu'une plaque non occultée peut avoir de plus pâle
-    -- (voir `isOccluded`).
-    MIN_ALPHA = "nameplateMinAlpha",
 }
 
 --- nom du CVar -> valeur qu'il portait avant nous, ou `false` s'il n'existait pas
@@ -688,6 +670,61 @@ local function applyTextSize(mod, unitFrame)
               T.SIZE.PLATE_CAST_TEXT)
 end
 
+-- -------------------------------------------------------------------------
+--  Le nom des alliés
+-- -------------------------------------------------------------------------
+-- Un corps à part pour le nom des joueurs alliés : c'est tout ce qui reste
+-- d'une plaque en mode « le nom seul », et il se lit de plus loin que le nom
+-- d'un adversaire. Le réglage ne vaut que là où le client montre des plaques
+-- alliées — hors instance : en donjon comme en raid, il les verrouille.
+--
+-- Appliqué **après** la taille de texte générale, à chaque peinture : le plus
+-- spécifique gagne. Le client réécrit le nom par `CompactUnitFrame_UpdateName`,
+-- qui est précisément l'un des deux hooks qui déclenchent la peinture — la
+-- reprise est donc dans le même souffle, sans hook de plus.
+
+--- nom allié -> corps qu'il portait avant qu'on y touche
+local allyNameSizes = {}
+
+---@param unit string
+---@return boolean
+local function isFriendlyPlayer(unit)
+    return U.IsTrue(UnitIsPlayer(unit))
+       and not U.IsTrue(UnitCanAttack("player", unit))
+end
+
+---@param mod table
+---@param unitFrame table
+---@param unit string
+local function applyAllyName(mod, unitFrame, unit)
+    if not LIVE.size then return end
+    if not mod:Get("resizeAllyName") then return end
+    if not isFriendlyPlayer(unit) then return end
+
+    local name = unitFrame.name
+    if type(name) ~= "table" then return end
+
+    if allyNameSizes[name] == nil then
+        allyNameSizes[name] = T.TextSize(name) or T.SIZE.PLATE_TEXT
+    end
+
+    settingFont = true
+    T.SetTextSize(name, mod:Get("allyNameSize"))
+    settingFont = false
+end
+
+--- Rend son corps à chaque nom allié retouché. Avant `restoreTextSizes` à
+--- l'extinction : le corps relevé ici peut être celui que la taille générale
+--- avait posé, et c'est elle qui connaît l'original.
+local function restoreAllyNames()
+    settingFont = true
+    for name, size in pairs(allyNameSizes) do
+        T.SetTextSize(name, size)
+    end
+    settingFont = false
+    wipe(allyNameSizes)
+end
+
 --- Rend son corps à chaque texte qu'on a retaillé.
 ---
 --- Les deux familles d'un coup : ce qui reste allumé est reposé par le passage
@@ -820,6 +857,26 @@ end
 -- règle 8). Rien n'est dessiné au sens propre : les icônes, le balayage et les
 -- polices sont les assets du client, on ne fait que les assembler.
 --
+-- ## Où les rangées se posent, et pourquoi elles ne tenaient pas
+--
+-- Trois erreurs, corrigées ensemble, et chacune produisait le même symptôme —
+-- « ça marche une demi-seconde puis le jeu reprend la main » :
+--
+--   · les rangées étaient **portées par le cadre d'unité** et **ancrées sur sa
+--     barre de vie**. Ce sont deux régions restreintes, que le client repose à
+--     chacun de ses passages : ce qu'on y accroche est défait sans que rien ne
+--     le dise. Elles sont désormais portées et ancrées par la **plaque** — le
+--     cadre que `C_NamePlate` nous rend, dont le client ne refait pas la mise en
+--     page et dont le niveau se lit ;
+--   · elles **héritaient de l'échelle de la plaque**, qui n'est pas la même sur
+--     la cible et qui change au clic. Un curseur posé à trente donnait trente
+--     fois autre chose selon la plaque. `W.AuraRow` s'en affranchit ;
+--   · on **effaçait le conteneur du client** pour mettre les nôtres à la place.
+--     C'était se battre avec lui à chaque aura qui bouge, et c'était contraire à
+--     la règle du dépôt : on emprunte avant de créer, on ne masque jamais pour
+--     ajouter. Les rangées **s'ajoutent** maintenant à ce que le jeu montre, et
+--     ce que le jeu montre se règle dans sa moitié de la page.
+--
 -- Trois rangées, parce que trois questions différentes se posent en combat, et
 -- qu'elles ne se regardent pas au même endroit :
 --
@@ -830,22 +887,16 @@ end
 --   · **les contrôles** — de tous les joueurs : un mob mouton est mouton,
 --     peu importe qui l'a lancé. À droite.
 --
--- Chaque rangée a sa taille, son décalage et son écart. Quand elles sont
--- allumées, la rangée du client s'efface — à l'opacité, rendue d'un geste.
+-- Chaque rangée a sa taille, son décalage et son écart. Les trois s'ajoutent à
+-- ce que le client affiche : la rangée du jeu reste, et se règle chez lui.
 
---- cadre d'unité -> ses trois rangées ({ imp =, dot =, cc = })
+--- plaque -> ses trois rangées ({ imp =, dot =, cc = })
 local auraRows = {}
 
---- cadre d'unité -> ses trois listes, tables de travail réutilisées (règle 7 :
+--- plaque -> ses trois listes, tables de travail réutilisées (règle 7 :
 --- `UNIT_AURA` est un chemin chaud). `list.n` borne le rempli ; `refused` compte
 --- les auras que le client n'a pas laissé lire.
 local auraLists = {}
-
---- conteneurs du client qu'on a effacés -> `true`
-local dimmedHosts = {}
-
---- Sommes-nous en train d'écrire l'opacité du conteneur ?
-local settingHostAlpha = false
 
 --- Cachet de mise en page : les rangées ne se réancrent que quand un réglage a
 --- changé, jamais à chaque repeinture — `paint` passe à chaque battement de vie.
@@ -873,21 +924,25 @@ local CC_SPELLS = {
 }
 
 --- Les trois rangées : leur clé de rangement, leurs réglages, leur ancrage sur
---- la barre de vie, et la nature d'aura qui teinte leur liseré.
+--- la plaque, et la nature d'aura qui teinte leur liseré.
 ---
 --- L'ancrage est déclaré ici et nulle part ailleurs : c'est lui qui dit « à
 --- gauche », « en haut à gauche », « à droite », et le décalage X/Y du joueur
---- s'ajoute à partir de là.
+--- s'ajoute à partir de là. Il se prend **sur la plaque** : c'est le seul repère
+--- de cette famille qu'on ait le droit de lire et que le client ne rejoue pas.
 local AURA_GROUPS = {
     { key = "imp", kind = "HELP",
       point = "RIGHT", relative = "LEFT",
-      size = "auraImpSize", x = "auraImpX", y = "auraImpY", gap = "auraImpGap" },
+      size = "auraImpSize", x = "auraImpX", y = "auraImpY", gap = "auraImpGap",
+      timer = "auraImpTimer" },
     { key = "dot", kind = "HARM",
       point = "BOTTOMLEFT", relative = "TOPLEFT",
-      size = "auraDotSize", x = "auraDotX", y = "auraDotY", gap = "auraDotGap" },
+      size = "auraDotSize", x = "auraDotX", y = "auraDotY", gap = "auraDotGap",
+      timer = "auraDotTimer" },
     { key = "cc", kind = "CC",
       point = "LEFT", relative = "RIGHT",
-      size = "auraCcSize", x = "auraCcX", y = "auraCcY", gap = "auraCcGap" },
+      size = "auraCcSize", x = "auraCcX", y = "auraCcY", gap = "auraCcGap",
+      timer = "auraCcTimer" },
 }
 
 --- Sorts d'exemple du mode aperçu, par rangée. Des classiques dont l'icône n'a
@@ -963,6 +1018,32 @@ local collectSeen = {}
 
 --- Range une aura dans sa liste, si elle a encore de la place.
 ---
+--- **Une valeur secrète se transmet, elle ne s'inspecte pas**, et c'est toute la
+--- règle de cette fonction. Sur une unité adverse, le client rend l'icône, le
+--- nombre de cumuls et l'identifiant de sort **secrets** — relevé en jeu par
+--- `/bui auras` :
+---
+---     aura.icon: secret | .auraInstanceID: activée
+---     .applications: secret | .spellId: secret
+---
+--- Une première version refusait l'aura sur ce constat, et les trois rangées
+--- restaient vides pour toujours. C'était l'erreur inverse de celle qu'on
+--- croyait éviter : un secret n'est pas intouchable, il est **illisible**. Passé
+--- tel quel à `SetTexture`, il peint l'icône exacte ; c'est ce que fait le client
+--- lui-même, et c'est ce que font les addons qui y arrivent (règle 8).
+---
+--- Ce qu'on perd, on le perd donc **précisément**, et pas en bloc :
+---
+---   · les **cumuls** ne s'affichent pas. Les écrire demanderait de comparer le
+---     nombre à un, ce qui lève sur un secret. Une icône sans son « 3 » reste
+---     une icône juste ;
+---   · le **vocabulaire d'entraves** (`CC_SPELLS`) ne sert plus de repli, faute
+---     de pouvoir lire l'identifiant de sort. Le filtre classé du client, lui,
+---     n'a jamais eu besoin qu'on lise quoi que ce soit.
+---
+--- L'`auraInstanceID`, lui, se lit : c'est ce qui fait tenir le dédoublonnage et
+--- l'horloge.
+---
 --- **La durée est un objet, pas deux nombres.** Sur ce client, départ et
 --- échéance ne se lisent plus sur l'aura : `GetAuraDuration` rend un objet
 --- opaque que le balayage sait consommer tel quel — c'est ce qui fait tourner
@@ -973,8 +1054,10 @@ local collectSeen = {}
 ---@param aura table
 ---@param lists table  pour le compte des refus
 local function admitAura(list, kind, unit, aura, lists)
+    -- Absente, l'icône ne peint rien ; secrète, elle peint la bonne. Seule la
+    -- première est un refus.
     local icon = aura.icon
-    if not icon or U.IsSecret(icon) then
+    if icon == nil then
         lists.refused = lists.refused + 1
         return
     end
@@ -1043,20 +1126,32 @@ local function collectAuras(unit, lists)
     -- Nos affaiblissements. `HARMFUL|PLAYER` filtre côté client ; à défaut, le
     -- champ de l'aura dit la même chose.
     local dots = bulkAuras(unit, "HARMFUL|PLAYER")
+
+    -- Le filtre large ne se lit que si un filtre fin a manqué : il sert de
+    -- repli aux deux rangées nuisibles, et le lire pour rien serait un coût de
+    -- plus sur un chemin chaud (règle 7).
+    local harmful
+    if not (cc and dots) then
+        harmful = bulkAuras(unit, "HARMFUL")
+    end
+
+    -- Sans le filtre classé, notre vocabulaire fait le tri des entraves — que
+    -- le filtre de nos affaiblissements ait répondu ou non. C'est ce « ou non »
+    -- qui manquait : dès que `HARMFUL|PLAYER` marchait, le repli des contrôles
+    -- ne se lisait plus, et leur rangée restait vide pour toujours.
+    if not cc and harmful then
+        for i = 1, #harmful do
+            local aura = harmful[i]
+            local spellID = not U.IsSecret(aura.spellId) and aura.spellId or nil
+            if spellID and CC_SPELLS[spellID] then
+                admitAura(lists.cc, "CC", unit, aura, lists)
+            end
+        end
+    end
+
     if dots then
         admitAll(dots, lists.dot, "HARM", unit, lists)
     else
-        local harmful = bulkAuras(unit, "HARMFUL")
-        if harmful and not cc then
-            -- Sans le filtre classé, notre vocabulaire fait le tri des entraves.
-            for i = 1, #harmful do
-                local aura = harmful[i]
-                local spellID = not U.IsSecret(aura.spellId) and aura.spellId or nil
-                if spellID and CC_SPELLS[spellID] then
-                    admitAura(lists.cc, "CC", unit, aura, lists)
-                end
-            end
-        end
         admitAll(harmful, lists.dot, "HARM", unit, lists, true)
     end
 
@@ -1064,53 +1159,30 @@ local function collectAuras(unit, lists)
     -- client. À défaut, toutes les améliorations — trop large, jamais vide.
     local big      = bulkAuras(unit, "HELPFUL|BIG_DEFENSIVE")
     local external = bulkAuras(unit, "HELPFUL|EXTERNAL_DEFENSIVE")
+    local helpful
     if big or external then
         admitAll(big, lists.imp, "HELP", unit, lists)
         admitAll(external, lists.imp, "HELP", unit, lists)
     else
-        admitAll(bulkAuras(unit, "HELPFUL"), lists.imp, "HELP", unit, lists)
+        helpful = bulkAuras(unit, "HELPFUL")
+        admitAll(helpful, lists.imp, "HELP", unit, lists)
+    end
+
+    -- Aucun chemin n'a répondu : le client refuse la lecture, ou ne publie
+    -- plus la fonction. Compté comme un refus, pour que le repli d'honnêteté
+    -- d'`applyOwnAuras` rende la main au client au lieu d'effacer sa rangée
+    -- sans rien poser à la place.
+    if not (cc or dots or harmful or big or external or helpful) then
+        lists.refused = lists.refused + 1
     end
 end
 
---- Efface ou rend la rangée du client. À l'opacité, avec un hook qui la tient :
---- le client la repose à ses passes, comme la hauteur de barre — même remède.
----@param host table
----@param dim boolean
-local function dimHost(host, dim)
-    if dim then
-        dimmedHosts[host] = true
-        U.GuardedHook(host, "SetAlpha", function(self)
-            if settingHostAlpha then return end
-
-            local mod = module()
-            if not (mod and LIVE.auras and mod:Get("ownAuras")) then return end
-
-            settingHostAlpha = true
-            pcall(self.SetAlpha, self, 0)
-            settingHostAlpha = false
-        end, function()
-            local mod = module()
-            return mod ~= nil and mod:IsEnabled()
-        end)
-    elseif not dimmedHosts[host] then
-        return
-    else
-        dimmedHosts[host] = nil
-    end
-
-    settingHostAlpha = true
-    pcall(host.SetAlpha, host, dim and 0 or 1)
-    settingHostAlpha = false
-end
-
-local function undimAllHosts()
-    settingHostAlpha = true
-    for host in pairs(dimmedHosts) do
-        pcall(host.SetAlpha, host, 1)
-    end
-    settingHostAlpha = false
-    wipe(dimmedHosts)
-end
+-- Le conteneur d'auras du client était effacé ici, à l'opacité, par un hook qui
+-- le retenait. **C'est parti**, et rien ne l'a remplacé : nos rangées s'ajoutent
+-- aux siennes. Ce qu'on y gagne dépasse le code supprimé — plus de bras de fer à
+-- chaque aura qui bouge, plus de repli à écrire pour le cas où le client refuse
+-- de nous laisser lire ses auras, et la moitié Blizzard de la page redevient ce
+-- qu'elle prétend être : les réglages de la rangée du jeu.
 
 --- Un réglage d'aura a changé : les rangées se réancreront à la prochaine
 --- repeinture. Appelé au changement de réglage, jamais depuis la peinture.
@@ -1118,23 +1190,21 @@ local function bumpAuraLayout()
     auraStamp = auraStamp + 1
 end
 
---- Ancre les trois rangées d'une plaque sur sa barre de vie, si le cachet a
---- changé depuis la dernière fois.
+--- Ancre les trois rangées d'une plaque **sur la plaque**, si le cachet a changé
+--- depuis la dernière fois.
 ---@param mod table
----@param unitFrame table
+---@param plate table
 ---@param rows table
-local function anchorRows(mod, unitFrame, rows)
+local function anchorRows(mod, plate, rows)
     if rows._stamp == auraStamp then return end
     rows._stamp = auraStamp
-
-    local bar = healthBarOf(unitFrame) or unitFrame
 
     for g = 1, #AURA_GROUPS do
         local group = AURA_GROUPS[g]
         local row = rows[group.key]
         if row then
             pcall(row.ClearAllPoints, row)
-            pcall(row.SetPoint, row, group.point, bar, group.relative,
+            pcall(row.SetPoint, row, group.point, plate, group.relative,
                   mod:Get(group.x), mod:Get(group.y))
         end
     end
@@ -1149,45 +1219,24 @@ end
 --- vie, et relire quarante auras à ce rythme est ce que la règle 7 interdit.
 --- C'est `UNIT_AURA` qui force — il ne parle que quand une aura change.
 ---@param mod table
----@param unitFrame table
+---@param plate table
 ---@param unit string
 ---@param force? boolean
-local function applyOwnAuras(mod, unitFrame, unit, force)
+local function applyOwnAuras(mod, plate, unit, force)
     if not LIVE.auras then return end
-
-    -- En pause : rien ne se pose, rien ne s'efface chez le client, et ce qui
-    -- aurait déjà été posé se range. La page, elle, montre la section grisée.
-    if AURAS_PAUSED then
-        local rows = auraRows[unitFrame]
-        if rows then
-            for g = 1, #AURA_GROUPS do
-                local row = rows[AURA_GROUPS[g].key]
-                if row then row:Hide() end
-            end
-        end
-        local host = unitFrame.AurasFrame or unitFrame.BuffFrame
-        if type(host) == "table" and type(host.SetAlpha) == "function" then
-            dimHost(host, false)
-        end
-        return
-    end
+    if AURAS_PAUSED then return end
 
     local own     = mod:Get("ownAuras") and true or false
     local preview = mod:Get("previewMode") and true or false
 
-    local rows = auraRows[unitFrame]
+    local rows = auraRows[plate]
     if not rows then
         if not (own or preview) then return end
         rows = {}
         for g = 1, #AURA_GROUPS do
-            rows[AURA_GROUPS[g].key] = W.AuraRow(unitFrame)
+            rows[AURA_GROUPS[g].key] = W.AuraRow(plate)
         end
-        auraRows[unitFrame] = rows
-    end
-
-    local host = unitFrame.AurasFrame or unitFrame.BuffFrame
-    if type(host) ~= "table" or type(host.SetAlpha) ~= "function" then
-        host = nil
+        auraRows[plate] = rows
     end
 
     if not (own or preview) then
@@ -1195,29 +1244,28 @@ local function applyOwnAuras(mod, unitFrame, unit, force)
             local row = rows[AURA_GROUPS[g].key]
             if row then row:Hide() end
         end
-        if host then dimHost(host, false) end
         return
     end
 
-    anchorRows(mod, unitFrame, rows)
+    anchorRows(mod, plate, rows)
 
     if preview then
-        if host then dimHost(host, own) end
         for g = 1, #AURA_GROUPS do
             local group = AURA_GROUPS[g]
             local row = rows[group.key]
             if row then
                 W.AuraRowSet(row, sampleLists[group.key],
-                             mod:Get(group.size), mod:Get(group.gap))
+                             mod:Get(group.size), mod:Get(group.gap),
+                             mod:Get(group.timer))
             end
         end
         return
     end
 
-    local lists = auraLists[unitFrame]
+    local lists = auraLists[plate]
     if not lists then
         lists = { imp = { n = 0 }, dot = { n = 0 }, cc = { n = 0 }, refused = 0 }
-        auraLists[unitFrame] = lists
+        auraLists[plate] = lists
     end
 
     local filled = rows._filled
@@ -1226,27 +1274,22 @@ local function applyOwnAuras(mod, unitFrame, unit, force)
         rows._filled = true
     end
 
-    -- Le repli, et il est la moitié de l'honnêteté de ces rangées : quand le
-    -- client refuse la lecture des auras — il le fait en instance protégée —,
-    -- les nôtres seraient vides pendant que la sienne est effacée, et le joueur
-    -- perdrait les auras tout court. Une aura refusée rend la main au client :
-    -- sa rangée revient, les nôtres se taisent, rien ne disparaît.
-    local blind = own and lists.refused > 0
-        and lists.imp.n == 0 and lists.dot.n == 0 and lists.cc.n == 0
-    if host then dimHost(host, own and not blind) end
-
+    -- Un refus du client ne demande plus rien de particulier : sa rangée n'a pas
+    -- été touchée, elle est toujours là. Nos rangées se contentent d'être vides,
+    -- ce qui est la vérité de ce qu'on a pu lire.
     for g = 1, #AURA_GROUPS do
         local group = AURA_GROUPS[g]
         local row = rows[group.key]
         if row then
             W.AuraRowSet(row, lists[group.key],
-                         mod:Get(group.size), mod:Get(group.gap))
+                         mod:Get(group.size), mod:Get(group.gap),
+                         mod:Get(group.timer))
         end
     end
 end
 
---- Cache toutes les rangées et rend la sienne au client. Les frames restent
---- prêtes pour la prochaine fois (règle 7).
+--- Cache toutes les rangées. Les frames restent prêtes pour la prochaine fois
+--- (règle 7) ; le client, lui, n'a rien à récupérer — on ne lui avait rien pris.
 local function hideAuraRows()
     for _, rows in pairs(auraRows) do
         for g = 1, #AURA_GROUPS do
@@ -1255,7 +1298,6 @@ local function hideAuraRows()
         end
         rows._filled = nil
     end
-    undimAllHosts()
 end
 
 --- Fait couler les barres d'exemple. `nil` quand personne ne les regarde.
@@ -1312,6 +1354,13 @@ end
 -- La hauteur de boîte n'est pas réglable ici : c'est la zone qui reçoit le clic,
 -- et la rétrécir rendrait les plaques difficiles à viser sans que rien ne le
 -- dise. On repose la sienne, relevée avec la largeur.
+--
+-- Troisième remarque, payée en jouant : **quelqu'un d'autre écrit cette taille**.
+-- Le pilote du client la repose quand il rejoue son calibre — ouvrir une page qui
+-- montre sa maquette suffit — et aucun événement ne l'annonce : ce n'est pas un
+-- CVar, `CVAR_UPDATE` ne dit rien. C'est la même leçon que la hauteur de barre :
+-- se brancher sur l'écriture elle-même, et reposer la nôtre dans le même souffle
+-- (voir `hookPlateSize`).
 
 --- { largeur, hauteur } de la boîte avant qu'on y touche, ou `nil`.
 local savedPlateSize
@@ -1333,6 +1382,10 @@ local function rememberPlateSize()
     return savedPlateSize[2]
 end
 
+--- Sommes-nous en train d'écrire la boîte ? Même rôle que pour la hauteur de
+--- barre : le hook ci-dessous guette l'écriture, donc il rappelle la nôtre.
+local settingPlateSize = false
+
 ---@param mod table
 local function applyPlateWidth(mod)
     if not (C_NamePlate and C_NamePlate.SetNamePlateSize) then return end
@@ -1342,7 +1395,31 @@ local function applyPlateWidth(mod)
     local boxHeight = rememberPlateSize()
     if not boxHeight then return end
 
+    settingPlateSize = true
     pcall(C_NamePlate.SetNamePlateSize, mod:Get("width"), boxHeight)
+    settingPlateSize = false
+end
+
+--- Repose notre largeur **à chaque fois que quelqu'un écrit la sienne**.
+---
+--- C'est le correctif du symptôme « ouvrir la fenêtre d'options rend les plaques
+--- à leur taille Blizzard » : le pilote du client repasse sa boîte par cette
+--- fonction-là, sans événement, et on ne peut pas le deviner — on se branche
+--- dessus. Sous `pcall` : hooker une table `C_*` est un pari de capacité, et un
+--- refus doit coûter la veille, pas une erreur.
+local function hookPlateSize()
+    if not (C_NamePlate and C_NamePlate.SetNamePlateSize) then return end
+
+    pcall(U.GuardedHook, C_NamePlate, "SetNamePlateSize", function()
+        if settingPlateSize then return end
+
+        local mod = module()
+        if not (mod and LIVE.size and mod:Get("resize")) then return end
+        applyPlateWidth(mod)
+    end, function()
+        local mod = module()
+        return mod ~= nil and mod:IsEnabled()
+    end)
 end
 
 --- Rend aux plaques la boîte qu'elles avaient — la vraie, relevée, pas une
@@ -1352,13 +1429,125 @@ local function restorePlateWidth()
     if not (C_NamePlate and C_NamePlate.SetNamePlateSize) then return end
     if InCombatLockdown() then return end
 
+    settingPlateSize = true
     pcall(C_NamePlate.SetNamePlateSize, savedPlateSize[1], savedPlateSize[2])
+    settingPlateSize = false
     savedPlateSize = nil
 end
 
 ---@param mod table
 local function applySize(mod)
     applyPlateWidth(mod)
+end
+
+-- =========================================================================
+--  La texture des barres de vie
+-- =========================================================================
+-- Le remplissage de la barre, remplacé image par image : on ne touche pas au
+-- widget, on change ce que sa texture **affiche**. `SetStatusBarTexture`
+-- reconstruirait la région ; écrire sur l'objet de texture la laisse en place,
+-- balayage compris, et se rend par le chemin inverse.
+--
+-- La cible et les autres ont chacune leur choix : c'est ce qui rend la cible
+-- lisible d'un coup d'œil sans que rien ne grossisse. Le changement de cible
+-- repasse par `paintAll`, qui repose la bonne texture des deux côtés.
+--
+-- Réversibilité (règle 6) : ce que la texture affichait — atlas ou fichier — se
+-- relève avant la première écriture. Une lecture refusée (valeur secrète) vaut
+-- renoncement : cette barre-là garde son image, on ne prend pas ce qu'on ne
+-- saura pas rendre.
+
+--- barre -> ce qu'elle affichait ({ atlas = } ou { file = }), ou `false` quand
+--- la lecture a été refusée.
+local barTextureTaken = {}
+
+--- Choix du réglage -> clé de `T.TEXTURE`. Deux choix, nommés par ce qu'ils
+--- font à la couleur plutôt que par leur asset : l'aplat blanc rend la teinte
+--- **vive**, le remplissage des cadres de raid la rend **standard** — c'est
+--- celle que le joueur connaît.
+local BAR_TEXTURE_KEY = {
+    vivid    = "STATUSBAR_FLAT",
+    standard = "STATUSBAR_RAID",
+}
+
+--- Les choix des deux listes déroulantes — une table, partagée : les deux
+--- contrôles offrent exactement la même palette.
+local BAR_TEXTURE_VALUES = {
+    { value = "vivid",    label = L["Texture vivid"] },
+    { value = "standard", label = L["Texture standard"] },
+}
+
+--- L'objet de texture du remplissage d'une barre, ou `nil`.
+---@param bar table
+---@return table|nil
+local function fillTextureOf(bar)
+    if type(bar.GetStatusBarTexture) ~= "function" then return nil end
+    local ok, texture = pcall(bar.GetStatusBarTexture, bar)
+    if not ok or type(texture) ~= "table" then return nil end
+    return texture
+end
+
+--- Relève ce que la texture affiche, une fois. Rend vrai si la barre est
+--- prenable — relevée maintenant ou lors d'un passage précédent.
+---@param bar table
+---@param texture table
+---@return boolean
+local function rememberBarTexture(bar, texture)
+    local taken = barTextureTaken[bar]
+    if taken ~= nil then return taken ~= false end
+
+    local okA, atlas = pcall(texture.GetAtlas, texture)
+    if okA and type(atlas) == "string" and not U.IsSecret(atlas) and atlas ~= "" then
+        barTextureTaken[bar] = { atlas = atlas }
+        return true
+    end
+
+    local okF, file = pcall(texture.GetTexture, texture)
+    if okF and file ~= nil and not U.IsSecret(file) then
+        barTextureTaken[bar] = { file = file }
+        return true
+    end
+
+    barTextureTaken[bar] = false
+    return false
+end
+
+---@param mod table
+---@param unitFrame table
+---@param isTarget boolean
+local function applyBarTexture(mod, unitFrame, isTarget)
+    if not LIVE.textures then return end
+    if not mod:Get("barTexture") then return end
+
+    local bar = healthBarOf(unitFrame)
+    if not bar then return end
+
+    local texture = fillTextureOf(bar)
+    if not texture then return end
+    if not rememberBarTexture(bar, texture) then return end
+
+    local choice = isTarget and mod:Get("textureTarget") or mod:Get("textureOther")
+    local path   = T.TEXTURE[BAR_TEXTURE_KEY[choice] or ""]
+    if not path then return end
+
+    pcall(texture.SetTexture, texture, path)
+end
+
+--- Rend son image à chaque barre dont on l'a remplacée.
+local function restoreBarTextures()
+    for bar, taken in pairs(barTextureTaken) do
+        if taken ~= false then
+            local texture = fillTextureOf(bar)
+            if texture then
+                if taken.atlas then
+                    pcall(texture.SetAtlas, texture, taken.atlas)
+                else
+                    pcall(texture.SetTexture, texture, taken.file)
+                end
+            end
+        end
+    end
+    wipe(barTextureTaken)
 end
 
 -- =========================================================================
@@ -1371,7 +1560,7 @@ end
 --     historiques n'existent plus que sur les clients classic ;
 --   · **occultée** : posée par le client, sur la plaque elle-même. C'est le
 --     seul des trois qu'il sache faire, et le seul qu'on ne saurait pas faire —
---     il faudrait pour cela savoir ce qu'il ne dit pas (voir `isOccluded`).
+--     il faudrait pour cela savoir ce qu'il ne dit pas.
 --
 -- Les deux se **multiplient** : notre opacité vit sur le cadre d'unité, la
 -- sienne sur la plaque qui le porte. Le CVar est donc un rapport, pas une
@@ -1395,46 +1584,6 @@ local function applyAlpha(mod)
     takeCVar(CVAR.OCCLUDED, U.Clamp(mult, 0, 1))
 end
 
--- =========================================================================
---  Assombrissement, et la question de l'occultation
--- =========================================================================
-
---- Écart en deçà duquel deux opacités sont la même. Les valeurs viennent du
---- moteur et ne tombent pas au millième près.
-local ALPHA_EPSILON = 0.01
-
---- Cette plaque est-elle occultée ?
----
---- **Rien ne le dit, on le déduit — et la déduction est sûre.** L'opacité que le
---- moteur pose sur la **plaque** — celle qu'il possède, pas le cadre d'unité où
---- vit la nôtre — vaut, pour une plaque visible, le seul fondu par la distance.
---- Ce fondu ne descend jamais sous `nameplateMinAlpha`. Une plaque occultée
---- porte en plus le multiplicateur d'occultation.
----
---- Il suffit donc de comparer au **plancher du fondu** : rien de visible ne peut
---- passer en dessous, donc tout ce qui est en dessous est occulté. Aucun faux
---- positif, jamais.
----
---- La réciproque tient tant que le multiplicateur d'occultation est plus bas que
---- ce plancher — c'est-à-dire dès que le réglage veut dire quelque chose. Réglé
---- au-dessus, l'assombrissement des occultés ne se déclenche pas : le réglage
---- reste sans effet plutôt que d'assombrir des plaques qui ne le méritent pas.
----
---- On ne cherche que si l'assombrissement des occultés est demandé : l'opacité,
---- elle, est déjà posée par le client sans que personne ait rien à deviner.
----@param plate table
----@return boolean
-local function isOccluded(plate)
-    -- Sous `pcall` comme toute lecture faite sur une plaque : le client refuse
-    -- certaines mesures sur ces cadres-là, et un refus se lit « on ne sait pas »,
-    -- pas « erreur » (voir la section sur les ancrages restreints).
-    local ok, alpha = pcall(plate.GetAlpha, plate)
-    if not ok or type(alpha) ~= "number" then return false end
-
-    local floor = tonumber(U.GetCVar(CVAR.MIN_ALPHA)) or 1
-    return alpha < floor - ALPHA_EPSILON
-end
-
 --- Cette unité est-elle la cible du joueur ?
 ---
 --- `UnitIsUnit` rend un booléen **secret** dès que l'identité d'une des deux
@@ -1443,20 +1592,6 @@ end
 ---@return boolean
 local function isTargetUnit(unit)
     return U.IsTrue(UnitIsUnit(unit, "target"))
-end
-
---- État visuel d'une plaque.
----@param mod table
----@param plate table
----@param isTarget boolean
----@return string  "target" | "other" | "occluded"
-local function stateOf(mod, plate, isTarget)
-    if mod:Get("visibility") and mod:Get("occludedDarkness") > 0
-       and isOccluded(plate) then
-        return "occluded"
-    end
-
-    return isTarget and "target" or "other"
 end
 
 --- Opacité que le module pose lui-même sur un cadre d'unité.
@@ -1539,25 +1674,6 @@ local function releaseAllAlpha()
     wipe(alphaTaken)
 end
 
---- État -> clé du réglage d'assombrissement.
----
---- Une table et non une concaténation : cette lecture tourne dix fois par
---- seconde sur chaque plaque affichée, et `state .. "Darkness"` y fabriquerait
---- une chaîne à chaque passage (règle 7).
-local DARKNESS_KEY = {
-    target   = "targetDarkness",
-    other    = "otherDarkness",
-    occluded = "occludedDarkness",
-}
-
----@param mod table
----@param state string
----@return number  0 = intacte, 1 = noire
-local function darknessOf(mod, state)
-    if not mod:Get("visibility") then return 0 end
-    return (mod:Get(DARKNESS_KEY[state]) or 0) / 100
-end
-
 -- =========================================================================
 --  Ce qu'est la créature
 -- =========================================================================
@@ -1567,11 +1683,15 @@ end
 
 --- Les classes qui lancent des sorts.
 ---
---- **Une créature a une classe, comme un joueur.** C'est la découverte qui a
---- rendu inutile tout ce qu'on avait bâti pour deviner un caster : on retenait
---- les PNJ vus en train d'incanter, on exportait la liste, on l'importait — un
---- mécanisme entier pour une question à laquelle `UnitClassBase` répond du
---- premier coup, dès la première plaque, sans rien avoir appris.
+--- **Une créature a une classe, comme un joueur** — mais elle ne veut dire
+--- quelque chose que sur une élite. C'est un champ du modèle de créature, rempli
+--- avec soin sur le trash de donjon, au petit bonheur sur tout le reste : un lynx
+--- d'extérieur peut très bien être déclaré druide ou chaman. La donnée existe
+--- partout, elle n'est fiable que là où quelqu'un l'a renseignée pour de bon.
+---
+--- C'est pourquoi `classify` ne l'interroge que sur une élite (voir plus bas). Le
+--- geste que ces deux couleurs servent — savoir qui interrompre dans un pack —
+--- n'a de toute façon de sens que là.
 ---
 --- Les classes retenues sont celles qui lancent l'essentiel de leurs sorts à
 --- distance. Paladin et druide en font partie : leurs versions PNJ soignent et
@@ -1610,17 +1730,28 @@ local function effectiveLevel(unit)
     return level
 end
 
---- Classement d'une unité parmi les cinq couleurs de PNJ.
+--- Classement d'une unité parmi les six couleurs de PNJ.
 ---
 --- L'ordre des tests est le classement lui-même, et il va du plus rare au plus
 --- commun : ce qu'un PNJ **est** prime sur ce qu'il **fait**. Un rare qui
 --- incante reste teint en rare — sa rareté est ce qu'on remarque en premier, et
 --- c'est aussi ce qui décide de ce qu'on en fait.
 ---
+--- **Un PNJ ordinaire n'est pas teint du tout**, et c'est la règle qui compte
+--- ici. Ce module ne repeint que ce qu'il sait nommer : un rang que le client
+--- déclare, ou une classe que quelqu'un a pris la peine de renseigner. Le reste —
+--- la faune, les civils, tout ce qui traîne en extérieur — garde la couleur du
+--- jeu, parce que la seule chose qu'on saurait en dire serait devinée. La
+--- version d'avant devinait, et c'est ainsi qu'un lynx passait pour un caster.
+---
 --- Le rang d'une élite se lit à son **niveau relatif au joueur**, et non à son
---- niveau absolu : à égalité c'est un mob d'élite ordinaire, qu'on classe alors
---- par ce qu'il lance ; au-dessus, c'est un miniboss ou un boss, et son rang
---- prime sur sa classe.
+--- niveau absolu :
+---
+---   · à égalité, c'est du trash d'élite : on le classe par ce qu'il lance ;
+---   · un cran au-dessus, c'est un miniboss ;
+---   · deux crans, ou hors échelle, c'est un boss.
+---
+--- Le rang prime alors sur la classe.
 ---@param unit string
 ---@return string|nil  clé de couleur, ou `nil` si l'unité n'en relève pas
 local function classify(unit)
@@ -1636,16 +1767,20 @@ local function classify(unit)
     -- Un boss déclaré comme tel, quand le client sait le dire.
     if UnitIsBossMob and U.IsTrue(UnitIsBossMob(unit)) then return "boss" end
 
-    local level = effectiveLevel(unit)
+    -- Tout ce qui n'est pas élite s'arrête ici, et rend la main au client.
+    if classification ~= "elite" then return nil end
 
-    if classification == "elite" then
-        -- Hors échelle, ou au-dessus du joueur : boss ou miniboss, que le joueur
-        -- ne distingue pas et qu'on ne sépare donc pas.
-        local mine = effectiveLevel("player")
-        if level == -1 then return "boss" end
-        if level and mine and level > mine then return "boss" end
+    local level = effectiveLevel(unit)
+    local mine  = effectiveLevel("player")
+
+    if level == -1 then return "boss" end
+    if level and mine then
+        if level >= mine + 2 then return "boss" end
+        if level == mine + 1 then return "miniboss" end
     end
 
+    -- Une élite au niveau du joueur : du trash, et c'est le seul endroit où la
+    -- classe d'une créature veut dire quelque chose.
     local class = UnitClassBase and UnitClassBase(unit)
     if not U.IsSecret(class) and CASTER_CLASSES[class] then return "caster" end
 
@@ -1655,11 +1790,32 @@ end
 --- Clé de classement -> clé du réglage de couleur.
 local NPC_COLOR_KEY = {
     boss      = "bossColor",
+    miniboss  = "minibossColor",
     caster    = "casterColor",
     melee     = "meleeColor",
     rare      = "rareColor",
     rareElite = "rareEliteColor",
 }
+
+--- Sommes-nous en instance ? Relu au chargement de zone, jamais à chaque
+--- plaque : la peinture est un chemin chaud, l'appartenance à une instance ne
+--- change qu'en passant un portail.
+local playerInInstance = false
+
+local function refreshInstance()
+    playerInInstance = U.IsTrue(IsInInstance())
+end
+
+--- Les couleurs par nature s'appliquent-elles ici ? Le réglage de portée dit
+--- « partout » ou « en instance seulement » — dehors, la couleur du client
+--- reprend la main sans que la case soit à décocher.
+---@param mod table
+---@return boolean
+local function npcColorsActive(mod)
+    if not mod:Get("npcColors") then return false end
+    if mod:Get("npcColorsScope") == "instance" then return playerInInstance end
+    return true
+end
 
 -- =========================================================================
 --  Ce que fait la menace
@@ -1743,7 +1899,7 @@ local function rgbOf(color)
     return r, g, b
 end
 
---- Couleur de fond d'une barre de vie, avant assombrissement.
+--- Couleur de fond d'une barre de vie.
 ---
 --- L'ordre est une hiérarchie d'urgence : la menace prime sur tout, parce
 --- qu'elle dit ce qui est en train de mal tourner ; le classement du PNJ vient
@@ -1775,7 +1931,7 @@ local function healthColor(mod, unit)
                     if color then return color:GetRGB() end
                 end
             end
-        elseif mod:Get("npcColors") then
+        elseif npcColorsActive(mod) then
             local key = NPC_COLOR_KEY[classify(unit) or ""]
             if key then
                 local r, g, b = rgbOf(mod:Get(key))
@@ -1795,13 +1951,12 @@ local function healthColor(mod, unit)
     return T.COLOR.WHITE:GetRGB()
 end
 
---- Couleur d'un nom, avant assombrissement.
+--- Couleur d'un nom.
 ---
 --- Le blanc pour tout le monde, la couleur de classe pour un joueur : ce sont
 --- les deux teintes que le client emploie lui-même. On les repose plutôt que de
---- relire la sienne, parce qu'une lecture suivie d'une écriture s'empilerait sur
---- elle-même passage après passage — l'assombrissement se multiplierait avec
---- lui-même jusqu'au noir.
+--- relire la sienne : une lecture suivie d'une écriture s'empilerait sur
+--- elle-même passage après passage.
 ---@param unit string
 ---@return number r, number g, number b
 local function nameColor(unit)
@@ -1842,15 +1997,13 @@ end
 -- déplacer une région d'une barre d'infos**, et la règle 6 n'admet pas qu'on
 -- déplace ce qu'on ne saura pas rendre.
 --
--- C'est pour cela — et pas par prudence de méthode — que `marker` et `allies`
--- sont à `false` dans `LIVE`. Ce qui reste à trouver avant de les rallumer :
--- une troisième voie qui ne lise rien et n'appelle rien. Le seul candidat connu
--- est de reposer un ancrage **calculé** plutôt que relevé, en acceptant qu'il
--- soit approximatif si le client change sa disposition. Ça se décide, ça ne se
--- suppose pas.
---
--- Ce qui suit reste écrit et fonctionnel pour le jour où la question sera
--- tranchée ; rien de tout cela ne s'exécute tant que les deux sections dorment.
+-- La troisième voie a été **décidée**, pas trouvée : le marqueur est rallumé en
+-- acceptant qu'un déplacement ne se relève pas. Ce qui le rend acceptable est le
+-- recyclage : le client repose lui-même ancrages et tailles en remontant une
+-- plaque (voir `detach`), donc une plaque redonnée après l'extinction revient
+-- d'elle-même. Entre l'extinction et le recyclage, le marqueur d'une plaque déjà
+-- à l'écran reste où on l'a mis — c'est le prix assumé, et un `/reload` le paie
+-- comptant.
 
 -- =========================================================================
 --  Marqueur de ciblage
@@ -1860,6 +2013,14 @@ end
 -- plaque, une vignette flottant au-dessus appartient à ce qu'il y a derrière.
 -- Les deux décalages partent de là, et les valeurs nulles sont donc déjà une
 -- position juste.
+--
+-- **Le client repose son ancrage, et il faut se brancher sur cette écriture.**
+-- Posé une fois par passage de peinture, le marqueur alterne entre sa place et
+-- la nôtre : le client le réancre à des moments qui ne sont pas les nôtres, et
+-- deux écrivains sur la même région se relaient sans jamais converger. C'est
+-- exactement le symptôme de la hauteur de barre, et c'est le même remède — un
+-- hook sur `SetPoint` avec un drapeau de non-récursion. Il n'y a alors plus de
+-- moment à deviner : notre ancrage est reposé dans le souffle du sien.
 
 ---@param unitFrame table
 ---@return table|nil
@@ -1869,15 +2030,91 @@ local function markerOf(unitFrame)
     return nil
 end
 
+--- Sommes-nous en train de poser l'ancrage du marqueur ? Le hook ci-dessous
+--- rappelle notre propre écriture ; ce drapeau coupe la boucle.
+local settingMarkerPoint = false
+
+--- marqueurs sortis de l'opacité de leur plaque -> `true`
+---
+--- Une plaque pâlit pour trois raisons — elle n'est pas la cible, elle est
+--- derrière un mur, elle est loin — et le marqueur pâlissait avec elle. C'est
+--- pourtant la seule chose de la plaque qu'on ait posée là **pour être vue de
+--- loin** : un marqueur à demi effacé ne remplit pas son office. Il sort donc de
+--- l'opacité de son parent, et il est le seul dans ce cas.
+---
+--- Réversible d'un booléen, contrairement à son ancrage : la liste sert à le
+--- rendre à l'extinction (règle 6).
+local markersOpaque = {}
+
+---@param marker table
+local function keepMarkerOpaque(marker)
+    if markersOpaque[marker] then return end
+    if type(marker.SetIgnoreParentAlpha) ~= "function" then return end
+    if not pcall(marker.SetIgnoreParentAlpha, marker, true) then return end
+    markersOpaque[marker] = true
+end
+
+--- Rend chaque marqueur à l'opacité de sa plaque.
+local function restoreMarkerAlpha()
+    for marker in pairs(markersOpaque) do
+        pcall(marker.SetIgnoreParentAlpha, marker, false)
+    end
+    wipe(markersOpaque)
+end
+
+--- Pose l'ancrage et la taille voulus. Le corps commun au passage de peinture et
+--- au hook — les deux écrivent la même chose, et une seule fonction la décrit.
+---@param mod table
+---@param unitFrame table
+---@param marker table
+local function writeMarker(mod, unitFrame, marker)
+    local anchorTo = healthBarOf(unitFrame) or unitFrame
+
+    settingMarkerPoint = true
+    pcall(marker.ClearAllPoints, marker)
+    pcall(marker.SetPoint, marker, "CENTER", anchorTo, "TOPRIGHT",
+          mod:Get("markerX"), mod:Get("markerY"))
+    settingMarkerPoint = false
+end
+
+--- Repose notre ancrage à chaque fois que quelqu'un écrit le sien. Un hook par
+--- marqueur, posé une fois (`U.GuardedHook` ne double jamais), inerte dès que le
+--- module ou l'interrupteur s'éteint.
+---@param unitFrame table
+---@param marker table
+local function hookMarkerPoint(unitFrame, marker)
+    U.GuardedHook(marker, "SetPoint", function()
+        if settingMarkerPoint then return end
+
+        local mod = module()
+        if not (mod and LIVE.marker and mod:Get("marker")) then return end
+        if AURAS_PAUSED then return end
+
+        writeMarker(mod, unitFrame, marker)
+    end, function()
+        local mod = module()
+        return mod ~= nil and mod:IsEnabled()
+    end)
+end
+
 ---@param mod table
 ---@param unitFrame table
 local function placeMarker(mod, unitFrame)
-    -- Éteint : on ne fait rien. Le marqueur a déjà retrouvé sa place, remise par
-    -- le client au moment où l'interrupteur s'est éteint — voir plus haut.
-    if not (LIVE.marker and mod:Get("marker")) then return end
+    -- En pause, ou éteint : on ne fait rien. Le marqueur a déjà retrouvé sa
+    -- place, remise par le client au moment où l'interrupteur s'est éteint —
+    -- voir plus haut.
+    if AURAS_PAUSED then return end
 
     local marker = markerOf(unitFrame)
     if not marker then return end
+
+    -- Le hook se pose même réglage éteint, comme celui de la hauteur de barre :
+    -- il ne fait rien tant que la case ne l'autorise pas, et le poser plus tard
+    -- voudrait dire attendre qu'une plaque repasse par ici après le clic.
+    hookMarkerPoint(unitFrame, marker)
+    if not (LIVE.marker and mod:Get("marker")) then return end
+
+    keepMarkerOpaque(marker)
 
     local size = mod:Get("markerSize")
     pcall(marker.SetSize, marker, size, size)
@@ -1890,10 +2127,97 @@ local function placeMarker(mod, unitFrame)
         pcall(icon.SetAllPoints, icon, marker)
     end
 
-    local anchorTo = healthBarOf(unitFrame) or unitFrame
-    pcall(marker.ClearAllPoints, marker)
-    pcall(marker.SetPoint, marker, "CENTER", anchorTo, "TOPRIGHT",
-          mod:Get("markerX"), mod:Get("markerY"))
+    writeMarker(mod, unitFrame, marker)
+end
+
+-- -------------------------------------------------------------------------
+--  Le marqueur d'exemple de l'aperçu
+-- -------------------------------------------------------------------------
+-- Un marqueur ne se montre que sur une unité marquée : le régler supposait de
+-- marquer un mob, comme la barre de sorts supposait d'attendre une incantation.
+-- Le mode aperçu montre donc la vraie vignette du client, avec un crâne
+-- d'exemple — l'icône que tout le monde pose en premier. Même mécanique que la
+-- barre de sorts maintenue : on se branche sur son `Hide`, et éteindre l'aperçu
+-- la rend une fois.
+
+--- vignettes que l'aperçu montre en ce moment -> `true`. Même nuance que
+--- `previewShown` : éteindre l'aperçu rend la vignette, passer en le laissant
+--- éteint ne la touche pas — sans quoi chaque repeinture cacherait le marqueur
+--- d'une unité réellement marquée.
+local markerShown = {}
+
+--- Sommes-nous en train de montrer ou de rendre la vignette ?
+local settingMarker = false
+
+--- Rend toutes les vignettes montrées par l'aperçu.
+local function hideMarkerPreviews()
+    settingMarker = true
+    for marker in pairs(markerShown) do
+        pcall(marker.Hide, marker)
+    end
+    settingMarker = false
+    wipe(markerShown)
+end
+
+---@param marker table
+local function hookMarkerPreview(marker)
+    U.GuardedHook(marker, "Hide", function(self)
+        if settingMarker then return end
+
+        local mod = module()
+        if not (mod and LIVE.marker and mod:Get("previewMode")) then return end
+
+        settingMarker = true
+        pcall(self.Show, self)
+        settingMarker = false
+    end, function()
+        local mod = module()
+        return mod ~= nil and mod:IsEnabled()
+    end)
+end
+
+---@param mod table
+---@param unitFrame table
+local function applyMarkerPreview(mod, unitFrame)
+    if not LIVE.marker then return end
+
+    -- En pause : l'aperçu du marqueur l'est avec lui. Montrer un crâne
+    -- d'exemple sur un réglage inerte ferait croire qu'il agit.
+    if AURAS_PAUSED then
+        hideMarkerPreviews()
+        return
+    end
+
+    local marker = markerOf(unitFrame)
+    if not marker then return end
+
+    hookMarkerPreview(marker)
+
+    if not mod:Get("previewMode") then
+        if markerShown[marker] then
+            markerShown[marker] = nil
+            settingMarker = true
+            pcall(marker.Hide, marker)
+            settingMarker = false
+        end
+        return
+    end
+
+    markerShown[marker] = true
+
+    -- Le crâne, posé sur la planche du client : c'est la même texture que ses
+    -- vraies vignettes, et une unité réellement marquée reprendra la sienne au
+    -- prochain marquage — le client repose l'icône lui-même.
+    local icon = marker.RaidTargetIcon
+    if type(icon) == "table" and type(icon.SetTexture) == "function" then
+        pcall(icon.SetTexture, icon, T.TEXTURE.RAID_MARKERS)
+        pcall(icon.SetTexCoord, icon, T.RaidMarkerCoords(8))
+    end
+
+    settingMarker = true
+    pcall(marker.Show, marker)
+    settingMarker = false
+    pcall(marker.SetAlpha, marker, 1)
 end
 
 -- =========================================================================
@@ -1976,13 +2300,41 @@ local function auraSliders(prefix)
         }
     end
 
-    -- Taille et décalages seulement : l'écart entre deux icônes garde son
-    -- défaut — celui du client — sans curseur. Trois rangées à quatre curseurs
-    -- faisaient une page de réglages qu'on ne règle jamais.
+    -- Les cinq : taille, décalages, écart entre deux icônes, et corps du
+    -- décompte — tous redemandés rangée par rangée. Le décompte a son propre
+    -- curseur parce que les trois rangées ne se lisent pas de la même façon :
+    -- une entrave se lit à la seconde près, un affaiblissement qu'on entretient
+    -- se lit du coin de l'œil.
     return {
-        slider("Size", L["Own aura size"], L["Own aura size tip"], 12, 50),
-        slider("X",    L["Aura offset X"], L["Aura offset tip"], -60, 60),
-        slider("Y",    L["Aura offset Y"], L["Aura offset tip"], -60, 60),
+        slider("Size",  L["Own aura size"],  L["Own aura size tip"], 12, 50),
+        slider("X",     L["Aura offset X"],  L["Aura offset tip"], -60, 60),
+        slider("Y",     L["Aura offset Y"],  L["Aura offset tip"], -60, 60),
+        slider("Gap",   L["Aura gap"],       L["Aura gap tip"], 0, 12),
+        slider("Timer", L["Aura timer size"], L["Aura timer size tip"], 6, 24),
+    }
+end
+
+--- Un curseur du marqueur. Même fabrique que ceux des rangées, et pour la même
+--- raison : ils portent le même verrou, et trois descripteurs recopiés seraient
+--- trois occasions d'en oublier un le jour où la pause se lève.
+---@param key string
+---@param text string
+---@param tooltip string
+---@param min number
+---@param max number
+---@return table
+local function markerSlider(key, text, tooltip, min, max)
+    return {
+        type     = "slider",
+        key      = key,
+        text     = text,
+        tooltip  = tooltip,
+        min      = min,
+        max      = max,
+        step     = 1,
+        indent   = true,
+        disabled = AURAS_PAUSED and aurasPaused or requires("marker"),
+        disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
     }
 end
 
@@ -2017,6 +2369,36 @@ local function sizeReason()
 end
 
 local SIZE_LOCK = { disabled = sizeTaken, reason = sizeReason }
+
+--- Les trois champs de bits qui commandent les rangées d'auras du client. Ils
+--- sont **éteints** tant que l'addon affiche les siennes : deux rangées d'auras
+--- sur une plaque, ce sont deux fois les mêmes icônes à deux endroits.
+---
+--- On les éteint **par ses propres CVars**, ce qui n'est pas se battre avec lui
+--- mais se servir de son interrupteur : il obéit, et la valeur d'avant est
+--- relevée pour lui être rendue (règle 6). C'est le même contrat que le reste
+--- des CVars de ce module.
+local CLIENT_AURA_CVARS = {
+    "nameplateEnemyNpcAuraDisplay",
+    "nameplateEnemyPlayerAuraDisplay",
+    "nameplateFriendlyPlayerAuraDisplay",
+}
+
+---@return boolean
+local function clientAurasTaken()
+    if InCombatLockdown() then return true end
+    local mod = module()
+    return LIVE.auras and not AURAS_PAUSED
+       and mod ~= nil and mod:Get("ownAuras") == true
+end
+
+---@return string
+local function clientAurasReason()
+    if InCombatLockdown() then return L["Cannot change in combat"] end
+    return L["Auras taken over"]
+end
+
+local AURA_LOCK = { disabled = clientAurasTaken, reason = clientAurasReason }
 
 --- Premier nom de CVar que le client connaît, parmi ceux proposés.
 ---
@@ -2316,9 +2698,6 @@ local function paint(mod, plate, unit)
     if U.IsTrue(UnitIsUnit(unit, "player")) then return end
 
     local isTarget = isTargetUnit(unit)
-    local state    = stateOf(mod, plate, isTarget)
-    local darkness = darknessOf(mod, state)
-    paintedState[plate] = state
 
     if LIVE.visibility then
         -- Le hook se pose réglage éteint comme allumé, pour la même raison que
@@ -2337,20 +2716,23 @@ local function paint(mod, plate, unit)
     local bar = healthBarOf(unitFrame)
     if bar and type(bar.SetStatusBarColor) == "function" then
         local r, g, b = healthColor(mod, unit)
-        pcall(bar.SetStatusBarColor, bar, T.Darken(r, g, b, darkness))
+        pcall(bar.SetStatusBarColor, bar, r, g, b)
     end
 
     local name = unitFrame.name
     if type(name) == "table" and type(name.SetTextColor) == "function" then
         local r, g, b = nameColor(unit)
-        pcall(name.SetTextColor, name, T.Darken(r, g, b, darkness))
+        pcall(name.SetTextColor, name, r, g, b)
     end
 
+    applyBarTexture(mod, unitFrame, isTarget)
     applyBarHeight(mod, unitFrame)
     applyCastSize(mod, unitFrame)
     applyCastPreview(mod, unitFrame)
-    applyOwnAuras(mod, unitFrame, unit)
+    applyOwnAuras(mod, plate, unit)
     applyTextSize(mod, unitFrame)
+    applyAllyName(mod, unitFrame, unit)
+    applyMarkerPreview(mod, unitFrame)
     placeMarker(mod, unitFrame)
 end
 
@@ -2372,8 +2754,6 @@ end
 ---@param plate table
 ---@return table|nil unitFrame
 local function detach(plate)
-    paintedState[plate] = nil
-
     local unitFrame = unitFrameOf(plate)
     if not unitFrame then return nil end
 
@@ -2382,7 +2762,7 @@ local function detach(plate)
     -- Les rangées d'auras ne survivent pas au recyclage : le prochain occupant
     -- de cette plaque hériterait des auras du précédent le temps d'une
     -- repeinture.
-    local rows = auraRows[unitFrame]
+    local rows = auraRows[plate]
     if rows then
         for g = 1, #AURA_GROUPS do
             local row = rows[AURA_GROUPS[g].key]
@@ -2419,50 +2799,12 @@ local function releaseAll()
     for _, plate in pairs(plates) do
         release(plate)
     end
-    wipe(paintedState)
     releaseAllAlpha()
     restoreBarHeights()
+    restoreBarTextures()
     restoreCastSizes()
+    restoreAllyNames()
     restoreTextSizes()
-end
-
--- =========================================================================
---  Le passage qui guette l'occultation
--- =========================================================================
--- **Le seul endroit de l'addon qui sonde au lieu d'écouter**, et il ne sonde
--- qu'une chose : l'opacité que le moteur vient de poser. Rien ne l'annonce, et
--- il n'y a pas d'autre chemin (voir `isOccluded`).
---
--- Il ne repeint que les plaques dont l'**état a changé** : passer derrière un
--- mur est rare à l'échelle d'un dixième de seconde, et repeindre quarante
--- plaques dix fois par seconde pour n'en changer aucune serait exactement le
--- coût que la règle 7 interdit. Tout le reste — la couleur qui suit les points
--- de vie, le nom que le client réécrit — est reposé par les hooks, au moment où
--- il écrit.
-
---- Passage périodique, `nil` quand le module est éteint.
-local ticker
-
----@param mod table
-local function sweep(mod)
-    for unit, plate in pairs(plates) do
-        local state = stateOf(mod, plate, isTargetUnit(unit))
-        if paintedState[plate] ~= state then
-            paint(mod, plate, unit)
-        end
-    end
-end
-
----@param mod table
-local function startTicker(mod)
-    if ticker then return end
-    ticker = C_Timer.NewTicker(T.TIMING.NAMEPLATE, function() sweep(mod) end)
-end
-
-local function stopTicker()
-    if not ticker then return end
-    ticker:Cancel()
-    ticker = nil
 end
 
 -- =========================================================================
@@ -2532,11 +2874,17 @@ end
 --- repeint, ce qui est le cas de la quasi-totalité de la page.
 local SIZE_KEYS  = { resize = true, width = true, height = true,
                      resizeText = true, textSize = true,
+                     resizeAllyName = true, allyNameSize = true,
                      resizeCastText = true, castTextSize = true,
                      previewMode = true,
                      resizeCast = true, castHeight = true }
 local ALPHA_KEYS = { visibility = true, targetAlpha = true, otherAlpha = true,
                      occludedAlpha = true }
+
+--- Les réglages de texture : un repassage suffit, sauf l'extinction, qui rend
+--- leurs images aux barres.
+local TEXTURE_KEYS = { barTexture = true, textureOther = true,
+                       textureTarget = true }
 
 --- Les CVars que chaque interrupteur rend quand on l'éteint. Déclarés ici plutôt
 --- que construits dans la fonction : une table bâtie à chaque clic est une table
@@ -2552,6 +2900,32 @@ local function giveBack(names)
         local saved = savedCVars[name]
         if saved and saved ~= false then U.SetCVar(name, saved) end
         savedCVars[name] = nil
+    end
+end
+
+--- Éteint les rangées d'auras du client, ou les lui rend.
+---
+--- Le geste est symétrique de la case « Régler les auras » et n'a pas d'autre
+--- déclencheur : allumée, les trois champs de bits tombent à zéro ; éteinte, ils
+--- reprennent la valeur relevée avant qu'on y touche. Les cases correspondantes
+--- se grisent en même temps (`AURA_LOCK`), pour que la page dise pourquoi elles
+--- ne répondent plus au lieu de laisser croire qu'elles sont cassées.
+---
+--- **Refusé en combat**, comme tous les réglages du client dans cette page. Ce
+--- qui a été refusé est repassé à la sortie de combat, par le même abonnement
+--- que la largeur de plaque.
+---@param mod table
+local function applyClientAuras(mod)
+    if not LIVE.auras or AURAS_PAUSED then return end
+    if InCombatLockdown() then return end
+
+    if mod:Get("ownAuras") then
+        for i = 1, #CLIENT_AURA_CVARS do
+            local name = CLIENT_AURA_CVARS[i]
+            if U.GetCVar(name) ~= nil then takeCVar(name, 0) end
+        end
+    else
+        giveBack(CLIENT_AURA_CVARS)
     end
 end
 
@@ -2592,6 +2966,11 @@ BUI:RegisterModule(MODULE, {
         resizeText = false,
         textSize   = T.PlateConstant("HEALTH_BAR_FONT_HEIGHT", T.SIZE.PLATE_TEXT),
 
+        -- Le nom des joueurs alliés, à part : c'est ce qu'on lit en mode
+        -- « le nom seul », et il se règle sans rendre le reste du texte.
+        resizeAllyName = false,
+        allyNameSize   = T.SIZE.PLATE_TEXT,
+
         -- Le corps de la barre de sorts est le sien : le client ecrit plus petit
         -- dessus, et partir de sa valeur rend l'interrupteur sans effet tant
         -- qu'on n'a pas bouge le curseur.
@@ -2609,20 +2988,23 @@ BUI:RegisterModule(MODULE, {
         -- minimal entre une rangée et la barre qu'elle borde.
         ownAuras    = false,
 
-        auraImpSize = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
-        auraImpGap  = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
-        auraImpX    = -4,
-        auraImpY    = 0,
+        auraImpSize  = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
+        auraImpGap   = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
+        auraImpX     = -4,
+        auraImpY     = 0,
+        auraImpTimer = T.SIZE.PLATE_AURA_TIMER,
 
-        auraDotSize = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
-        auraDotGap  = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
-        auraDotX    = 0,
-        auraDotY    = 4,
+        auraDotSize  = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
+        auraDotGap   = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
+        auraDotX     = 0,
+        auraDotY     = 4,
+        auraDotTimer = T.SIZE.PLATE_AURA_TIMER,
 
-        auraCcSize  = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
-        auraCcGap   = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
-        auraCcX     = 4,
-        auraCcY     = 0,
+        auraCcSize   = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
+        auraCcGap    = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
+        auraCcX      = 4,
+        auraCcY      = 0,
+        auraCcTimer  = T.SIZE.PLATE_AURA_TIMER,
 
         resizeCast = false,
         castHeight = T.SIZE.PLATE_CAST_BAR_H,
@@ -2633,6 +3015,13 @@ BUI:RegisterModule(MODULE, {
         markerX    = 0,
         markerY    = 0,
 
+        -- La texture des barres. « Couleur vive » des deux côtés : c'est la
+        -- demande — l'aplat façon Details —, et le premier choix de la liste.
+        -- Rien ne s'écrit tant que la case est décochée.
+        barTexture    = false,
+        textureOther  = "vivid",
+        textureTarget = "vivid",
+
         -- Opacités : celles du client, pour la même raison. L'occultée est le
         -- produit des deux valeurs qu'il emploie — la moitié pour un non-ciblé,
         -- puis les deux cinquièmes de celle-là.
@@ -2640,13 +3029,12 @@ BUI:RegisterModule(MODULE, {
         targetAlpha      = 100,
         otherAlpha       = 50,
         occludedAlpha    = 20,
-        targetDarkness   = 0,
-        otherDarkness    = 0,
-        occludedDarkness = 0,
 
         npcColors      = false,
+        npcColorsScope = "always",
         pvpClassColor  = false,
         bossColor      = T.ColorTable(T.COLOR.PLATE.BOSS),
+        minibossColor  = T.ColorTable(T.COLOR.PLATE.MINIBOSS),
         casterColor    = T.ColorTable(T.COLOR.PLATE.CASTER),
         meleeColor     = T.ColorTable(T.COLOR.PLATE.MELEE),
         rareColor      = T.ColorTable(T.COLOR.PLATE.RARE),
@@ -2699,14 +3087,13 @@ BUI:RegisterModule(MODULE, {
         bitfieldGroup("nameplateStackingTypes", Enum.NamePlateStackType,
             STACK_LABELS, L["Stacking tip"]),
 
-        -- La maquette au-dessus de ce qu'elle illustre : on la regarde en
-        -- réglant le style et la taille, pas après les avoir quittés.
-        { section = "preview" },
-        { type = "header",      text = L["Preview"] },
-        { type = "description", text = L["Preview notice"] },
-        { type = "preview" },
+        -- La maquette du client vivait ici, au-dessus de ce qu'elle illustrait.
+        -- **Elle est partie, et elle ne revient pas** : la monter réveille son
+        -- gestionnaire de barres d'infos, qui repasse sur les vraies plaques en
+        -- étant teinté par nous — une erreur dans son code, et les tailles
+        -- rendues à celles de Blizzard à chaque ouverture de cette fenêtre.
+        -- Le détail est dans `UI/Widgets/PlatePreview.lua`.
 
-        { section = "blizzard" },
         { type = "header", text = L["Appearance"] },
         enumDropdown("nameplateStyle", Enum.NamePlateStyle, STYLE_LABELS,
             L["Nameplate style"], L["Nameplate style tip"]),
@@ -2725,12 +3112,15 @@ BUI:RegisterModule(MODULE, {
         -- « 1,20 » ne se lit pas comme une taille. Les bornes sont celles où la
         -- vignette reste une vignette — au-delà elle mange la plaque, en deçà elle
         -- n'est plus reconnaissable.
+        -- Sous le même verrou que le calibre : tant que l'addon tient la taille,
+        -- toucher à ces deux-là fait rejouer la mise en page du client — et
+        -- c'est précisément le geste qui écrasait les réglages en pixels.
         blizzSlider("nameplateAuraScale",
             L["Aura scale"], L["Aura scale tip"],
-            { min = 70, max = 140, step = 10, factor = 100 }),
+            { min = 70, max = 140, step = 10, factor = 100 }, SIZE_LOCK),
         blizzSlider("nameplateDebuffPadding",
             L["Debuff spacing"], L["Debuff spacing tip"],
-            { min = 0, max = 20, step = 1 }),
+            { min = 0, max = 20, step = 1 }, SIZE_LOCK),
 
         { type = "header", text = L["Health bar info"] },
         bitfieldGroup("nameplateInfoDisplay", Enum.NamePlateInfoDisplay,
@@ -2750,15 +3140,15 @@ BUI:RegisterModule(MODULE, {
         -- plutôt que de les fondre, pour que la page dise ce que le jeu fait.
         { type = "header", text = L["Enemy NPC auras"] },
         bitfieldGroup("nameplateEnemyNpcAuraDisplay", Enum.NamePlateEnemyNpcAuraDisplay,
-            AURA_LABELS, L["Auras tip"]),
+            AURA_LABELS, L["Auras tip"], AURA_LOCK),
 
         { type = "header", text = L["Enemy player auras"] },
         bitfieldGroup("nameplateEnemyPlayerAuraDisplay", Enum.NamePlateEnemyPlayerAuraDisplay,
-            AURA_LABELS, L["Auras tip"]),
+            AURA_LABELS, L["Auras tip"], AURA_LOCK),
 
         { type = "header", text = L["Friendly player auras"] },
         bitfieldGroup("nameplateFriendlyPlayerAuraDisplay", Enum.NamePlateFriendlyPlayerAuraDisplay,
-            AURA_LABELS, L["Auras tip"]),
+            AURA_LABELS, L["Auras tip"], AURA_LOCK),
 
         { type = "header", text = L["Simplified nameplates"] },
         { type = "description", text = L["Simplified nameplates notice"] },
@@ -2833,11 +3223,97 @@ BUI:RegisterModule(MODULE, {
             disabled = requires("resizeText"),
         },
         -- Le client sait faire lui-même « le nom seul », mais son menu ne le
-        -- propose nulle part : la case vit donc ici, en dernière ligne de la
-        -- barre de vie — c'est elle qu'elle remplace.
+        -- propose nulle part : la case vit donc ici, en dernières lignes de la
+        -- barre de vie — c'est elle qu'elle remplace. Le corps du nom allié
+        -- l'accompagne : c'est tout ce qui reste d'une plaque en mode nom seul.
         blizzToggle("nameplateShowOnlyNameForFriendlyPlayerUnits",
             L["Allied names only"], L["Allied names only tip"]),
+        {
+            type    = "toggle",
+            key     = "resizeAllyName",
+            text    = L["Resize ally names"],
+            tooltip = L["Resize ally names tip"],
+            indent  = true,
+        },
+        {
+            type     = "slider",
+            key      = "allyNameSize",
+            text     = L["Ally name size"],
+            tooltip  = L["Resize ally names tip"],
+            min      = 6,
+            max      = 32,
+            step     = 1,
+            indent   = true,
+            disabled = requires("resizeAllyName"),
+        },
 
+        -- La texture du remplissage : dans la partie barre de vie, parce que
+        -- c'est elle qu'elle habille.
+        { section = "textures" },
+        { type = "header", text = L["Bar texture"] },
+        {
+            type    = "toggle",
+            key     = "barTexture",
+            text    = L["Set the bar texture"],
+            tooltip = L["Set the bar texture tip"],
+        },
+        {
+            type     = "dropdown",
+            key      = "textureOther",
+            text     = L["Others bar texture"],
+            tooltip  = L["Others bar texture tip"],
+            values   = BAR_TEXTURE_VALUES,
+            disabled = requires("barTexture"),
+        },
+        {
+            type     = "dropdown",
+            key      = "textureTarget",
+            text     = L["Target bar texture"],
+            tooltip  = L["Target bar texture tip"],
+            values   = BAR_TEXTURE_VALUES,
+            disabled = requires("barTexture"),
+        },
+        { section = "visibility" },
+        { type = "header", text = L["Visibility"] },
+        { type = "description", text = L["Visibility notice"] },
+        {
+            type    = "toggle",
+            key     = "visibility",
+            text    = L["Tune visibility"],
+            tooltip = L["Tune visibility tip"],
+        },
+        {
+            type     = "slider",
+            key      = "targetAlpha",
+            text     = L["Target opacity"],
+            tooltip  = L["Target opacity tip"],
+            min      = 10,
+            max      = 100,
+            step     = 5,
+            disabled = requires("visibility"),
+        },
+        {
+            type     = "slider",
+            key      = "otherAlpha",
+            text     = L["Others opacity"],
+            tooltip  = L["Others opacity tip"],
+            min      = 10,
+            max      = 100,
+            step     = 5,
+            disabled = requires("visibility"),
+        },
+        {
+            type     = "slider",
+            key      = "occludedAlpha",
+            text     = L["Occluded opacity"],
+            tooltip  = L["Occluded opacity tip"],
+            min      = 5,
+            max      = 100,
+            step     = 5,
+            disabled = requires("visibility"),
+        },
+
+        { section = "size" },
         { type = "header", text = L["Cast bar size"] },
         {
             type    = "toggle",
@@ -2894,10 +3370,29 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Color enemies by kind tip"],
         },
         {
+            type     = "dropdown",
+            key      = "npcColorsScope",
+            text     = L["NPC colors scope"],
+            tooltip  = L["NPC colors scope tip"],
+            indent   = true,
+            values   = {
+                { value = "always",   label = L["Everywhere"] },
+                { value = "instance", label = L["Instances only"] },
+            },
+            disabled = requires("npcColors"),
+        },
+        {
             type     = "color",
             key      = "bossColor",
             text     = L["Boss color"],
             tooltip  = L["Boss color tip"],
+            disabled = requires("npcColors"),
+        },
+        {
+            type     = "color",
+            key      = "minibossColor",
+            text     = L["Miniboss color"],
+            tooltip  = L["Miniboss color tip"],
             disabled = requires("npcColors"),
         },
         {
@@ -2959,120 +3454,6 @@ BUI:RegisterModule(MODULE, {
             disabled = requires("threatColors"),
         },
 
-        -- Le client sait faire lui-même « le nom seul », mais son menu ne le
-        -- propose nulle part : la case est donc de ce côté-ci. On avait
-        -- entrepris de construire cette fonctionnalité — masquer la barre,
-        -- recentrer le nom — et on s'y était cassé les dents sur des ancrages
-        -- qu'il interdit de relire. Il suffisait de le lui demander.
-        { section = "marker" },
-        { type = "header", text = L["Raid marker"] },
-        {
-            type    = "toggle",
-            key     = "marker",
-            text    = L["Place raid marker"],
-            tooltip = L["Place raid marker tip"],
-        },
-        {
-            type     = "slider",
-            key      = "markerSize",
-            text     = L["Marker size"],
-            tooltip  = L["Marker size tip"],
-            min      = 8,
-            max      = 64,
-            step     = 1,
-            disabled = requires("marker"),
-        },
-        {
-            type     = "slider",
-            key      = "markerX",
-            text     = L["Marker offset X"],
-            tooltip  = L["Marker offset tip"],
-            min      = -60,
-            max      = 60,
-            step     = 1,
-            disabled = requires("marker"),
-        },
-        {
-            type     = "slider",
-            key      = "markerY",
-            text     = L["Marker offset Y"],
-            tooltip  = L["Marker offset tip"],
-            min      = -60,
-            max      = 60,
-            step     = 1,
-            disabled = requires("marker"),
-        },
-
-        { section = "visibility" },
-        { type = "header", text = L["Visibility"] },
-        { type = "description", text = L["Visibility notice"] },
-        {
-            type    = "toggle",
-            key     = "visibility",
-            text    = L["Tune visibility"],
-            tooltip = L["Tune visibility tip"],
-        },
-        {
-            type     = "slider",
-            key      = "targetAlpha",
-            text     = L["Target opacity"],
-            tooltip  = L["Target opacity tip"],
-            min      = 10,
-            max      = 100,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-        {
-            type     = "slider",
-            key      = "targetDarkness",
-            text     = L["Target darkness"],
-            tooltip  = L["Darkness tip"],
-            min      = 0,
-            max      = 90,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-        {
-            type     = "slider",
-            key      = "otherAlpha",
-            text     = L["Others opacity"],
-            tooltip  = L["Others opacity tip"],
-            min      = 10,
-            max      = 100,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-        {
-            type     = "slider",
-            key      = "otherDarkness",
-            text     = L["Others darkness"],
-            tooltip  = L["Darkness tip"],
-            min      = 0,
-            max      = 90,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-        {
-            type     = "slider",
-            key      = "occludedAlpha",
-            text     = L["Occluded opacity"],
-            tooltip  = L["Occluded opacity tip"],
-            min      = 5,
-            max      = 100,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-        {
-            type     = "slider",
-            key      = "occludedDarkness",
-            text     = L["Occluded darkness"],
-            tooltip  = L["Occluded darkness tip"],
-            min      = 0,
-            max      = 90,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-
         -- Ces trois-là sont des réglages du client, comme ceux de la moitié
         -- d'au-dessus, mais son menu ne les expose nulle part : il n'y a donc pas
         -- d'autre endroit où aller les chercher, et leur place est de ce côté-ci.
@@ -3090,16 +3471,20 @@ BUI:RegisterModule(MODULE, {
             L["Nameplate distance"], L["Nameplate distance tip"],
             { min = 10, max = 100, step = 5 }),
 
+        -- Les auras et le marqueur sous un seul en-tête : ils se règlent de la
+        -- même façon — une taille, deux décalages, un écart — et ils se
+        -- regardent ensemble sur la même plaque.
         { section = "auras" },
-        { type = "header", text = L["Auras"] },
-        { type = "description", text = L["Auras paused notice"] },
+        { type = "header", text = L["Auras and marker"] },
+        { type = "description",
+          text = AURAS_PAUSED and L["Auras paused notice"] or L["Auras notice"] },
         {
             type    = "toggle",
             key     = "ownAuras",
             text    = L["Own auras"],
             tooltip = L["Own auras tip"],
-            disabled = aurasPaused,
-            disabledReason = L["Auras paused"],
+            disabled = AURAS_PAUSED and aurasPaused or nil,
+            disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
         },
 
         { type = "header", text = L["Own debuff auras"] },
@@ -3114,7 +3499,142 @@ BUI:RegisterModule(MODULE, {
         { type = "description", text = L["Crowd control auras notice"] },
         auraSliders("auraCc"),
 
+        -- Le marqueur ferme la section : il se règle comme une rangée — une
+        -- taille, deux décalages.
+        { section = "marker" },
+        { type = "header", text = L["Raid marker"] },
+        {
+            type    = "toggle",
+            key     = "marker",
+            text    = L["Place raid marker"],
+            tooltip = L["Place raid marker tip"],
+            disabled = AURAS_PAUSED and aurasPaused or nil,
+            disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
+        },
+        markerSlider("markerSize", L["Marker size"], L["Marker size tip"], 8, 64),
+        markerSlider("markerX", L["Marker offset X"], L["Marker offset tip"], -60, 60),
+        markerSlider("markerY", L["Marker offset Y"], L["Marker offset tip"], -60, 60),
+
     }),
+
+    --- `/bui auras` : l'état de la chaîne des auras et du zoom, écrit dans le
+    --- chat. Le symptôme « les curseurs ne font rien » a trop de causes
+    --- possibles — lecture refusée, conteneur introuvable, rangée jamais
+    --- montée, zoom posé ailleurs que là où on le tient — pour se deviner de
+    --- loin : on regarde sur pièces, sur la plaque de la cible. Les noms de
+    --- filtres et de champs sont ceux de l'API, ils ne se traduisent pas.
+    DiagnoseAuras = function(self)
+        self:Print(L["Aura diagnostic"])
+
+        if not U.IsTrue(UnitExists("target")) then
+            self:Print(L["Aura diagnostic needs target"])
+            return
+        end
+
+        local plate = C_NamePlate and C_NamePlate.GetNamePlateForUnit
+                      and C_NamePlate.GetNamePlateForUnit("target")
+        local unitFrame = unitFrameOf(plate)
+        if not unitFrame then
+            self:Print(L["No nameplate for target"])
+            return
+        end
+
+        self:Print("C_UnitAuras.GetUnitAuras:",
+            (C_UnitAuras and C_UnitAuras.GetUnitAuras) and L["On"] or L["Off"])
+
+        local filters = { "HARMFUL|CROWD_CONTROL", "HARMFUL|PLAYER", "HARMFUL",
+                          "HELPFUL|BIG_DEFENSIVE", "HELPFUL|EXTERNAL_DEFENSIVE",
+                          "HELPFUL" }
+        -- Le premier lot qui répond sert de spécimen : on regarde champ par
+        -- champ ce que le client laisse lire d'une aura. C'est la mesure qui
+        -- manquait — un filtre qui répond « quatre auras » ne dit pas si ces
+        -- quatre-là passeront le tri, et c'est là que la chaîne se rompt.
+        -- **Le témoin, et c'est lui qui rend le reste lisible.** Six zéros sur
+        -- une cible peuvent vouloir dire « le client ne nous répond pas » aussi
+        -- bien que « cette cible n'a rien sur elle », et les deux appellent des
+        -- corrections opposées. Le joueur, lui, porte toujours quelque chose :
+        -- si sa ligne est vide elle aussi, la lecture est en cause et l'unité
+        -- n'y est pour rien.
+        local mine = bulkAuras("player", "HELPFUL")
+        self:Print("player HELPFUL:", mine and #mine or L["Refused"],
+                   "(" .. L["Control"] .. ")")
+
+        -- **Les deux jetons.** Les rangées lisent le jeton de plaque
+        -- (`nameplate3`), jamais `target` : ce sont deux façons de désigner la
+        -- même unité, et rien ne garantit que le client les protège pareil.
+        -- Comparer les deux colonnes est la seule façon de le savoir.
+        local token = plate.namePlateUnitToken
+        if type(token) ~= "string" then
+            for unit, known in pairs(plates) do
+                if known == plate then token = unit break end
+            end
+        end
+        self:Print(L["Tokens"] .. ": target |", token or L["Refused"])
+
+        local specimen
+        for i = 1, #filters do
+            local onTarget = bulkAuras("target", filters[i])
+            local onPlate  = token and bulkAuras(token, filters[i])
+            self:Print(filters[i] .. ":",
+                       onTarget and #onTarget or L["Refused"],
+                       "|", onPlate and #onPlate or L["Refused"])
+
+            local found = (onTarget and onTarget[1]) or (onPlate and onPlate[1])
+            if not specimen and found then specimen = found end
+        end
+
+        if specimen then
+            local function reads(value)
+                if value == nil then return "nil" end
+                if U.IsSecret(value) then return L["Secret"] end
+                return L["On"]
+            end
+            self:Print("aura.icon:", reads(specimen.icon),
+                       "| .auraInstanceID:", reads(specimen.auraInstanceID),
+                       "| .applications:", reads(specimen.applications),
+                       "| .spellId:", reads(specimen.spellId))
+        end
+
+        -- Ce que le tri en fait, par le même chemin que les vraies rangées et
+        -- sur le jeton qu'elles emploient. Des zéros ici avec des filtres qui
+        -- répondent au-dessus désignent le tri ; des zéros des deux côtés
+        -- désignent la lecture.
+        local probe = { imp = { n = 0 }, dot = { n = 0 }, cc = { n = 0 }, refused = 0 }
+        collectAuras(token or "target", probe)
+        self:Print("collect imp:", probe.imp.n, "| dot:", probe.dot.n,
+                   "| cc:", probe.cc.n, "| " .. L["Refused"] .. ":", probe.refused)
+
+        self:Print("ownAuras:", self:Get("ownAuras") and L["On"] or L["Off"],
+                   "| previewMode:", self:Get("previewMode") and L["On"] or L["Off"])
+        self:Print("AurasFrame:", unitFrame.AurasFrame and L["On"] or L["Off"],
+                   "| BuffFrame:", unitFrame.BuffFrame and L["On"] or L["Off"],
+                   "| name:", unitFrame.name and L["On"] or L["Off"])
+
+        local rows = auraRows[plate]
+        if rows then
+            for g = 1, #AURA_GROUPS do
+                local key = AURA_GROUPS[g].key
+                local row = rows[key]
+                local shown = row and U.IsTrue(row:IsShown())
+                self:Print("row " .. key .. ":",
+                           row and (shown and L["On"] or L["Off"]) or L["Refused"])
+            end
+        else
+            self:Print("rows:", L["Refused"])
+        end
+
+        -- Les échelles empilées. Les rangées n'en héritent plus — elles ignorent
+        -- celle de leur parent —, mais les deux nombres restent la première
+        -- chose à regarder quand une rangée n'est pas là où le curseur la dit.
+        local okP, plateScale = pcall(plate.GetScale, plate)
+        local okF, frameScale = pcall(unitFrame.GetScale, unitFrame)
+        self:Print("scale plate:",
+            (okP and type(plateScale) == "number" and not U.IsSecret(plateScale))
+                and string.format("%.2f", plateScale) or "?",
+            "| frame:",
+            (okF and type(frameScale) == "number" and not U.IsSecret(frameScale))
+                and string.format("%.2f", frameScale) or "?")
+    end,
 
     OnEnable = function(self)
         -- Les exemples de l'aperçu se préparent d'abord : si la case a survécu à
@@ -3122,6 +3642,12 @@ BUI:RegisterModule(MODULE, {
         if LIVE.auras and self:Get("previewMode") then refreshSampleList() end
 
         applySize(self)
+        applyClientAuras(self)
+
+        -- La boîte des plaques se fait réécrire sans événement — le pilote du
+        -- client la repose en rejouant son calibre. On se branche sur
+        -- l'écriture, comme pour la hauteur de barre.
+        hookPlateSize()
 
         -- Un autre addon — ou le panneau du client — peut écrire par-dessus nos
         -- CVars. On reprend la main, sans précipitation : voir `CVAR_SETTLE`.
@@ -3129,12 +3655,16 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("CVAR_UPDATE", U.Throttle(T.TIMING.CVAR_SETTLE, function()
             applySize(self)
             applyAlpha(self)
+            applyClientAuras(self)
         end))
 
         -- La largeur de boîte est refusée en combat, sans rien dire. Ce qui a été
         -- refusé se rattrape ici — c'est le même contrat que les cadres de groupe
         -- dans `Modules/UnitFrames.lua`.
-        self:RegisterEvent("PLAYER_REGEN_ENABLED", function() applySize(self) end)
+        self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+            applySize(self)
+            applyClientAuras(self)
+        end)
 
         -- Tout ce qui suit s'occupe des plaques une par une. Tant qu'aucune
         -- section n'en a besoin, rien de tout cela ne s'arme : pas de hook, pas
@@ -3143,14 +3673,12 @@ BUI:RegisterModule(MODULE, {
         if not needsPlates() then return end
 
         refreshRole()
+        refreshInstance()
         collectPlates()
         hookPainting()
         applyAlpha(self)
         paintAll(self)
 
-        -- Le passage périodique ne sert qu'à guetter l'occultation : sans la
-        -- section qui l'exploite, il tournerait pour personne.
-        if LIVE.visibility then startTicker(self) end
         updateCastTicker(self)
 
         self:RegisterEvent("NAME_PLATE_UNIT_ADDED", function(_, unit)
@@ -3194,8 +3722,7 @@ BUI:RegisterModule(MODULE, {
             if not (LIVE.auras and self:Get("ownAuras")) then return end
             if self:Get("previewMode") then return end
 
-            local unitFrame = unitFrameOf(plate)
-            if unitFrame then applyOwnAuras(self, unitFrame, unit, true) end
+            applyOwnAuras(self, plate, unit, true)
         end)
 
         self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", function()
@@ -3206,6 +3733,7 @@ BUI:RegisterModule(MODULE, {
         local function enteredWorld()
             -- Le client refait ses plaques en chargeant une zone, sans
             -- réannoncer celles qui restent : on repart de ce qui est à l'écran.
+            refreshInstance()
             collectPlates()
             -- Les échelles se relisent au montage des plaques : rentrer dans une
             -- instance en reconstruit, et le client les remonte avec ses propres
@@ -3220,9 +3748,10 @@ BUI:RegisterModule(MODULE, {
     OnDisable = function()
         -- On rend sans relire les réglages : le module s'éteint, ce qu'il a posé
         -- doit disparaître même si les interrupteurs restent cochés.
-        stopTicker()
         if castTicker then castTicker:Cancel() castTicker = nil end
         hideAuraRows()
+        hideMarkerPreviews()
+        restoreMarkerAlpha()
         restorePlateWidth()
         releaseAll()
         giveBackCVars()
@@ -3254,6 +3783,11 @@ BUI:RegisterModule(MODULE, {
                 giveBackSize()
             elseif key == "resizeText" and not self:Get("resizeText") then
                 restoreTextSizes()
+            elseif key == "resizeAllyName" and not self:Get("resizeAllyName") then
+                restoreAllyNames()
+                -- La taille générale reprend les noms rendus au prochain
+                -- passage, si elle est allumée : on le lui offre tout de suite.
+                paintAll(self)
             elseif key == "resizeCast" and not self:Get("resizeCast") then
                 restoreCastSizes()
             else
@@ -3269,12 +3803,35 @@ BUI:RegisterModule(MODULE, {
             return
         end
 
+        if TEXTURE_KEYS[key] then
+            if key == "barTexture" and not self:Get("barTexture") then
+                restoreBarTextures()
+            else
+                paintAll(self)
+            end
+            return
+        end
+
         if ALPHA_KEYS[key] then
             if key == "visibility" and not self:Get("visibility") then
                 giveBack(ALPHA_CVARS)
             else
                 applyAlpha(self)
             end
+        end
+
+        -- La case des auras commande aussi celles du client : allumée, elle les
+        -- éteint et grise leurs cases ; éteinte, elle les lui rend.
+        if key == "ownAuras" then
+            applyClientAuras(self)
+        end
+
+        -- Le marqueur éteint retrouve l'opacité de sa plaque. Son ancrage, lui,
+        -- ne se rend pas — c'est le prix assumé de la section, et le recyclage
+        -- de la plaque le paie (voir « Rendre un ancrage qu'on n'a pas le droit
+        -- de lire »).
+        if key == "marker" and not self:Get("marker") then
+            restoreMarkerAlpha()
         end
 
         -- Les rangées d'auras se réancreront au repassage : un réglage vient de

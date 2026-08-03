@@ -127,11 +127,6 @@ local function buildWidget(page, mod, descriptor)
     elseif kind == "description" then
         return W.Description(page, descriptor.text)
 
-    elseif kind == "preview" then
-        -- Rend `nil` si le client ne sait pas monter sa maquette : la ligne
-        -- disparaît alors de la page, ce qui vaut mieux qu'un cadre creux.
-        return W.PlatePreview(page)
-
     elseif kind == "warning" then
         return W.Warning(page, descriptor.text)
 

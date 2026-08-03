@@ -64,6 +64,7 @@
 
     "GetLocale", "GetTime", "GetBuildInfo", "InCombatLockdown",
     "IsShiftKeyDown", "IsControlKeyDown", "IsAltKeyDown", "IsModifierKeyDown",
+    "IsInInstance",
     "hooksecurefunc", "geterrorhandler", "CallErrorHandler", "securecallfunction", "issecretvalue",
 
     "TargetFrameToT", "FocusFrameToT", "PartyFrame",

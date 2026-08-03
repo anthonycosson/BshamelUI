@@ -1,33 +1,39 @@
 -- =========================================================================
 --  Bshamel UI — UI/Widgets/PlatePreview.lua
---  L'aperçu de barre d'infos du client, posé dans notre page.
+--  La rangée d'auras des barres d'infos.
 --
---  **On ne dessine rien.** Ce fichier a remplacé un widget qui fabriquait de
---  fausses auras et une fausse barre d'incantation, et qui a duré le temps qu'on
---  s'aperçoive qu'il mentait : ses vignettes n'avaient ni la taille, ni l'écart,
---  ni la place des vraies. Un aperçu qui approxime fait prendre des décisions de
---  réglage fausses — il est pire que pas d'aperçu.
+--  ## La maquette du client a vécu ici, et elle est partie
 --
---  Le client, lui, possède la maquette qu'il montre dans son propre panneau
---  d'options : `NamePlatePreviewTemplate`. On en fabrique **une instance à
---  nous** — on ne lui prend pas la sienne, ce qui la retirerait de son panneau.
---  Ce qu'elle affiche est ce qu'il affiche, et elle suivra ses changements de
---  style sans qu'on touche à une ligne.
+--  Ce fichier a porté un aperçu : une instance à nous de
+--  `NamePlatePreviewTemplate`, la maquette que le panneau d'options du jeu
+--  montre. Elle s'affichait correctement, suivait les CVars, et le raisonnement
+--  qui l'autorisait paraissait solide — « la maquette n'a pas d'unité, elle n'a
+--  donc aucune valeur secrète à comparer ».
 --
---  ## Pourquoi c'est permis, alors que le reste ne l'était pas
+--  **Le raisonnement était faux, et le jeu l'a dit :**
 --
---  Appeler le pilote de barres d'infos teinte tout ce qu'il touche, parce que son
---  chemin lit les points de vie d'une **vraie unité** — une valeur secrète, qui
---  ne se compare pas depuis du code d'addon (voir `dev/docs/API_NOTES.md`).
+--      attempted to iterate a table that cannot be accessed while tainted
+--      (execution tainted by 'BshamelUI')
+--        CastingBarFrame.lua: StopFinishAnims <- StopAnims <- SetUnit
+--        CompactUnitFrame_SetUnit <- ApplyFrameOptions <- OnNamePlateAdded
+--        Blizzard_SettingsDefinitions_Frame/Nameplates.lua
+--        <- pcall <- UI/Widgets/PlatePreview.lua
 --
---  La maquette n'a pas d'unité. Ses méthodes s'appellent `SetExplicitValues`,
---  `UpdatePreviewText` : on lui *donne* ses valeurs, elle n'en lit aucune. Il n'y
---  a donc rien de secret à comparer, et le mur qui fermait cette porte n'est pas
---  devant celle-ci.
+--  Monter ce template réveille le gestionnaire de barres d'infos du panneau de
+--  réglages, qui repasse `ApplyFrameOptions` **sur les vraies plaques** — donc
+--  sur de vraies unités, avec de vraies valeurs secrètes, et teinté par nous.
+--  C'était aussi ce qui rendait les plaques à leur taille Blizzard à chaque
+--  ouverture de la fenêtre d'options : le symptôme et l'erreur avaient la même
+--  cause.
 --
---  Cela reste un raisonnement, pas une preuve : tout passe par `pcall`, et un
---  refus rend `nil` plutôt qu'une erreur. Une page sans aperçu vaut mieux qu'une
---  page qui lève.
+--  C'est la règle du module, rencontrée par une porte qu'on croyait dérobée :
+--  **on n'entre pas dans le code de mise en page du client** (voir
+--  `Modules/Nameplates.lua`, « On n'appelle pas le pilote de barres d'infos »).
+--  Il n'y a pas de version prudente de cet appel, et `pcall` n'en protège pas —
+--  ce n'est pas nous qui levons, c'est lui, parce que nous l'avons réveillé.
+--
+--  Ce qu'il reste : la rangée d'auras ci-dessous, qui ne monte que des cadres à
+--  nous et n'appelle rien de lui.
 -- =========================================================================
 
 local _, ns = ...
@@ -35,41 +41,6 @@ local BUI = ns.BUI
 local T    = BUI.Theme
 local U    = BUI.Util
 local W    = BUI.Widgets
-
---- Construit un aperçu, ou `nil` si le client ne sait pas le monter.
----
---- Le `nil` n'est pas un cas d'erreur à rattraper : c'est ce qui fait
---- **disparaître** la ligne de la page, comme un contrôle branché sur un CVar
---- absent. Une maquette vide serait un cadre creux au milieu des réglages.
----@param parent table
----@return table|nil
-function W.PlatePreview(parent)
-    local template = T.Template("PLATE_PREVIEW")
-    if not template then return nil end
-
-    local ok, preview = pcall(CreateFrame, "Frame", nil, parent, template)
-    if not (ok and preview) then return nil end
-
-    -- **On lui impose sa hauteur, on ne la lui demande pas.** La première version
-    -- lisait la sienne, en se disant que la maquette savait mieux que nous ce
-    -- qu'elle occupait. Elle le sait, mais elle le dit parfois avec une valeur
-    -- *secrète* — elle descend d'un template de barre d'infos, et le secret
-    -- voyage avec elle. Cette hauteur devenait celle de la page, puis la course
-    -- de l'ascenseur, qui ne se compare plus : mille cinq cents erreurs par
-    -- seconde dans la fenêtre d'options.
-    --
-    -- Un nombre à nous coupe la contamination à la source. Il est moins juste, et
-    -- c'est un prix qu'on paie volontiers.
-    preview:SetHeight(T.SIZE.PLATE_PREVIEW_H)
-
-    -- La maquette se remplit elle-même à l'affichage — c'est ce que font ses
-    -- `OnShow` et ses `OnNamePlate*Changed`. On ne l'appelle donc pas : on la
-    -- montre. C'est la même règle que partout ailleurs dans cet addon, où l'on
-    -- laisse le client faire son travail plutôt que de le refaire à sa place.
-    preview:Show()
-
-    return preview
-end
 
 -- =========================================================================
 --  La rangée d'auras de l'addon
@@ -129,10 +100,13 @@ local function iconOf(row, i)
         local ok, cooldown = pcall(CreateFrame, "Cooldown", nil, icon, template)
         if ok and cooldown then
             cooldown:SetAllPoints(icon.face)
-            -- Le compte à rebours chiffré appartient au gestionnaire de temps de
-            -- recharge ; sur une vignette de cette taille il recouvrirait tout.
+            -- Le décompte chiffré est **montré**, et son corps se règle rangée
+            -- par rangée. Il avait été masqué en le croyant réservé au
+            -- gestionnaire de temps de recharge : c'est le balayage seul qui dit
+            -- « bientôt fini », le chiffre dit *quand*, et sur une entrave de
+            -- huit secondes les deux ne répondent pas à la même question.
             if cooldown.SetHideCountdownNumbers then
-                cooldown:SetHideCountdownNumbers(true)
+                cooldown:SetHideCountdownNumbers(false)
             end
             icon.cooldown = cooldown
         end
@@ -152,32 +126,29 @@ end
 --- La rangée se dimensionne sur ce qu'elle montre et se cache quand il n'y a
 --- rien : une rangée vide n'est pas une rangée discrète, c'est un cadre invisible
 --- qui intercepte on ne sait quoi.
+--- Le corps du décompte se repose **à chaque passage**, et pas une fois à la
+--- construction : le client refait sa police en posant une durée, et une taille
+--- écrite avant lui est perdue au premier balayage. Le poser ici coûte un appel
+--- par vignette affichée, sur un chemin qui ne passe que quand une aura change.
+---@param cooldown table
+---@param timer number
+local function setTimerSize(cooldown, timer)
+    if type(cooldown.GetCountdownFontString) ~= "function" then return end
+
+    local ok, text = pcall(cooldown.GetCountdownFontString, cooldown)
+    if not ok or type(text) ~= "table" then return end
+
+    T.SetTextSize(text, timer)
+end
+
 ---@param list table
 ---@param side number
 ---@param gap number
-function W.AuraRowSet(row, list, side, gap)
-    -- La rangée retrouve l'échelle de l'interface, et **seulement** elle. Une
-    -- plaque porte deux échelles empilées : celle de l'interface, que tous nos
-    -- curseurs parlent, et un zoom à elle — la ciblée est grossie, les
-    -- lointaines réduites. Suivre les deux rendait la taille du curseur fausse
-    -- partout ; ignorer les deux (l'essai précédent) faussait en plus les
-    -- décalages, qui se mesurent dans l'échelle du cadre. On annule donc le seul
-    -- zoom de plaque : le rapport entre l'échelle effective du parent et celle
-    -- de l'interface. Trente veut alors dire trente, comme sur tout autre
-    -- curseur de l'addon, et la rangée cesse de respirer au changement de cible.
-    local parent = row:GetParent()
-    if parent then
-        local okP, plateScale = pcall(parent.GetEffectiveScale, parent)
-        local okU, uiScale    = pcall(UIParent.GetEffectiveScale, UIParent)
-        -- Le secret avant la comparaison : une échelle protégée passerait le
-        -- test de type et lèverait au `> 0`.
-        if okP and okU
-           and not U.IsSecret(plateScale) and not U.IsSecret(uiScale)
-           and type(plateScale) == "number" and plateScale > 0
-           and type(uiScale) == "number" and uiScale > 0 then
-            pcall(row.SetScale, row, uiScale / plateScale)
-        end
-    end
+---@param timer number  corps du décompte
+function W.AuraRowSet(row, list, side, gap, timer)
+    -- La rangée vit **hors de l'échelle de la plaque** (voir `W.AuraRow`) : le
+    -- nombre du curseur est donc un nombre de pixels d'écran, et il le reste
+    -- quand la plaque de la cible grossit.
 
     local shown = math.min(list.n or #list, T.SIZE.PLATE_AURA_MAX)
 
@@ -208,6 +179,8 @@ function W.AuraRowSet(row, list, side, gap)
             else
                 icon.cooldown:Clear()
             end
+
+            setTimerSize(icon.cooldown, timer)
         end
 
         icon.count:SetText((entry.count and entry.count > 1)
@@ -231,13 +204,38 @@ end
 --- Construit une rangée d'auras. Vide, cachée et **sans ancrage** : c'est
 --- l'appelant qui la pose — la place d'une rangée est une décision de module,
 --- pas de widget — et `AuraRowSet` qui la peuple.
----@param parent table  le cadre d'unité, qui porte la rangée
+---
+--- **Le parent est la plaque, pas le cadre d'unité**, et les deux lignes qui
+--- suivent en découlent. La plaque est le cadre que `C_NamePlate` nous rend :
+--- il est à nous d'accès, le client n'en refait pas la mise en page, et son
+--- niveau se lit. Le cadre d'unité et sa barre de vie, eux, sont des régions
+--- restreintes que le client repose à chaque passage — une rangée posée là est
+--- reprise dans la seconde (technique lue chez MiniCC, règle 8).
+---
+--- `SetIgnoreParentScale` est la seconde moitié de la même idée. La plaque de la
+--- cible n'a pas l'échelle des autres, et elle change au clic : une rangée qui
+--- en hérite respire à chaque changement de cible, et le nombre du curseur ne
+--- veut plus rien dire. Hors de cette échelle, trente pixels sont trente pixels.
+---@param parent table  la plaque, qui porte la rangée
 ---@return table|nil
 function W.AuraRow(parent)
     local ok, row = pcall(CreateFrame, "Frame", nil, parent)
     if not (ok and row) then return nil end
 
-    pcall(row.SetFrameLevel, row, (parent:GetFrameLevel() or 0) + 5)
+    pcall(row.SetIgnoreParentScale, row, true)
+
+    -- La rangée ne prend pas la souris : elle est posée par-dessus la plaque, et
+    -- une plaque se clique pour cibler.
+    pcall(row.EnableMouse, row, false)
+
+    -- Le niveau du parent se lit **avant** de s'en servir : le client peut le
+    -- rendre secret, et une arithmétique sur un secret lève — hors du `pcall` si
+    -- elle se fait dans ses arguments. Illisible, on laisse le niveau que la
+    -- création a donné.
+    local okL, level = pcall(parent.GetFrameLevel, parent)
+    if okL and type(level) == "number" and not U.IsSecret(level) then
+        pcall(row.SetFrameLevel, row, level + 10)
+    end
 
     row._icons = {}
     row:Hide()

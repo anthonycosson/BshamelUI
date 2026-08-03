@@ -319,6 +319,19 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
+    -- `/bui auras` : le diagnostic des barres d'infos, écrit dans le chat par
+    -- le module lui-même. Le core cite le module par son nom, ce qui est permis :
+    -- ce nom est une clé de base de données, donc stable par la règle 4.
+    if arg == "auras" then
+        local mod = registry["Nameplates"]
+        if mod and mod._active and mod.DiagnoseAuras then
+            BUI.safecall(mod.DiagnoseAuras, mod)
+        else
+            BUI:Print(L["Aura diagnostic unavailable"])
+        end
+        return
+    end
+
     -- `/bui blocked` : écrit dans le chat le nom de chaque action refusée par le
     -- client. La fenêtre « action réservée à l'IU de Blizzard » ne le dit pas, et
     -- sans lui il n'y a rien à chercher (voir `BUI:ToggleActionWatch`).

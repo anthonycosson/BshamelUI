@@ -2,6 +2,91 @@
 
 ## Non publié
 
+### Corrigé
+- **Barres d'infos** — ouvrir la fenêtre d'options ne rend plus les plaques à
+  leur taille Blizzard, et ne produit plus d'erreur Lua dans le code du jeu.
+  Les deux avaient la même cause : **l'aperçu**. Monter la maquette du client
+  réveillait son gestionnaire de barres d'infos, qui repassait sa mise en page
+  sur les vraies plaques en étant teinté par l'addon — d'où l'erreur
+  `attempted to iterate a table that cannot be accessed while tainted`, et
+  d'où les tailles reposées. L'aperçu est retiré ; il ne reviendra pas, la
+  règle « on n'entre pas dans le code de mise en page du client » valant aussi
+  pour un template qui l'y fait entrer. L'addon se branche par ailleurs sur
+  l'écriture de la boîte des plaques, ce qui le protège des autres écrivains,
+  et la taille des auras comme l'espacement des affaiblissements se grisent
+  tant que la taille en pixels est tenue — comme le calibre l'était déjà.
+
+- **Barres d'infos** — un PNJ ordinaire n'est plus repeint. Une créature a une
+  classe comme un joueur, mais ce champ n'est renseigné avec soin que sur le
+  trash de donjon : ailleurs il vaut ce qu'il vaut, et un lynx d'extérieur
+  pouvait passer pour un caster. Les couleurs « caster » et « mêlée » ne
+  s'appliquent donc plus qu'aux **élites**, là où la donnée veut dire quelque
+  chose et où le geste — savoir qui interrompre dans un pack — a un sens. Rare,
+  rare-élite, miniboss et boss restent teints partout ; tout le reste garde la
+  couleur du jeu.
+
+### Ajouté
+- **Barres d'infos — barre de vie.** La texture du remplissage se choisit,
+  séparément pour la cible et pour les autres — « couleur vive » (l'aplat) ou
+  « couleur standard » (le remplissage des cadres de raid), deux textures du
+  client. « Le nom seul » des alliés rejoint le bas de la section Barre de vie,
+  avec une taille de nom dédiée pour les joueurs alliés — 12 par défaut, hors
+  instance seulement : le jeu y verrouille les plaques alliées. La section
+  Visibilité se rallume, resserrée sur les trois opacités — cible, les autres,
+  hors de vue — et remonte dans la partie barre de vie ; l'assombrissement est
+  parti, et avec lui la mécanique qui guettait l'occultation.
+- **Barres d'infos — auras et marqueur.** Les deux sections n'en font plus
+  qu'une, et **la pause est levée** : les rangées et le marqueur suivent leurs
+  curseurs. Trois choses les en empêchaient, et c'étaient trois erreurs de
+  l'addon, pas des limites du jeu — les rangées étaient portées par une région
+  que le client repose à chacun de ses passages, elles héritaient de l'échelle
+  de la plaque, qui n'est pas la même sur la cible et qui change au clic, et
+  elles effaçaient la rangée du jeu pour prendre sa place. Elles sont
+  désormais portées par la plaque elle-même, hors de son échelle, et elles
+  **s'ajoutent** à celle du jeu au lieu de la remplacer : ce que le jeu montre
+  continue de se régler dans sa moitié de la page. Chaque rangée garde sa
+  taille, ses deux décalages, son espacement entre icônes et **le corps de son
+  décompte** ; le marqueur, sa taille et ses deux décalages. Le temps restant
+  s'écrit sur les icônes : le balayage dit « bientôt fini », le chiffre dit
+  *quand*, et sur une entrave de huit secondes les deux ne répondent pas à la
+  même question. Un curseur par rangée, parce qu'une entrave se lit à la
+  seconde près là où un affaiblissement qu'on entretient se lit du coin de
+  l'œil.
+
+  Cocher « Régler les auras » **éteint les rangées du jeu** et grise leurs
+  cases dans la moitié gauche de la page : deux rangées d'auras sur une plaque,
+  ce sont deux fois les mêmes icônes à deux endroits. Elles s'éteignent par les
+  propres réglages du client — les trois champs de bits d'affichage d'auras —,
+  relevés avant d'être écrits et rendus tels quels au décochage comme à
+  l'extinction du module. Le marqueur ne bat plus entre sa place et la
+  nôtre : le client le réancre à des moments qui ne sont pas les nôtres, et
+  deux écrivains sur la même région se relaient sans converger. Notre ancrage
+  est désormais reposé dans le souffle du sien — le même remède que la hauteur
+  de barre. Il ne pâlit plus non plus avec sa plaque : une plaque s'efface
+  parce qu'elle n'est pas la cible, qu'elle est loin ou derrière un mur, et le
+  marqueur est justement ce qu'on y a mis pour être vu de loin.
+
+  Les rangées restaient par ailleurs vides sur une vraie plaque quand elles
+  s'affichaient en aperçu : sur une unité adverse, le client rend l'icône d'une
+  aura **secrète**, et le tri la refusait pour cette raison. Une valeur secrète
+  se transmet pourtant très bien — passée telle quelle, elle peint la bonne
+  image ; c'est l'inspecter qui est interdit. Deux conséquences assumées : les
+  cumuls ne s'affichent pas (les écrire demanderait de comparer un nombre
+  secret), et la liste d'entraves de l'addon ne sert plus de repli, faute de
+  pouvoir lire un identifiant de sort. Le classement du jeu, lui, n'a jamais
+  eu besoin qu'on lise quoi que ce soit.
+- **Barres d'infos — portée des couleurs par nature.** Les couleurs de PNJ
+  s'appliquent partout, ou en donjon et raid seulement : dehors, les couleurs
+  du jeu reprennent la main sans rien décocher.
+- **Barres d'infos — couleur des miniboss.** Une élite exactement un niveau
+  au-dessus du joueur a sa propre couleur, séparée de celle des boss.
+
+### Interne
+- `/bui auras` écrit dans le chat l'état de la chaîne des barres d'infos, lu
+  sur la plaque de la cible : filtres d'auras acceptés ou refusés, conteneurs
+  trouvés, rangées montées, échelles empilées. C'est ce qui permet de
+  diagnostiquer sur pièces ce qu'un « ça ne marche pas » ne décrit pas.
+
 ## 0.7.9 — 2026-08-03
 
 ### Interne
