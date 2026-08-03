@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.11 — 2026-08-03
+
 ### Modifié
 - **Barres d'infos — ce que chaque rangée montre.** La rangée de gauche affiche
   désormais **les gros sorts offensifs *et* défensifs**, et plus seulement les
