@@ -582,9 +582,9 @@ BUI:RegisterLocale("enUS", {
         "A cast bar only shows while something is casting, an aura only once a "
         .. "spell puts it there, a raid marker only on a marked unit — none of "
         .. "them can be adjusted by waiting. This keeps the real cast bar up and "
-        .. "filling, adds a sample row of auras — one helpful, one harmful, one "
-        .. "crowd control — and shows the raid marker with a sample skull. "
-        .. "Remember to turn it off.",
+        .. "filling, adds sample auras **to the rows you have taken over** — the "
+        .. "ones left to the game get none, they will never appear there — and "
+        .. "shows the raid marker with a sample skull. Remember to turn it off.",
     ["Sample cast"]                    = "Casting",
     ["Resize cast text"]               = "Set the cast text size",
     ["Resize cast text tip"] =
@@ -597,8 +597,9 @@ BUI:RegisterLocale("enUS", {
     ["Taken over by the addon"] =
         "Bshamel UI is setting the size in pixels. Turn that off to get this back.",
     ["Auras taken over"] =
-        "Bshamel UI is showing the auras. Untick \"Adjust the auras\" to get the "
-        .. "game's rows back — they are switched off, not lost.",
+        "Bshamel UI is showing this category. Untick \"Take over this row\" in "
+        .. "the row that replaces it to get this back — it is switched off, not "
+        .. "lost.",
 
     ["Auras and marker"]               = "Auras and marker",
     ["Auras paused"]                   = "Paused while size and offsets get fixed.",
@@ -606,25 +607,22 @@ BUI:RegisterLocale("enUS", {
         "Paused: the rows and the marker do not follow their sliders faithfully "
         .. "enough yet. Nothing in this section does anything for now.",
     ["Auras notice"] =
-        "Ticking \"Adjust the auras\" switches the game's rows off and greys "
-        .. "their boxes on the left-hand side of this page: two aura rows on one "
-        .. "nameplate means the same icons twice. Unticking gives them back "
-        .. "exactly as they were.",
+        "The addon shows one row of its own: crowd control. Taking it over "
+        .. "switches the game's crowd control off — two rows on one nameplate "
+        .. "means the same icons twice — and greys that one box on the left-hand "
+        .. "side of this page. Everything else stays the game's, untouched: it "
+        .. "now shows buffs and debuffs better than the addon could, and it "
+        .. "reads what it will not let an addon read.",
     ["Own auras"]                      = "Adjust the auras",
     ["Own auras tip"] =
-        "The addon shows each nameplate's auras in three rows of its own, and "
-        .. "switches the game's off while it holds them. What preview mode shows "
-        .. "is these exact rows: same code, same place, same size. Every image "
-        .. "is the game's own.",
-    ["Important auras"]                = "Big offensives and defensives",
-    ["Important auras notice"] =
-        "To the left of the nameplate. Major cooldowns only, offensive and "
-        .. "defensive — the game classes them, not the addon. An empty row means "
-        .. "there are none.",
-    ["Own debuff auras"]               = "Debuffs — yours only",
-    ["Own debuff auras notice"] =
-        "Top left of the nameplate. Your spells only: trinket and item-bonus "
-        .. "procs are dropped where the game lets us tell them apart.",
+        "Opens the section. Nothing changes until you take the row over below. "
+        .. "What preview mode shows is that exact row: same code, same place, "
+        .. "same size. Every image is the game's own.",
+    ["Take over this row"]             = "Take over this row",
+    ["Take over crowd control tip"] =
+        "Ticked, the addon shows this row and the game stops showing crowd "
+        .. "control on enemy nameplates. Unticked, the game keeps its own crowd "
+        .. "control icons, wherever it puts them.",
     ["Crowd control auras"]            = "Crowd control — everyone's",
     ["Crowd control auras notice"] =
         "To the right of the health bar. A sheeped mob is sheeped no matter who "
@@ -634,6 +632,12 @@ BUI:RegisterLocale("enUS", {
     ["Aura offset X"]                  = "Offset X (pixels)",
     ["Aura offset Y"]                  = "Offset Y (pixels)",
     ["Aura offset tip"]                = "Nudges this row from its anchor on the nameplate.",
+    ["Aura max"]                       = "Most icons",
+    ["Aura max tip"] =
+        "How many icons this row shows at most. The row fills in the order the "
+        .. "game answers, and nothing sorts it — what would sort it is hidden "
+        .. "on an enemy. A low ceiling is therefore the way to keep the row "
+        .. "readable rather than complete.",
     ["Aura gap"]                       = "Spacing (pixels)",
     ["Aura gap tip"]                   = "Gap between two icons of this row.",
     ["Aura timer size"]                = "Timer size",
@@ -698,7 +702,6 @@ BUI:RegisterLocale("enUS", {
         "Thickness of the health bar. 11 is what the game uses. The name and the "
         .. "icons keep their size — they are not part of the bar.",
 
-    ["Bar texture"]                    = "Bar texture",
     ["Set the bar texture"]            = "Set the bar texture",
     ["Set the bar texture tip"] =
         "Replaces the fill of enemy health bars. Your target and the others each "

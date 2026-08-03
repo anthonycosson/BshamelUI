@@ -2,6 +2,74 @@
 
 ## Non publié
 
+### Retiré
+- **Barres d'infos — deux des trois rangées d'auras.** Les **améliorations**
+  (gros temps de recharge offensifs et défensifs, à gauche) et **vos
+  affaiblissements** (en haut à gauche) ne sont plus affichés par l'addon. Le
+  jeu les montre lui-même, et il le fait mieux : ces rangées reposaient sur ce
+  qu'il accepte de laisser lire à un addon, et il en protège une partie
+  croissante — l'identité d'un sort, ses cumuls, le jugement « ce sort est
+  important ». Leurs réglages disparaissent de la page avec elles.
+
+  **Il reste la rangée des contrôles**, à droite de la barre de vie, et le
+  marqueur de ciblage. Le classement du jeu ne dit pas ce qu'on veut savoir
+  d'une entrave — qui l'a lancée n'a aucune importance quand il s'agit de ne pas
+  la casser — et c'est la seule des trois où l'addon ajoute encore quelque chose.
+
+### Ajouté
+- **Barres d'infos — la rangée des contrôles se prend ou se laisse.** Une case
+  **« Prendre cette rangée »** : cochée, l'addon affiche les entraves et le jeu
+  cesse de les montrer ; décochée, il garde les siennes, là où il les met.
+  « Régler les auras » ouvre la section, cette case décide.
+
+  Le jeu range ses auras de plaque en quatre catégories et sait les éteindre une
+  par une : on n'éteint plus que celle qu'on remplace. Les améliorations, les
+  affaiblissements et la perte de contrôle ne sont plus jamais touchés — ils
+  tombaient jusqu'ici par ricochet. Les cases du jeu, dans la moitié gauche de la
+  page, se grisent en conséquence : celle de la catégorie prise, et elle seule.
+
+  **Le mode aperçu suit la case** : pas d'aura d'exemple là où la rangée est
+  laissée au jeu. En régler la position contre un exemple qui ment ne mène nulle
+  part — c'est déjà la raison pour laquelle aucune plaque alliée n'en reçoit.
+
+- **Barres d'infos — un curseur « Icônes au plus »** pour la rangée. Rien ne la
+  trie : elle se remplit dans l'ordre où le jeu répond, et ce qui permettrait de
+  trier est protégé sur un adversaire. Un plafond bas est donc le moyen de la
+  garder lisible plutôt que complète.
+
+### Modifié
+- **Barres d'infos — la page se lit dans l'ordre où l'on règle.** La moitié
+  Bshamel UI suit maintenant : la barre de vie, la barre de sorts, le
+  chevauchement des plaques, la visibilité, les auras et le marqueur, puis les
+  couleurs et la menace. Les deux barres et la place qu'elles prennent d'abord,
+  ce qu'on ajoute ensuite, ce qui repeint en dernier.
+
+  **« Texture des barres » n'est plus une section à part** : ses trois réglages
+  ont rejoint la barre de vie, juste avant la largeur — c'est elle qu'ils
+  habillent, et un titre pour trois lignes coupait la section en deux. « Cible »
+  y passe avant « Les autres » : c'est la barre qu'on regarde et celle dont on
+  change la texture en premier.
+
+  Aucun réglage ne change de valeur ni de nom.
+
+### Corrigé
+- **Barres d'infos — une unité qui change de camp.** Un contrôle mental rend un
+  adversaire allié pour quelques secondes, puis le rend adverse, sans que sa
+  barre d'infos change de main. Rien ne relisait cette réponse-là : les rangées
+  d'auras, la couleur de la barre et du nom restaient celles du camp précédent
+  jusqu'au prochain passage du jeu sur cette plaque — qui peut ne jamais venir.
+  Elles se relisent maintenant au moment du changement.
+
+  Le corps du nom allié, lui, ne repartait **jamais** : il se posait quand
+  l'unité devenait alliée et restait sur l'adversaire qu'elle redevenait. Il est
+  rendu avec le camp.
+
+- **Barres d'infos** — plus d'erreur Lua en rafale devant un adversaire. Quatre
+  endroits du module interrogeaient une donnée que le jeu protège sur certaines
+  unités **avant** de vérifier qu'elle était lisible ; la vérification passe en
+  premier. Celui qui produisait l'erreur en rafale est parti avec sa rangée, les
+  trois autres sont corrigés.
+
 ## 0.7.11 — 2026-08-03
 
 ### Modifié

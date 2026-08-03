@@ -593,9 +593,10 @@ BUI:RegisterLocale("frFR", {
         "Une barre de sorts ne se montre que pendant une incantation, une aura "
         .. "que lorsqu'un sort la pose, un marqueur que sur une unité marquée : "
         .. "rien de tout cela ne se règle en l'attendant. Ce mode maintient la "
-        .. "vraie barre de sorts affichée et en cours, ajoute une rangée d'auras "
-        .. "d'exemple — une qui aide, une qui nuit, une qui immobilise — et "
-        .. "montre le marqueur avec un crâne d'exemple. Pensez à l'éteindre.",
+        .. "vraie barre de sorts affichée et en cours, ajoute des auras "
+        .. "d'exemple **dans les rangées que vous avez prises** — celles qui "
+        .. "restent au jeu n'en reçoivent pas, elles n'apparaîtront jamais là — "
+        .. "et montre le marqueur avec un crâne d'exemple. Pensez à l'éteindre.",
     ["Sample cast"]                    = "Incantation",
     ["Resize cast text"]               = "Régler la taille du texte des sorts",
     ["Resize cast text tip"] =
@@ -609,8 +610,9 @@ BUI:RegisterLocale("frFR", {
         "Bshamel UI règle la taille en pixels. Éteignez-le pour récupérer ce "
         .. "réglage.",
     ["Auras taken over"] =
-        "Bshamel UI affiche les auras. Décochez « Régler les auras » pour "
-        .. "récupérer les rangées du jeu — elles sont éteintes, pas perdues.",
+        "Bshamel UI affiche cette catégorie. Décochez « Prendre cette rangée » "
+        .. "dans la rangée qui la remplace pour la récupérer — elle est éteinte, "
+        .. "pas perdue.",
 
     ["Auras and marker"]               = "Auras et marqueur",
     ["Auras paused"]                   = "En pause, le temps de régler la taille et les décalages.",
@@ -619,26 +621,24 @@ BUI:RegisterLocale("frFR", {
         .. "curseurs assez fidèlement. Rien dans cette section n'agit pour le "
         .. "moment.",
     ["Auras notice"] =
-        "Cocher « Régler les auras » éteint les rangées du jeu et grise leurs "
-        .. "cases, dans la moitié gauche de cette page : deux rangées d'auras "
-        .. "sur une plaque, ce sont deux fois les mêmes icônes. Décocher les lui "
-        .. "rend telles qu'elles étaient.",
+        "L'addon affiche une seule rangée à lui : les contrôles. La prendre "
+        .. "éteint les contrôles du jeu — deux rangées sur une plaque, ce sont "
+        .. "deux fois les mêmes icônes — et grise cette case-là dans la moitié "
+        .. "gauche de cette page. Tout le reste lui appartient et n'est pas "
+        .. "touché : il affiche désormais les améliorations et les "
+        .. "affaiblissements mieux que l'addon ne le pouvait, et il lit ce "
+        .. "qu'il refuse de laisser lire à un addon.",
     ["Own auras"]                      = "Régler les auras",
     ["Own auras tip"] =
-        "L'addon affiche les auras de chaque barre d'infos dans trois rangées à "
-        .. "lui, et éteint celles du jeu le temps qu'il les tient. Ce que le "
-        .. "mode aperçu montre est exactement ces rangées : même code, même "
-        .. "place, même taille. Chaque image est un asset du jeu.",
-    ["Important auras"]                = "Gros sorts offensifs et défensifs",
-    ["Important auras notice"] =
-        "À gauche de la plaque. Les gros temps de recharge seulement, offensifs "
-        .. "comme défensifs — c'est le jeu qui les classe, pas l'addon. Une "
-        .. "rangée vide veut dire qu'il n'y en a aucun.",
-    ["Own debuff auras"]               = "Affaiblissements — les nôtres",
-    ["Own debuff auras notice"] =
-        "En haut à gauche de la plaque. Vos sorts seulement : les procs de bijou "
-        .. "et de bonus d'objet sont écartés quand le jeu permet de les "
-        .. "reconnaître.",
+        "Ouvre la section. Rien ne change tant que la rangée n'est pas prise "
+        .. "ci-dessous. Ce que le mode aperçu montre est exactement cette "
+        .. "rangée : même code, même place, même taille. Chaque image est un "
+        .. "asset du jeu.",
+    ["Take over this row"]             = "Prendre cette rangée",
+    ["Take over crowd control tip"] =
+        "Cochée, l'addon affiche cette rangée et le jeu cesse de montrer les "
+        .. "contrôles sur les plaques adverses. Décochée, le jeu garde ses "
+        .. "propres icônes de contrôles, là où il les met.",
     ["Crowd control auras"]            = "Contrôles — de tous les joueurs",
     ["Crowd control auras notice"] =
         "À droite de la barre de vie. Un mob mouton est mouton, peu importe qui "
@@ -648,6 +648,12 @@ BUI:RegisterLocale("frFR", {
     ["Aura offset X"]                  = "Décalage X (pixels)",
     ["Aura offset Y"]                  = "Décalage Y (pixels)",
     ["Aura offset tip"]                = "Écarte cette rangée de son ancrage sur la plaque.",
+    ["Aura max"]                       = "Icônes au plus",
+    ["Aura max tip"] =
+        "Combien d'icônes cette rangée affiche au maximum. Elle se remplit dans "
+        .. "l'ordre où le jeu répond, et rien ne la trie — ce qui trierait est "
+        .. "caché sur un adversaire. Un plafond bas est donc le moyen de garder "
+        .. "la rangée lisible plutôt que complète.",
     ["Aura gap"]                       = "Espacement (pixels)",
     ["Aura gap tip"]                   = "Écart entre deux icônes de cette rangée.",
     ["Aura timer size"]                = "Corps du décompte",
@@ -716,7 +722,6 @@ BUI:RegisterLocale("frFR", {
         "Épaisseur de la barre de vie. Le jeu utilise 11. Le nom et les icônes "
         .. "gardent leur taille — ils ne font pas partie de la barre.",
 
-    ["Bar texture"]                    = "Texture des barres",
     ["Set the bar texture"]            = "Régler la texture des barres",
     ["Set the bar texture tip"] =
         "Remplace le remplissage des barres de vie adverses. La cible et les "

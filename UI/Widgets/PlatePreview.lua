@@ -150,7 +150,12 @@ function W.AuraRowSet(row, list, side, gap, timer)
     -- nombre du curseur est donc un nombre de pixels d'écran, et il le reste
     -- quand la plaque de la cible grossit.
 
-    local shown = math.min(list.n or #list, T.SIZE.PLATE_AURA_MAX)
+    -- `list.max` est le plafond que le joueur a réglé pour **cette** rangée ;
+    -- celui du thème reste le plafond dur. La coupe se fait ici, à la peinture,
+    -- et non au remplissage : un plafond abaissé se voit alors sans attendre
+    -- qu'une aura change, et l'aperçu montre exactement ce que montrera la
+    -- plaque.
+    local shown = math.min(list.n or #list, list.max or T.SIZE.PLATE_AURA_MAX)
 
     for i = 1, shown do
         local entry = list[i]

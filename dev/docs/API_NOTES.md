@@ -3147,14 +3147,29 @@ Le motif qui en découle, et qui est celui à reproduire :
 
 ```lua
 local flag = aura.nameplateShowPersonal
-local drop = flag ~= nil and not U.IsSecret(flag) and flag == false
+local drop = not U.IsSecret(flag) and flag == false
 ```
 
-Trois tests dans cet ordre, et l'ordre n'est pas négociable : `== false` sur une
-valeur secrète **lève**. La garde se pose donc *avant* la comparaison, jamais
-après. Le raffinement s'applique là où la donnée se lit, et s'efface ailleurs —
-ce qui donne un affichage un peu moins fin sur les unités protégées, et jamais
-un affichage vide.
+**Cette note prescrivait d'abord un test de plus, en tête** — `flag ~= nil and
+not U.IsSecret(flag) and flag == false` — au motif qu'un champ absent ne dit
+rien. Elle a coûté six cent cinquante-deux erreurs :
+
+    Nameplates.lua: attempt to compare a secret boolean value
+    (execution tainted by 'BshamelUI')
+
+**`~= nil` est une comparaison comme une autre.** Comparer un secret à `nil` lève
+exactement comme le comparer à `false` ; que les deux types diffèrent ne dispense
+de rien, la valeur secrète est refusée avant qu'on en arrive là. Et le test ne
+servait à rien : `nil == false` répond déjà « non ».
+
+L'ordre n'est donc pas « la garde avant la comparaison qui compte », c'est **la
+garde en premier, avant le premier maillon qui touche la valeur** — y compris un
+`~= nil`, y compris un `if valeur and …`. Tout ce qui précède la garde dans une
+conjonction est du code qui lève.
+
+Le raffinement s'applique là où la donnée se lit, et s'efface ailleurs — ce qui
+donne un affichage un peu moins fin sur les unités protégées, et jamais un
+affichage vide.
 
 ---
 
