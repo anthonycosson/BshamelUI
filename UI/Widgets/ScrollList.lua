@@ -10,6 +10,7 @@
 local _, ns = ...
 local BUI = ns.BUI
 local T    = BUI.Theme
+local U    = BUI.Util
 local W    = BUI.Widgets
 
 ---@param bar table
@@ -75,6 +76,14 @@ function W.UpdateScrollThumb(scrollFrame)
 
     local visible = scrollFrame:GetHeight()
     local range   = scrollFrame:GetVerticalScrollRange()
+
+    -- Une mesure **secrète** ne se compare pas : le test lèverait au lieu de
+    -- répondre. Le cas n'est pas théorique — une page qui contient un cadre monté
+    -- depuis un template du client peut lui emprunter son secret, et la hauteur
+    -- de la page devient alors incomparable. On préfère un ascenseur qui garde sa
+    -- taille précédente à une fenêtre d'options qui lève à chaque image.
+    if U.IsSecret(visible) or U.IsSecret(range) then return end
+    if type(visible) ~= "number" or type(range) ~= "number" then return end
 
     bar:SetShown(range > 0)
     if range <= 0 then return end
@@ -142,10 +151,21 @@ function W.ScrollPane(parent, hideBar)
 
     --- Remet le défilement en haut. Appelé à chaque changement de page pour que
     --- l'utilisateur n'atterrisse pas au milieu d'une page qu'il vient d'ouvrir.
+    ---
+    --- La plage de défilement peut être **secrète** : elle se déduit de la
+    --- hauteur du contenu, et un cadre monté depuis un template du client — la
+    --- maquette de barre d'infos — peut la contaminer. `SetVerticalScroll`
+    --- traverse alors le gestionnaire sécurisé du template, qui fait de
+    --- l'arithmétique sur cette plage : c'est **son** code qui lève, parce que
+    --- nous l'avons appelé. On ne l'appelle donc pas dans ce cas — une page qui
+    --- s'ouvre là où elle était vaut mieux qu'une salve d'erreurs.
     function scrollFrame:ResetScroll()
-        self:SetVerticalScroll(0)
+        local range = self:GetVerticalScrollRange()
+        if U.IsSecret(range) then return end
+
+        pcall(self.SetVerticalScroll, self, 0)
         if self.ScrollBar and self.ScrollBar.SetValue then
-            self.ScrollBar:SetValue(0)
+            pcall(self.ScrollBar.SetValue, self.ScrollBar, 0)
         end
     end
 

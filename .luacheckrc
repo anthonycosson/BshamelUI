@@ -138,6 +138,26 @@ read_globals = {
     "UnitExists", "UnitIsPlayer", "UnitIsUnit", "UnitClass", "UnitGUID",
     "RAID_CLASS_COLORS", "C_ClassColor",
 
+    -- Barres d'infos. Les deux fonctions de cadre compact sont les deux passages
+    -- obligés qu'on coiffe pour repeindre au moment où le client peint.
+    --
+    -- `NamePlateDriverFrame` ne figure **pas** ici, et c'est délibéré : on
+    -- n'appelle pas le pilote de barres d'infos, sa mise en page manipule des
+    -- valeurs secrètes qui ne survivent pas à un appel teinté (voir
+    -- `dev/docs/API_NOTES.md`).
+    -- Table des mesures que le client donne à ses barres d'infos : hauteur de
+    -- barre, côté d'une aura, corps des polices. On les **lit** au lieu de les
+    -- recopier — c'est la seule façon qu'un exemple reste fidèle après un patch.
+    "NamePlateConstants",
+    "CompactUnitFrame_UpdateHealthColor", "CompactUnitFrame_UpdateName",
+    "UnitSelectionColor", "UnitClassification", "UnitLevel", "UnitEffectiveLevel",
+    "UnitClassBase", "UnitIsBossMob", "UnitCanAttack", "UnitIsFriend",
+    "UnitThreatSituation", "GetSpecializationRole",
+
+    -- Sélecteur de couleur du client. On n'en écrit pas : il en a un, et il a
+    -- changé d'interface — les deux chemins sont essayés (règle 1).
+    "ColorPickerFrame",
+
     -- Spécialisations. Le chemin `C_SpecializationInfo` est le récent, les
     -- globales sont celles qu'on essaie ensuite : on cite les deux parce qu'on
     -- teste les deux.
@@ -186,7 +206,7 @@ read_globals = {
     "LoggingCombat",
 
     -- Auras, charges de sort et enchantements d'arme
-    "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
+    "C_DurationUtil", "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
 
     -- Clés mythiques et chrono de donjon. Le chrono affiché est celui du client :
     -- `ScenarioObjectiveTracker` est le module de son suivi d'objectifs qui porte le

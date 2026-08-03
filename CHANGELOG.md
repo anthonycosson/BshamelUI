@@ -2,6 +2,70 @@
 
 ## Non publié
 
+### Ajouté
+- **Barres d'infos** — la page annoncée en 0.7.7 s'ouvre, et l'entrée n'est plus
+  grisée. Elle ne remplace pas les barres d'infos du jeu : elle règle celles
+  qu'il dessine déjà.
+
+  La page est en deux colonnes quand la fenêtre est assez large. **Paramètres
+  Blizzard** reflète le menu du jeu, réglage pour réglage — affichage par type
+  d'unité, superposition, style, taille en cinq crans, contenu des barres et des
+  rangées d'auras, plaques simplifiées, et l'affichage hors écran que le menu ne
+  montre pas. Rien n'est recopié : en changer un ici le change aussi dans le menu
+  du jeu, et réciproquement. La maquette d'exemple du jeu s'affiche au-dessus du
+  style, et suit chaque réglage en direct.
+
+  **Options Bshamel UI** tient ce que l'addon ajoute, et chaque interrupteur rend
+  ce qu'il avait pris quand on l'éteint :
+
+  - **Barre de vie** — largeur de la plaque et épaisseur de la barre en pixels,
+    corps du texte (nom, niveau, points de vie), et « le nom seul » pour les
+    joueurs alliés — un réglage du jeu que son menu cache. Tant que la taille est
+    tenue, le curseur de taille du jeu se grise sans que sa valeur bouge.
+  - **Barre des sorts** — épaisseur en pixels et corps du texte, réglés sur la
+    vraie barre. Sa largeur n'est pas réglable : le jeu la tend entre deux
+    ancrages, une largeur imposée y est ignorée.
+  - **Superposition** — l'espacement horizontal et vertical entre plaques, deux
+    réglages du jeu absents de son menu.
+  - **Couleurs des adversaires.** C'est l'unité qui décide, pas la zone : un PNJ
+    prend une couleur selon sa nature — boss et miniboss, caster, mêlée, rare,
+    rare-élite, reconnus par les classifications du jeu et par la classe que
+    chaque créature porte —, un joueur adverse peut prendre celle de sa classe.
+  - **Menace, lue selon le rôle.** Pas de couleur « tout va bien » — ce sont les
+    couleurs par nature qui parlent. Deux alertes qui priment sur tout : l'aggro
+    en train de basculer, et l'aggro changée de mains — perdue pour un tank,
+    prise pour les autres.
+  - **Mode aperçu** — maintient la vraie barre de sorts à l'écran, en cours
+    d'incantation, pour la régler sans attendre le combat.
+  - **Auras** — trois rangées dessinées par l'addon avec les images du jeu (nos
+    affaiblissements, les offensifs et défensifs importants, les contrôles),
+    chacune avec sa taille et ses décalages. La section est **en pause**, grisée :
+    les rangées ne suivent pas encore leurs curseurs assez fidèlement.
+
+- **Sélecteur de couleur** dans la fenêtre d'options : une pastille qu'on clique
+  ouvre celui du jeu. C'est un type de contrôle de plus dans la fabrique, pas une
+  pièce propre aux barres d'infos.
+
+- **Vue compacte.** Un menu dans la barre de titre de la fenêtre d'options règle
+  l'échelle de son contenu, de 100 % à 70 %, sans toucher à la fenêtre : il y
+  tient d'autant plus de réglages. Ouverte à 75 % par défaut.
+
+### Modifié
+- **La fenêtre d'options s'ouvre plus grande** — 1120 × 744 — **et plus dense** :
+  lignes resserrées d'un tiers, sous-options en retrait et d'un corps plus
+  petit, et la page des barres d'infos se coupe en deux colonnes quand la place
+  le permet.
+
+### Corrigé
+- **Panneau d'outils de groupe : trois vignettes de marqueur étaient permutées.**
+  Les cases 5, 6 et 7 montraient la lune, l'étoile et le rond là où elles posent
+  l'étoile, le rond et la lune. Le marqueur posé était le bon — l'index part d'un
+  attribut sécurisé, pas de l'image —, c'est bien la vignette qui mentait.
+- **Le bouton « retirer tous les marqueurs » ne retirait rien.** Il passait `0` à
+  la fonction du client, qui attend un index de 1 à 8 et n'efface tout que si on
+  ne lui donne rien : zéro tombait hors de la plage et l'appel se perdait en
+  silence.
+
 ## 0.7.7 — 2026-08-02
 
 ### Ajouté

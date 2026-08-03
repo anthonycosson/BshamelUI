@@ -14,6 +14,11 @@ BUI:RegisterLocale("enUS", {
     ["Tools"]                   = "Tools",
     ["Search..."]               = "Search...",
     ["Reset this page"]         = "Reset this page",
+    ["Content scale"]           = "Compact view",
+    ["Content scale tip"] =
+        "Shrinks everything inside the window without changing the window itself, "
+        .. "so more settings fit. Click to pick a size.",
+    ["Scale percent"]           = "%d%%",
     ["Reset page confirm"]      = "Reset every setting on this page to its default value?",
     ["Yes"]                     = "Yes",
     ["Cancel"]                  = "Cancel",
@@ -106,8 +111,6 @@ BUI:RegisterLocale("enUS", {
     ["Hide Lua errors"]                = "Hide Lua errors",
     ["Hide Lua errors tip"]            = "Suppresses the error popup. Errors are still reported to error handlers.",
 
-    -- Module InfoBar (annonce)
-    ["Info bar"]                       = "Info bar",
 
     -- Module Character
     ["Character sheet"]                = "Character sheet",
@@ -494,4 +497,280 @@ BUI:RegisterLocale("enUS", {
     ["Reset windows confirm"] =
         "Send every window back to its default position and size?",
     ["Window layout reset"]            = "Every window is back in its default place.",
+
+    -- Module Nameplates
+    ["Nameplates"]                     = "Nameplates",
+
+    ["Blizzard settings"]              = "Blizzard settings",
+    ["Blizzard settings notice"] =
+        "The game's own nameplate settings, gathered here so there is only one "
+        .. "place to go. They are not copied: changing one here changes it in the "
+        .. "game menu too, and the other way round. Turning this module off leaves "
+        .. "them exactly as you left them.",
+    ["Bshamel UI options"]             = "Bshamel UI options",
+    ["Bshamel UI options notice"] =
+        "What the game menu does not offer: settings the addon adds, and the "
+        .. "handful of its own it never shows you. Each switch hands back what it "
+        .. "took when you turn it off.",
+    ["Cannot change in combat"]        = "The game refuses this change during combat.",
+
+    ["Always show nameplates"]         = "Always show nameplates",
+    ["Always show nameplates tip"]     = "Keeps nameplates up instead of only showing them in combat.",
+    ["Enemy nameplates"]               = "Enemy units",
+    ["Enemy nameplates tip"]           = "Nameplates on hostile units.",
+    ["Enemy minions"]                  = "Enemy minions",
+    ["Enemy minions tip"]              = "Pets, guardians and totems on the enemy side.",
+    ["Enemy minor units"]              = "Enemy minor units",
+    ["Enemy minor units tip"]          = "Critters and other units with almost no health.",
+    ["Friendly player nameplates"]     = "Friendly players",
+    ["Friendly player nameplates tip"] = "Nameplates on players on your side.",
+    ["Friendly NPC nameplates"]        = "Friendly NPCs",
+    ["Friendly NPC nameplates tip"]    = "Nameplates on quest givers, vendors and other friendly NPCs.",
+    ["Nameplate distance"]             = "Distance",
+    ["Nameplate distance tip"]         = "How far away a nameplate is still drawn, in yards.",
+    ["Vertical overlap"]               = "Vertical spacing",
+    ["Horizontal overlap"]             = "Horizontal spacing",
+    ["Overlap tip"] =
+        "How much room each nameplate keeps around itself before the game pushes "
+        .. "the next one aside. Higher spreads them out, lower packs them tighter.",
+    ["Spacing and distance"]           = "Spacing and distance",
+
+    ["Nameplate style"]                = "Style",
+    ["Nameplate style tip"] =
+        "The overall look the game gives its nameplates. Same list as the game "
+        .. "menu, and the same setting.",
+    ["Style modern"]                   = "Modern",
+    ["Style thin"]                     = "Thin bars",
+    ["Style block"]                    = "Block bars",
+    ["Style health focus"]             = "Wide health bar",
+    ["Style cast focus"]               = "Block casts",
+    ["Style legacy"]                   = "Traditional red",
+
+    ["Stacking"]                       = "Stacking",
+    ["Stacking tip"] =
+        "Stacked nameplates never cover each other; unstacked ones stay over the "
+        .. "unit they belong to.",
+    ["Stack enemy nameplates"]         = "Enemy units",
+    ["Stack friendly nameplates"]      = "Friendly units",
+    ["Health bar info"]                = "Health bar info",
+    ["Health bar info tip"]            = "What the game writes on a nameplate's health bar.",
+    ["Health percentage"]              = "Health percentage",
+    ["Health value"]                   = "Health points",
+    ["Rarity icon"]                    = "Rarity icon",
+    ["Cast bar info"]                  = "Cast bar info",
+    ["Cast bar info tip"]              = "What the game writes on a nameplate's cast bar.",
+    ["Spell name"]                     = "Spell name",
+    ["Spell icon"]                     = "Spell icon",
+    ["Spell target"]                   = "Spell target",
+    ["Highlight important casts"]      = "Highlight important casts",
+    ["Highlight casts on you"]         = "Highlight casts aimed at you",
+
+    ["Threat display"]                 = "Threat display",
+    ["Threat display tip"]             = "How the game itself shows threat. Separate from the addon's threat colours.",
+    ["Threat progressive"]             = "Progressive",
+    ["Threat flash"]                   = "Flash",
+    ["Threat health bar color"]        = "Health bar colour",
+
+    ["Enemy NPC auras"]                = "Enemy NPC auras",
+    ["Enemy player auras"]             = "Enemy player auras",
+    ["Friendly player auras"]          = "Friendly player auras",
+    ["Auras"]                          = "Auras",
+    ["Health bar size"]                = "Health bar",
+    ["Cast bar size"]                  = "Cast bar",
+    ["Preview mode"]                   = "Preview mode",
+    ["Show cast bar"]                  = "Show what only appears in combat",
+    ["Show cast bar tip"] =
+        "A cast bar only shows while something is casting, and an aura only once "
+        .. "a spell puts it there — neither can be sized by waiting for it. This "
+        .. "keeps the real cast bar up and filling, and adds a sample row of "
+        .. "auras: one helpful, one harmful, one crowd control. Remember to turn "
+        .. "it off.",
+    ["Sample cast"]                    = "Casting",
+    ["Resize cast text"]               = "Set the cast text size",
+    ["Resize cast text tip"] =
+        "Applies to whatever the cast bar writes: the spell name, and its target "
+        .. "when the game shows it.",
+    ["Cast text size"]                 = "Cast text size (pixels)",
+    ["Cast text size tip"] =
+        "Separate from the text above, because the game itself writes smaller on a "
+        .. "cast bar than on a health bar.",
+    ["Taken over by the addon"] =
+        "Bshamel UI is setting the size in pixels. Turn that off to get this back.",
+
+    ["Auras paused"]                   = "Paused while size and offsets get fixed.",
+    ["Auras paused notice"] =
+        "Paused: the rows do not follow their sliders faithfully enough yet. "
+        .. "Nothing here does anything for now.",
+    ["Own auras"]                      = "Adjust the auras",
+    ["Own auras tip"] =
+        "The addon shows each nameplate's auras in three rows of its own — the "
+        .. "game's row steps aside. What preview mode shows is these exact rows: "
+        .. "same code, same place, same size. Every image is the game's own.",
+    ["Important auras"]                = "Big offensives and defensives",
+    ["Important auras notice"] =
+        "To the left of the health bar. The game itself classes what counts as a "
+        .. "major defensive.",
+    ["Own debuff auras"]               = "Debuffs — yours only",
+    ["Own debuff auras notice"]        = "Top left of the health bar. Only what you put there.",
+    ["Crowd control auras"]            = "Crowd control — everyone's",
+    ["Crowd control auras notice"] =
+        "To the right of the health bar. A sheeped mob is sheeped no matter who "
+        .. "cast it.",
+    ["Own aura size"]                  = "Icon size (pixels)",
+    ["Own aura size tip"]              = "Side of an aura icon in this row.",
+    ["Aura offset X"]                  = "Offset X (pixels)",
+    ["Aura offset Y"]                  = "Offset Y (pixels)",
+    ["Aura offset tip"]                = "Nudges this row from its anchor on the health bar.",
+    ["Auras tip"]                      = "Which auras the game shows above these nameplates.",
+    ["Buffs"]                          = "Buffs",
+    ["Debuffs"]                        = "Debuffs",
+    ["Crowd control"]                  = "Crowd control",
+    ["Loss of control"]                = "Loss of control",
+    ["Nameplate size"]                 = "Nameplate size",
+    ["Nameplate size tip"] =
+        "The game's own size setting, in five steps. Separate from the width and "
+        .. "height in pixels further down, which fine-tune what this sets.",
+    ["Debuff spacing"]                 = "Debuff spacing",
+    ["Debuff spacing tip"] =
+        "Vertical gap only, between the row of debuffs and what sits above it. "
+        .. "Applies to all three rows, not just the last one.",
+
+    ["Simplified nameplates"]          = "Simplified nameplates",
+    ["Simplified nameplates notice"] =
+        "A simplified nameplate is reduced to a name — no bar, no icons. Pick which "
+        .. "units get one.",
+    ["Simplified nameplates tip"]      = "Shown as a name only.",
+    ["Minions"]                        = "Minions",
+    ["Minor units"]                    = "Minor units",
+    ["Friendly players"]               = "Friendly players",
+    ["Friendly NPCs"]                  = "Friendly NPCs",
+    ["Show off-screen nameplates"]     = "Off-screen units",
+    ["Show off-screen nameplates tip"] =
+        "Whether nameplates are drawn for units that are off screen.",
+    ["Friendly minions"]               = "Friendly minions",
+    ["Friendly minions tip"]           = "Pets, guardians and totems belonging to players on your side.",
+
+    ["Resize cast bar"]                = "Set the cast bar size",
+    ["Resize cast bar tip"] =
+        "Same treatment as the health bar, on its own switch: turning it off gives "
+        .. "the cast bar back without touching the rest.",
+    ["Cast bar height"]                = "Cast bar height (pixels)",
+    ["Cast bar height tip"]            = "Thickness of the cast bar. The game makes it thinner than the health bar.",
+
+    ["Resize nameplates"]              = "Set the size",
+    ["Resize nameplates tip"] =
+        "Sets the size of every nameplate in pixels while this is on, and hands "
+        .. "them back to the game when you turn it off.",
+    ["Nameplate width"]                = "Width (pixels)",
+    ["Nameplate width tip"] =
+        "Width of the plate. The health bar stretches to fill it. 128 is what "
+        .. "the game uses.",
+    ["Resize nameplate text"]          = "Set the text size",
+    ["Resize nameplate text tip"] =
+        "One size for every piece of text on a nameplate. Turn it off and each "
+        .. "one goes back to the size the game gave it.",
+    ["Nameplate text size"]            = "Text size (pixels)",
+    ["Nameplate text size tip"] =
+        "Name, level, health, health percentage and the spell being cast, all at "
+        .. "once. The font and its outline are left alone — only the size changes.",
+    ["Nameplate height"]               = "Health bar height (pixels)",
+    ["Nameplate height tip"] =
+        "Thickness of the health bar. 11 is what the game uses. The name and the "
+        .. "icons keep their size — they are not part of the bar.",
+
+    ["Raid marker"]                    = "Raid marker",
+    ["Place raid marker"]              = "Place the marker yourself",
+    ["Place raid marker tip"] =
+        "Puts the target icon on the top-right corner of the health bar, at the "
+        .. "size and offset you choose.",
+    ["Marker size"]                    = "Marker size",
+    ["Marker size tip"]                = "Side of the icon, in pixels.",
+    ["Marker offset X"]                = "Marker offset, sideways",
+    ["Marker offset Y"]                = "Marker offset, up and down",
+    ["Marker offset tip"] =
+        "Distance from the top-right corner of the health bar. At zero the icon "
+        .. "sits centred on that corner.",
+
+    ["Visibility"]                     = "Visibility",
+    ["Visibility notice"] =
+        "Three states, and a nameplate is always in exactly one of them: it is "
+        .. "your target, it is another one, or it is behind something. Opacity is "
+        .. "how much of it you see; darkness is how much colour is left in it.",
+    ["Tune visibility"]                = "Set opacity and darkness",
+    ["Tune visibility tip"] =
+        "Sets how visible each nameplate is while this is on, and hands the "
+        .. "plates back to the game when you turn it off.",
+    ["Target opacity"]                 = "Target — opacity",
+    ["Target opacity tip"]             = "How visible the plate of your current target is.",
+    ["Target darkness"]                = "Target — darkness",
+    ["Darkness tip"]                   = "How far the health bar and the name are dimmed. Zero leaves them alone.",
+    ["Others opacity"]                 = "Others — opacity",
+    ["Others opacity tip"]             = "How visible the plates of everything you are not targeting are.",
+    ["Others darkness"]                = "Others — darkness",
+    ["Occluded opacity"]               = "Behind cover — opacity",
+    ["Occluded opacity tip"] =
+        "How visible a plate is when its owner is behind a wall or a pillar.",
+    ["Occluded darkness"]              = "Behind cover — darkness",
+    ["Occluded darkness tip"] =
+        "The game never says an enemy went behind cover, it only dims the plate. "
+        .. "The darkening is worked back out from that, so it only kicks in while "
+        .. "the opacity above is lower than the game's own distance fade.",
+
+    ["Enemy colors"]                   = "Enemy colours",
+    ["Enemy colors notice"] =
+        "The unit decides, not the zone: NPC enemies take the kind colours below, "
+        .. "enemy players take their class colour if you ask for it.",
+    ["PvP class colors"]               = "Class colours on enemy players",
+    ["PvP class colors tip"] =
+        "An enemy player's health bar takes the colour of their class, wherever "
+        .. "you meet them.",
+    ["Color enemies by kind"]          = "Colour enemies by kind",
+    ["Color enemies by kind tip"] =
+        "Rarity first, then what the creature does: a rare that casts stays "
+        .. "coloured as a rare.",
+    ["Boss color"]                     = "Boss and miniboss",
+    ["Boss color tip"]                 = "Bosses and elites — the game counts a miniboss as an elite.",
+    ["Caster color"]                   = "Caster",
+    ["Caster color tip"] =
+        "Learnt as you play: a creature counts as a caster the first time you "
+        .. "see it cast. Nothing in the game says so beforehand.",
+    ["Melee color"]                    = "Melee, trivial and minor",
+    ["Melee color tip"]                = "Everything that is neither rare, nor elite, nor known to cast.",
+    ["Rare color"]                     = "Rare",
+    ["Rare color tip"]                 = "Silver dragon, no elite border.",
+    ["Rare elite color"]               = "Rare elite",
+    ["Rare elite color tip"]           = "Silver dragon with the elite border.",
+
+
+    ["Threat"]                         = "Threat",
+    ["Threat notice"] =
+        "When aggro is where it belongs, the kind colours above colour the bar — "
+        .. "there is no all-is-well colour. Threat has two alerts only, read by "
+        .. "your role.",
+    ["Color by threat"]                = "Colour by threat",
+    ["Color by threat tip"] =
+        "Turns the bar to the alert colour the moment aggro moves toward the "
+        .. "wrong person — lost if you are the tank, taken if you are not.",
+    ["Threat shifting"]                = "Aggro shifting (by role)",
+    ["Threat shifting tip"] =
+        "Tank: it is slipping away, or you are taking it back without holding it "
+        .. "firmly. Damage or healer: you are climbing and about to take it.",
+    ["Threat wrong"]                   = "Aggro taken or lost (by role)",
+    ["Threat wrong tip"]               = "Tank: you lost it. Damage or healer: you took it.",
+
+    ["Preview"]                        = "Preview",
+    ["Preview notice"] =
+        "The game's own sample nameplate, the one its options panel shows. It is "
+        .. "not a drawing of ours: it follows the settings above, and it will "
+        .. "follow whatever the game changes about its nameplates.",
+
+    ["Allied names only"]              = "Show only the name for allies",
+    ["Allied names only tip"] =
+        "Friendly players get a name and no health bar. Theirs is already on the "
+        .. "party frames.",
+    ["Allies"]                         = "Allies",
+    ["Class colored ally names"]       = "Class-coloured names",
+    ["Class colored ally names tip"]   = "Friendly player names take their class colour.",
+    ["Aura scale"]                     = "Aura size",
+    ["Aura scale tip"]                 = "Size of the aura icons, as a percentage of the game's own.",
 })

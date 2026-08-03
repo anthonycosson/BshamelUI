@@ -435,7 +435,7 @@ local copyWindow
 ---@param frame table
 local function openCopy(frame)
     if not copyWindow then
-        copyWindow = W.CopyWindow(L["Copy chat"], L["Copy chat hint"])
+        copyWindow = W.CopyWindow("BshamelUICopyFrame", L["Copy chat"], L["Copy chat hint"])
         if not copyWindow then return end
     end
     copyWindow:Open(chatText(frame))

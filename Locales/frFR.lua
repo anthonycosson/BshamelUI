@@ -15,6 +15,12 @@ BUI:RegisterLocale("frFR", {
     ["Tools"]                   = "Outils",
     ["Search..."]               = "Rechercher...",
     ["Reset this page"]         = "Réinitialiser cette page",
+    ["Content scale"]           = "Vue compacte",
+    ["Content scale tip"] =
+        "Rapetisse tout ce qui est dans la fenêtre sans toucher à la fenêtre "
+        .. "elle-même : il y tient donc plus de réglages. Cliquez pour choisir "
+        .. "une taille.",
+    ["Scale percent"]           = "%d %%",
     ["Reset page confirm"]      = "Remettre tous les réglages de cette page à leur valeur par défaut ?",
     ["Yes"]                     = "Oui",
     ["Cancel"]                  = "Annuler",
@@ -113,8 +119,6 @@ BUI:RegisterLocale("frFR", {
     ["Hide Lua errors tip"] =
         "Supprime la fenêtre d'erreur. Les erreurs restent transmises aux gestionnaires d'erreurs.",
 
-    -- Module InfoBar (annonce)
-    ["Info bar"]                       = "Barre d'infos",
 
     -- Module Character
     ["Character sheet"]                = "Fiche de personnage",
@@ -496,4 +500,305 @@ BUI:RegisterLocale("frFR", {
     ["Reset windows confirm"] =
         "Remettre chaque fenêtre à sa position et à sa taille d'origine ?",
     ["Window layout reset"]            = "Toutes les fenêtres ont retrouvé leur place.",
+
+    -- Module Nameplates
+    -- « Barres d'infos » et non « barres de nom » : c'est le nom que le client
+    -- français donne lui-même à ces plaques. Une page se cherche sous le nom que
+    -- le joueur a sous les yeux dans les options du jeu, pas sous la traduction
+    -- littérale de son nom anglais.
+    ["Nameplates"]                     = "Barres d'infos",
+
+    ["Blizzard settings"]              = "Paramètres Blizzard",
+    ["Blizzard settings notice"] =
+        "Les réglages de barres d'infos du jeu, rassemblés ici pour n'avoir qu'un "
+        .. "seul endroit où aller. Ils ne sont pas recopiés : en changer un ici le "
+        .. "change aussi dans le menu du jeu, et réciproquement. Éteindre ce module "
+        .. "les laisse exactement dans l'état où vous les avez mis.",
+    ["Bshamel UI options"]             = "Options Bshamel UI",
+    ["Bshamel UI options notice"] =
+        "Ce que le menu du jeu ne propose pas : les réglages que l'addon ajoute, "
+        .. "et les quelques-uns du jeu qu'il ne montre nulle part. Chaque "
+        .. "interrupteur rend ce qu'il avait pris quand on l'éteint.",
+    ["Cannot change in combat"]        = "Le jeu refuse ce changement pendant le combat.",
+
+    ["Always show nameplates"]         = "Toujours afficher les barres d'infos",
+    ["Always show nameplates tip"] =
+        "Garde les barres d'infos affichées au lieu de ne les montrer qu'en combat.",
+    ["Enemy nameplates"]               = "Unités ennemies",
+    ["Enemy nameplates tip"]           = "Barres d'infos sur les unités hostiles.",
+    ["Enemy minions"]                  = "Serviteurs ennemis",
+    ["Enemy minions tip"]              = "Familiers, gardiens et totems du camp adverse.",
+    ["Enemy minor units"]              = "Unités mineures ennemies",
+    ["Enemy minor units tip"]          = "Bestioles et autres unités sans presque aucun point de vie.",
+    ["Friendly player nameplates"]     = "Personnages-joueurs alliés",
+    ["Friendly player nameplates tip"] = "Barres d'infos sur les joueurs de votre camp.",
+    ["Friendly NPC nameplates"]        = "PNJ amicaux",
+    ["Friendly NPC nameplates tip"] =
+        "Barres d'infos sur les donneurs de quête, les marchands et les autres PNJ amicaux.",
+    ["Nameplate distance"]             = "Distance",
+    ["Nameplate distance tip"]         = "Jusqu'où une barre d'infos est encore dessinée, en mètres.",
+    ["Vertical overlap"]               = "Espacement vertical",
+    ["Horizontal overlap"]             = "Espacement horizontal",
+    ["Overlap tip"] =
+        "Place que chaque barre d'infos garde autour d'elle avant que le jeu ne "
+        .. "pousse la suivante. Plus haut les écarte, plus bas les resserre.",
+    ["Spacing and distance"]           = "Espacement et distance",
+
+    ["Nameplate style"]                = "Style",
+    ["Nameplate style tip"] =
+        "L'allure générale que le jeu donne à ses barres d'infos. Même liste que "
+        .. "dans le menu du jeu, et même réglage.",
+    ["Style modern"]                   = "Moderne",
+    ["Style thin"]                     = "Barres fines",
+    ["Style block"]                    = "Barres en bloc",
+    ["Style health focus"]             = "Barre de vie large",
+    ["Style cast focus"]               = "Sorts en bloc",
+    ["Style legacy"]                   = "Rouge traditionnel",
+
+    ["Stacking"]                       = "Superposition",
+    ["Stacking tip"] =
+        "Des barres d'infos superposées ne se recouvrent jamais ; sans "
+        .. "superposition, chacune reste au-dessus de l'unité à qui elle appartient.",
+    ["Stack enemy nameplates"]         = "Unités ennemies",
+    ["Stack friendly nameplates"]      = "Unités amicales",
+    ["Health bar info"]                = "Informations de barre de vie",
+    ["Health bar info tip"]            = "Ce que le jeu écrit sur la barre de vie d'une barre d'infos.",
+    ["Health percentage"]              = "Pourcentage de points de vie",
+    ["Health value"]                   = "Points de vie",
+    ["Rarity icon"]                    = "Icône de rareté",
+    ["Cast bar info"]                  = "Informations de barre de sorts",
+    ["Cast bar info tip"]              = "Ce que le jeu écrit sur la barre de sorts d'une barre d'infos.",
+    ["Spell name"]                     = "Nom du sort",
+    ["Spell icon"]                     = "Icône du sort",
+    ["Spell target"]                   = "Cible du sort",
+    ["Highlight important casts"]      = "Mettre en avant les sorts importants",
+    ["Highlight casts on you"]         = "Mettre en avant les sorts qui vous visent",
+
+    ["Threat display"]                 = "Affichage de menace",
+    ["Threat display tip"] =
+        "La façon dont le jeu montre lui-même la menace. Indépendant des couleurs "
+        .. "de menace de l'addon.",
+    ["Threat progressive"]             = "Progressive",
+    ["Threat flash"]                   = "Clignotement",
+    ["Threat health bar color"]        = "Couleur de la barre de vie",
+
+    ["Enemy NPC auras"]                = "Auras des PNJ adversaires",
+    ["Enemy player auras"]             = "Auras des joueurs adverses",
+    ["Friendly player auras"]          = "Auras des joueurs alliés",
+    ["Auras"]                          = true,
+    ["Health bar size"]                = "Barre de vie",
+    ["Cast bar size"]                  = "Barre des sorts",
+    ["Preview mode"]                   = "Mode aperçu",
+    ["Show cast bar"]                  = "Montrer ce qui n'apparaît qu'en combat",
+    ["Show cast bar tip"] =
+        "Une barre de sorts ne se montre que pendant une incantation, et une aura "
+        .. "que lorsqu'un sort la pose : ni l'une ni l'autre ne se règle en "
+        .. "l'attendant. Ce mode maintient la vraie barre de sorts affichée et en "
+        .. "cours, et ajoute une rangée d'auras d'exemple : une qui aide, une qui "
+        .. "nuit, une qui immobilise. Pensez à l'éteindre.",
+    ["Sample cast"]                    = "Incantation",
+    ["Resize cast text"]               = "Régler la taille du texte des sorts",
+    ["Resize cast text tip"] =
+        "Porte sur ce que la barre de sorts écrit : le nom du sort, et sa cible "
+        .. "quand le jeu l'affiche.",
+    ["Cast text size"]                 = "Taille du texte des sorts (pixels)",
+    ["Cast text size tip"] =
+        "Distincte du texte ci-dessus, parce que le jeu lui-même écrit plus petit "
+        .. "sur une barre de sorts que sur une barre de vie.",
+    ["Taken over by the addon"] =
+        "Bshamel UI règle la taille en pixels. Éteignez-le pour récupérer ce "
+        .. "réglage.",
+
+    ["Auras paused"]                   = "En pause, le temps de régler la taille et les décalages.",
+    ["Auras paused notice"] =
+        "En pause : les rangées ne suivent pas encore leurs curseurs assez "
+        .. "fidèlement. Rien ici n'agit pour le moment.",
+    ["Own auras"]                      = "Régler les auras",
+    ["Own auras tip"] =
+        "L'addon affiche les auras de chaque barre d'infos dans trois rangées à "
+        .. "lui — celle du jeu s'efface. Ce que le mode aperçu montre est "
+        .. "exactement ces rangées : même code, même place, même taille. Chaque "
+        .. "image est un asset du jeu.",
+    ["Important auras"]                = "Offensifs et défensifs importants",
+    ["Important auras notice"] =
+        "À gauche de la barre de vie. C'est le jeu lui-même qui classe ce qui "
+        .. "compte comme grand défensif.",
+    ["Own debuff auras"]               = "Affaiblissements — les nôtres",
+    ["Own debuff auras notice"] =
+        "En haut à gauche de la barre de vie. Seulement ce que vous y avez posé.",
+    ["Crowd control auras"]            = "Contrôles — de tous les joueurs",
+    ["Crowd control auras notice"] =
+        "À droite de la barre de vie. Un mob mouton est mouton, peu importe qui "
+        .. "l'a lancé.",
+    ["Own aura size"]                  = "Taille des icônes (pixels)",
+    ["Own aura size tip"]              = "Côté d'une icône d'aura de cette rangée.",
+    ["Aura offset X"]                  = "Décalage X (pixels)",
+    ["Aura offset Y"]                  = "Décalage Y (pixels)",
+    ["Aura offset tip"]                = "Écarte cette rangée de son ancrage sur la barre de vie.",
+    ["Auras tip"]                      = "Les auras que le jeu affiche au-dessus de ces barres d'infos.",
+    ["Buffs"]                          = "Améliorations",
+    ["Debuffs"]                        = "Affaiblissements",
+    ["Crowd control"]                  = "Contrôle de foule",
+    ["Loss of control"]                = "Perte de contrôle",
+    ["Nameplate size"]                 = "Taille des barres de nom",
+    ["Nameplate size tip"] =
+        "Le réglage de taille du jeu, en cinq crans. À distinguer de la largeur "
+        .. "et de la hauteur en pixels plus bas, qui affinent ce que celui-ci pose.",
+    ["Debuff spacing"]                 = "Espacement des affaiblissements",
+    ["Debuff spacing tip"] =
+        "Écart vertical seulement, entre la rangée d'affaiblissements et ce qui "
+        .. "est au-dessus. S'applique aux trois rangées, pas seulement à la "
+        .. "dernière.",
+
+    ["Simplified nameplates"]          = "Barres d'infos simplifiées",
+    ["Simplified nameplates notice"] =
+        "Une barre d'infos simplifiée se réduit à un nom : ni barre, ni icônes. "
+        .. "Choisissez quelles unités en reçoivent une.",
+    ["Simplified nameplates tip"]      = "Affichée sous forme de nom seul.",
+    ["Minions"]                        = "Serviteurs",
+    ["Minor units"]                    = "Unités mineures",
+    ["Friendly players"]               = "Joueurs alliés",
+    ["Friendly NPCs"]                  = "PNJ amicaux",
+    ["Show off-screen nameplates"]     = "Unités hors écran",
+    ["Show off-screen nameplates tip"] =
+        "Définit si les barres d'infos des unités hors écran sont affichées.",
+    ["Friendly minions"]               = "Serviteurs alliés",
+    ["Friendly minions tip"] =
+        "Familiers, gardiens et totems appartenant aux joueurs de votre camp.",
+
+    ["Resize cast bar"]                = "Régler la taille de la barre de sorts",
+    ["Resize cast bar tip"] =
+        "Même traitement que la barre de vie, sur son propre interrupteur : "
+        .. "l'éteindre rend la barre de sorts sans toucher au reste.",
+    ["Cast bar height"]                = "Hauteur de la barre de sorts (pixels)",
+    ["Cast bar height tip"] =
+        "Épaisseur de la barre de sorts. Le jeu la fait plus fine que la barre de vie.",
+
+    ["Resize nameplates"]              = "Régler la taille",
+    ["Resize nameplates tip"] =
+        "Fixe la taille des barres d'infos en pixels tant que c'est allumé, et "
+        .. "les rend au jeu quand on l'éteint.",
+    ["Nameplate width"]                = "Largeur (pixels)",
+    ["Nameplate width tip"] =
+        "Largeur de la plaque. La barre de vie s'étire pour la remplir. Le jeu "
+        .. "utilise 128.",
+    ["Resize nameplate text"]          = "Régler la taille du texte",
+    ["Resize nameplate text tip"] =
+        "Une seule taille pour tout le texte d'une barre d'infos. En l'éteignant, "
+        .. "chacun retrouve le corps que le jeu lui donnait.",
+    ["Nameplate text size"]            = "Taille du texte (pixels)",
+    ["Nameplate text size tip"] =
+        "Le nom, le niveau, les points de vie, leur pourcentage et le sort en "
+        .. "cours, d'un seul coup. La police et son contour ne sont pas touchés — "
+        .. "seul le corps change.",
+    ["Nameplate height"]               = "Hauteur de la barre (pixels)",
+    ["Nameplate height tip"] =
+        "Épaisseur de la barre de vie. Le jeu utilise 11. Le nom et les icônes "
+        .. "gardent leur taille — ils ne font pas partie de la barre.",
+
+    ["Raid marker"]                    = "Marqueur de ciblage",
+    ["Place raid marker"]              = "Placer le marqueur soi-même",
+    ["Place raid marker tip"] =
+        "Pose l'icône de ciblage sur le coin haut-droit de la barre de vie, à la "
+        .. "taille et au décalage choisis.",
+    ["Marker size"]                    = "Taille du marqueur",
+    ["Marker size tip"]                = "Côté de l'icône, en pixels.",
+    ["Marker offset X"]                = "Décalage du marqueur, horizontal",
+    ["Marker offset Y"]                = "Décalage du marqueur, vertical",
+    ["Marker offset tip"] =
+        "Écart au coin haut-droit de la barre de vie. À zéro, l'icône est centrée "
+        .. "sur ce coin.",
+
+    ["Visibility"]                     = "Visibilité",
+    ["Visibility notice"] =
+        "Trois états, et une barre de nom est toujours dans exactement l'un des "
+        .. "trois : c'est votre cible, c'en est une autre, ou elle est derrière "
+        .. "quelque chose. L'opacité dit combien on en voit ; l'assombrissement, "
+        .. "combien il lui reste de couleur.",
+    ["Tune visibility"]                = "Régler opacité et assombrissement",
+    ["Tune visibility tip"] =
+        "Décide de la visibilité de chaque barre de nom tant que c'est allumé, "
+        .. "et rend les plaques au jeu quand on l'éteint.",
+    ["Target opacity"]                 = "Cible — opacité",
+    ["Target opacity tip"]             = "À quel point la plaque de votre cible est visible.",
+    ["Target darkness"]                = "Cible — assombrissement",
+    ["Darkness tip"] =
+        "De combien la barre de vie et le nom sont assombris. À zéro, on n'y "
+        .. "touche pas.",
+    ["Others opacity"]                 = "Les autres — opacité",
+    ["Others opacity tip"]             = "À quel point les plaques de ce que vous ne ciblez pas sont visibles.",
+    ["Others darkness"]                = "Les autres — assombrissement",
+    ["Occluded opacity"]               = "Hors de vue — opacité",
+    ["Occluded opacity tip"] =
+        "À quel point une plaque est visible quand son porteur est derrière un "
+        .. "mur ou un pilier.",
+    ["Occluded darkness"]              = "Hors de vue — assombrissement",
+    ["Occluded darkness tip"] =
+        "Le jeu ne dit jamais qu'un adversaire est passé derrière quelque chose, "
+        .. "il se contente de pâlir la plaque. L'assombrissement s'en déduit : il "
+        .. "ne se déclenche donc que tant que l'opacité ci-dessus reste plus basse "
+        .. "que le fondu par la distance du jeu.",
+
+    ["Enemy colors"]                   = "Couleurs des adversaires",
+    ["Enemy colors notice"] =
+        "C'est l'unité qui décide, pas la zone : un PNJ ennemi prend les couleurs "
+        .. "par nature ci-dessous, un joueur adverse prend celle de sa classe si "
+        .. "vous le demandez.",
+    ["PvP class colors"]               = "Couleurs de classe sur les joueurs adverses",
+    ["PvP class colors tip"] =
+        "La barre de vie d'un joueur adverse prend la couleur de sa classe, où "
+        .. "que vous le croisiez.",
+    ["Color enemies by kind"]          = "Colorier les adversaires par nature",
+    ["Color enemies by kind tip"] =
+        "La rareté d'abord, ce que fait la créature ensuite : un rare qui incante "
+        .. "reste colorié en rare.",
+    ["Boss color"]                     = "Boss et miniboss",
+    ["Boss color tip"]                 = "Boss et élites — le jeu range un miniboss parmi les élites.",
+    ["Caster color"]                   = "Caster",
+    ["Caster color tip"] =
+        "Appris en jouant : une créature devient un caster la première fois qu'on "
+        .. "la voit incanter. Rien dans le jeu ne le dit à l'avance.",
+    ["Melee color"]                    = "Mêlée, trivial et mineur",
+    ["Melee color tip"]                = "Tout ce qui n'est ni rare, ni élite, ni connu pour incanter.",
+    ["Rare color"]                     = "Rare",
+    ["Rare color tip"]                 = "Dragon argenté, sans le liseré d'élite.",
+    ["Rare elite color"]               = "Rare-élite",
+    ["Rare elite color tip"]           = "Dragon argenté avec le liseré d'élite.",
+
+
+    ["Threat"]                         = "Menace",
+    ["Threat notice"] =
+        "Quand l'aggro est là où elle doit être, ce sont les couleurs par nature "
+        .. "ci-dessus qui colorent la barre — pas de couleur « tout va bien ». "
+        .. "La menace n'a que deux alertes, lues selon votre rôle.",
+    ["Color by threat"]                = "Colorier selon la menace",
+    ["Color by threat tip"] =
+        "Passe la barre à la couleur d'alerte dès que l'aggro bouge vers la "
+        .. "mauvaise personne — perdue si vous êtes tank, prise si vous ne "
+        .. "l'êtes pas.",
+    ["Threat shifting"]                = "Aggro en train de basculer (selon le rôle)",
+    ["Threat shifting tip"] =
+        "Tank : elle vous échappe, ou vous la reprenez sans l'avoir assurée. "
+        .. "DPS ou soigneur : vous montez et allez la prendre.",
+    ["Threat wrong"]                   = "Aggro prise ou perdue (selon le rôle)",
+    ["Threat wrong tip"] =
+        "Tank : vous l'avez perdue. DPS ou soigneur : vous l'avez prise.",
+
+    ["Preview"]                        = "Aperçu",
+    ["Preview notice"] =
+        "La barre d'infos d'exemple du jeu, celle que son panneau d'options "
+        .. "affiche. Ce n'est pas un dessin à nous : elle suit les réglages "
+        .. "ci-dessus, et elle suivra ce que le jeu changera à ses barres d'infos.",
+
+    ["Allied names only"]              = "Afficher uniquement le nom pour les alliés",
+    ["Allied names only tip"] =
+        "Les joueurs alliés n'ont qu'un nom, sans barre de vie. La leur est déjà "
+        .. "sur les cadres de groupe.",
+    ["Allies"]                         = "Alliés",
+    ["Class colored ally names"]       = "Noms aux couleurs de classe",
+    ["Class colored ally names tip"] =
+        "Les noms des joueurs alliés prennent la couleur de leur classe.",
+    ["Aura scale"]                     = "Taille des auras",
+    ["Aura scale tip"] =
+        "Taille des icônes d'aura, en pourcentage de celle du jeu.",
 })

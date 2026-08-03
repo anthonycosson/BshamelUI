@@ -11,6 +11,12 @@
 --  contenu comme dans `W.ScrollPane` : une zone de saisie multiligne calcule sa
 --  propre hauteur d'après son texte. Lui donner un parent intermédiaire
 --  obligerait à mesurer ce texte à sa place.
+--
+--  **Elle sert aussi à faire entrer du texte**, et c'est le même widget parce
+--  que c'est le même geste : une liste qu'on emporte et une liste qu'on colle
+--  se présentent pareil, se sélectionnent pareil, et se lisent dans la même
+--  fenêtre. `onSubmit` ajoute le seul bouton qui les distingue — sans lui, la
+--  fenêtre est en lecture et rien ne peut être validé par mégarde.
 -- =========================================================================
 
 local _, ns = ...
@@ -18,15 +24,19 @@ local BUI = ns.BUI
 local T    = BUI.Theme
 local W    = BUI.Widgets
 
---- Construit la fenêtre de copie. Une seule suffit pour tout l'addon :
---- l'appelant la garde et la rouvre avec un autre contenu.
+--- Construit une fenêtre de copie. L'appelant la garde et la rouvre avec un
+--- autre contenu — une par usage, chacune sous son propre nom global : deux
+--- cadres portant le même nom se recouvriraient l'un l'autre.
+---@param globalName string     nom global (préfixé `BshamelUI`), requis par UISpecialFrames
 ---@param titleText string
----@param hintText string   rappel du raccourci de copie, sous la zone de texte
+---@param hintText string       rappel du raccourci de copie, sous la zone de texte
+---@param submitLabel? string   intitulé du bouton de validation ; sans lui, aucun bouton
+---@param onSubmit? fun(text: string)
 ---@return table
-function W.CopyWindow(titleText, hintText)
+function W.CopyWindow(globalName, titleText, hintText, submitLabel, onSubmit)
     local S = T.SIZE
 
-    local frame = W.Window("BshamelUICopyFrame", titleText, S.COPY_W, S.COPY_H)
+    local frame = W.Window(globalName, titleText, S.COPY_W, S.COPY_H)
 
     -- Le rappel du raccourci est **hors** du panneau : dans la zone de texte, il
     -- serait sélectionné avec le reste et se retrouverait dans le presse-papier.
@@ -63,6 +73,19 @@ function W.CopyWindow(titleText, hintText)
     end)
 
     scroll:SetScrollChild(edit)
+
+    -- Le bouton de validation, quand la fenêtre en a un. Il vit sur la même
+    -- ligne que le rappel de raccourci, à l'autre bout : c'est la bande basse,
+    -- hors du panneau, et donc hors de ce qui part dans le presse-papier.
+    if submitLabel and onSubmit then
+        local submit = W.Button(frame, submitLabel, function()
+            local text = edit:GetText()
+            frame:Hide()
+            onSubmit(text or "")
+        end)
+        submit:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT",
+            -(S.CHROME_SIDE + S.PADDING), S.CHROME_BOTTOM)
+    end
 
     --- La largeur du texte suit celle de la zone visible ; sa hauteur, elle,
     --- est calculée par la zone de saisie elle-même.

@@ -13,13 +13,22 @@
 --      { type = "dropdown",    key = ..., text = ..., values = { { value=, label= }, ... } }
 --          `values` accepte aussi une **fonction** qui rend cette liste, pour un
 --          choix qui dépend du personnage et n'est pas connu à la construction.
+--      { type = "color",       key = ..., text = ... }
+--          la valeur est une table `{ r = , g = , b = }` ; le sélecteur est
+--          celui du client (voir `UI/Widgets/ColorSwatch.lua`).
 --      { type = "button",      text = ..., label = ..., onClick = function() end }
 --      { type = "description", text = ... }
 --      { type = "spacer",      height = 10 }
+--      { type = "column" }
+--          coupure : tout ce qui suit se pose dans une seconde colonne, à
+--          droite — si la page est assez large pour deux (voir `layout`).
 --
 --  Champs communs facultatifs :
+--      indent   = true                               -- sous-option : la ligne
+--                                                    -- ne veut rien dire sans
+--                                                    -- celle du dessus
 --      disabled = function() return true|false end   -- grise la ligne
---      disabledReason = "..."                        -- expliqué en infobulle
+--      disabledReason = "..." | function(): string   -- expliqué en infobulle
 --      hidden   = function() return true|false end   -- retire la ligne du flux
 --      get / set                                     -- si le réglage ne vient
 --                                                    -- pas de `key`
@@ -71,6 +80,7 @@ local function buildWidget(page, mod, descriptor)
         return W.Toggle(page, {
             text    = descriptor.text,
             tooltip = descriptor.tooltip,
+            indent  = descriptor.indent,
             get     = get,
             set     = set,
         })
@@ -79,6 +89,7 @@ local function buildWidget(page, mod, descriptor)
         return W.Slider(page, {
             text     = descriptor.text,
             tooltip  = descriptor.tooltip,
+            indent   = descriptor.indent,
             min      = descriptor.min or 0,
             max      = descriptor.max or 100,
             step     = descriptor.step,
@@ -91,7 +102,17 @@ local function buildWidget(page, mod, descriptor)
         return W.Dropdown(page, {
             text    = descriptor.text,
             tooltip = descriptor.tooltip,
+            indent  = descriptor.indent,
             values  = descriptor.values or {},
+            get     = get,
+            set     = set,
+        })
+
+    elseif kind == "color" then
+        return W.ColorSwatch(page, {
+            text    = descriptor.text,
+            tooltip = descriptor.tooltip,
+            indent  = descriptor.indent,
             get     = get,
             set     = set,
         })
@@ -105,6 +126,11 @@ local function buildWidget(page, mod, descriptor)
 
     elseif kind == "description" then
         return W.Description(page, descriptor.text)
+
+    elseif kind == "preview" then
+        -- Rend `nil` si le client ne sait pas monter sa maquette : la ligne
+        -- disparaît alors de la page, ce qui vaut mieux qu'un cadre creux.
+        return W.PlatePreview(page)
 
     elseif kind == "warning" then
         return W.Warning(page, descriptor.text)
@@ -121,36 +147,75 @@ local function buildWidget(page, mod, descriptor)
 end
 
 --- Empile les widgets et renvoie la hauteur totale utilisée.
+---
+--- Une page peut demander une **coupure de colonne** : tout ce qui suit se pose
+--- alors dans une seconde colonne, à droite. C'est un vœu, pas un ordre — la
+--- coupure n'est honorée que si les deux moitiés restent assez larges pour porter
+--- un libellé lisible à côté de son contrôle (`COLUMN_MIN_W`). Sinon la page
+--- retombe sur une colonne unique et la coupure ne fait rien.
+---
+--- Ce repli n'est pas une prudence de plus : une fenêtre étroite, ou un joueur
+--- qui a réduit l'échelle du contenu, changent la largeur disponible d'un facteur
+--- deux. Une découpe imposée y gagnerait de la hauteur en tronquant les
+--- intitulés, c'est-à-dire en rendant illisible ce qu'elle voulait rendre plus
+--- visible.
 local function layout(page)
-    local y = -T.SIZE.PADDING
+    local S = T.SIZE
     local entries = page._entries
+    local width   = page:GetWidth() or 0
+
+    local split    = page._breakAt ~= nil
+                     and width >= S.COLUMN_MIN_W * 2 + S.COLUMN_GAP
+    local colWidth = split and (width - S.COLUMN_GAP) / 2 or width
+
+    -- Une ordonnée par colonne, et le rang de la première ligne de chacune : un
+    -- en-tête respire davantage, sauf en tête de sa propre colonne.
+    local y     = { -S.PADDING, -S.PADDING }
+    local first = { true, true }
+    local col   = 1
 
     for i = 1, #entries do
         local entry = entries[i]
         local hidden = entry.descriptor.hidden and entry.descriptor.hidden() or false
 
+        if split and page._breakAt == i - 1 then col = 2 end
+
         if hidden then
             entry.frame:Hide()
         else
-            -- Un en-tête de section respire davantage, sauf en tête de page.
-            if entry.descriptor.type == "header" and i > 1 then
-                y = y - T.SIZE.SECTION_GAP
+            if entry.descriptor.type == "header" and not first[col] then
+                y[col] = y[col] - S.SECTION_GAP
             end
+            first[col] = false
+
+            local x = (col == 2) and (colWidth + S.COLUMN_GAP) or 0
 
             entry.frame:Show()
             entry.frame:ClearAllPoints()
-            entry.frame:SetPoint("TOPLEFT", page, "TOPLEFT", 0, y)
-            entry.frame:SetPoint("TOPRIGHT", page, "TOPRIGHT", 0, y)
+            entry.frame:SetPoint("TOPLEFT", page, "TOPLEFT", x, y[col])
+            if colWidth > 0 then entry.frame:SetWidth(colWidth) end
 
-            -- Les widgets à hauteur variable (paragraphes) se mesurent une fois
-            -- leur largeur connue, donc après l'ancrage.
+            -- La largeur vient d'être posée : les lignes peuvent répartir leur
+            -- libellé et leur contrôle, et les paragraphes se mesurer.
+            if entry.frame.Arrange    then entry.frame:Arrange()    end
             if entry.frame.AutoHeight then entry.frame:AutoHeight() end
 
-            y = y - entry.frame:GetHeight() - T.SIZE.ROW_GAP
+            -- Une hauteur **secrète** empoisonne tout ce qu'on en déduit : la
+            -- position de la ligne suivante, celle de la page, puis la course de
+            -- l'ascenseur, qui ne se compare alors plus. Un cadre monté depuis un
+            -- template du client peut en rendre une ; on l'écarte ici, une fois,
+            -- plutôt que de s'en défendre à chaque endroit qui lit une hauteur.
+            local height = entry.frame:GetHeight()
+            if BUI.Util.IsSecret(height) or type(height) ~= "number" then
+                height = T.SIZE.ROW_H
+            end
+
+            y[col] = y[col] - height - S.ROW_GAP
         end
     end
 
-    local height = math.abs(y) + T.SIZE.PADDING
+    local deepest = math.min(y[1], y[2])
+    local height  = math.abs(deepest) + S.PADDING
     page:SetHeight(height)
     return height
 end
@@ -185,6 +250,10 @@ local function refreshPage(page)
             if descriptor.disabled() then
                 enabled = false
                 reason  = descriptor.disabledReason
+                -- Un motif peut être **calculé** : une même ligne se grise
+                -- parfois pour deux raisons, et dire laquelle est tout ce qui
+                -- distingue un contrôle expliqué d'un contrôle inerte.
+                if type(reason) == "function" then reason = reason() end
             end
         end
 
@@ -230,9 +299,18 @@ function PB:GetPage(parent, mod)
 
     for i = 1, #descriptors do
         local descriptor = descriptors[i]
-        local frame = buildWidget(page, mod, descriptor)
-        if frame then
-            page._entries[#page._entries + 1] = { descriptor = descriptor, frame = frame }
+
+        if descriptor.type == "column" then
+            -- La coupure ne construit rien : elle retient seulement après quelle
+            -- ligne la seconde colonne commence. Une seule par page — deux
+            -- coupures voudraient dire trois colonnes, et à trois colonnes il n'y
+            -- a plus de place pour un libellé.
+            page._breakAt = #page._entries
+        else
+            local frame = buildWidget(page, mod, descriptor)
+            if frame then
+                page._entries[#page._entries + 1] = { descriptor = descriptor, frame = frame }
+            end
         end
     end
 

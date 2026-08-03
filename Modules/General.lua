@@ -208,6 +208,16 @@ BUI:RegisterModule(MODULE, {
 
         compactGameMenu = false,
         gameMenuScale   = 75,
+
+        -- Échelle du contenu de la fenêtre d'options, en pourcentage. Réglage
+        -- sans contrôle dans cette page, comme l'angle du bouton de minicarte :
+        -- il se change depuis la barre de titre de la fenêtre, là où on en voit
+        -- l'effet (voir `UI/Config/ConfigFrame.lua`).
+        --
+        -- Trois quarts par défaut : la page des barres d'infos est devenue la
+        -- mesure de l'addon, et à taille pleine elle ne tient pas sous les yeux.
+        -- Qui préfère plus grand remonte d'un geste dans la barre de titre.
+        configScale = 75,
     },
 
     options = {

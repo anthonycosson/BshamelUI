@@ -40,6 +40,10 @@ UI\Widgets\Text.lua
 UI\Widgets\Button.lua
 UI\Widgets\Toggle.lua
 UI\Widgets\Slider.lua
+UI\Widgets\ColorSwatch.lua
+# La maquette de barre d'infos du client, reprise dans notre page d'options.
+# Elle ne dépend que du thème : rangée ici, près des autres pièces de la fabrique.
+UI\Widgets\PlatePreview.lua
 UI\Widgets\Dropdown.lua
 UI\Widgets\ScrollList.lua
 UI\Widgets\MinimapButton.lua
@@ -88,7 +92,7 @@ Modules\DarkMode.lua
 Modules\Character.lua
 Modules\ActionBars.lua
 Modules\UnitFrames.lua
-Modules\InfoBar.lua
+Modules\Nameplates.lua
 Modules\CooldownManager.lua
 Modules\Windows.lua
 Modules\Chat.lua

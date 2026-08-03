@@ -31,7 +31,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 10
+local SCHEMA_VERSION   = 12
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -407,6 +407,41 @@ function DB:RunMigrations()
             end
         end
         from = 10
+    end
+
+    -- Palier 11 — la « barre d'infos » annoncée en 0.7.7 **était** cette page-ci :
+    -- « barres d'infos » est le nom que le client français donne aux barres de
+    -- nom. Le module d'annonce `InfoBar` disparaît donc au profit de
+    -- `Nameplates`, qui prend sa place dans la colonne.
+    --
+    -- Il n'y a rien à déplacer — une annonce n'a pas de réglage —, seulement à
+    -- effacer : un module retiré du code n'est plus dans les défauts, donc plus
+    -- rien ne retire ses clés du fichier à la déconnexion. Elles y resteraient
+    -- indéfiniment, sans effet et sans explication (même motif que le palier 3).
+    if from < 11 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            if profile.modules then profile.modules.InfoBar = nil end
+        end
+        from = 11
+    end
+
+    -- Palier 12 — les couleurs par défaut des barres d'infos ont changé pendant
+    -- le développement du module, **avant toute publication**. Un défaut de
+    -- couleur est une table : fusionné une fois dans la base, l'ancien y reste
+    -- quand le nouveau arrive — il diffère du défaut courant, donc la
+    -- déconnexion ne le retire plus, et il passe pour un choix du joueur. On
+    -- efface les clés concernées : elles reprennent le défaut du code, qui est
+    -- la couleur voulue. `threatOkColor` part avec — le réglage n'existe plus.
+    if from < 12 then
+        local STALE = { "bossColor", "casterColor", "meleeColor", "rareColor",
+                        "rareEliteColor", "threatBadColor", "threatOkColor" }
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local plates = profile.modules and profile.modules.Nameplates
+            if plates then
+                for i = 1, #STALE do plates[STALE[i]] = nil end
+            end
+        end
+        from = 12
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)

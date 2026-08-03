@@ -1751,8 +1751,16 @@ d'action sécurisée et les décrit par attributs :
 | Attribut | Valeur |
 |---|---|
 | `type` | `"worldmarker"` |
-| `marker` | 1 à 8, ou `0` pour tout effacer |
+| `marker` | 1 à 8, **absent** pour tout effacer |
 | `action` | `"set"` ou `"clear"` |
+
+**« Tout effacer » s'écrit en n'écrivant rien.** Le gestionnaire sécurisé fait
+`ClearRaidMarker(tonumber(attribut))` sans rien interpréter, et l'argument de
+`ClearRaidMarker` est déclaré `luaIndex` non nul, de défaut « tous ». Zéro n'est
+donc pas un « tous » : c'est un index hors plage, et l'appel ne fait rien — sans
+erreur, sans message. Le `nil` d'un attribut jamais posé, lui, déclenche le
+défaut. C'est ce que fait le bouton de remise à zéro du client, qui appelle
+`ClearRaidMarker()` sans argument.
 
 Les attributs sont écrits **une fois**, à la construction : un bouton de marqueur
 porte le même numéro toute sa vie. C'est la différence avec le menu de
@@ -1802,6 +1810,20 @@ deux : `T.WORLD_MARKER_ICON` est donc une table de données, et elle ne façonne
 rien — l'index posé est celui de l'attribut, la table ne décide que de la
 vignette. Une entrée fausse met la mauvaise image sur un bouton qui pose quand
 même le bon marqueur.
+
+La correspondance se relève dans `WORLD_RAID_MARKER_ORDER`, du gestionnaire de
+cadres de raid du client, mais elle y est écrite **à l'envers** : ses vignettes
+sont rangées du crâne vers l'étoile, si bien que sa position *i* montre l'icône
+de ciblage `9 - i`. Notre table est cette table-là retournée :
+
+| Marqueur au sol | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Icône de ciblage | 6 | 4 | 3 | 7 | 1 | 2 | 5 | 8 |
+| | carré | triangle | losange | croix | étoile | rond | lune | crâne |
+
+La suite se casse au milieu parce qu'elle est historique : les cinq premiers
+marqueurs datent de Pandarie, les trois derniers ont été ajoutés en 6.0.2 et se
+sont rangés à la fin.
 
 La vérification de présence (`DoReadyCheck`) et le décompte
 (`C_PartyInfo.DoCountdown`) ne sont **pas** protégés : ce sont des boutons
@@ -2647,3 +2669,290 @@ L'identifiant du sort se lit d'abord par `auraInstanceID` et
 `C_UnitAuras.GetAuraDataByAuraInstanceID` : sur un client récent, le bouton ne
 retient que l'identifiant d'instance et c'est au client qu'il faut redemander de
 quel sort il s'agit.
+
+---
+
+## Le client n'a pas d'opacité de cible pour les barres de nom
+
+**Symptôme** — on cherche les CVars `nameplateSelectedAlpha` et
+`nameplateNotSelectedAlpha`, qui sont partout dans la documentation et dans les
+addons. Écrits sur un client retail, ils ne font rien.
+
+**Cause** — ils n'existent plus que sur les clients classic. Le client actuel ne
+publie, pour l'opacité des barres de nom, que le fondu par la distance
+(`nameplateMinAlpha`, `nameplateMaxAlpha`, et leurs deux distances) et le
+multiplicateur d'occultation `nameplateOccludedAlphaMult`. La distinction
+cible / non-cible n'est pas un réglage : c'est du code.
+
+**Ce qu'on fait** — l'opacité de la cible et celle des autres sont posées à la
+main, par `SetAlpha` sur le **cadre d'unité** de chaque plaque, au moment où le
+client repeint (voir `Modules/Nameplates.lua`). L'occultation reste au client :
+elle se pose sur la **plaque**, un cran au-dessus, et les deux opacités se
+multiplient donc naturellement. Le CVar d'occultation est calculé comme un
+rapport entre les deux curseurs, pour que le joueur règle trois opacités et non
+deux opacités et un rapport.
+
+---
+
+## Rien ne dit qu'une barre de nom est passée derrière un mur
+
+**Symptôme** — on veut assombrir la plaque d'un adversaire hors du champ de
+vision. Aucun événement ne l'annonce, aucune fonction ne répond, et
+`UnitIsVisible` parle d'autre chose (la portée du client, pas la ligne de vue).
+
+**Cause** — l'occultation est calculée par le moteur, qui se contente d'en
+appliquer le résultat : il multiplie l'opacité de la plaque par
+`nameplateOccludedAlphaMult`. L'information existe donc, mais seulement sous la
+forme d'un nombre déjà appliqué.
+
+**Ce qu'on fait** — on la **déduit de l'opacité posée**, et la déduction est
+sûre dans un sens. L'opacité que le moteur pose sur la plaque vaut le seul fondu
+par la distance, lequel ne descend jamais sous `nameplateMinAlpha`. Tout ce qui
+passe sous ce plancher est donc occulté — aucun faux positif possible. La
+réciproque tient tant que le multiplicateur d'occultation est plus bas que ce
+plancher, c'est-à-dire dès que le réglage veut dire quelque chose ; réglé
+au-dessus, l'assombrissement ne se déclenche pas plutôt que de se tromper.
+
+La lecture demande un passage périodique — le seul de l'addon qui sonde au lieu
+d'écouter, et il ne repeint que les plaques dont l'état a changé.
+
+---
+
+## Le jeu ne sait pas qu'un PNJ est un caster
+
+**Symptôme** — on veut colorier les casters d'un pack autrement que les mêlées.
+Ni `UnitClassification`, ni le grimoire, ni le journal des rencontres ne portent
+cette information : le journal ne connaît que les boss, et la classification ne
+parle que de rareté.
+
+**Cause** — ce n'est pas une donnée de jeu. C'est une observation de joueur, et
+les bases qui existent sont celles d'autres addons — donc les leurs
+(CLAUDE.md règle 8 : MythicDungeonTools est en GPL v2, incompatible avec notre
+licence fermée ; BetterBlizzPlates est *all rights reserved*).
+
+**Ce qu'on fait** — on fabrique la nôtre en jouant. `UNIT_SPELLCAST_START` et
+`UNIT_SPELLCAST_CHANNEL_START` sont émis pour les jetons `nameplateN` : un PNJ
+qui incante est retenu comme caster, par identifiant, dans la base compte.
+L'identifiant se lit dans le GUID (`Creature-0-…-<id>-<apparition>`, sixième
+champ) et jamais le nom, qui est traduit. La liste s'exporte et s'importe en
+texte, ce qui permet de la partager et d'en figer une de départ.
+
+---
+
+## L'ancrage d'une barre d'infos ne se lit pas
+
+**Symptôme** — quatre-vingts erreurs d'affilée en cochant un réglage de barres
+d'infos :
+
+```
+Frame:GetPoint(): Action[FrameMeasurement] failed
+because[Can't measure restricted regions]
+Lua Taint: BshamelUI
+```
+
+**Cause** — les régions d'une barre d'infos sont **restreintes** : le client
+refuse d'en laisser mesurer l'ancrage à du code d'addon, une position relative
+renseignant sur ce qu'il protège. La restriction est fine — `GetWidth` et
+`GetHeight` passent encore, `GetPoint` et `GetNumPoints` non. Et sans les points,
+il n'y a rien à reposer : le motif habituel « je relève avant de bouger, je
+repose ensuite » est impossible sur ces cadres-là.
+
+**Ce qu'on fait** — on ne relève rien, et on rend l'ancrage en **demandant au
+client de refaire sa mise en page** : `NamePlateDriverFrame:UpdateNamePlateOptions()`
+repasse sur chaque plaque visible et y réapplique ses propres options. C'est le
+même principe que pour les couleurs, où l'on rappelle `CompactUnitFrame_UpdateHealthColor`
+au lieu de reposer une teinte — lui seul sait ce qu'il aurait dessiné.
+
+Deux conséquences sur la structure du code :
+
+- **la restitution ne peut pas venir du passage de peinture.** La mise en page du
+  client rappelle les fonctions que nos hooks coiffent, qui rappellent la
+  peinture : l'appeler de là boucle. Elle se fait au changement de réglage et à
+  l'extinction, une fois ;
+- **il n'y a rien à défaire quand une plaque part au recyclage.** Le pilote
+  appelle `ApplyFrameOptions` à chaque unité ajoutée, donc il réancre lui-même.
+  Ne restent à notre charge que les deux choses qui ne sont pas de la mise en
+  page : une barre qu'on a masquée et une opacité qu'on a baissée.
+
+Corollaire général : **toute lecture faite sur une plaque passe par `pcall`**, et
+un refus se lit « on ne sait pas » plutôt que « erreur ». Les cadres que le
+client déclare `IsForbidden()` — les plaques d'arène, dont il protège l'identité
+— sont écartés à l'entrée.
+
+---
+
+## Appeler le pilote de barres d'infos teinte tout ce qu'il touche
+
+**Symptôme** — deux mille six cents erreurs pour un seul clic sur une case à
+cocher, et plus une barre d'infos à l'écran :
+
+```
+CompactUnitFrame.lua:1199: attempt to compare local 'maxHealth'
+(a secret number value, while execution tainted by 'BshamelUI')
+  CompactUnitFrame_UpdateHealPrediction
+  CompactUnitFrame_UpdateAll
+  CompactUnitFrame_SetUpFrame
+  ApplyFrameOptions
+  NamePlateDriverFrame:UpdateNamePlateOptions()   <- appelé par l'addon
+```
+
+**Cause** — `UpdateNamePlateOptions` repasse sur chaque plaque et la remonte
+entièrement. Appelé depuis du code d'addon, **tout ce chemin s'exécute teinté**,
+et il manipule des valeurs *secrètes* — les points de vie d'une unité en sont
+une. Une valeur secrète ne se compare pas depuis du code teinté : c'est le code
+de Blizzard qui lève, une fois par plaque, à chaque passage. La mise en page
+s'interrompt au milieu, et les plaques ne s'affichent plus.
+
+Ce n'est pas propre aux barres d'infos : c'est la règle générale du modèle des
+valeurs secrètes. **On n'entre pas dans le code de mise en page du client.** Il
+n'existe pas de version prudente de cet appel — ni `pcall`, ni garde, ni moment
+opportun.
+
+**Ce qu'on fait** — rien. Écrire le CVar suffit : le pilote écoute `CVAR_UPDATE`
+lui-même et repasse depuis *son* gestionnaire d'événement, donc sans teinture. On
+pose la valeur et on le laisse remarquer.
+
+Corollaire, et il coûte deux fonctionnalités : **il n'existe aujourd'hui aucune
+façon réversible de déplacer une région d'une barre d'infos.** On ne peut pas
+relever son ancrage (voir l'entrée précédente) et on ne peut pas faire reposer le
+sien au client. Déplacer ce qu'on ne saura pas rendre est interdit par la
+règle 6 : le marqueur de ciblage et le recentrage du nom des alliés restent donc
+éteints tant qu'une troisième voie n'est pas trouvée.
+
+---
+
+## Taille d'une barre d'infos : ni CVar, ni fonction par faction
+
+**Symptôme** — trois tentatives, trois échecs silencieux : `NamePlateVerticalScale`
+et `NamePlateHorizontalScale` s'écrivent sans rien changer, puis
+`C_NamePlate.SetNamePlateEnemySize` ne fait rien non plus. Aucune erreur nulle
+part — sous `pcall`, un appel à une fonction absente est indiscernable d'un appel
+qui a réussi.
+
+**Cause** — trois choses ont changé sur ce client, et il faut les trois :
+
+- les deux CVars d'échelle sont **acceptés mais inertes**. Ils ne façonnent plus
+  rien ;
+- la taille de boîte se pose par **`C_NamePlate.SetNamePlateSize(largeur, hauteur)`**
+  et se relit par `C_NamePlate.GetNamePlateSize()`. Les variantes par faction
+  (`SetNamePlateEnemySize`, `SetNamePlateFriendlySize`) ont disparu côté écriture ;
+- la hauteur de la **barre de vie** n'est pas la hauteur de la boîte : elle se
+  pose sur `unitFrame.HealthBarsContainer:SetHeight(pixels)`, plaque par plaque.
+
+**Ce qu'on fait** — deux chemins séparés. La largeur par `SetNamePlateSize`, la
+hauteur de barre sur le conteneur de chaque plaque. Trois pièges à retenir :
+
+- `SetNamePlateSize` est **refusée en combat**, silencieusement. On la garde
+  derrière `InCombatLockdown` et on rattrape sur `PLAYER_REGEN_ENABLED` ;
+- la taille de boîte se **relève** avant d'écrire (`GetNamePlateSize`), ce qui est
+  la seule mesure de barre d'infos qu'on ait le droit de lire — les ancrages ne le
+  sont pas ;
+- la hauteur de barre doit être reposée **sur l'écriture elle-même**. Le client la
+  repose en montant une plaque, sur changement de CVar et sur changement d'échelle
+  d'interface : se contenter des hooks de peinture fait battre la barre entre les
+  deux valeurs, une fois sur deux. Un `hooksecurefunc` sur le `SetHeight` du
+  conteneur, avec un drapeau de non-récursion, supprime la course — il n'y a plus
+  de moment à deviner.
+
+---
+
+## L'aperçu de barre d'infos du client ne se réutilise pas
+
+**Symptôme** — le panneau d'options du jeu montre une barre d'infos d'exemple,
+auras et incantation comprises. On voudrait la même chose dans notre page plutôt
+que de dessiner une imitation.
+
+**Ce qu'on trouve** — `NamePlatePreviewMixin` existe, avec `GetPreview`,
+`ShowPreviewNamePlateCastBar`, `ToggleEnemyNpcAuraDisplay` et le reste.
+`NamePlateConstants.PREVIEW_UNIT_TOKEN` vaut `"preview"`, ce qui laisse espérer
+une plaque pilotée par une unité fictive.
+
+**Ce qu'on vérifie** — panneau du jeu ouvert, aperçu affiché :
+
+```
+/run print(C_NamePlate.GetNamePlateForUnit("preview"))
+```
+
+ne rend rien. L'aperçu **n'est pas** une plaque du moteur : c'est une pièce
+interne du panneau, montée par le Lua de mise en page de Blizzard. Or ce Lua ne
+s'appelle pas depuis un addon (voir « Appeler le pilote de barres d'infos teinte
+tout ce qu'il touche ») : appeler les méthodes du mixin le ferait tourner teinté,
+sur des valeurs secrètes.
+
+**Ce qu'on fait** — on renonce à l'aperçu et on garde nos propres cadres, mais
+dimensionnés sur `NamePlateConstants`, la table où le client publie ses mesures :
+`AURA_ITEM_HEIGHT`, `CAST_BAR_ICON_HEIGHT`, `LARGE_CAST_BAR_HEIGHT`,
+`CAST_BAR_FONT_HEIGHT`, `DEBUFF_PADDING`. On lit ses nombres au lieu de les
+recopier — l'exemple reste alors juste après un patch. La **position**, elle,
+demeure une convention à nous : elle ne se lit pas (voir « L'ancrage d'une barre
+d'infos ne se lit pas »).
+
+Relevé au passage, pour plus tard : `C_NamePlateManager` publie
+`SetNamePlateSimplified`, `Get`/`SetNamePlateHitTestInsets` et
+`IsNamePlateUnitBehindCamera` — de quoi rendre une plaque cliquable-au-travers ou
+la réduire à son nom, plaque par plaque, sans passer par un CVar global.
+
+---
+
+## L'aperçu du client s'affiche, mais ne se configure pas
+
+**Suite de l'entrée précédente.** L'aperçu n'était pas hors de portée : le
+template existe et s'instancie.
+
+```lua
+CreateFrame("Frame", nil, parent, "NamePlatePreviewTemplate")
+```
+
+rend une maquette qui s'affiche correctement — style, taille, informations de
+barre, auras, barre de sorts — et qui suit les CVars sans qu'on lui demande rien.
+C'est ce que la page d'options affiche aujourd'hui.
+
+**Ce qu'elle ne fait pas** — changer de type d'unité. `Enum.NamePlateType` n'a
+que deux membres (`Friendly = 0`, `Enemy = 1`), mais rien sur le cadre ne permet
+de choisir : `SetExplicitValues` y est `nil`, et les seuls champs sont
+`NamePlate`, `Border` et `Preview`, aucun ne portant de méthode.
+
+`NamePlatePreviewMixin` est donc appliqué à un **autre** template, celui que le
+panneau de réglages monte lui-même. On ne l'obtient pas sans lui.
+
+Il n'y a pas non plus de template frère par type : ni `NamePlatePreviewEnemyTemplate`,
+ni `NamePlateEnemyPreviewTemplate`, ni `NamePlatePreviewFriendlyTemplate`. La
+maquette est unique et son type est décidé par celui qui la monte.
+
+Piège à éviter au passage : `frame[0]` est `userdata` sur **toute** frame — c'est
+son pointeur interne, pas une donnée du template. Le voir apparaître dans un
+`pairs()` ne veut rien dire.
+
+**Ce qu'on fait** — on affiche la maquette telle qu'elle vient, sur son type par
+défaut. Ce qui distingue un allié d'un adverse est la couleur de la barre et le
+nom, soit à peu près la seule chose que la page ne règle pas ; tout le reste — ce
+que l'aperçu sert à juger — est montré fidèlement.
+
+---
+
+## Un aperçu d'auras ne se pose pas dans le conteneur du client
+
+**Symptôme** — on veut montrer une rangée d'auras d'exemple là où les vraies
+apparaîtront. `unitFrame.AurasFrame` existe (250 × 100, mesuré en jeu), on y
+accroche la rangée : elle flotte au mauvais endroit, au centre comme au bas.
+
+**Cause** — le conteneur est une *zone*, pas une rangée, et la position des
+rangées à l'intérieur ne se lit pas : `GetBottom`/`GetLeft` de ses enfants
+rendent des valeurs secrètes, comme les ancrages. On ne saura jamais où le
+client pose ses auras *dans* ce cadre.
+
+**Ce qu'on fait** — la technique de MiniCC (lue pour la méthode, règle 8) : ne
+rien poser *dans* ce qu'on ne peut pas lire, s'ancrer *sur* un repère qu'on
+connaît. Le client empile ses auras au-dessus du **nom** de la plaque, et
+`unitFrame.name` est un champ publié. Un seul point d'ancrage suffit — le nom
+est centré sur la plaque, donc bas-milieu de la rangée sur haut-milieu du nom
+centre les deux axes d'un geste.
+
+Deux autres choses relevées chez MiniCC en passant :
+
+- son mode test rend de fausses icônes **par le même chemin que les vraies**
+  (mêmes conteneurs, faux identifiants de sort, fausses durées). C'est ce qui le
+  rend fidèle — possible seulement quand on possède l'affichage qu'on prévisualise ;
+- `AurasFrame.RefreshAuras` existe et se laisse coiffer par `hooksecurefunc` :
+  c'est l'annonce « le client vient de reposer ses auras », si un jour on en a
+  besoin.

@@ -34,42 +34,182 @@ T.SIZE = {
     -- **mesurés** sur ce qu'il y a à montrer.
     --
     -- La hauteur est décidée par la colonne de navigation, pas par les pages :
-    -- trois catégories et vingt entrées demandent environ 650 unités, là où la
-    -- page la plus chargée en demande 560. C'est donc elle qui déborde la
-    -- première, et une colonne qui défile oblige à chercher une page qu'on
-    -- devrait voir.
+    -- une colonne qui défile oblige à chercher une page qu'on devrait voir. Et
+    -- depuis que le contenu s'ouvre en vue compacte (trois quarts de sa taille),
+    -- la même fenêtre montre un quart de réglages en plus — la largeur suit,
+    -- pour que la coupure en deux colonnes de la page des barres d'infos tienne
+    -- d'emblée.
     --
     -- Le plafond est l'écran : `UIParent` fait 768 unités de haut sur un client
-    -- réglé par défaut. 720 laisse une marge de deux fois vingt-quatre, ce qui
-    -- est peu mais suffit — et la fenêtre reste déplaçable et redimensionnable
-    -- pour qui veut autre chose.
-    WINDOW_W       = 1040,
-    WINDOW_H       = 720,
+    -- réglé par défaut. 744 laisse douze unités de marge en haut et en bas —
+    -- serré, mais la fenêtre reste déplaçable et redimensionnable pour qui veut
+    -- autre chose.
+    WINDOW_W       = 1120,
+    WINDOW_H       = 744,
     WINDOW_MIN_W   = 760,
     WINDOW_MIN_H   = 480,
 
     -- Colonne de navigation. Élargie avec la fenêtre : « Gestionnaire de temps de
-    -- recharge » et « Barre d'infos (Prochainement) » sont les deux plus longs
-    -- intitulés, et ils décident de cette largeur.
+    -- recharge » est le plus long intitulé, et c'est lui qui décide de cette
+    -- largeur. Elle ne se resserre pas pour autant sur lui — un intitulé suivi de
+    -- « (Prochainement) » le dépasse, et c'est la longueur qu'il faut pouvoir
+    -- porter le jour où une page s'annonce à nouveau.
     SIDEBAR_W      = 250,
 
     PADDING        = 16,    -- marge intérieure d'un pane
     GUTTER         = 10,    -- écart entre deux panes
     PANEL_PAD      = 6,     -- retrait du contenu à l'intérieur d'un panneau creusé
 
-    PAGE_TITLE_H   = 46,    -- bloc du titre de page : le texte et son filet
+    PAGE_TITLE_H   = 40,    -- bloc du titre de page : le texte et son filet
     RULE_H         = 1,     -- épaisseur d'un filet de séparation
 
-    ROW_H          = 30,    -- hauteur d'une ligne d'option
-    ROW_GAP        = 6,     -- écart vertical entre deux lignes
-    SECTION_GAP    = 16,    -- écart avant un en-tête de section
-    SECTION_H      = 26,
+    -- Rythme vertical d'une page.
+    --
+    -- Resserré d'environ un cinquième après coup, et le motif est mesurable : la
+    -- page la plus chargée de l'addon compte une soixantaine de lignes, et quatre
+    -- pixels gagnés par ligne en rendent une dizaine visibles sans défiler. Ce
+    -- qu'on cherche n'est pas la densité pour elle-même, c'est de voir d'un coup
+    -- les réglages qui se règlent les uns par rapport aux autres.
+    --
+    -- Le plancher est la case à cocher. On l'avait d'abord fixé à vingt-quatre
+    -- pixels, en croyant qu'en dessous elle deviendrait une cible qu'on manque ;
+    -- vérification faite, le client lui-même en pose entre vingt et vingt-six
+    -- selon les panneaux. Vingt-deux est donc dans ce qu'il livre, et c'est là
+    -- qu'on s'arrête — non par prudence, mais parce que rien au-delà n'est
+    -- attesté.
+    --
+    -- La case a désormais sa propre mesure : elle **ne se déduit plus** de la
+    -- hauteur de ligne. Les deux avaient été liées par commodité, et cette
+    -- commodité empêchait de resserrer les lignes sans rapetisser la cible.
+    ROW_H          = 24,    -- hauteur d'une ligne d'option
+    CHECK_SIZE     = 22,    -- côté d'une case à cocher
+    ROW_GAP        = 2,     -- écart vertical entre deux lignes
+    SECTION_GAP    = 10,    -- écart avant un en-tête de section
+    SECTION_H      = 22,
 
     CONTROL_X      = 340,   -- abscisse du contrôle dans une ligne : c'est ce
                             -- nombre, et lui seul, qui aligne les cases à
                             -- cocher entre toutes les pages
     CONTROL_W      = 160,   -- largeur des dropdowns / sliders
     LABEL_INDENT   = 8,
+
+    -- Retrait supplémentaire d'une **sous-option** : une ligne qui ne veut rien
+    -- dire sans celle du dessus. Le décalage seul ne suffit pas à le faire
+    -- comprendre — un libellé décalé se lit comme un libellé mal aligné —, il
+    -- s'accompagne d'un corps plus petit. Les deux ensemble disent « ceci dépend
+    -- de cela », ce que ni l'un ni l'autre ne dit seul.
+    --
+    -- Même valeur que le retrait des entrées de la navigation : c'est la même
+    -- idée de subordination, et deux retraits différents pour une seule idée se
+    -- liraient comme deux idées.
+    LABEL_SUB_INDENT = 18,
+
+    -- Place qu'une ligne réserve à droite pour son contrôle : la largeur d'une
+    -- glissière, le nombre qui la suit, et de l'air au bord. C'est ce qui permet
+    -- à `CONTROL_X` de céder quand la ligne est étroite — dans une colonne, par
+    -- exemple — au lieu de pousser les glissières hors du cadre.
+    CONTROL_RESERVE = 216,
+
+    -- En deçà, un libellé n'est plus lisible mais tronqué. Une ligne qui ne peut
+    -- offrir ni cette largeur ni la réserve ci-dessus est une ligne qu'il ne faut
+    -- pas mettre en colonne — voir `COLUMN_MIN_W`.
+    LABEL_MIN_W     = 150,
+
+    -- Découpe d'une page en deux colonnes.
+    --
+    -- `COLUMN_MIN_W` est la largeur au-dessous de laquelle on **renonce** et on
+    -- reste sur une colonne. Ce n'est pas une préférence : c'est la somme de la
+    -- réserve du contrôle et d'un libellé lisible. En dessous, la deuxième
+    -- colonne ne gagnerait de la hauteur qu'en tronquant les intitulés, ce qui
+    -- revient à rendre illisible ce qu'on voulait rendre plus visible.
+    COLUMN_MIN_W    = 380,
+    COLUMN_GAP      = 24,
+
+    -- Pastille de couleur d'une ligne d'option. Nettement plus étroite qu'un
+    -- dropdown : ce qu'elle montre est un aplat, et un aplat de la largeur d'un
+    -- contrôle se lit comme un bandeau posé dans la page. Elle prend la hauteur
+    -- d'une case à cocher, pour que les deux s'alignent dans la même colonne.
+    -- Contrôle posé dans la barre de titre. Étroit : il ne porte qu'un nombre
+    -- suivi d'un pour-cent, et il doit tenir dans la hauteur du bandeau — une
+    -- barre de titre qui s'épaissit pour loger un contrôle n'est plus une barre
+    -- de titre.
+    TITLE_CONTROL_W = 84,
+    TITLE_CONTROL_H = 20,
+
+    -- Échelle du contenu de la fenêtre d'options, en pourcentage.
+    --
+    -- Le plancher n'est pas un goût : sous soixante-dix pour cent, les libellés
+    -- des options passent sous la taille à laquelle une police d'interface reste
+    -- nette, et on gagne des lignes en perdant la lecture. Le plafond est cent —
+    -- l'échelle **compacte**, elle n'agrandit pas ; agrandir se fait en tirant la
+    -- fenêtre, qui est déjà redimensionnable.
+    CONFIG_SCALE_MIN  = 70,
+    CONFIG_SCALE_MAX  = 100,
+    CONFIG_SCALE_STEP = 5,
+
+    SWATCH_W       = 44,
+    SWATCH_H       = 18,
+    SWATCH_EDGE    = 1,     -- épaisseur du liseré sombre qui la détache du fond
+
+    -- Barres d'infos.
+    --
+    -- Ni l'une ni l'autre ne façonne quoi que ce soit : ce sont les valeurs que
+    -- le client donne lui-même, et elles ne servent qu'à **partir de ce qu'il
+    -- fait**. La hauteur de barre est en plus le repli quand on n'a pas pu
+    -- relever la sienne — le client rend parfois une mesure *secrète* sur ces
+    -- cadres-là, et une valeur secrète ne se retient pas.
+    --
+    -- La largeur, elle, est la valeur de départ des curseurs. La vraie largeur
+    -- courante est relue à l'exécution par `C_NamePlate.GetNamePlateSize`, et
+    -- c'est **elle** qui est rendue à l'extinction — ce nombre-ci ne sert qu'à ce
+    -- que le curseur s'ouvre à peu près là où le jeu en est.
+    --
+    -- `PLATE_TEXT` est de la même farine : l'ordre de grandeur du corps que le
+    -- client donne aux textes d'une plaque, valeur de départ du curseur. Le corps
+    -- réel de chaque texte est relu avant d'être changé, et c'est **lui** qui est
+    -- rendu — chacun retrouve donc le sien, pas celui-ci.
+    PLATE_BAR_H    = 11,
+    PLATE_W        = 172,
+    PLATE_TEXT     = 12,
+    PLATE_CAST_TEXT = 10,   -- le client écrit plus petit sur une barre de sorts
+
+
+    -- Barre de sorts d'une plaque : mêmes repères, même rôle. Le client la fait
+    -- plus fine que la barre de vie — c'est ce qui les distingue d'un coup d'œil,
+    -- et la valeur de départ le conserve.
+    PLATE_CAST_BAR_H = 8,
+
+    -- Hauteur réservée à la maquette du client dans une page, quand elle ne dit
+    -- pas la sienne. Un repli, pas une mesure : si elle se dimensionne toute
+    -- seule, c'est sa hauteur qu'on garde.
+    PLATE_PREVIEW_H = 130,
+
+    -- Replis des mesures d'aura, quand le client ne publie pas les siennes, et
+    -- épaisseur du liseré coloré d'une vignette d'exemple. Ce liseré-là est le
+    -- seul de ces trois nombres qui façonne quelque chose : c'est lui qui dit si
+    -- l'aura aide, nuit ou immobilise.
+    PLATE_AURA      = 25,
+    PLATE_AURA_GAP  = 2,
+    PLATE_AURA_EDGE = 1,
+
+
+    -- Plafond d'icônes de la rangée d'auras de l'addon. Huit : au-delà, la
+    -- rangée déborde d'une plaque de largeur ordinaire, et une aura qu'on ne
+    -- peut plus compter d'un coup d'œil n'informe plus.
+    PLATE_AURA_MAX  = 8,
+
+    -- Profondeur de la descente qui recense les textes d'une plaque.
+    --
+    -- Quatre niveaux, et il en faut quatre : le nom est posé sur la plaque, le
+    -- sort en cours sur sa barre d'incantation — deux niveaux suffisaient pour
+    -- eux — mais **les points de vie et leur pourcentage sont deux crans plus
+    -- bas**, dans la barre que porte le conteneur de barres. S'arrêter à deux
+    -- donnait un réglage qui grossissait le nom et laissait les chiffres, ce qui
+    -- ne se lit pas comme une limite mais comme un oubli.
+    --
+    -- Le coût est celui d'une descente par plaque, faite une fois : quelques
+    -- dizaines de nœuds, jamais depuis un chemin chaud.
+    PLATE_TEXT_DEPTH = 4,
 
     SIDEBAR_CAT_H  = 30,    -- bandeau d'en-tête de catégorie
     SIDEBAR_ITEM_H = 26,    -- entrée de module
@@ -458,6 +598,32 @@ T.TIMING = {
     -- chaque image ce que l'œil ne suit pas (règle 7).
     SCALE_DRAG    = 0.03,
 
+    -- Cadence du passage sur les barres de nom.
+    --
+    -- C'est la seule cadence de l'addon qui **sonde** au lieu d'écouter, et elle
+    -- le fait pour une raison précise : rien n'annonce qu'un adversaire vient de
+    -- passer derrière un mur. Le client le sait — il baisse l'opacité de la
+    -- plaque — mais il ne le dit pas (voir `Modules/Nameplates.lua`).
+    --
+    -- Un dixième de seconde : c'est le seuil au-dessous duquel un changement
+    -- d'état paraît instantané, et le passage ne parcourt qu'une quarantaine de
+    -- plaques au plus — le client n'en affiche jamais davantage.
+    NAMEPLATE     = 0.1,
+
+    -- Barre de sorts d'exemple : la cadence de son remplissage, et le temps
+    -- qu'elle met à se remplir.
+    --
+    -- Vingt images par seconde suffisent à ce qu'une barre paraisse couler ; on
+    -- n'en paie pas soixante pour un mouvement que l'œil ne suit pas de toute
+    -- façon (règle 7). Et deux secondes, parce que c'est la durée d'une
+    -- incantation ordinaire — un exemple qui se remplit en un clin d'œil ne
+    -- ressemble à rien de ce qu'on verra en jeu.
+    --
+    -- Elle ne tourne que le temps qu'on règle la barre, et pour personne
+    -- d'autre : la case s'éteint, la minuterie avec.
+    PLATE_CAST       = 0.05,
+    PLATE_CAST_CYCLE = 2.0,
+
     HOVER         = 0.1,   -- sondage de la fenêtre survolée, pendant qu'un
                             -- modificateur est tenu. Assez court pour que le
                             -- capteur de molette paraisse instantané, assez long
@@ -524,6 +690,18 @@ local FONT_CANDIDATES = {
     -- les distinguent l'un de l'autre, pas leur corps.
     TRACKER      = { "NumberFont_Outline_Large", "NumberFontNormalLarge",
                      "GameFontNormalLarge" },
+
+    -- Polices des barres d'infos, celles du client. Elles ne servent qu'aux
+    -- éléments d'exemple du mode test : ce qui imite une plaque doit s'écrire
+    -- comme une plaque, sans quoi l'exemple ment sur la place que le vrai texte
+    -- occupera.
+    PLATE_NAME   = { "SystemFont_NamePlate", "GameFontNormalSmall" },
+    PLATE_CAST   = { "SystemFont_NamePlateCastBar", "SystemFont_NamePlate",
+                     "GameFontNormalSmall" },
+
+    -- Compteur de cumuls d'une aura de la rangée de l'addon. À contour, comme
+    -- tout nombre posé sur une image.
+    PLATE_STACK  = { "NumberFontNormalSmall", "GameFontHighlightSmall" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
     LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },
@@ -672,6 +850,51 @@ T.COLOR = {
 -- autres alors qu'il les commande.
 T.COLOR.TIER_TWO   = T.COLOR.DISABLED
 T.COLOR.TIER_THREE = T.COLOR.FRAME_GOLD
+
+-- -------------------------------------------------------------------------
+--  Barres de nom
+-- -------------------------------------------------------------------------
+-- Les teintes **de départ** des barres de nom. Elles ne sont pas figées : le
+-- joueur les change une par une dans la page du module. Ce qui est décidé ici,
+-- c'est le vocabulaire qu'il trouve en arrivant.
+--
+-- Deux familles, et elles ne se mélangent pas.
+--
+--   · **Ce qu'est la créature** — boss, caster, mêlée, rare. C'est une famille
+--     de *couleurs*, sans ordre entre elles : aucune ne vaut mieux qu'une
+--     autre, elles se distinguent, point. Chacune est choisie pour ne
+--     ressembler à aucune des trois autres à la vitesse où on les lit ;
+--   · **Ce que fait la menace** — conforme, bascule, anormale. C'est un feu
+--     tricolore, avec un ordre, et c'est le même que celui des décomptes de
+--     l'addon (voir `T.CountdownColor`). Un joueur qui a compris l'un a compris
+--     l'autre : l'orange y veut dire « ça part de travers », jamais « attention
+--     en général ».
+--
+-- L'or est réservé au boss, et c'est le seul emprunt d'une famille à l'autre :
+-- c'est déjà la couleur de ce qui prime dans le reste de l'addon.
+-- Ces teintes-là ne sont pas un choix de thème : ce sont **celles du joueur**,
+-- données en hexadécimal et converties ici. On les note telles quelles pour
+-- pouvoir les comparer un jour à ce qu'il a demandé.
+--
+--   boss/miniboss  A200FF   caster  00BFFF
+--   mêlée/trivial  C2996B   rare(-élite)  7DFFBD
+--
+-- Le rare simple n'a pas reçu de teinte à lui : il prend celle du rare-élite —
+-- un rare est un rare, et les deux lignes restent réglables séparément.
+--
+-- La menace n'a pas de couleur d'état conforme : quand l'aggro est là où elle
+-- doit être, ce sont les couleurs par nature qui parlent. Ses deux alertes —
+-- bascule en cours et aggro changée de mains — partent du même rouge, chacune
+-- réglable ensuite.
+T.COLOR.PLATE = {
+    BOSS       = CreateColor(0.635, 0.000, 1.000),
+    CASTER     = CreateColor(0.000, 0.749, 1.000),
+    MELEE      = CreateColor(0.761, 0.600, 0.420),
+    RARE       = CreateColor(0.490, 1.000, 0.741),
+    RARE_ELITE = CreateColor(0.490, 1.000, 0.741),
+
+    THREAT_BAD = CreateColor(1.000, 0.000, 0.000),
+}
 
 -- =========================================================================
 --  Opacités
@@ -1068,6 +1291,92 @@ function T.ClassColor(class)
     return color
 end
 
+--- Couleur du thème sous la forme que la base de réglages sait ranger.
+---
+--- Un `ColorMixin` porte des méthodes : rangé tel quel dans le SavedVariables,
+--- il en ressortirait comme une table de nombres sans elles. Une couleur que le
+--- joueur peut changer se stocke donc en trois nombres nommés, et cette fonction
+--- est le seul endroit qui fasse la traduction — un défaut de couleur reste
+--- ainsi déclaré dans le thème, jamais recopié dans un module (règle 2).
+---@param color ColorMixin
+---@return table  { r = , g = , b = }
+function T.ColorTable(color)
+    local r, g, b = color:GetRGB()
+    return { r = r, g = g, b = b }
+end
+
+--- Assombrit une couleur d'une fraction donnée.
+---
+--- On **multiplie**, on ne mélange pas vers le noir : ce sont deux opérations
+--- différentes, et la première est celle qui conserve la teinte. Mélanger un
+--- rouge vers le noir le fait virer brun avant de s'éteindre ; le multiplier le
+--- garde rouge jusqu'au bout, de plus en plus sombre. Une barre de nom
+--- assombrie doit rester reconnaissable — c'est même tout ce qu'on lui demande.
+---@param r number
+---@param g number
+---@param b number
+---@param amount number  0 = intacte, 1 = noire
+---@return number r, number g, number b
+function T.Darken(r, g, b, amount)
+    local factor = 1 - (amount or 0)
+    if factor < 0 then factor = 0 elseif factor > 1 then factor = 1 end
+    return r * factor, g * factor, b * factor
+end
+
+--- Mesure que le client donne à ses barres d'infos, ou le repli fourni.
+---
+--- `NamePlateConstants` est la table où il range ce qu'il dessine : côté d'une
+--- aura, hauteur d'une barre de sorts, corps des textes. **On la lit plutôt que
+--- de la recopier**, et c'est ce qui distingue un exemple d'une imitation : les
+--- nombres restent les siens, ils suivent ses retouches, et ils suivront un
+--- changement de style qu'on n'aurait pas vu passer.
+---
+--- Les replis de `T.SIZE` ne servent que si le client cesse de publier la table.
+--- Ils sont là pour que le mode test dégrade au lieu de disparaître ; ce ne sont
+--- pas des valeurs de référence, et on ne les ajuste pas.
+---@param key string
+---@param fallback number
+---@return number
+function T.PlateConstant(key, fallback)
+    local constants = NamePlateConstants
+    local value = constants and constants[key]
+    if type(value) == "number" and value > 0 then return value end
+    return fallback
+end
+
+--- Corps d'un texte, en pixels, ou `nil` si le client ne le dit pas.
+---@param fontString table
+---@return number|nil
+function T.TextSize(fontString)
+    if type(fontString.GetFont) ~= "function" then return nil end
+
+    local ok, _, size = pcall(fontString.GetFont, fontString)
+    if not ok or type(size) ~= "number" or size <= 0 then return nil end
+    return size
+end
+
+--- Change le corps d'un texte **sans toucher à sa police ni à son contour**.
+---
+--- C'est la seule écriture de police de l'addon hors des widgets, et elle vit ici
+--- pour la même raison qu'eux (règle 2) : `SetFont` prend un fichier de police,
+--- et un fichier de police ne se nomme pas ailleurs que dans ce fichier. Ici, on
+--- n'en nomme aucun — on **relit** celui que le cadre porte déjà et on le
+--- repose, avec son contour, en ne changeant que le nombre. Le texte reste donc
+--- celui du client, dans sa langue et dans son style ; il est seulement plus
+--- grand ou plus petit.
+---@param fontString table
+---@param size number
+---@return boolean applied
+function T.SetTextSize(fontString, size)
+    if type(fontString.GetFont) ~= "function" then return false end
+
+    local ok, file, _, flags = pcall(fontString.GetFont, fontString)
+    if not ok or type(file) ~= "string" then return false end
+
+    local written = pcall(fontString.SetFont, fontString, file, size, flags)
+    return written
+end
+
 --- Teinte du texte d'un widget selon son état actif/inactif.
 ---@param fontString table
 ---@param enabled boolean
@@ -1194,7 +1503,14 @@ end
 --- ne dessine pas le mauvais marqueur au sol — le clic passe par un attribut
 --- sécurisé qui porte l'index, pas l'icône —, elle met la mauvaise vignette sur
 --- le bouton.
-T.WORLD_MARKER_ICON = { 6, 4, 3, 7, 5, 1, 2, 8 }
+---
+--- Elle se relève dans `WORLD_RAID_MARKER_ORDER` du gestionnaire de cadres de
+--- raid du client, qui range ses vignettes du crâne vers l'étoile : notre table
+--- est cette table-là retournée. Les cinq premiers marqueurs sont ceux de
+--- Pandarie, les trois derniers ont été ajoutés en 6.0.2 — d'où la rupture de
+--- suite au milieu, qui n'a l'air d'une faute de frappe que parce qu'elle est
+--- historique.
+T.WORLD_MARKER_ICON = { 6, 4, 3, 7, 1, 2, 5, 8 }
 
 -- =========================================================================
 --  Barre de titre : on la relève, on ne la nomme pas
@@ -1298,6 +1614,21 @@ T.TEMPLATES = {
     -- ouvragé, jamais cassé.
     DIALOG_BORDER = { "DialogBorderTemplate", "DialogBorderDarkTemplate",
                       "InsetFrameTemplate3" },
+    -- La maquette de barre d'infos du client, celle que son propre panneau
+    -- d'options affiche. On en fabrique une instance à nous plutôt que d'emprunter
+    -- la sienne — la lui prendre la retirerait de son panneau.
+    --
+    -- C'est le seul template de cette table qui ne soit pas un habillage mais un
+    -- **contenu** : ce qu'il dessine est ce que le jeu dessine, ce qui est
+    -- exactement ce qu'un aperçu doit montrer. Sans lui, il n'y a pas d'aperçu —
+    -- on n'en réinvente pas un, on a essayé et il mentait.
+    PLATE_PREVIEW = { "NamePlatePreviewTemplate" },
+
+    -- Balayage de temps de recharge, celui que le client pose sur ses icônes de
+    -- sort. Sans lui, une aura de la rangée de l'addon n'aurait pas d'horloge —
+    -- elle s'affiche alors sans balayage, jamais cassée.
+    COOLDOWN   = { "CooldownFrameTemplate" },
+
     BUTTON     = { "UIPanelButtonTemplate" },
     CHECKBOX   = { "UICheckButtonTemplate", "InterfaceOptionsCheckButtonTemplate" },
     SLIDER     = { "OptionsSliderTemplate" },

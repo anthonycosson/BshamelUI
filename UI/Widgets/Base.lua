@@ -503,24 +503,71 @@ end
 --  Ligne d'option
 -- =========================================================================
 
+--- Répartit le libellé et le contrôle d'après la largeur **courante** de la
+--- ligne.
+---
+--- `CONTROL_X` reste la position de référence, et c'est toujours elle qui aligne
+--- les contrôles d'une page à l'autre. Mais une ligne peut être étroite — une
+--- page en deux colonnes en fait des moitiés —, et à cette largeur-là une
+--- abscisse fixe pousserait les glissières hors du cadre. Le contrôle recule donc
+--- jusqu'à la place qu'il lui faut, et le libellé prend ce qui reste.
+---
+--- Appelée à la construction, puis par la mise en page chaque fois que la largeur
+--- change. Définie une fois et partagée par toutes les lignes : une fermeture par
+--- ligne serait une fermeture par réglage de l'addon.
+---@param row table
+local function arrangeRow(row)
+    local S = T.SIZE
+    local width = row:GetWidth() or 0
+
+    local x = S.CONTROL_X
+    if width > 0 then
+        local latest = width - S.CONTROL_RESERVE
+        if latest < x then
+            x = (latest > S.LABEL_MIN_W) and latest or S.LABEL_MIN_W
+        end
+    end
+
+    -- Une sous-option part de plus loin : sa largeur disponible est amputée
+    -- d'autant, sans quoi son libellé déborderait sous le contrôle.
+    row.label:SetWidth(math.max(1, x - row._labelX - S.LABEL_INDENT))
+
+    if row.control then
+        row.control:ClearAllPoints()
+        row.control:SetPoint("LEFT", row, "LEFT", x, 0)
+    end
+end
+
 --- Conteneur d'une ligne : un libellé à gauche, un contrôle à `CONTROL_X`.
 --- Toutes les lignes de toutes les pages passent par ici, c'est ce qui garantit
 --- que les contrôles restent alignés en colonne d'une page à l'autre.
+--- `indented` marque une **sous-option** : une ligne qui ne veut rien dire sans
+--- celle du dessus — « Serviteurs » sous « Unités ennemies ». Elle part de plus
+--- à droite et s'écrit un cran plus petit ; c'est la conjonction des deux qui se
+--- lit comme une subordination, un décalage seul se lisant comme un défaut
+--- d'alignement.
 ---@param parent table
 ---@param labelText string
+---@param indented? boolean
 ---@return table row
-function W.Row(parent, labelText)
+function W.Row(parent, labelText, indented)
     local row = CreateFrame("Frame", nil, parent)
     row:SetHeight(T.SIZE.ROW_H)
 
-    local label = row:CreateFontString(nil, "ARTWORK", T.FONT.LABEL)
-    label:SetPoint("LEFT", row, "LEFT", T.SIZE.LABEL_INDENT, 0)
+    local labelX = T.SIZE.LABEL_INDENT
+    if indented then labelX = labelX + T.SIZE.LABEL_SUB_INDENT end
+
+    local label = row:CreateFontString(nil, "ARTWORK",
+        indented and T.FONT.LABEL_SMALL or T.FONT.LABEL)
+    label:SetPoint("LEFT", row, "LEFT", labelX, 0)
     label:SetJustifyH("LEFT")
-    label:SetWidth(T.SIZE.CONTROL_X - T.SIZE.LABEL_INDENT * 2)
     label:SetWordWrap(false)
     label:SetText(labelText or "")
 
-    row.label = label
+    row.label   = label
+    row._labelX = labelX
+    row.Arrange = arrangeRow
+    row:Arrange()
     return row
 end
 
@@ -528,9 +575,8 @@ end
 ---@param row table
 ---@param control table
 function W.PlaceControl(row, control)
-    control:ClearAllPoints()
-    control:SetPoint("LEFT", row, "LEFT", T.SIZE.CONTROL_X, 0)
     row.control = control
+    row:Arrange()
 end
 
 -- =========================================================================

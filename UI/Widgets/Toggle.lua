@@ -12,6 +12,7 @@ local W    = BUI.Widgets
 ---@class BUI.ToggleOpts
 ---@field text string
 ---@field tooltip? string
+---@field indent? boolean  sous-option : en retrait, d'un corps plus petit
 ---@field get fun(): boolean
 ---@field set fun(value: boolean)
 
@@ -28,10 +29,10 @@ local W    = BUI.Widgets
 ---@param opts BUI.ToggleOpts
 ---@return table row
 function W.Toggle(parent, opts)
-    local row = W.Row(parent, opts.text)
+    local row = W.Row(parent, opts.text, opts.indent)
 
     local check = CreateFrame("CheckButton", nil, row, T.Template("CHECKBOX"))
-    check:SetSize(T.SIZE.ROW_H - 2, T.SIZE.ROW_H - 2)
+    check:SetSize(T.SIZE.CHECK_SIZE, T.SIZE.CHECK_SIZE)
     W.PlaceControl(row, check)
 
     check:SetScript("OnClick", function(self)

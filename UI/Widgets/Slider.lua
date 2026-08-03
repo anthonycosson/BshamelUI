@@ -11,6 +11,7 @@ local W    = BUI.Widgets
 ---@class BUI.SliderOpts
 ---@field text string
 ---@field tooltip? string
+---@field indent? boolean  sous-option : en retrait, d'un corps plus petit
 ---@field min number
 ---@field max number
 ---@field step? number
@@ -23,7 +24,7 @@ local W    = BUI.Widgets
 ---@param opts BUI.SliderOpts
 ---@return table row
 function W.Slider(parent, opts)
-    local row = W.Row(parent, opts.text)
+    local row = W.Row(parent, opts.text, opts.indent)
 
     local step     = opts.step or 1
     local decimals = opts.decimals or 0

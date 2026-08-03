@@ -42,12 +42,11 @@ local function setButtonText(control, text)
     end
 end
 
---- Menu déroulant moderne.
-local function modernDropdown(row, opts)
-    local control = CreateFrame("DropdownButton", nil, row, T.Template("DROPDOWN"))
-    control:SetSize(T.SIZE.CONTROL_W, T.SIZE.ROW_H - 2)
-    W.PlaceControl(row, control)
-
+--- Remplit le menu d'un bouton déroulant. Partagé par la ligne d'option et par
+--- le contrôle de barre de titre : c'est le même menu, seule la boîte change.
+---@param control table
+---@param opts BUI.DropdownOpts
+local function fillMenu(control, opts)
     control:SetupMenu(function(_, rootDescription)
         local values = valuesOf(opts)
         for i = 1, #values do
@@ -59,7 +58,15 @@ local function modernDropdown(row, opts)
             )
         end
     end)
+end
 
+--- Menu déroulant moderne.
+local function modernDropdown(row, opts)
+    local control = CreateFrame("DropdownButton", nil, row, T.Template("DROPDOWN"))
+    control:SetSize(T.SIZE.CONTROL_W, T.SIZE.ROW_H - 2)
+    W.PlaceControl(row, control)
+
+    fillMenu(control, opts)
     return control
 end
 
@@ -90,16 +97,61 @@ end
 ---@class BUI.DropdownOpts
 ---@field text string
 ---@field tooltip? string
+---@field indent? boolean  sous-option : en retrait, d'un corps plus petit
 ---@field values BUI.DropdownEntry[]|fun(): BUI.DropdownEntry[]
 ---@field get fun(): any
 ---@field set fun(value: any)
+
+--- Menu déroulant nu, pour une barre de titre : pas de ligne, pas de libellé,
+--- juste la boîte et sa valeur.
+---
+--- Il ne passe pas par `W.Row` — une ligne d'option occupe toute la largeur d'une
+--- page et aligne son contrôle sur la colonne commune, ce qui n'a aucun sens dans
+--- un bandeau de trente pixels. C'est le seul endroit de l'addon où un menu vit
+--- hors d'une page, d'où sa propre fabrique plutôt qu'un drapeau dans l'autre.
+---
+--- L'appelant l'ancre lui-même : sa place dépend de ce que la barre porte déjà.
+---@param parent table
+---@param opts BUI.DropdownOpts
+---@return table control
+function W.TitleDropdown(parent, opts)
+    local S = T.SIZE
+    local control
+
+    if T.Template("DROPDOWN") then
+        control = CreateFrame("DropdownButton", nil, parent, T.Template("DROPDOWN"))
+        control:SetSize(S.TITLE_CONTROL_W, S.TITLE_CONTROL_H)
+        fillMenu(control, opts)
+    else
+        -- Même repli que pour la ligne d'option : à défaut de menu, un bouton qui
+        -- fait défiler les valeurs. Le réglage reste atteignable.
+        control = W.Button(parent, "", function()
+            local values = valuesOf(opts)
+            if #values == 0 then return end
+
+            local current, index = opts.get(), 1
+            for i = 1, #values do
+                if values[i].value == current then index = i break end
+            end
+            opts.set(values[(index % #values) + 1].value)
+        end, S.TITLE_CONTROL_W)
+        control:SetHeight(S.TITLE_CONTROL_H)
+    end
+
+    function control:Refresh()
+        setButtonText(self, labelFor(valuesOf(opts), opts.get()))
+    end
+
+    control:Refresh()
+    return control
+end
 
 --- Ligne « libellé + menu déroulant ».
 ---@param parent table
 ---@param opts BUI.DropdownOpts
 ---@return table row
 function W.Dropdown(parent, opts)
-    local row = W.Row(parent, opts.text)
+    local row = W.Row(parent, opts.text, opts.indent)
 
     local canUseModern = T.Template("DROPDOWN") ~= nil
     local control = canUseModern and modernDropdown(row, opts) or cyclingButton(row, opts)
