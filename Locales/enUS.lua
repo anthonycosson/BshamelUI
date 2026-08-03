@@ -618,10 +618,13 @@ BUI:RegisterLocale("enUS", {
         .. "is the game's own.",
     ["Important auras"]                = "Big offensives and defensives",
     ["Important auras notice"] =
-        "To the left of the health bar. The game itself classes what counts as a "
-        .. "major defensive.",
+        "To the left of the nameplate. Major cooldowns only, offensive and "
+        .. "defensive — the game classes them, not the addon. An empty row means "
+        .. "there are none.",
     ["Own debuff auras"]               = "Debuffs — yours only",
-    ["Own debuff auras notice"]        = "Top left of the health bar. Only what you put there.",
+    ["Own debuff auras notice"] =
+        "Top left of the nameplate. Your spells only: trinket and item-bonus "
+        .. "procs are dropped where the game lets us tell them apart.",
     ["Crowd control auras"]            = "Crowd control — everyone's",
     ["Crowd control auras notice"] =
         "To the right of the health bar. A sheeped mob is sheeped no matter who "

@@ -2,6 +2,40 @@
 
 ## Non publié
 
+### Modifié
+- **Barres d'infos — ce que chaque rangée montre.** La rangée de gauche affiche
+  désormais **les gros sorts offensifs *et* défensifs**, et plus seulement les
+  défensifs. Aucun filtre du jeu ne nomme les offensifs — mais le jeu cure déjà
+  une liste d'améliorations importantes pour ses propres plaques, et on emprunte
+  son verdict au lieu de le refaire. Le repli qui remplissait la rangée de toutes
+  les améliorations disparaît : elle dit « les gros sorts », et une rangée vide
+  est la bonne réponse quand il n'y en a pas.
+
+  La rangée du haut écarte les procs de bijou et de bonus d'objet pour ne garder
+  que vos sorts — **là où le jeu permet de les distinguer**. Le drapeau qui les
+  sépare est illisible sur certaines unités, et le tri s'efface alors plutôt que
+  de vider la rangée.
+
+  **Aucune aura n'est affichée sur une plaque alliée** — ni amélioration, ni
+  affaiblissement, ni entrave, ni temps de recharge, aperçu compris. Le test
+  porte sur l'unité et non sur ce que la plaque montre : il tient donc aussi en
+  mode « le nom seul ». Les rangées du jeu sur les plaques alliées restent
+  éteintes comme les autres tant que l'addon tient les auras.
+
+### Corrigé
+- **Barres d'infos — aperçu des auras.** Le décompte ne s'affichait qu'un instant
+  après avoir coché la case : les auras d'exemple duraient quinze secondes et ne
+  repartaient jamais. Elles se renouvellent maintenant tant que l'aperçu est
+  ouvert, ce qui permet de régler le corps du décompte en le voyant.
+
+### Corrigé
+- **Téléportation** — le menu ne produit plus d'erreur Lua à la connexion. Le
+  temps de recharge d'une ligne se lit en demandant deux nombres au jeu, et le
+  client les rend désormais **protégés** sur certaines actions : les comparer
+  depuis du code d'addon lève. La lecture s'en écarte maintenant avant de
+  comparer ; la ligne concernée s'affiche alors sans horloge — comme une ligne
+  prête — et reste cliquable.
+
 ## 0.7.10 — 2026-08-03
 
 ### Corrigé

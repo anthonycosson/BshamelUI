@@ -2539,6 +2539,26 @@ qui ne tourne que menu ouvert : un cadre caché n'en reçoit pas. `SetEntries` l
 rappelle tout de suite, sans quoi une ligne recyclée garderait le temps de
 recharge de ce qu'elle affichait avant.
 
+**Et ces deux nombres peuvent être secrets.** Le menu se remplit au moment où le
+module s'allume, donc depuis du code teinté, et le client rend alors une durée
+protégée :
+
+```
+SecureMenu.lua:122: attempt to compare local 'duration'
+(a secret number value, while execution tainted by 'BshamelUI')
+  remainingCooldown <- refreshCooldowns <- SetEntries <- OnEnable
+```
+
+Le test de forme ne suffit pas : `type()` d'un nombre secret rend bien
+`"number"`. C'est la **troisième** fois que la règle « le garde de secret se
+place avant toute comparaison, jamais après » se paie — voir « Un booléen secret
+ne se teste pas » et « Une valeur secrète interrompt tout un passage ». Ici elle
+manquait tout entière, sur un fichier écrit avant elle.
+
+Le garde rend `nil`, donc pas d'horloge sur la ligne — ce qui est déjà ce
+qu'affiche une action prête. Il n'y a rien à conclure d'un secret, et une ligne
+sans horloge reste cliquable : c'est le clic qui décide, pas nous.
+
 ---
 
 ## Deux listes de globals, et seule la CI voit qu'elles divergent
@@ -3100,6 +3120,41 @@ Le symptôme est trompeur parce qu'il ressemble à une donnée absente. Ce qui
 tranche en une commande : demander à la donnée si elle est *là* avant de demander
 si elle est *lisible*. Les deux questions n'ont pas la même réponse, et seule la
 seconde était posée.
+
+**Le secret est par unité, pas par champ.** Relevé décisif, deux cibles à
+quelques minutes d'écart, même version du code :
+
+```
+cible A   aura.icon: secret  .applications: secret  .spellId: secret
+          .nameplateShowPersonal: secret
+cible B   aura.icon: activée .applications: activée .spellId: activée
+          .nameplateShowPersonal: activée
+```
+
+Le même champ, de la même fonction, sur le même client. Ce n'est donc pas
+« `icon` est un champ protégé » mais « cette unité-ci est protégée ». La
+conséquence pratique est qu'**on ne peut pas décider à l'écriture du code ce qui
+sera lisible** : toute logique qui dépend d'un champ doit marcher dans les deux
+cas, et se dégrader du côté secret plutôt que de disparaître.
+
+**Noté au passage, pour un choix qui pourrait être révisé** : la liste curée
+`AurasFrame.buffList` n'est triée à l'important que sur les unités **adverses**.
+Sur un allié elle est brute, et il faut la resserrer soi-même — le filtre employé
+ailleurs pour cela est `HELPFUL|INCLUDE_NAME_PLATE_ONLY|RAID_IN_COMBAT|PLAYER`.
+L'addon n'en a plus besoin : il n'affiche aucune aura sur une plaque alliée.
+
+Le motif qui en découle, et qui est celui à reproduire :
+
+```lua
+local flag = aura.nameplateShowPersonal
+local drop = flag ~= nil and not U.IsSecret(flag) and flag == false
+```
+
+Trois tests dans cet ordre, et l'ordre n'est pas négociable : `== false` sur une
+valeur secrète **lève**. La garde se pose donc *avant* la comparaison, jamais
+après. Le raffinement s'applique là où la donnée se lit, et s'efface ailleurs —
+ce qui donne un affichage un peu moins fin sur les unités protégées, et jamais
+un affichage vide.
 
 ---
 

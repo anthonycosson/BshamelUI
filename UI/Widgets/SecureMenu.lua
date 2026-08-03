@@ -119,6 +119,15 @@ local function remainingCooldown(kind, id)
     end
 
     if type(start) ~= "number" or type(duration) ~= "number" then return nil end
+
+    -- `U.IsSecret` **avant** la comparaison, jamais après : un nombre secret se
+    -- déclare `"number"` puis lève à la première comparaison — comme à
+    -- l'addition qui suit. Le client protège l'état de recharge de certaines
+    -- actions quand la question vient d'un addon ; la ligne s'affiche alors sans
+    -- horloge, exactement comme quand l'action est prête. C'est ce que la garde
+    -- coûte, et il n'y a rien à conclure d'un secret.
+    if U.IsSecret(start) or U.IsSecret(duration) then return nil end
+
     if duration <= GLOBAL_COOLDOWN then return nil end
 
     local left = start + duration - GetTime()

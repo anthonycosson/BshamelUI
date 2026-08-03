@@ -955,7 +955,8 @@ local SAMPLE_SPELLS = {
 }
 
 --- Les listes d'exemple, une par rangée. Les durées repartent à chaque allumage
---- du mode aperçu : un balayage figé ressemble à une aura expirée.
+--- du mode aperçu **et à chaque cycle** : un balayage figé ressemble à une aura
+--- expirée, et un décompte arrêté à zéro ne se règle pas.
 local sampleLists = {
     imp = { n = 0 }, dot = { n = 0 }, cc = { n = 0 },
 }
@@ -977,11 +978,14 @@ local function refreshSampleList()
                 local entry = list[n]
                 if not entry then entry = {} list[n] = entry end
 
+                local cycle = T.TIMING.PLATE_AURA_CYCLE
+                local stagger = (n - 1) * T.TIMING.PLATE_AURA_STEP
+
                 entry.icon           = icon
                 entry.kind           = group.kind
                 entry.count          = (group.key == "dot" and n == 1) and 3 or nil
-                entry.duration       = 15
-                entry.expirationTime = now + 15 - (n - 1) * 3
+                entry.duration       = cycle
+                entry.expirationTime = now + cycle - stagger
 
                 -- Un vrai objet de durée quand le client sait en fabriquer :
                 -- l'exemple passe alors par la même horloge que les vraies
@@ -989,7 +993,7 @@ local function refreshSampleList()
                 entry.durationObject = nil
                 if C_DurationUtil and C_DurationUtil.CreateDuration then
                     local ok, durationObject = pcall(C_DurationUtil.CreateDuration,
-                        now - (n - 1) * 3, 15)
+                        now - stagger, cycle)
                     if ok then entry.durationObject = durationObject end
                 end
                 list.n = n
@@ -1094,27 +1098,131 @@ end
 ---@param unit string
 ---@param lists table
 ---@param onlyMine? boolean  n'admettre que ce que le joueur a posé
-local function admitAll(auras, list, kind, unit, lists, onlyMine)
+---@param onlySpells? boolean  écarter ce qui n'est pas un sort de classe
+local function admitAll(auras, list, kind, unit, lists, onlyMine, onlySpells)
     if not auras then return end
     for i = 1, #auras do
         local aura = auras[i]
-        if not onlyMine or U.IsTrue(aura.isFromPlayerOrPlayerPet) then
+
+        -- Le drapeau ne s'applique **que s'il se lit et qu'il dit non**. Absent,
+        -- il ne dit rien ; secret, il ne se compare même pas — `== false` sur une
+        -- valeur secrète lève, et la comparaison doit donc être gardée avant
+        -- d'être écrite, pas après.
+        --
+        -- Relevé sur ce client : il **est** secret sur une unité adverse. Ce
+        -- chemin est donc inerte aujourd'hui, et il est gardé pour le jour où il
+        -- ne le sera plus — le retirer coûterait de le retrouver.
+        local flag = aura.nameplateShowPersonal
+        local isProc = onlySpells
+            and flag ~= nil
+            and not U.IsSecret(flag)
+            and flag == false
+
+        if (not onlyMine or U.IsTrue(aura.isFromPlayerOrPlayerPet))
+           and not isProc then
             admitAura(list, kind, unit, aura, lists)
         end
     end
 end
 
+-- -------------------------------------------------------------------------
+--  Les gros sorts offensifs : on emprunte le jugement du client
+-- -------------------------------------------------------------------------
+-- Les défensifs se nomment par filtre (`BIG_DEFENSIVE`, `EXTERNAL_DEFENSIVE`).
+-- **Les offensifs, non.** Aucun jeton ne les désigne, et le seul jugement que le
+-- client publie sur la question, `C_Spell.IsSpellImportant`, rend un booléen
+-- *secret* : il se passe à `SetAlphaFromBoolean`, il ne se teste pas. On ne peut
+-- donc pas trier une liste large avec.
+--
+-- Mais le client tient déjà la liste triée : c'est celle qu'il affiche lui-même
+-- sur une plaque adverse, et elle est curée à l'important — les temps de
+-- recharge offensifs d'un joueur adverse en font partie. Elle vit sur
+-- `AurasFrame.buffList` et s'énumère par `Iterate` (technique lue chez MiniCC,
+-- règle 8). On emprunte son verdict au lieu de le refaire.
+--
+-- Le client y mêle du bruit purgeable — des améliorations mineures qu'il range
+-- avec les vraies. Elles s'écartent sans rien lire de secret : une aura à la
+-- fois purgeable **et** ni grand défensif ni défensif reçu n'est pas un gros
+-- sort. `IsAuraFilteredOutByInstanceID` répond à ces trois questions pour un
+-- identifiant d'aura, et cet identifiant-là n'est pas secret.
+
+--- Contexte du parcours en cours. Des variables de fichier plutôt qu'une
+--- fermeture par appel : `Iterate` passe sur un chemin chaud (règle 7).
+---
+--- Il y avait ici un resserrement pour les unités **amies** : le client ne cure
+--- sa liste à l'important que sur les adversaires, et sur un allié elle est
+--- brute. Il est parti avec le cas qu'il traitait — les rangées ne se posent
+--- plus du tout sur une plaque alliée (voir `auraless`). Le filtre qu'il
+--- employait est noté dans `API_NOTES.md`, au cas où ce choix soit un jour
+--- révisé.
+local importantUnit, importantLists
+
+--- Une aura purgeable qui n'est pas un défensif est du bruit, pas un gros sort.
+---@param unit string
+---@param id number
+---@return boolean
+local function isPurgeableNoise(unit, id)
+    local api = C_UnitAuras.IsAuraFilteredOutByInstanceID
+    if type(api) ~= "function" then return false end
+
+    local okP, purgeable = pcall(api, unit, id, "HELPFUL|RAID_PLAYER_DISPELLABLE")
+    if not okP or purgeable ~= false then return false end
+
+    local okB, notBig = pcall(api, unit, id, "HELPFUL|BIG_DEFENSIVE")
+    local okE, notExt = pcall(api, unit, id, "HELPFUL|EXTERNAL_DEFENSIVE")
+    return okB and okE and notBig == true and notExt == true
+end
+
+---@param auraInstanceID number
+local function collectImportantBuff(auraInstanceID)
+    if U.IsSecret(auraInstanceID) then return end
+    if isPurgeableNoise(importantUnit, auraInstanceID) then return end
+
+    local ok, aura = pcall(C_UnitAuras.GetAuraDataByAuraInstanceID,
+                           importantUnit, auraInstanceID)
+    if not ok or type(aura) ~= "table" then return end
+
+    admitAura(importantLists.imp, "HELP", importantUnit, aura, importantLists)
+end
+
+--- Verse les améliorations importantes du client dans la rangée de gauche.
+---@param unit string
+---@param unitFrame table|nil
+---@param lists table
+---@return boolean|nil  `nil` si le client ne publie pas sa liste
+local function importantBuffs(unit, unitFrame, lists)
+    if not (C_UnitAuras and C_UnitAuras.GetAuraDataByAuraInstanceID) then return nil end
+
+    local frame = unitFrame and unitFrame.AurasFrame
+    if type(frame) ~= "table" or isForbidden(frame) then return nil end
+
+    local list = frame.buffList
+    if type(list) ~= "table" or type(list.Iterate) ~= "function" then return nil end
+
+    importantUnit, importantLists = unit, lists
+    local ok = pcall(list.Iterate, list, collectImportantBuff)
+    importantUnit, importantLists = nil, nil
+
+    return ok
+end
+
 --- Remplit les trois listes d'une plaque avec les vraies auras de son unité.
 ---
---- Chaque rangée essaie d'abord le filtre **classé** du client, qui sait mieux
---- que nous ce qui est un contrôle ou un grand défensif ; à défaut — le client
---- peut retirer un filtre — elle retombe sur le filtre large et sur notre
---- vocabulaire. Les contrôles se lisent avant les affaiblissements : une
---- entrave est aussi un affaiblissement, et `collectSeen` donne la place au
---- premier arrivé.
+--- Chaque rangée dit une chose différente, et chacune a sa source :
+---
+---   · **à gauche, les gros sorts** — défensifs par filtre, offensifs par la
+---     liste curée du client (voir juste au-dessus) ;
+---   · **en haut à gauche, nos affaiblissements** — les nôtres, et ceux qui sont
+---     des sorts plutôt que des procs d'objet ;
+---   · **à droite, les entraves** — le filtre classé du client, tous lanceurs
+---     confondus.
+---
+--- Les contrôles se lisent avant les affaiblissements : une entrave est aussi un
+--- affaiblissement, et `collectSeen` donne la place au premier arrivé.
 ---@param unit string
 ---@param lists table
-local function collectAuras(unit, lists)
+---@param unitFrame? table  la plaque du client, qui porte sa liste curée
+local function collectAuras(unit, lists, unitFrame)
     lists.refused = 0
     lists.imp.n, lists.dot.n, lists.cc.n = 0, 0, 0
     wipe(collectSeen)
@@ -1149,30 +1257,51 @@ local function collectAuras(unit, lists)
         end
     end
 
+    -- **Nos sorts, pas nos procs.** `HARMFUL|PLAYER` rend tout ce que le joueur
+    -- a posé, bijou et bonus d'objet compris — or ce n'est pas ce qu'on
+    -- entretient, et ça mange les places de ce qu'on entretient.
+    --
+    -- Aucun filtre ne sépare les deux, et l'identité du sort est secrète : une
+    -- liste d'exclusion serait donc impossible à comparer. Le seul discriminant
+    -- lisible est un drapeau que le client pose sur l'aura elle-même,
+    -- `nameplateShowPersonal` — « celle-ci mérite la plaque quand c'est toi qui
+    -- l'as posée ». C'est exactement le vocabulaire cherché : Blizzard le met
+    -- sur les affaiblissements de classe, pas sur un proc de bijou.
+    --
+    -- Il est appliqué **quand il se lit**, et ignoré sinon : un drapeau absent ou
+    -- secret rendrait la rangée vide, ce qui serait pire que trop pleine.
     if dots then
-        admitAll(dots, lists.dot, "HARM", unit, lists)
+        admitAll(dots, lists.dot, "HARM", unit, lists, nil, true)
     else
-        admitAll(harmful, lists.dot, "HARM", unit, lists, true)
+        admitAll(harmful, lists.dot, "HARM", unit, lists, true, true)
     end
 
-    -- L'important : les grands défensifs et les défensifs reçus, classés par le
-    -- client. À défaut, toutes les améliorations — trop large, jamais vide.
+    -- L'important : **les gros sorts, offensifs comme défensifs**.
+    --
+    -- Les défensifs se nomment par filtre. Les offensifs, non : aucun jeton ne
+    -- les désigne, et le seul jugement du client sur la question —
+    -- `C_Spell.IsSpellImportant` — rend un booléen *secret*, qu'on ne peut pas
+    -- tester. C'est `importantBuffs` qui les apporte, en empruntant la liste que
+    -- le client cure déjà pour ses propres plaques.
     local big      = bulkAuras(unit, "HELPFUL|BIG_DEFENSIVE")
     local external = bulkAuras(unit, "HELPFUL|EXTERNAL_DEFENSIVE")
-    local helpful
-    if big or external then
-        admitAll(big, lists.imp, "HELP", unit, lists)
-        admitAll(external, lists.imp, "HELP", unit, lists)
-    else
-        helpful = bulkAuras(unit, "HELPFUL")
-        admitAll(helpful, lists.imp, "HELP", unit, lists)
-    end
+    admitAll(big, lists.imp, "HELP", unit, lists)
+    admitAll(external, lists.imp, "HELP", unit, lists)
+
+    local curated = importantBuffs(unit, unitFrame, lists)
+
+    -- **Aucun repli sur `HELPFUL`.** Il y en avait un, et il était juste tant
+    -- que la rangée voulait dire « ce qu'il a sur lui » : à défaut de filtre
+    -- fin, on montrait tout. La rangée dit maintenant « les gros sorts », et
+    -- tout n'en est pas — une rangée vide est alors la bonne réponse, pas un
+    -- pis-aller. Huit places prises par des buffs de zone, c'est huit places où
+    -- l'offensif qu'on guettait n'apparaît pas.
 
     -- Aucun chemin n'a répondu : le client refuse la lecture, ou ne publie
     -- plus la fonction. Compté comme un refus, pour que le repli d'honnêteté
     -- d'`applyOwnAuras` rende la main au client au lieu d'effacer sa rangée
     -- sans rien poser à la place.
-    if not (cc or dots or harmful or big or external or helpful) then
+    if not (cc or dots or harmful or big or external or curated) then
         lists.refused = lists.refused + 1
     end
 end
@@ -1188,6 +1317,24 @@ end
 --- repeinture. Appelé au changement de réglage, jamais depuis la peinture.
 local function bumpAuraLayout()
     auraStamp = auraStamp + 1
+end
+
+--- Les rangées ne se posent **que sur un adversaire**.
+---
+--- Une aura sur une plaque alliée ne répond à aucune question qu'on se pose en
+--- combat : on ne l'interrompt pas, on ne la dissipe pas d'un coup d'œil sur une
+--- barre de nom, et elle occupe la place de celles qui comptent. Les trois
+--- rangées et leurs sources s'arrêtent donc ici, avant toute lecture.
+---
+--- Le test porte sur **l'unité, pas sur ce que la plaque montre**. C'est ce qui
+--- fait qu'il tient en mode « le nom seul » : une plaque réduite à son nom garde
+--- une boîte, et nos rangées s'ancrent dessus — les cacher parce que la barre de
+--- vie a disparu aurait marché par accident, et cessé de marcher au premier
+--- réglage changé.
+---@param unit string
+---@return boolean
+local function auraless(unit)
+    return not U.IsTrue(UnitCanAttack("player", unit))
 end
 
 --- Ancre les trois rangées d'une plaque **sur la plaque**, si le cachet a changé
@@ -1226,8 +1373,13 @@ local function applyOwnAuras(mod, plate, unit, force)
     if not LIVE.auras then return end
     if AURAS_PAUSED then return end
 
-    local own     = mod:Get("ownAuras") and true or false
-    local preview = mod:Get("previewMode") and true or false
+    -- Un allié n'a pas de rangées, y compris en aperçu : montrer un exemple là
+    -- où rien n'apparaîtra jamais ferait régler la position contre une plaque
+    -- qui ne la portera pas.
+    local wanted = not auraless(unit)
+
+    local own     = wanted and mod:Get("ownAuras") and true or false
+    local preview = wanted and mod:Get("previewMode") and true or false
 
     local rows = auraRows[plate]
     if not rows then
@@ -1270,7 +1422,7 @@ local function applyOwnAuras(mod, plate, unit, force)
 
     local filled = rows._filled
     if force or not filled then
-        collectAuras(unit, lists)
+        collectAuras(unit, lists, unitFrameOf(plate))
         rows._filled = true
     end
 
@@ -1324,6 +1476,40 @@ local function updateCastTicker(mod)
     elseif not wanted and castTicker then
         castTicker:Cancel()
         castTicker = nil
+    end
+end
+
+--- Fait repartir les auras d'exemple. `nil` quand personne ne les regarde.
+local auraTicker
+
+--- Une aura d'exemple **expire**, comme une vraie : passé sa durée, le balayage
+--- s'arrête et le décompte disparaît. C'est juste, et c'est inutilisable — on
+--- règle alors la taille d'un chiffre qui n'est plus affiché. On les refait donc
+--- à chaque cycle, ce qui rend l'aperçu perpétuel sans lui faire mentir : ce
+--- qu'on voit reste une aura de quinze secondes en train de s'écouler.
+---
+--- Une fois toutes les quinze secondes, et seulement pendant qu'on règle : c'est
+--- la minuterie la moins chère de l'addon, à la différence de sa voisine qui
+--- pousse une barre vingt fois par seconde.
+local function tickAuraPreview()
+    local mod = module()
+    if not mod then return end
+
+    refreshSampleList()
+    for unit, plate in pairs(plates) do
+        applyOwnAuras(mod, plate, unit)
+    end
+end
+
+---@param mod table
+local function updateAuraTicker(mod)
+    local wanted = LIVE.auras and not AURAS_PAUSED and mod:Get("previewMode")
+
+    if wanted and not auraTicker then
+        auraTicker = C_Timer.NewTicker(T.TIMING.PLATE_AURA_CYCLE, tickAuraPreview)
+    elseif not wanted and auraTicker then
+        auraTicker:Cancel()
+        auraTicker = nil
     end
 end
 
@@ -3593,14 +3779,33 @@ BUI:RegisterModule(MODULE, {
                        "| .auraInstanceID:", reads(specimen.auraInstanceID),
                        "| .applications:", reads(specimen.applications),
                        "| .spellId:", reads(specimen.spellId))
+
+            -- Le drapeau qui sépare un sort de classe d'un proc de bijou. S'il
+            -- ne se lit pas, la rangée du haut restera large et il faudra une
+            -- autre idée.
+            self:Print("aura.nameplateShowPersonal:",
+                       reads(specimen.nameplateShowPersonal),
+                       "| .isFromPlayerOrPlayerPet:",
+                       reads(specimen.isFromPlayerOrPlayerPet))
         end
+
+        -- Les deux emprunts au client : sa liste curée d'améliorations — d'où
+        -- viennent les offensifs — et le test qui écarte le bruit purgeable.
+        local aurasFrame = unitFrame.AurasFrame
+        local buffList   = type(aurasFrame) == "table" and aurasFrame.buffList
+        local iterable   = type(buffList) == "table"
+                           and type(buffList.Iterate) == "function"
+        self:Print("AurasFrame.buffList:", iterable and L["On"] or L["Refused"],
+                   "| IsAuraFilteredOutByInstanceID:",
+                   (C_UnitAuras and C_UnitAuras.IsAuraFilteredOutByInstanceID)
+                       and L["On"] or L["Refused"])
 
         -- Ce que le tri en fait, par le même chemin que les vraies rangées et
         -- sur le jeton qu'elles emploient. Des zéros ici avec des filtres qui
         -- répondent au-dessus désignent le tri ; des zéros des deux côtés
         -- désignent la lecture.
         local probe = { imp = { n = 0 }, dot = { n = 0 }, cc = { n = 0 }, refused = 0 }
-        collectAuras(token or "target", probe)
+        collectAuras(token or "target", probe, unitFrame)
         self:Print("collect imp:", probe.imp.n, "| dot:", probe.dot.n,
                    "| cc:", probe.cc.n, "| " .. L["Refused"] .. ":", probe.refused)
 
@@ -3680,6 +3885,7 @@ BUI:RegisterModule(MODULE, {
         paintAll(self)
 
         updateCastTicker(self)
+        updateAuraTicker(self)
 
         self:RegisterEvent("NAME_PLATE_UNIT_ADDED", function(_, unit)
             -- La plaque personnelle est celle du joueur, posée à ses pieds : ni
@@ -3749,6 +3955,7 @@ BUI:RegisterModule(MODULE, {
         -- On rend sans relire les réglages : le module s'éteint, ce qu'il a posé
         -- doit disparaître même si les interrupteurs restent cochés.
         if castTicker then castTicker:Cancel() castTicker = nil end
+        if auraTicker then auraTicker:Cancel() auraTicker = nil end
         hideAuraRows()
         hideMarkerPreviews()
         restoreMarkerAlpha()
@@ -3774,6 +3981,7 @@ BUI:RegisterModule(MODULE, {
             if key == "previewMode" then
                 if self:Get("previewMode") then refreshSampleList() end
                 updateCastTicker(self)
+                updateAuraTicker(self)
             end
 
             -- Les interrupteurs de la section se rendent séparément : éteindre la

@@ -629,13 +629,16 @@ BUI:RegisterLocale("frFR", {
         .. "lui, et éteint celles du jeu le temps qu'il les tient. Ce que le "
         .. "mode aperçu montre est exactement ces rangées : même code, même "
         .. "place, même taille. Chaque image est un asset du jeu.",
-    ["Important auras"]                = "Offensifs et défensifs importants",
+    ["Important auras"]                = "Gros sorts offensifs et défensifs",
     ["Important auras notice"] =
-        "À gauche de la barre de vie. C'est le jeu lui-même qui classe ce qui "
-        .. "compte comme grand défensif.",
+        "À gauche de la plaque. Les gros temps de recharge seulement, offensifs "
+        .. "comme défensifs — c'est le jeu qui les classe, pas l'addon. Une "
+        .. "rangée vide veut dire qu'il n'y en a aucun.",
     ["Own debuff auras"]               = "Affaiblissements — les nôtres",
     ["Own debuff auras notice"] =
-        "En haut à gauche de la barre de vie. Seulement ce que vous y avez posé.",
+        "En haut à gauche de la plaque. Vos sorts seulement : les procs de bijou "
+        .. "et de bonus d'objet sont écartés quand le jeu permet de les "
+        .. "reconnaître.",
     ["Crowd control auras"]            = "Contrôles — de tous les joueurs",
     ["Crowd control auras notice"] =
         "À droite de la barre de vie. Un mob mouton est mouton, peu importe qui "

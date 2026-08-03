@@ -613,6 +613,21 @@ T.TIMING = {
     PLATE_CAST       = 0.05,
     PLATE_CAST_CYCLE = 2.0,
 
+    -- Durée de vie d'une aura d'exemple, et décalage entre deux d'une même
+    -- rangée. Quinze secondes, parce que c'est l'ordre de grandeur d'une entrave
+    -- ou d'un affaiblissement — un décompte à trois chiffres ne dirait rien de
+    -- la place que prend un vrai.
+    --
+    -- Le décalage sert à ce que les vignettes d'une rangée n'expirent pas toutes
+    -- ensemble : un décompte identique sur trois icônes ressemble à une image
+    -- figée, trois nombres différents à une rangée vivante.
+    --
+    -- L'aperçu **repart** à chaque cycle. Sans cela les exemples s'éteignent au
+    -- bout de leur durée et ne reviennent jamais : on règle alors des icônes
+    -- sans horloge, ce qui est précisément ce que l'aperçu doit montrer.
+    PLATE_AURA_CYCLE = 15,
+    PLATE_AURA_STEP  = 3,
+
     HOVER         = 0.1,   -- sondage de la fenêtre survolée, pendant qu'un
                             -- modificateur est tenu. Assez court pour que le
                             -- capteur de molette paraisse instantané, assez long
