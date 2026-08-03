@@ -2,7 +2,10 @@
 
 ## Non publié
 
-## 0.7.8 — 2026-08-03
+### Interne
+- La 0.7.8 est un tag mort : sa pipeline a échoué avant tout envoi — un
+  avertissement que seule la CI voyait — et un tag protégé ne se supprime pas.
+  Cette version porte exactement son contenu, plus la déclaration qui manquait.
 
 ### Ajouté
 - **Barres d'infos** — la page annoncée en 0.7.7 s'ouvre, et l'entrée n'est plus
