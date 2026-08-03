@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.10 — 2026-08-03
+
 ### Corrigé
 - **Barres d'infos** — ouvrir la fenêtre d'options ne rend plus les plaques à
   leur taille Blizzard, et ne produit plus d'erreur Lua dans le code du jeu.
