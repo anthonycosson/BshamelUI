@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.8 — 2026-08-03
+
 ### Ajouté
 - **Barres d'infos** — la page annoncée en 0.7.7 s'ouvre, et l'entrée n'est plus
   grisée. Elle ne remplace pas les barres d'infos du jeu : elle règle celles
