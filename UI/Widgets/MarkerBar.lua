@@ -70,8 +70,15 @@ local function newMarkerButton(panel, index)
     button:SetAttribute("useOnKeyDown", false)
 
     button:SetAttribute("type", "worldmarker")
-    button:SetAttribute("marker", index or 0)
     button:SetAttribute("action", index and "set" or "clear")
+
+    -- **« Tout effacer » ne s'écrit pas `0`, il s'écrit rien du tout.** Le
+    -- gestionnaire sécurisé passe l'attribut tel quel à `ClearRaidMarker`, dont
+    -- l'argument est déclaré `luaIndex` non nul de défaut « tous » : zéro tombe
+    -- hors de la plage et l'appel ne fait rien, en silence. Ne pas poser
+    -- l'attribut du tout donne le `nil` qui déclenche le défaut — c'est
+    -- exactement ce que fait le bouton de remise à zéro du client.
+    button:SetAttribute("marker", index)
 
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints()
