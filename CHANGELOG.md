@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.12 — 2026-08-04
+
 ### Retiré
 - **Barres d'infos — deux des trois rangées d'auras.** Les **améliorations**
   (gros temps de recharge offensifs et défensifs, à gauche) et **vos
