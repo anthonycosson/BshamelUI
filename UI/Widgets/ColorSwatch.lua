@@ -64,11 +64,17 @@ local function openPicker(color, apply)
     end
 
     -- Chemin ancien : les champs sont posés sur la frame, puis on l'affiche.
+    -- C'est le protocole du client — il lit ces champs-là sur sa propre frame —
+    -- et luacheck n'a aucun moyen de le savoir : pour lui, on écrit dans une
+    -- globale en lecture seule. On le lui dit ici, au plus près, plutôt que de
+    -- rendre la frame inscriptible pour tout le dépôt.
+    -- luacheck: push ignore 122
     picker.func       = onChange
     picker.swatchFunc = onChange
     picker.cancelFunc = onCancel
     picker.opacityFunc = nil
     picker.hasOpacity  = false
+    -- luacheck: pop
     picker:SetColorRGB(color.r, color.g, color.b)
     picker:Hide()   -- forcer un `OnShow`, sans quoi la couleur de départ colle
     picker:Show()

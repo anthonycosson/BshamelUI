@@ -2956,3 +2956,29 @@ Deux autres choses relevées chez MiniCC en passant :
 - `AurasFrame.RefreshAuras` existe et se laisse coiffer par `hooksecurefunc` :
   c'est l'annonce « le client vient de reposer ses auras », si un jour on en a
   besoin.
+
+---
+
+## Le lint local ne lance pas luacheck
+
+**Symptôme** — `dev/scripts/lint-local.sh` intégralement vert, tag poussé, et la
+CI rouge sur cinq `W122` que rien n'avait annoncés. Le job `release` est sauté,
+la version `v0.7.8` est morte — un tag protégé ne se supprime pas, on publie le
+numéro suivant.
+
+**Cause** — le script local passe la syntaxe, `lua-language-server`, la longueur
+des lignes, l'accord des listes de globals et les garde-fous de design. **Pas
+`luacheck`**, qui n'est pas installé sur la machine de dev. Or la CI le lance,
+et un avertissement y vaut échec. Les deux outils ne recouvrent pas les mêmes
+diagnostics : `W122` (écriture d'un champ d'une globale en lecture seule) n'a
+pas d'équivalent chez `lua-language-server`.
+
+**Ce qu'on fait** — avant tout tag : ou bien installer `luacheck` localement
+(`luarocks install luacheck`) et l'ajouter à `lint-local.sh`, ou bien pousser
+sur `main` d'abord et attendre la pipeline verte avant de taguer. La deuxième
+est celle qui ne dépend pas du poste.
+
+Le `W122` lui-même : écrire les champs du protocole d'une frame du client
+(`ColorPickerFrame.func`…) est légitime — c'est son API ancienne — et se
+déclare au plus près par `-- luacheck: push ignore 122` / `pop`, jamais en
+rendant la frame inscriptible pour tout le dépôt.
