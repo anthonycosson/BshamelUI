@@ -831,4 +831,61 @@ BUI:RegisterLocale("enUS", {
     ["Control"]                        = "control",
     ["Tokens"]                         = "tokens",
     ["Aura diagnostic unavailable"]    = "The Nameplates module is not running.",
+
+    -- Ressource de classe (Modules/ClassResource.lua)
+    ["Class resource"]                 = "Class resource",
+    ["Class resource notice"] =
+        "One square per point of the resource your specialisation counts: combo points, "
+        .. "holy power, chi, soul shards, arcane charges, essence, runes, or Maelstrom "
+        .. "Weapon stacks. The row picks the right one when you change specialisation, "
+        .. "and stays hidden on a character who has none.",
+    ["Show resource bar"]              = "Show the resource row",
+    ["Show resource bar tip"] =
+        "Adds a row of squares that you place yourself. It replaces nothing: the game "
+        .. "keeps showing its own resource under your character.",
+    ["Resource preview"]               = "Preview",
+    ["Resource preview tip"] =
+        "Fills the row on its own, one square at a time, so you can place it and watch "
+        .. "the threshold colour switch without waiting for a fight.",
+    ["Lock resource bar"]              = "Lock in place",
+    ["Lock resource bar tip"]          = "Stops the row from being dragged with the mouse.",
+
+    ["Resource shape"]                 = "Shape",
+    ["Resource cell width"]            = "Square width",
+    ["Resource cell width tip"]        = "Width of a single square.",
+    ["Resource cell height"]           = "Square height",
+    ["Resource cell height tip"]       = "Height of a single square.",
+    ["Resource cell gap"]              = "Gap between squares",
+    ["Resource cell gap tip"] =
+        "Space between two squares. At zero they touch, separated only by their outline.",
+    ["Resource cells per row"]         = "Squares per row",
+    ["Resource cells per row tip"] =
+        "Folds the row after this many squares. At five, ten Maelstrom Weapon stacks "
+        .. "become two rows of five. Zero keeps everything on a single row. A row that "
+        .. "does not fill up stays left-aligned, in the order the squares fill.",
+    ["Resource count"]                 = "Show the number",
+    ["Resource count tip"]             = "Writes the current count in the middle of the row.",
+    ["Hide empty resource"]            = "Hide when empty",
+    ["Hide empty resource tip"] =
+        "The row disappears while you have nothing and comes back at the first point. "
+        .. "The preview keeps it visible either way.",
+
+    ["Resource colours"]               = "Colours",
+    ["Resource colour source"]         = "Filled colour",
+    ["Resource colour source tip"]     = "Where the colour of a filled square comes from.",
+    ["Game resource colour"]           = "The game's",
+    ["Class colour"]                   = "Your class",
+    ["Custom colour"]                  = "Pick one",
+    ["Resource fill colour"]           = "Chosen colour",
+    ["Resource fill colour tip"]       = "Colour of a filled square.",
+    ["Resource fill colour needs custom"] =
+        "Only used when the filled colour is set to \"Pick one\".",
+    ["Resource threshold"]             = "Colour change from",
+    ["Resource threshold tip"] =
+        "From this many points on, the whole row takes the colour below. Zero turns it off.",
+    ["Resource threshold colour"]      = "Colour past that point",
+    ["Resource threshold colour tip"] =
+        "Colour the row takes once the count above is reached.",
+    ["Resource threshold colour needs threshold"] =
+        "Set a colour change point first.",
 })

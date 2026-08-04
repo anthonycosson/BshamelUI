@@ -56,10 +56,11 @@ UI\Widgets\ItemLevelTag.lua
 UI\Widgets\Mover.lua
 UI\Widgets\ChatTools.lua
 # Panneaux posés à même l'écran. `Panel.lua` est leur socle commun : il vient
-# donc avant les trois pièces qui s'appuient dessus.
+# donc avant les pièces qui s'appuient dessus.
 UI\Widgets\Panel.lua
 UI\Widgets\IconTracker.lua
 UI\Widgets\MarkerBar.lua
+UI\Widgets\ResourceBar.lua
 # Les paliers d'une clé ne sont pas un panneau : ils se posent sur le bloc de
 # chrono du client. Ce fichier ne dépend donc pas de `Panel.lua`, il est rangé
 # ici pour rester à côté des pièces de la même page.
@@ -92,6 +93,7 @@ Modules\DarkMode.lua
 Modules\Character.lua
 Modules\ActionBars.lua
 Modules\UnitFrames.lua
+Modules\ClassResource.lua
 Modules\Nameplates.lua
 Modules\CooldownManager.lua
 Modules\Windows.lua

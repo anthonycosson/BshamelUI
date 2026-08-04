@@ -15,6 +15,33 @@
   bienfait répond encore quand on retourne le voir. Rien ne se déclenche hors
   d'un donjon.
 
+- **Ressource de classe**, une nouvelle page sous *Interface*. Une **rangée de
+  cases**, une par point : points de combo, puissance sacrée, chi, fragments
+  d'âme, charges des arcanes, essence, runes, et les cumuls d'**Arme-tempête** du
+  chaman améliorations. La rangée choisit la bonne ressource toute seule au
+  changement de spécialisation, et reste cachée sur un personnage qui n'en a
+  aucune. Elle n'éteint rien : le jeu continue d'afficher la sienne sous le
+  personnage.
+
+  **Elle se place à la souris**, comme les autres panneaux de l'addon, et un
+  **aperçu** la remplit case après case pour qu'on puisse la poser — et voir le
+  palier se franchir — sans attendre un combat. Une case se verrouille ensuite en
+  place.
+
+  **Un palier de couleur** : à partir de X points, toute la rangée prend une
+  seconde teinte. C'est ce qui permet de lire « il y a de quoi dépenser » sans
+  compter. La teinte des cases pleines vient au choix du jeu, de la classe ou de
+  vous ; celle du palier est toujours la vôtre. Largeur, hauteur et écart des
+  cases se règlent, le nombre s'affiche ou non au milieu, et la rangée peut
+  disparaître tant qu'elle est vide.
+
+  **Un curseur « Cases par rangée »** plie la rangée : à cinq, les dix cumuls
+  d'Arme-tempête deviennent deux rangées de cinq. Le pliage se dit en colonnes
+  et non en rangées, parce que c'est la seule formulation qui survive à un
+  changement de personnage — le nombre de cases, lui, n'est pas au choix du
+  joueur. Une rangée qui ne se remplit pas reste calée à gauche, dans l'ordre où
+  les cases se remplissent.
+
 - **Fiche de personnage — les mêmes bandeaux à l'inspection.** Niveau d'objet,
   rang d'amélioration, enchantement, châsses et noyau du vide s'affichent
   désormais aussi sur la fenêtre d'inspection, emplacement par emplacement.

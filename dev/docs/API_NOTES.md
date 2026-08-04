@@ -3287,6 +3287,67 @@ réveille en fait partie.
 
 ---
 
+## Les ressources à cases ne se lisent pas toutes par `UnitPower`
+
+**Symptôme** — un suivi de ressource bâti sur `UnitPower` affiche tout : points
+de combo, puissance sacrée, chi, fragments d'âme, charges des arcanes, essence,
+runes. Il reste vide sur un **chaman améliorations**, dont Arme-tempête est
+pourtant la ressource qu'on regarde le plus.
+
+**Cause** — Arme-tempête n'est pas une ressource du client. C'est une **aura**
+qui se cumule (sort 344179, dix cumuls), et `Enum.PowerType` n'a rien qui lui
+corresponde. La ressource que le client déclare pour un chaman améliorations est
+la puissance élémentaire, qui n'existe pas dans cette spécialisation — donc une
+réserve nulle, donc aucune case.
+
+Le piège symétrique existe côté détection : on retient la première ressource dont
+`UnitPowerMax` est non nul, et **les points de combo se déclarent plus largement
+que les spécialisations qui s'en servent** — un druide qui change de forme en est
+le cas courant. Les mettre en tête de liste donne une rangée de cinq cases vides
+sur des personnages qui n'ont pas de points de combo.
+
+Troisième piège, dans le piège : **le cumul et le passif qui le donne sont deux
+sorts distincts**. `IsPlayerSpell(344179)` rend toujours non — 344179 est le
+buff, et un buff ne se « connaît » pas. La reconnaissance par le sort ne marche
+donc pas du tout, et elle échoue en silence : la rangée reste simplement éteinte.
+
+**Ce qu'on fait** — deux mécanismes côte à côte dans `Modules/ClassResource.lua` :
+`UnitPower` pour les six ressources du client, `C_UnitAuras.GetPlayerAuraBySpellID`
+pour les cumuls d'Arme-tempête. Celle-ci est reconnue par son **numéro de
+spécialisation** (263, Améliorations), qui est la seule réponse valable aussi
+quand la rangée est vide — c'est-à-dire au moment précis où il faut décider de
+l'afficher. La présence du cumul sert de filet : tant qu'aucune ressource n'a été
+retenue, chaque aura du joueur redéclenche une détection, ce qui rallume la
+rangée même si le numéro de spécialisation devenait faux.
+
+Et les points de combo **ferment** la liste de détection, de sorte qu'une
+ressource franche l'emporte toujours sur eux.
+
+Les runes ont leur propre variante du même piège : elles n'émettent pas
+`UNIT_POWER_UPDATE` mais `RUNE_POWER_UPDATE`, parce que chacune a son temps de
+recharge. Leur valeur, elle, se lit bien par `UnitPower` — c'est le nombre de
+runes prêtes.
+
+---
+
+## Les teintes de ressource sont publiées, il ne faut pas les recopier
+
+**Symptôme** — sept teintes écrites en dur pour sept ressources, qui ne
+ressemblent plus tout à fait à celles du jeu après un changement d'habillage.
+
+**Cause** — `PowerBarColor` est la table où le client range la couleur de chaque
+ressource. Elle est indexée de **deux** façons — par jeton (`"HOLY_POWER"`) et
+par numéro de type de ressource — sans que rien ne garantisse que les deux
+couvrent la même liste.
+
+**Ce qu'on fait** — `T.PowerColor(token, powerType)` essaie l'un puis l'autre, et
+retient le résultat par jeton : la fonction est appelée depuis un chemin qui bat,
+et rien ne dit que le client rende la même table à chaque fois (règle 7). Elle
+rend `nil` là où il ne publie rien — Arme-tempête, qui n'est pas une ressource —
+et l'appelant se rabat alors sur la couleur de classe.
+
+---
+
 ## Rendre un portrait au client sans lui demander de le redessiner
 
 **Symptôme** — trois cent sept erreurs dans une session d'arène, dans le code du

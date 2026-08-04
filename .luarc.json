@@ -75,6 +75,7 @@
     "NamePlateConstants", "ColorPickerFrame", "C_DurationUtil",
     "UnitSelectionColor", "UnitClassification", "UnitLevel", "UnitEffectiveLevel",
     "UnitClassBase", "UnitIsBossMob", "UnitCanAttack", "UnitIsFriend",
+    "UnitPower", "UnitPowerMax", "PowerBarColor",
     "UnitThreatSituation", "GetSpecializationRole",
     "UnitExists", "UnitIsPlayer", "UnitIsUnit", "UnitClass", "UnitGUID",
     "RAID_CLASS_COLORS", "C_ClassColor", "C_Item", "ITEM_QUALITY_COLORS",

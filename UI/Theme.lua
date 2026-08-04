@@ -449,6 +449,60 @@ T.SIZE = {
     MARKER_SCALE_MIN = 0.5,
     MARKER_SCALE_MAX = 2.5,
 
+    -- Rangée de ressource de classe : points de combo, puissance sacrée, chi,
+    -- fragments d'âme, runes, cumuls d'Arme-tempête.
+    --
+    -- **Des cases, pas une jauge.** Ce qu'on suit ici se compte sur les doigts et
+    -- se dépense par unités entières : une barre continue oblige à estimer une
+    -- longueur pour retrouver un nombre qu'on avait déjà. Cinq cases se comptent
+    -- sans les compter.
+    --
+    -- Les cases sont plus **larges** que hautes, comme le sont les segments d'une
+    -- barre de ressource du jeu : à hauteur égale, des carrés se lisent comme une
+    -- rangée d'icônes, et une rangée d'icônes se cherche des vignettes.
+    RESOURCE_CELL_W   = 34,
+    RESOURCE_CELL_H   = 22,
+    RESOURCE_GAP      = 3,
+
+    -- Épaisseur du liseré sombre qui borde chaque case. C'est lui qui sépare deux
+    -- cases pleines voisines : sans lui, la rangée redevient la barre continue
+    -- qu'on ne voulait pas.
+    RESOURCE_EDGE     = 1,
+
+    -- Bornes des curseurs de taille. Le plancher est la case encore distinguable
+    -- de sa voisine, le plafond celle au-delà de laquelle la rangée devient une
+    -- deuxième barre d'action.
+    RESOURCE_CELL_MIN = 8,
+    RESOURCE_CELL_MAX = 80,
+    RESOURCE_GAP_MAX  = 20,
+
+    -- Plafond de cases **construites**. Une frame ne se détruit pas (règle 7) :
+    -- on bâtit une fois ce plafond, et chaque ressource n'en montre que ce qu'il
+    -- lui faut. Douze laisse de la marge sur la plus fournie qu'on connaisse — les
+    -- dix cumuls d'Arme-tempête — sans qu'une extension à venir oblige à y revenir.
+    RESOURCE_MAX_CELLS = 12,
+
+    -- Nombre de cases de l'aperçu quand le personnage n'a aucune ressource à
+    -- cases. Cinq : c'est ce qu'ont les points de combo et les fragments d'âme,
+    -- donc la rangée la plus courante.
+    RESOURCE_PREVIEW_CELLS = 5,
+
+    -- Corps du nombre posé sur la rangée, en proportion de la hauteur d'une case.
+    -- Il ne se règle pas séparément : un nombre au corps fixe se perd dans une
+    -- rangée agrandie et déborde d'une rangée réduite. Les deux bornes sont des
+    -- garde-fous, pas des mesures — elles ne mordent qu'aux extrêmes des curseurs.
+    RESOURCE_TEXT_RATIO = 0.7,
+    RESOURCE_TEXT_MIN   = 8,
+    RESOURCE_TEXT_MAX   = 32,
+
+    -- De combien la rangée descend sous le centre de l'écran à la première
+    -- ouverture. Ce n'est pas une position définitive — elle se déplace à la
+    -- souris — mais le centre exact de l'écran est le pire endroit possible pour
+    -- une pièce qu'on découvre : elle y couvre le personnage. Cent quatre-vingts
+    -- unités la posent entre lui et les barres d'action, là où le jeu met déjà
+    -- les siennes.
+    RESOURCE_DROP = 180,
+
     -- Repères des paliers d'une clé, posés sur la barre de chrono du client.
     --
     -- Huit pixels de large sur dix de haut, **cadrés en haut** de la barre. Deux
@@ -628,6 +682,13 @@ T.TIMING = {
     PLATE_AURA_CYCLE = 15,
     PLATE_AURA_STEP  = 3,
 
+    -- Cadence de l'aperçu de la rangée de ressource : une case de plus toutes
+    -- les six dixièmes, puis on repart de zéro. Assez lent pour qu'on voie
+    -- chaque palier se franchir — c'est précisément ce que l'aperçu doit montrer,
+    -- la teinte qui change à partir de X cases —, assez rapide pour qu'on ne
+    -- l'attende pas en réglant la position.
+    RESOURCE_PREVIEW = 0.6,
+
     HOVER         = 0.1,   -- sondage de la fenêtre survolée, pendant qu'un
                             -- modificateur est tenu. Assez court pour que le
                             -- capteur de molette paraisse instantané, assez long
@@ -706,6 +767,14 @@ local FONT_CANDIDATES = {
     -- Compteur de cumuls d'une aura de la rangée de l'addon. À contour, comme
     -- tout nombre posé sur une image.
     PLATE_STACK  = { "NumberFontNormalSmall", "GameFontHighlightSmall" },
+
+    -- Nombre posé sur la rangée de ressource. À contour, pour la même raison que
+    -- partout ailleurs : il s'écrit **par-dessus** des cases dont la teinte est
+    -- au choix du joueur, et un chiffre sans contour disparaît dès qu'elle est
+    -- claire. Son corps, lui, suit la hauteur des cases (voir
+    -- `T.ResourceTextSize`) — d'où une police de départ moyenne plutôt que petite.
+    RESOURCE     = { "NumberFont_Outline_Med", "NumberFontNormalSmall",
+                     "GameFontNormalSmall" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
     LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },
@@ -855,6 +924,24 @@ T.COLOR = {
 T.COLOR.TIER_TWO   = T.COLOR.DISABLED
 T.COLOR.TIER_THREE = T.COLOR.FRAME_GOLD
 
+-- Teintes **de départ** de la rangée de ressource de classe. Comme celles des
+-- barres de nom, elles se changent ensuite dans la page du module : ce qui est
+-- décidé ici, c'est ce que le joueur trouve en arrivant.
+--
+--   remplissage → l'accent de l'addon, et seulement pour qui choisit une teinte
+--                 à lui. Le mode par défaut prend celle **du jeu** (voir
+--                 `T.PowerColor`), qui est déjà celle à laquelle un joueur
+--                 reconnaît des points de combo d'une puissance sacrée ;
+--   palier      → l'or de l'habillage, le même que le palier d'une clé mythique.
+--                 Il y veut dire « c'est celui-ci qu'on regarde », et il veut
+--                 dire exactement la même chose ici : à partir de X cases, la
+--                 rangée dit qu'il y a de quoi dépenser.
+--
+-- Les deux **diffèrent** volontairement : un palier de la couleur du
+-- remplissage se lirait comme un réglage qui ne marche pas.
+T.COLOR.RESOURCE_FILL  = T.COLOR.ACCENT
+T.COLOR.RESOURCE_ALERT = T.COLOR.FRAME_GOLD
+
 -- -------------------------------------------------------------------------
 --  Barres de nom
 -- -------------------------------------------------------------------------
@@ -970,6 +1057,21 @@ T.ALPHA = {
     -- dégradé lui-même, qui s'éteint vers les deux bords — la baisser ici pâlirait le
     -- repère entier au lieu d'adoucir ses bords.
     KEY_TIER        = 1.00,
+
+    -- Case **vide** de la rangée de ressource : la même teinte que les pleines,
+    -- presque éteinte. Une case vide teintée d'un gris à elle ferait deux
+    -- vocabulaires dans une même rangée — « plein » et « autre chose » — là où on
+    -- veut lire une seule échelle, dont une partie est allumée. C'est aussi ce
+    -- que fait le jeu sur ses propres segments de ressource.
+    --
+    -- Assez basse pour que le compte se lise d'un coup d'œil, assez haute pour
+    -- que la rangée entière reste visible quand elle est vide : c'est elle qui
+    -- dit **où** la rangée se trouve quand il n'y a rien dedans.
+    RESOURCE_EMPTY  = 0.22,
+
+    -- Liseré des cases. Pleine : c'est le noir qui les sépare, et un noir dilué
+    -- laisse deux cases pleines se toucher.
+    RESOURCE_EDGE   = 1.00,
 }
 
 -- =========================================================================
@@ -1298,6 +1400,59 @@ function T.ClassColor(class)
     return color
 end
 
+--- jeton de ressource -> sa couleur, ou `false` si le client n'en publie pas.
+local powerColors = {}
+
+--- Teinte que le **client** donne à une ressource, ou `nil` s'il n'en a pas.
+---
+--- `PowerBarColor` est sa table : les points de combo y sont rouges, la
+--- puissance sacrée dorée, le chi vert, les fragments d'âme violets. On la lit
+--- plutôt que de recopier sept teintes — c'est le même parti pris que les
+--- couleurs de classe, et pour la même raison : un joueur qui reconnaît une
+--- ressource à sa couleur la reconnaîtra dans celle du jeu ou dans aucune.
+---
+--- Elle est indexée de deux façons, par jeton (« HOLY_POWER ») et par numéro de
+--- type de ressource, sans que rien ne garantisse que les deux couvrent la même
+--- liste : on essaie donc l'un puis l'autre.
+---
+--- Le résultat est retenu par jeton : la fonction est appelée sur un chemin qui
+--- bat — une ressource se dépense plusieurs fois par seconde — et rien ne dit
+--- que le client rende la même table à chaque fois (règle 7).
+---@param token? string
+---@param powerType? number
+---@return ColorMixin|nil
+function T.PowerColor(token, powerType)
+    local key = token or powerType
+    if key == nil then return nil end
+
+    local cached = powerColors[key]
+    if cached ~= nil then return cached or nil end
+
+    local source = PowerBarColor
+    local entry  = type(source) == "table"
+                   and ((token and source[token]) or (powerType and source[powerType]))
+                   or nil
+
+    local color
+    if type(entry) == "table" and type(entry.r) == "number" then
+        color = CreateColor(entry.r, entry.g, entry.b)
+    end
+
+    powerColors[key] = color or false
+    return color
+end
+
+--- Corps du nombre posé sur une rangée de ressource, d'après la hauteur d'une
+--- case. Voir `T.SIZE.RESOURCE_TEXT_RATIO` pour le pourquoi de la proportion.
+---@param cellHeight? number
+---@return number
+function T.ResourceTextSize(cellHeight)
+    local size = (cellHeight or T.SIZE.RESOURCE_CELL_H) * T.SIZE.RESOURCE_TEXT_RATIO
+    if size < T.SIZE.RESOURCE_TEXT_MIN then return T.SIZE.RESOURCE_TEXT_MIN end
+    if size > T.SIZE.RESOURCE_TEXT_MAX then return T.SIZE.RESOURCE_TEXT_MAX end
+    return size
+end
+
 --- Couleur du thème sous la forme que la base de réglages sait ranger.
 ---
 --- Un `ColorMixin` porte des méthodes : rangé tel quel dans le SavedVariables,
@@ -1310,6 +1465,26 @@ end
 function T.ColorTable(color)
     local r, g, b = color:GetRGB()
     return { r = r, g = g, b = b }
+end
+
+--- Réciproque : une couleur rangée en base, rendue sous la forme que le reste du
+--- code manipule.
+---
+--- Elle est **relue comme une donnée venue d'ailleurs** : le sélecteur du client
+--- l'a écrite, mais elle a passé la nuit sur le disque et le SavedVariables
+--- s'édite à la main. Trois nombres ou rien — un repli vaut mieux qu'un cadre
+--- peint avec une chaîne de caractères.
+---@param stored any
+---@param fallback ColorMixin
+---@return ColorMixin
+function T.ColorFrom(stored, fallback)
+    if type(stored) == "table" then
+        local r, g, b = stored.r, stored.g, stored.b
+        if type(r) == "number" and type(g) == "number" and type(b) == "number" then
+            return CreateColor(r, g, b)
+        end
+    end
+    return fallback
 end
 
 --- Mesure que le client donne à ses barres d'infos, ou le repli fourni.

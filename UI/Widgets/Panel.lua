@@ -2,12 +2,13 @@
 --  Bshamel UI — UI/Widgets/Panel.lua
 --  Petit panneau posé à même l'écran, déplaçable à la souris.
 --
---  Trois pièces de l'addon vivent en dehors de la fenêtre d'options : le suivi
---  des résurrections de combat, la barre de marqueurs et le rappel de file. Elles
---  ont toutes le même besoin — un fond, une bordure, un titre facultatif, et une
---  position que le joueur pose une fois pour toutes. Écrire trois fois ce socle
---  donnerait trois marges et trois façons de retenir une position ; il vit donc
---  ici, et chaque pièce n'écrit que ce qui la distingue.
+--  Plusieurs pièces de l'addon vivent en dehors de la fenêtre d'options : le
+--  suivi des résurrections de combat, la barre de marqueurs, le rappel de file et
+--  la rangée de ressource de classe. Elles ont toutes le même besoin — un fond,
+--  une bordure, un titre facultatif, et une position que le joueur pose une fois
+--  pour toutes. Écrire quatre fois ce socle donnerait quatre marges et quatre
+--  façons de retenir une position ; il vit donc ici, et chaque pièce n'écrit que
+--  ce qui la distingue.
 --
 --  **Une position est un décalage de centre à centre**, jamais un ancrage. C'est
 --  la même règle que pour les fenêtres du client (voir `UI/Move.lua` et

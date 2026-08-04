@@ -859,4 +859,62 @@ BUI:RegisterLocale("frFR", {
     ["Control"]                        = "témoin",
     ["Tokens"]                         = "jetons",
     ["Aura diagnostic unavailable"]    = "Le module Barres d'infos n'est pas actif.",
+
+    -- Ressource de classe (Modules/ClassResource.lua)
+    ["Class resource"]                 = "Ressource de classe",
+    ["Class resource notice"] =
+        "Une case par point de la ressource que compte votre spécialisation : points de "
+        .. "combo, puissance sacrée, chi, fragments d'âme, charges des arcanes, essence, "
+        .. "runes ou cumuls d'Arme-tempête. La rangée choisit la bonne quand vous changez "
+        .. "de spécialisation, et reste cachée sur un personnage qui n'en a aucune.",
+    ["Show resource bar"]              = "Afficher la rangée",
+    ["Show resource bar tip"] =
+        "Ajoute une rangée de cases que vous placez vous-même. Elle ne remplace rien : le "
+        .. "jeu continue d'afficher sa propre ressource sous le personnage.",
+    ["Resource preview"]               = "Aperçu",
+    ["Resource preview tip"] =
+        "Remplit la rangée toute seule, case après case : vous la placez et vous voyez le "
+        .. "changement de teinte se produire, sans attendre un combat.",
+    ["Lock resource bar"]              = "Verrouiller la position",
+    ["Lock resource bar tip"]          = "La rangée ne se déplace plus à la souris.",
+
+    ["Resource shape"]                 = "Forme",
+    ["Resource cell width"]            = "Largeur d'une case",
+    ["Resource cell width tip"]        = "Largeur d'une seule case.",
+    ["Resource cell height"]           = "Hauteur d'une case",
+    ["Resource cell height tip"]       = "Hauteur d'une seule case.",
+    ["Resource cell gap"]              = "Écart entre les cases",
+    ["Resource cell gap tip"] =
+        "Espace entre deux cases. À zéro elles se touchent, séparées par leur seul liseré.",
+    ["Resource cells per row"]         = "Cases par rangée",
+    ["Resource cells per row tip"] =
+        "Plie la rangée après ce nombre de cases. À cinq, les dix cumuls d'Arme-tempête "
+        .. "deviennent deux rangées de cinq. Zéro garde tout d'un tenant. Une rangée qui "
+        .. "ne se remplit pas reste calée à gauche, dans l'ordre où les cases se remplissent.",
+    ["Resource count"]                 = "Afficher le nombre",
+    ["Resource count tip"]             = "Écrit le compte courant au milieu de la rangée.",
+    ["Hide empty resource"]            = "Masquer quand c'est vide",
+    ["Hide empty resource tip"] =
+        "La rangée disparaît tant que vous n'avez rien et revient au premier point. "
+        .. "L'aperçu la garde visible dans tous les cas.",
+
+    ["Resource colours"]               = "Couleurs",
+    ["Resource colour source"]         = "Couleur des cases pleines",
+    ["Resource colour source tip"]     = "D'où vient la teinte d'une case pleine.",
+    ["Game resource colour"]           = "Celle du jeu",
+    ["Class colour"]                   = "Celle de la classe",
+    ["Custom colour"]                  = "La vôtre",
+    ["Resource fill colour"]           = "Teinte choisie",
+    ["Resource fill colour tip"]       = "Couleur d'une case pleine.",
+    ["Resource fill colour needs custom"] =
+        "Utilisée seulement quand la couleur des cases pleines est « La vôtre ».",
+    ["Resource threshold"]             = "Changer de couleur à partir de",
+    ["Resource threshold tip"] =
+        "À partir de ce nombre de points, toute la rangée prend la teinte ci-dessous. "
+        .. "Zéro éteint le mécanisme.",
+    ["Resource threshold colour"]      = "Couleur au-delà du palier",
+    ["Resource threshold colour tip"] =
+        "Teinte que prend la rangée une fois le nombre ci-dessus atteint.",
+    ["Resource threshold colour needs threshold"] =
+        "Choisissez d'abord un palier.",
 })
