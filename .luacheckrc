@@ -113,7 +113,7 @@ read_globals = {
     -- globale absente vaut `nil`, ce qui est exactement le test de capacité
     -- voulu (CLAUDE.md règle 1).
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
-    "CharacterFrame",
+    "CharacterFrame", "InspectFrame",
     -- Cinématiques. Trois choses distinctes s'y cachent et ne s'arrêtent pas
     -- pareil : le film, la vraie cinématique et la **scène en jeu**, dont
     -- l'annulation est conditionnée à un geste matériel (voir

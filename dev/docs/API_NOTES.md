@@ -787,6 +787,35 @@ ne trouve rien du tout et tout paraît enchanté.
 
 ---
 
+## La même lecture vaut pour l'inspection, sauf le niveau d'objet
+
+Tout le tableau ci-dessus part d'un **lien**, et `GetInventoryItemLink(unit, slot)`
+en rend un pour n'importe quelle unité inspectée : enchantement, châsses, gemmes,
+rang d'amélioration et classe d'objet se lisent donc à l'identique sur quelqu'un
+d'autre. `C_TooltipInfo.GetInventoryItem(unit, slot)` prend lui aussi l'unité, ce
+qui couvre le noyau du vide.
+
+**La seule exception est le niveau d'objet.** `ItemLocation` ne sait désigner que
+l'inventaire du joueur : `CreateFromEquipmentSlot` y renvoie toujours à
+`"player"`, quelle que soit l'unité regardée — il n'y a pas d'argument d'unité à
+lui passer. Pour une autre unité il reste `C_Item.GetDetailedItemLevelInfo(link)`,
+qui lit les identifiants de bonus du lien. C'est ce que le serveur envoie de
+l'inspection, donc il n'y a rien de plus juste à lire.
+
+Trois points de mise en œuvre :
+
+- `Blizzard_InspectUI` est **chargé à la demande** : `InspectFrame` et ses
+  boutons `Inspect<Nom>Slot` n'existent pas au démarrage. La construction se
+  diffère à `ADDON_LOADED` ;
+- l'unité regardée est `InspectFrame.unit`, et c'est en général `"target"`. Elle
+  se **relit à chaque passage** plutôt que de se retenir : le client suit
+  lui-même les changements de cible tant que la fenêtre est ouverte ;
+- l'équipement arrive par `INSPECT_READY`, c'est-à-dire après coup. Les données
+  d'objet, elles, peuvent arriver plus tard encore — `GET_ITEM_INFO_RECEIVED` à
+  cadence lâche est le rattrapage, exactement comme pour la fiche du joueur.
+
+---
+
 ## `GetItemStats` compte les châsses **totales**, pas les vides
 
 **Symptôme** — malgré son nom, la clé `EMPTY_SOCKET_PRISMATIC` ne vaut pas zéro

@@ -18,6 +18,12 @@
 --  les manques donne une fiche qui a l'air correcte dès qu'une lecture échoue :
 --  l'absence de rouge ne se distingue plus de l'absence d'information.
 --
+--  La même chose vaut pour la fiche d'**inspection**, et c'est la même fiche :
+--  mêmes emplacements, même disposition, même question — « qu'est-ce qui
+--  manque ? ». Les réglages sont donc les mêmes aussi : allumer le niveau
+--  d'objet l'allume des deux côtés. Un jeu de cases à cocher par fiche ferait
+--  régler deux fois un seul geste de lecture.
+--
 --  Réversibilité (règle 6) : rien n'est modifié sur les cadres du client. Le
 --  module **ajoute** une frame par emplacement et la cache à la désactivation ;
 --  la fiche redevient alors exactement celle de Blizzard.
@@ -227,12 +233,13 @@ end
 ---
 --- `C_TooltipInfo` et non une infobulle cachée : il rend des **données**, donc
 --- sans créer la moindre frame.
+---@param unit string
 ---@param slotID integer
 ---@return boolean
-local function hasVoidCore(slotID)
+local function hasVoidCore(unit, slotID)
     if not (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) then return false end
 
-    local data = C_TooltipInfo.GetInventoryItem("player", slotID)
+    local data = C_TooltipInfo.GetInventoryItem(unit, slotID)
     if not data then return false end
 
     -- Les champs d'une ligne ne sont peuplés qu'après ce passage : sans lui,
@@ -268,19 +275,34 @@ end
 
 --- Niveau d'objet réel de la pièce équipée.
 ---
---- Par l'emplacement et non par le lien : c'est le seul chemin qui tienne compte
---- de la mise à l'échelle. Un objet de bas niveau monté par une affinité ou une
---- pièce de raid mise à l'échelle affiche sinon le niveau écrit dans son lien,
---- qui n'est pas celui que le personnage porte.
+--- Pour le joueur, par l'emplacement et non par le lien : c'est le seul chemin
+--- qui tienne compte de la mise à l'échelle. Un objet de bas niveau monté par
+--- une affinité ou une pièce de raid mise à l'échelle affiche sinon le niveau
+--- écrit dans son lien, qui n'est pas celui que le personnage porte.
+---
+--- Pour quelqu'un d'autre, ce chemin n'existe pas : `ItemLocation` ne sait
+--- désigner que l'inventaire du joueur. Il reste le lien, qui porte les
+--- identifiants de bonus et donc le niveau effectif de la pièce — c'est ce que
+--- le serveur envoie de l'inspection, et il n'y a rien de plus juste à lire.
+---@param unit string
 ---@param slotID integer
+---@param link string
 ---@return integer|nil
-local function itemLevel(slotID)
-    if not (ItemLocation and C_Item and C_Item.GetCurrentItemLevel) then return nil end
+local function itemLevel(unit, slotID, link)
+    if unit == "player" and ItemLocation and C_Item and C_Item.GetCurrentItemLevel then
+        local location = ItemLocation:CreateFromEquipmentSlot(slotID)
+        if location and C_Item.DoesItemExist and C_Item.DoesItemExist(location) then
+            local level = C_Item.GetCurrentItemLevel(location)
+            if level and level > 0 then return level end
+        end
+    end
 
-    local location = ItemLocation:CreateFromEquipmentSlot(slotID)
-    if not (location and C_Item.DoesItemExist and C_Item.DoesItemExist(location)) then return nil end
+    local read = (C_Item and C_Item.GetDetailedItemLevelInfo) or GetDetailedItemLevelInfo
+    if not read then return nil end
 
-    return C_Item.GetCurrentItemLevel(location)
+    local level = read(link)
+    if not level or level <= 0 then return nil end
+    return level
 end
 
 --- Rang d'amélioration, sous la forme « 6/8 ».
@@ -521,42 +543,76 @@ end
 --  Bandeaux
 -- =========================================================================
 
---- { id, name, info } pour chaque emplacement, construit une fois.
-local slots = {}
+--- Les deux fiches, décrites de la même façon.
+---
+--- Elles ne diffèrent que par trois choses : le préfixe de leurs boutons, le
+--- cadre qui les porte, et l'unité qu'elles montrent. Tout le reste — les seize
+--- emplacements, la disposition des colonnes, la lecture de chaque pièce — est
+--- commun, et c'est pour ça que cette table existe plutôt qu'un second module.
+---
+--- La fiche d'inspection vit dans un addon **chargé à la demande** : son cadre
+--- et ses boutons n'existent pas au démarrage, d'où le champ `addon` et la
+--- construction différée.
+local SHEETS = {
+    {
+        prefix = "Character",
+        slots  = {},
+        Frame  = function() return CharacterFrame end,
+        Unit   = function() return "player" end,
+    },
+    {
+        prefix = "Inspect",
+        addon  = "Blizzard_InspectUI",
+        slots  = {},
+        Frame  = function() return InspectFrame end,
+        -- Le cadre publie l'unité qu'il montre, et c'est en général « target ».
+        -- On la relit à chaque passage plutôt que de la retenir : le client
+        -- suit lui-même les changements de cible pendant que la fenêtre est
+        -- ouverte, et une unité retenue montrerait l'équipement de quelqu'un
+        -- que la fiche n'affiche plus.
+        Unit   = function()
+            local unit = InspectFrame and InspectFrame.unit
+            if unit and UnitExists(unit) then return unit end
+            return nil
+        end,
+    },
+}
 
 --- Construit une colonne par emplacement. Rend `false` tant que la fiche du
 --- client n'est pas là — elle peut être chargée à la demande.
 ---
 --- La position se pose ici, une fois pour toutes : elle ne dépend que du nom de
 --- l'emplacement, donc d'aucune mesure, donc d'aucun moment.
+---@param sheet table
 ---@return boolean
-local function buildSlots()
-    if #slots > 0 then return true end
-    if not (CharacterFrame and GetInventorySlotInfo) then return false end
+local function buildSlots(sheet)
+    if #sheet.slots > 0 then return true end
+    if not (sheet.Frame() and GetInventorySlotInfo) then return false end
 
     for i = 1, #SLOT_NAMES do
         local name   = SLOT_NAMES[i]
-        local button = _G["Character" .. name]
+        local button = _G[sheet.prefix .. name]
         local slotID = GetInventorySlotInfo(name)
 
         if button and slotID then
             local info = W.SlotInfo(button)
             if info then
                 info:SetPlacement(PLACEMENT[name] or "RIGHT")
-                slots[#slots + 1] = { id = slotID, name = name, info = info }
+                sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
         end
     end
 
-    return #slots > 0
+    return #sheet.slots > 0
 end
 
 --- Relit un emplacement et repeint son bandeau.
 ---@param mod table
 ---@param slot table
-local function updateSlot(mod, slot)
+---@param unit string
+local function updateSlot(mod, slot, unit)
     local info = slot.info
-    local link = GetInventoryItemLink("player", slot.id)
+    local link = GetInventoryItemLink(unit, slot.id)
 
     if not link then
         info:Clear()
@@ -565,7 +621,7 @@ local function updateSlot(mod, slot)
 
     -- ---- niveau d'objet, sur l'icône -------------------------------------
     if mod:Get("showItemLevel") then
-        local level = itemLevel(slot.id)
+        local level = itemLevel(unit, slot.id, link)
         if level then
             local quality = C_Item and C_Item.GetItemQualityByID and C_Item.GetItemQualityByID(link)
             info:SetLevel(tostring(level), T.ItemQualityColor(quality))
@@ -602,23 +658,41 @@ local function updateSlot(mod, slot)
     end
 
     if mod:Get("showVoidCore") and expectsVoidCore(slot.name, link) then
-        info:AddBadge(L["Void core badge"], T.StatusColor(hasVoidCore(slot.id)))
+        info:AddBadge(L["Void core badge"], T.StatusColor(hasVoidCore(unit, slot.id)))
     end
 
     info:EndBadges()
 end
 
---- Repeint les seize bandeaux.
----@param mod table
-local function updateAll(mod)
-    if not buildSlots() then return end
-
-    for i = 1, #slots do
-        BUI.safecall(updateSlot, mod, slots[i])
+--- Vide les seize bandeaux d'une fiche.
+---@param sheet table
+local function clearSheet(sheet)
+    for i = 1, #sheet.slots do
+        sheet.slots[i].info:Clear()
     end
 end
 
---- Repeint, mais seulement si la fiche est ouverte.
+--- Repeint les seize bandeaux d'une fiche.
+---@param mod table
+---@param sheet table
+local function updateAll(mod, sheet)
+    if not buildSlots(sheet) then return end
+
+    -- Une fenêtre d'inspection ouverte sur personne : la cible a disparu, ou le
+    -- serveur n'a pas encore répondu. On vide plutôt que de laisser en place ce
+    -- qu'on avait lu de quelqu'un d'autre — un nombre périmé se croit.
+    local unit = sheet.Unit()
+    if not unit then
+        clearSheet(sheet)
+        return
+    end
+
+    for i = 1, #sheet.slots do
+        BUI.safecall(updateSlot, mod, sheet.slots[i], unit)
+    end
+end
+
+--- Repeint les fiches ouvertes, et elles seules.
 ---
 --- Le garde sur la visibilité est ce qui rend le reste bon marché : l'équipement
 --- change surtout quand la fiche est fermée, et rien de ce qu'on affiche n'a de
@@ -626,9 +700,13 @@ end
 local function repaint()
     local mod = BUI.Modules:Get(MODULE)
     if not (mod and mod:IsEnabled()) then return end
-    if not (CharacterFrame and CharacterFrame:IsShown()) then return end
 
-    updateAll(mod)
+    for i = 1, #SHEETS do
+        local frame = SHEETS[i].Frame()
+        if frame and frame:IsShown() then
+            updateAll(mod, SHEETS[i])
+        end
+    end
 end
 
 --- Groupé (règle 7) : équiper une pièce émet coup sur coup
@@ -715,12 +793,31 @@ local function startBankWatch()
     end)
 end
 
---- Montre ou cache tous les bandeaux d'un coup.
+--- Montre ou cache tous les bandeaux des deux fiches d'un coup.
 ---@param shown boolean
 local function setShown(shown)
-    for i = 1, #slots do
-        slots[i].info:SetShown(shown)
+    for i = 1, #SHEETS do
+        local sheet = SHEETS[i]
+        for j = 1, #sheet.slots do
+            sheet.slots[j].info:SetShown(shown)
+        end
     end
+end
+
+--- Guette l'ouverture d'une fiche.
+---
+--- C'est le seul moment où ces bandeaux servent, et le seul où l'on soit sûr que
+--- ses boutons existent. `U.GuardedHook` ne pose le hook qu'une fois et le rend
+--- inerte quand le module s'éteint (règle 6) : appeler cette fonction deux fois
+--- sur la même fiche ne coûte rien.
+---@param sheet table
+---@param guard fun(): boolean
+local function watchSheet(sheet, guard)
+    local frame = sheet.Frame()
+    if not frame then return end
+
+    buildSlots(sheet)
+    U.GuardedHook(frame, "Show", refresh, guard)
 end
 
 -- =========================================================================
@@ -802,15 +899,41 @@ BUI:RegisterModule(MODULE, {
     },
 
     OnEnable = function(self)
-        if buildSlots() then setShown(true) end
+        local guard = function() return self:IsEnabled() end
 
-        -- La fiche s'ouvre : c'est le seul moment où ces bandeaux servent, et le
-        -- seul où l'on peut mesurer de quel côté les poser.
-        if CharacterFrame then
-            U.GuardedHook(CharacterFrame, "Show", refresh, function()
-                return self:IsEnabled()
-            end)
+        for i = 1, #SHEETS do
+            watchSheet(SHEETS[i], guard)
         end
+        setShown(true)
+
+        -- La fiche d'inspection vit dans un addon chargé à la demande : elle
+        -- n'existe pas encore ici, et la première inspection est aussi le
+        -- premier moment où l'on peut lui accrocher quoi que ce soit.
+        self:RegisterEvent("ADDON_LOADED", function(_, addonName)
+            for i = 1, #SHEETS do
+                if SHEETS[i].addon == addonName then
+                    watchSheet(SHEETS[i], guard)
+                    setShown(true)
+                    refresh()
+                end
+            end
+        end)
+
+        -- L'équipement d'un autre joueur est une réponse du serveur : il n'y a
+        -- rien à lire avant, et tout à relire après. Le client suit par ailleurs
+        -- la cible pendant que la fenêtre reste ouverte — il repeuple les mêmes
+        -- emplacements avec quelqu'un d'autre, et sans ce rattrapage les
+        -- bandeaux gardent l'équipement du précédent jusqu'à la réponse.
+        --
+        -- Les deux sont conditionnés à la fenêtre d'inspection, et pas seulement
+        -- au regroupement : `INSPECT_READY` tombe pour l'inspection de
+        -- n'importe qui, la nôtre comme celle d'un autre addon, et changer de
+        -- cible n'a aucune raison de faire relire les seize pièces du joueur.
+        local onInspect = function()
+            if InspectFrame and InspectFrame:IsShown() then refresh() end
+        end
+        self:RegisterEvent("INSPECT_READY",         onInspect)
+        self:RegisterEvent("PLAYER_TARGET_CHANGED", onInspect)
 
         self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED", refresh)
         self:RegisterEvent("PLAYER_ENTERING_WORLD",    refresh)
@@ -822,8 +945,12 @@ BUI:RegisterModule(MODULE, {
         -- jusqu'à la prochaine ouverture de la fiche.
         self:RegisterEvent("GET_ITEM_INFO_RECEIVED",   refreshLater)
 
+        -- L'unité inspectée aussi : elle change d'équipement sous nos yeux, et
+        -- c'est le seul signal qui le dise pendant que la fenêtre reste ouverte.
         self:RegisterEvent("UNIT_INVENTORY_CHANGED", function(_, unit)
-            if unit == "player" then refresh() end
+            if unit == "player" or unit == (InspectFrame and InspectFrame.unit) then
+                refresh()
+            end
         end)
 
         -- Conteneurs. `BAG_UPDATE_DELAYED` est le regroupé du client : il tombe
@@ -852,8 +979,7 @@ BUI:RegisterModule(MODULE, {
         -- Ouvrir un sac ne change rien à son contenu : aucun événement ne
         -- l'annonce. Ces quatre fonctions sont les seules portes d'entrée, et
         -- `U.GuardedHook` les rend inertes quand le module s'éteint (règle 6).
-        local guard = function() return self:IsEnabled() end
-        local BAG_TOGGLES = { "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags" }
+        local BAG_TOGGLES ={ "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags" }
         for i = 1, #BAG_TOGGLES do
             if type(_G[BAG_TOGGLES[i]]) == "function" then
                 U.GuardedHook(BAG_TOGGLES[i], refreshBags, guard)

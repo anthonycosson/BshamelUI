@@ -15,6 +15,18 @@
   bienfait répond encore quand on retourne le voir. Rien ne se déclenche hors
   d'un donjon.
 
+- **Fiche de personnage — les mêmes bandeaux à l'inspection.** Niveau d'objet,
+  rang d'amélioration, enchantement, châsses et noyau du vide s'affichent
+  désormais aussi sur la fenêtre d'inspection, emplacement par emplacement.
+
+  **Aucun nouveau réglage** : ce sont exactement les mêmes cases de la page
+  *Fiche de personnage*. C'est la même fiche et la même question — « qu'est-ce
+  qui manque ? » — et deux jeux de cases feraient régler deux fois un seul geste
+  de lecture.
+
+  La fenêtre suit la cible tant qu'elle reste ouverte ; les bandeaux la suivent,
+  et se vident plutôt que de garder l'équipement du joueur précédent.
+
 ## 0.7.12 — 2026-08-04
 
 ### Retiré
