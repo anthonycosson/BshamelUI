@@ -42,6 +42,16 @@
   joueur. Une rangée qui ne se remplit pas reste calée à gauche, dans l'ordre où
   les cases se remplissent.
 
+- **Barres d'infos — une case « Noms aux couleurs de classe »**, dans une
+  nouvelle section *Alliés* qui regroupe les quatre réglages du nom allié.
+  **Cochée par défaut** : l'addon posait déjà cette couleur, sans le dire ni
+  offrir de l'arrêter. La case ne change donc le comportement de personne, elle
+  le rend visible et refusable. Décochée, le jeu reprend la main de bout en bout
+  — on ne lui repose pas une teinte, on s'abstient d'en poser une.
+
+  Elle ne vaut que pour les alliés : le nom d'un adversaire garde toujours la
+  couleur de sa classe, parce que c'est là que la classe est l'information.
+
 - **Fiche de personnage — les mêmes bandeaux à l'inspection.** Niveau d'objet,
   rang d'amélioration, enchantement, châsses et noyau du vide s'affichent
   désormais aussi sur la fenêtre d'inspection, emplacement par emplacement.
@@ -67,6 +77,13 @@
   L'addon ne rend désormais que les portraits qu'il a réellement remplacés, et
   il les rend sans entrer dans le code du jeu — il refait le même choix que lui,
   icône de classe ou visage, selon les mêmes réglages.
+
+- **Barres d'infos — le nom des alliés reprend la couleur de classe en mode
+  « nom seul ».** L'addon la posait déjà, et le jeu l'effaçait aussitôt : une
+  plaque réduite à son nom n'a plus de barre de vie, et le client y repeint le
+  nom par des chemins qui ne passent par aucun des deux points où l'on
+  repeignait. On se branche désormais sur l'écriture elle-même, ce qui rend le
+  chemin sans importance.
 
 ## 0.7.12 — 2026-08-04
 

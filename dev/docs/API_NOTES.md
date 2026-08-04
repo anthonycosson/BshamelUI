@@ -3348,6 +3348,48 @@ et l'appelant se rabat alors sur la couleur de classe.
 
 ---
 
+## Une plaque réduite à son nom repeint ce nom hors des deux passages obligés
+
+**Symptôme** — les noms des joueurs alliés restent au vert du client alors que
+l'addon leur pose une couleur de classe. Le même code teinte pourtant très bien
+le nom d'un adversaire. La différence : les plaques alliées sont en **nom seul**
+(`nameplateShowOnlyNameForFriendlyPlayerUnits`).
+
+**Cause** — les deux fonctions que le module coiffe pour repeindre,
+`CompactUnitFrame_UpdateHealthColor` et `CompactUnitFrame_UpdateName`, sont les
+passages obligés d'une plaque **ordinaire**. Une plaque réduite à son nom n'a
+plus de barre de vie, et le client y réécrit la couleur du nom par d'autres
+chemins — mise en place du cadre, changement d'options du pilote. Notre teinte
+est donc bien posée, puis effacée dans le même souffle.
+
+Le symptôme est trompeur pour cette raison : il ressemble à « le réglage ne
+s'applique pas » alors que le réglage s'est appliqué, et il oriente vers la
+lecture de la classe — `UnitClass`, les valeurs secrètes — au lieu de la question
+posée, qui est *qui a écrit en dernier*.
+
+**Ce qu'on fait** — on se branche sur l'**écriture** au lieu du chemin qui y
+mène : `U.GuardedHook` sur `SetTextColor` **et** `SetVertexColor` de la chaîne de
+texte du nom. Quel que soit le chemin par lequel le client repasse, il finit là.
+
+C'est exactement le remède déjà employé pour le corps des textes de plaque
+(`hookTextSize`, sur `SetFont` et `SetFontObject`), et pour la même raison : on
+ne court pas après le client, on se met là où il écrit. Les deux méthodes sont
+guettées dans les deux cas — n'en prendre qu'une laisse passer la moitié des
+remises à zéro.
+
+Deux précautions qui vont avec :
+
+- **un drapeau de réentrance** (`settingNameColor`), sans quoi notre propre
+  écriture rappelle le hook ;
+- **l'unité se lit au déclenchement**, pas à la pose. Les chaînes de texte d'une
+  plaque sortent d'un pool et servent tour à tour à plusieurs unités : un hook
+  qui retiendrait l'unité connue au moment de sa pose teindrait le nom du
+  suivant avec la classe du précédent. Le hook sort d'ailleurs tout de suite si
+  l'unité n'est pas une plaque suivie — c'est ce qui écarte la plaque
+  personnelle.
+
+---
+
 ## Rendre un portrait au client sans lui demander de le redessiner
 
 **Symptôme** — trois cent sept erreurs dans une session d'arène, dans le code du

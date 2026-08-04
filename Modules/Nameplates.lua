@@ -2081,23 +2081,122 @@ local function healthColor(mod, unit)
     return T.COLOR.WHITE:GetRGB()
 end
 
---- Couleur d'un nom.
+--- Couleur d'un nom, ou `nil` quand il ne faut pas y toucher.
 ---
 --- Le blanc pour tout le monde, la couleur de classe pour un joueur : ce sont
 --- les deux teintes que le client emploie lui-même. On les repose plutôt que de
 --- relire la sienne : une lecture suivie d'une écriture s'empilerait sur
 --- elle-même passage après passage.
+---
+--- **Le nom d'un allié est le seul des deux qui se règle**, et c'est le seul qui
+--- ait un choix à offrir : un adversaire, on le lit pour savoir sur quoi taper —
+--- sa classe *est* l'information, et la lui retirer ne rendrait service à
+--- personne. Un allié, on lit son nom pour le reconnaître, et le vert que le jeu
+--- lui donne est une réponse défendable.
+---
+--- `nil` veut dire « le client garde la main de bout en bout » — pas « blanc ».
+--- C'est ce qui rend la case réversible sans qu'on ait à retenir une teinte
+--- d'origine : on ne rend pas une couleur, on s'abstient d'en poser une.
+---@param mod table
 ---@param unit string
----@return number r, number g, number b
-local function nameColor(unit)
-    if U.IsTrue(UnitIsPlayer(unit)) then
-        local _, class = UnitClass(unit)
-        if not U.IsSecret(class) then
-            local color = T.ClassColor(class)
-            if color then return color:GetRGB() end
-        end
+---@return number? r, number? g, number? b
+local function nameColor(mod, unit)
+    if not U.IsTrue(UnitIsPlayer(unit)) then
+        return T.COLOR.WHITE:GetRGB()
+    end
+
+    if isFriendlyPlayer(unit) and not mod:Get("allyClassColor") then
+        return nil
+    end
+
+    local _, class = UnitClass(unit)
+    if not U.IsSecret(class) then
+        local color = T.ClassColor(class)
+        if color then return color:GetRGB() end
     end
     return T.COLOR.WHITE:GetRGB()
+end
+
+--- Redemande au client de peindre le nom de chaque plaque suivie.
+---
+--- Sert quand la case des couleurs alliées s'éteint : notre teinte est déjà
+--- posée, et le client ne repeindra pas de lui-même avant le prochain changement
+--- d'état de la plaque — le nom resterait à la couleur de classe qu'on vient
+--- justement de refuser. On ne repose donc pas une teinte, on **rappelle sa
+--- fonction** : lui seul sait ce qu'il aurait dessiné là, réaction comprise
+--- (même raison que `release`).
+---
+--- Pas de garde de récursion : notre peinture n'appelle jamais cette
+--- fonction-ci, et le hook de peinture qu'elle déclenche ne fait qu'écrire une
+--- couleur. La boucle ne se referme nulle part.
+local function releaseNames()
+    if type(CompactUnitFrame_UpdateName) ~= "function" then return end
+
+    for _, plate in pairs(plates) do
+        local unitFrame = unitFrameOf(plate)
+        if unitFrame and unitFrame.unit then
+            BUI.safecall(CompactUnitFrame_UpdateName, unitFrame)
+        end
+    end
+end
+
+--- Sommes-nous en train de poser une couleur de nom ? Même rôle que
+--- `settingFont` pour le corps : le hook ci-dessous guette l'écriture, donc il
+--- rappellerait la nôtre.
+local settingNameColor = false
+
+--- Repose notre teinte chaque fois que le client écrit la sienne sur un nom.
+---
+--- **C'est ce qui tient le mode « nom seul ».** Les deux fonctions coiffées plus
+--- bas (`hookPainting`) sont les passages obligés d'une plaque *ordinaire* ; une
+--- plaque alliée réduite à son nom n'a plus de barre de vie, et le client y
+--- repeint le nom par un chemin qui ne passe par aucune des deux. La couleur de
+--- classe était donc posée, puis effacée dans le même souffle — un symptôme qui
+--- ressemble à « le réglage ne marche pas » alors que le réglage a marché.
+---
+--- Se brancher sur l'**écriture** au lieu du chemin qui y mène ne demande de
+--- connaître aucun de ces chemins : quel qu'il soit, il finit ici. C'est le même
+--- parti pris que `hookTextSize` pour le corps des textes, et il est là pour la
+--- même raison — on ne court pas après le client, on se met là où il écrit.
+---
+--- Les deux écritures, parce qu'une chaîne de texte en a deux : `SetTextColor`
+--- est celle qu'on emploie, `SetVertexColor` celle que le client emploie sur ses
+--- plaques. N'en guetter qu'une laisserait passer la moitié des remises à zéro.
+---
+--- Le hook lit l'unité **au moment où il se déclenche**, et non celle qu'on
+--- connaissait en le posant : les chaînes de texte d'une plaque sortent d'un
+--- pool et servent tour à tour à plusieurs unités.
+---@param fontString table
+---@param unitFrame table
+local function hookNameColor(fontString, unitFrame)
+    local guard = function()
+        local mod = module()
+        return mod ~= nil and mod:IsEnabled()
+    end
+
+    local function repost(self)
+        if settingNameColor then return end
+
+        local mod = module()
+        if not mod then return end
+
+        local unit = unitFrame.unit or unitFrame.displayedUnit
+        if type(unit) ~= "string" then return end
+
+        -- Une plaque qu'on ne suit pas n'est pas à nous : la plaque personnelle
+        -- du joueur, ou une plaque déjà retirée dont le cadre traîne encore.
+        if not plates[unit] then return end
+
+        local r, g, b = nameColor(mod, unit)
+        if not r then return end
+
+        settingNameColor = true
+        pcall(self.SetTextColor, self, r, g, b)
+        settingNameColor = false
+    end
+
+    U.GuardedHook(fontString, "SetTextColor",   repost, guard)
+    U.GuardedHook(fontString, "SetVertexColor", repost, guard)
 end
 
 -- =========================================================================
@@ -2973,8 +3072,18 @@ local function paint(mod, plate, unit)
 
     local name = unitFrame.name
     if type(name) == "table" and type(name.SetTextColor) == "function" then
-        local r, g, b = nameColor(unit)
-        pcall(name.SetTextColor, name, r, g, b)
+        -- Posé à chaque peinture, comme le hook du corps des textes : la pose
+        -- est idempotente (`U.GuardedHook` ne pose qu'une fois par cadre), et
+        -- attendre un autre moment reviendrait à attendre qu'une plaque
+        -- repasse ici après coup.
+        hookNameColor(name, unitFrame)
+
+        local r, g, b = nameColor(mod, unit)
+        if r then
+            settingNameColor = true
+            pcall(name.SetTextColor, name, r, g, b)
+            settingNameColor = false
+        end
     end
 
     applyBarTexture(mod, unitFrame, isTarget)
@@ -3242,6 +3351,12 @@ BUI:RegisterModule(MODULE, {
         -- « le nom seul », et il se règle sans rendre le reste du texte.
         resizeAllyName = false,
         allyNameSize   = T.SIZE.PLATE_TEXT,
+
+        -- Cochée, contrairement au reste de la page. Ce n'est pas une exception
+        -- de confort : c'est ce que l'addon faisait déjà, sans le dire ni offrir
+        -- de l'arrêter. La case ne change donc le comportement de personne — elle
+        -- se contente de le rendre visible et refusable.
+        allyClassColor = true,
 
         -- Le corps de la barre de sorts est le sien : le client ecrit plus petit
         -- dessus, et partir de sa valeur rend l'interrupteur sans effet tant
@@ -3524,10 +3639,15 @@ BUI:RegisterModule(MODULE, {
             step     = 1,
             disabled = requires("resizeText"),
         },
-        -- Le client sait faire lui-même « le nom seul », mais son menu ne le
-        -- propose nulle part : la case vit donc ici, en dernières lignes de la
-        -- barre de vie — c'est elle qu'elle remplace. Le corps du nom allié
-        -- l'accompagne : c'est tout ce qui reste d'une plaque en mode nom seul.
+        -- Le nom des alliés, en dernières lignes de la barre de vie : c'est elle
+        -- que le mode « nom seul » remplace, et c'est là qu'on vient le chercher.
+        -- Le client sait le faire lui-même, mais son menu ne le propose nulle
+        -- part — d'où la case ici plutôt que dans la section des réglages du jeu.
+        --
+        -- Les deux lignes en retrait ne veulent rien dire sans elle : c'est en
+        -- nom seul que le corps du nom compte, puisqu'il ne reste que lui. La
+        -- couleur, elle, vaut pour toute plaque alliée et reste donc au bord.
+        { type = "header", text = L["Allies"] },
         blizzToggle("nameplateShowOnlyNameForFriendlyPlayerUnits",
             L["Allied names only"], L["Allied names only tip"]),
         {
@@ -3547,6 +3667,12 @@ BUI:RegisterModule(MODULE, {
             step     = 1,
             indent   = true,
             disabled = requires("resizeAllyName"),
+        },
+        {
+            type    = "toggle",
+            key     = "allyClassColor",
+            text    = L["Class colored ally names"],
+            tooltip = L["Class colored ally names tip"],
         },
 
         -- La barre de sorts suit immédiatement la barre de vie : c'est l'autre
@@ -4159,6 +4285,14 @@ BUI:RegisterModule(MODULE, {
         -- de lire »).
         if key == "marker" and not self:Get("marker") then
             restoreMarkerAlpha()
+        end
+
+        -- La couleur de classe refusée : le repassage qui suit s'abstiendra d'en
+        -- poser une, mais celle qui est déjà là resterait jusqu'au prochain
+        -- changement d'état de la plaque. On redemande donc au client de peindre
+        -- **avant** ce repassage, et il garde la main.
+        if key == "allyClassColor" and not self:Get("allyClassColor") then
+            releaseNames()
         end
 
         -- Les rangées d'auras se réancreront au repassage : un réglage vient de

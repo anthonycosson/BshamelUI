@@ -843,7 +843,10 @@ BUI:RegisterLocale("frFR", {
     ["Allies"]                         = "Alliés",
     ["Class colored ally names"]       = "Noms aux couleurs de classe",
     ["Class colored ally names tip"] =
-        "Les noms des joueurs alliés prennent la couleur de leur classe.",
+        "Les noms des joueurs alliés prennent la couleur de leur classe, y compris quand "
+        .. "leur plaque est réduite à son nom. Décochée, le jeu les colore comme il "
+        .. "l'entend — en vert, le plus souvent. Le nom d'un adversaire garde toujours la "
+        .. "couleur de sa classe : là, c'est la classe qui est l'information.",
     ["Aura scale"]                     = "Taille des auras",
     ["Aura scale tip"] =
         "Taille des icônes d'aura, en pourcentage de celle du jeu.",

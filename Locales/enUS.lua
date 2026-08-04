@@ -817,7 +817,11 @@ BUI:RegisterLocale("enUS", {
     ["Ally name size"]                 = "Allied name size (12 by default)",
     ["Allies"]                         = "Allies",
     ["Class colored ally names"]       = "Class-coloured names",
-    ["Class colored ally names tip"]   = "Friendly player names take their class colour.",
+    ["Class colored ally names tip"] =
+        "Allied players' names take their class colour, including when their nameplate is "
+        .. "down to its name alone. Unchecked, the game colours them the way it wants — "
+        .. "green, most of the time. An enemy's name always takes their class colour: "
+        .. "there, the class is the point.",
     ["Aura scale"]                     = "Aura size",
     ["Aura scale tip"]                 = "Size of the aura icons, as a percentage of the game's own.",
 
