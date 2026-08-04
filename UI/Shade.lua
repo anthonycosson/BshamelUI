@@ -452,8 +452,11 @@ local function collectFrom(frame, out, seen, rules)
     -- qu'il porte. Protégé comme le reste du classement — un doute se tranche en
     -- ne touchant pas, ce qui laisse au pire une lueur claire sur une barre
     -- sombre, là où l'erreur inverse éteint le signal.
-    local known, signals = pcall(signalsFrame, frame)
-    if not known or signals then return end
+    -- Noms distincts de ceux du classement texture par texture, plus bas : les
+    -- deux tests se ressemblent, et une fermeture imbriquée qui réemploie les
+    -- mêmes noms masque la variable de son englobante.
+    local frameKnown, frameSignals = pcall(signalsFrame, frame)
+    if not frameKnown or frameSignals then return end
 
     -- Ce que ce cadre affiche pour informer, et non pour décorer : le
     -- remplissage de sa barre (vie, ressource, temps restant) et ses textures
