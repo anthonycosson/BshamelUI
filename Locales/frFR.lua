@@ -327,6 +327,16 @@ BUI:RegisterLocale("frFR", {
         .. "chuchotement. Votre propre !keys obtient une réponse lui aussi, ce qui est la façon "
         .. "la plus simple de vérifier que le réglage marche.",
     ["No keystone"]                    = "Pas de clé.",
+    ["Dungeon dialogue"]               = "Dialogues de donjon",
+    ["Auto dungeon gossip"]            = "Parler aux PNJ à votre place",
+    ["Auto dungeon gossip tip"] =
+        "Clique pour vous la seule ligne d'un dialogue dans un donjon : les prisonniers à libérer "
+        .. "à la Fosse de Saron, le bienfait distribué au début de l'Académie Algeth'ar.",
+    ["Dungeon gossip notice"] =
+        "Uniquement dans un donjon, uniquement un dialogue qui propose une seule ligne et aucune "
+        .. "quête, et chaque ligne n'est cliquée qu'une fois par conversation. Une quête reste à "
+        .. "la page « Quêtes », un vrai choix reste à vous. Attention : un dialogue qui lance une "
+        .. "rencontre n'a lui aussi qu'une seule ligne — parler à ce PNJ la déclenche aussitôt.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Recherche de groupe",

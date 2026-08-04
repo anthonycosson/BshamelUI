@@ -2,6 +2,19 @@
 
 ## Non publié
 
+### Ajouté
+- **Clés mythiques — parler aux PNJ du donjon.** Un nouveau réglage clique pour
+  vous la seule ligne d'un dialogue ouvert dans un donjon : les prisonniers à
+  libérer à la Fosse de Saron, le bienfait distribué au début de l'Académie
+  Algeth'ar.
+
+  **Une seule ligne, ou rien.** Dès qu'un PNJ propose un choix, le choix reste
+  au joueur ; un dialogue qui porte une quête reste à la page *Quêtes* et à ses
+  propres réglages. Chaque ligne n'est cliquée qu'une fois par conversation, ce
+  qui interdit la boucle sur un menu qui se rouvre — et le PNJ qui redonne un
+  bienfait répond encore quand on retourne le voir. Rien ne se déclenche hors
+  d'un donjon.
+
 ## 0.7.12 — 2026-08-04
 
 ### Retiré

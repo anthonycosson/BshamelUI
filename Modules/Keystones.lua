@@ -1,11 +1,13 @@
 -- =========================================================================
 --  Bshamel UI — Modules/Keystones.lua
---  La clé mythique : la montrer, et la poser.
+--  La clé mythique : la montrer, la poser, et parler aux PNJ du donjon.
 --
---  Deux gestes qu'on répète à chaque donjon. Répondre à « !keys » demande de
+--  Trois gestes qu'on répète à chaque donjon. Répondre à « !keys » demande de
 --  retrouver sa clé dans ses sacs et de la coller dans le chat ; poser la clé
 --  demande d'ouvrir ses sacs devant le socle alors qu'on n'a rien d'autre à y
---  faire.
+--  faire ; et la moitié des donjons ouvre une fenêtre de dialogue à une seule
+--  ligne — les prisonniers de la Fosse de Saron, le bienfait du début
+--  d'Académie Algeth'ar — dont le seul contenu est « oui ».
 --
 --  **La clé se cherche dans les sacs, pas dans une API.** Le client publie bien
 --  le donjon et le niveau (`C_MythicPlus`), mais pas le **lien** : or c'est le
@@ -195,6 +197,74 @@ local function slotKeystone(mod)
 end
 
 -- =========================================================================
+--  Parler aux PNJ du donjon
+-- =========================================================================
+
+--- Le seul type d'instance où on clique à la place du joueur. Un donjon, et
+--- rien d'autre : c'est là que le dialogue est une formalité imposée à cinq
+--- personnes pressées. Dehors, une fenêtre de dialogue est une conversation, et
+--- personne n'a demandé qu'on la mène.
+local DUNGEON_INSTANCE = "party"
+
+--- Options déjà cliquées depuis l'ouverture de la fenêtre courante.
+---
+--- **C'est le garde anti-boucle.** Chaque sélection provoque un nouveau
+--- `GOSSIP_SHOW` (voir `dev/docs/API_NOTES.md`, « Boucle de dialogue avec
+--- `GOSSIP_SHOW` ») : une ligne qui se contente de rouvrir le même menu se
+--- recliquerait indéfiniment. Une ligne ne se clique donc qu'une fois par
+--- conversation — enchaîner deux sous-menus différents reste possible, se
+--- répéter non. La table se vide à la fermeture de la fenêtre, si bien que le
+--- PNJ qui redonne un bienfait répond encore quand on retourne le voir.
+local gossipClicked = {}
+
+--- Sommes-nous dans un donjon ?
+--- Le type d'instance arrive du client : il se teste après `U.IsSecret`, jamais
+--- avant (CLAUDE.md, et la note « Un booléen secret ne se teste pas »).
+---@return boolean
+local function inDungeon()
+    local _, instanceType = IsInInstance()
+    if U.IsSecret(instanceType) then return false end
+    return instanceType == DUNGEON_INSTANCE
+end
+
+--- Ce dialogue porte-t-il une quête ?
+---
+--- Si oui, il ne nous regarde pas : les quêtes ont leur propre page, avec ses
+--- propres réglages. Un joueur qui a allumé le dialogue de donjon sans allumer
+--- l'acceptation automatique n'a pas demandé qu'on prenne une quête à sa place.
+---@return boolean
+local function gossipHasQuests()
+    local available = C_GossipInfo.GetAvailableQuests and C_GossipInfo.GetAvailableQuests()
+    if available and #available > 0 then return true end
+
+    local active = C_GossipInfo.GetActiveQuests and C_GossipInfo.GetActiveQuests()
+    return (active and #active > 0) == true
+end
+
+--- **Une seule ligne, ou rien.** Dès qu'un PNJ propose un choix, le choix est
+--- au joueur : c'est la même règle que la récompense de quête à choix multiple.
+--- Ce qui reste — « Nous sommes prêts », « Libère-moi », « Prends ce bienfait » —
+--- est exactement ce qu'on venait cliquer.
+---@param mod table
+local function autoGossip(mod)
+    if not mod:Get("autoDungeonGossip") then return end
+    if not (C_GossipInfo and C_GossipInfo.GetOptions and C_GossipInfo.SelectOption) then return end
+    if not inDungeon() then return end
+    if gossipHasQuests() then return end
+
+    local options = C_GossipInfo.GetOptions()
+    if not options or #options ~= 1 then return end
+
+    -- L'identifiant sert de clé dans `gossipClicked` : le garde de secret vient
+    -- donc avant l'indexation, pas après.
+    local id = options[1].gossipOptionID
+    if id == nil or U.IsSecret(id) or gossipClicked[id] then return end
+
+    gossipClicked[id] = true
+    C_GossipInfo.SelectOption(id)
+end
+
+-- =========================================================================
 --  Déclaration du module
 -- =========================================================================
 
@@ -206,6 +276,7 @@ BUI:RegisterModule(MODULE, {
     defaults = {
         answerKeysRequest = false,
         autoSlotKeystone  = false,
+        autoDungeonGossip = false,
     },
 
     options = {
@@ -223,6 +294,15 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Auto slot keystone tip"],
         },
         { type = "description", text = L["Keystones notice"] },
+
+        { type = "header", text = L["Dungeon dialogue"] },
+        {
+            type    = "toggle",
+            key     = "autoDungeonGossip",
+            text    = L["Auto dungeon gossip"],
+            tooltip = L["Auto dungeon gossip tip"],
+        },
+        { type = "description", text = L["Dungeon gossip notice"] },
     },
 
     OnEnable = function(self)
@@ -247,9 +327,14 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN", function()
             slotKeystone(self)
         end)
+
+        self:RegisterEvent("GOSSIP_SHOW",   function() autoGossip(self) end)
+        -- La conversation est finie : ce qu'on a cliqué dedans ne vaut plus rien.
+        self:RegisterEvent("GOSSIP_CLOSED", function() wipe(gossipClicked) end)
     end,
 
     OnDisable = function()
         wipe(answered)
+        wipe(gossipClicked)
     end,
 })

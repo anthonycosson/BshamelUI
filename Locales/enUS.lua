@@ -330,6 +330,16 @@ BUI:RegisterLocale("enUS", {
         .. "instance and guild chat are listened to, never a whisper. Your own !keys is answered "
         .. "too, which is the simplest way to check the setting works.",
     ["No keystone"]                    = "No keystone.",
+    ["Dungeon dialogue"]               = "Dungeon dialogue",
+    ["Auto dungeon gossip"]            = "Talk to dungeon NPCs for you",
+    ["Auto dungeon gossip tip"] =
+        "Clicks the single line of dialogue for you inside a dungeon: the prisoners to free in "
+        .. "Pit of Saron, the buff handed out at the start of Algeth'ar Academy.",
+    ["Dungeon gossip notice"] =
+        "Only inside a dungeon, only a dialogue that offers exactly one line and no quest, and "
+        .. "each line is clicked once per conversation. A quest is left to the Quest page, a real "
+        .. "choice is left to you. Beware that a dialogue which starts an encounter also has a "
+        .. "single line: talking to that NPC starts it right away.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Group finder",
