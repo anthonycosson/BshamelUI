@@ -3537,3 +3537,52 @@ demandant à l'addon ce qu'il avait touché. C'est ce que fait `/bui glow`, et
 c'est pourquoi il reste livré. Une texture de signal assombrie ne ressemble pas à
 une texture assombrie : elle ressemble à une lueur qui manque, et le symptôme
 désigne toujours le déclencheur plutôt que le voile.
+
+---
+
+## Un secret se fait passer, il ne se lit pas — et le repli comptait plus que le garde
+
+**Symptôme** — les noms alliés prennent bien la couleur de classe en extérieur,
+et virent au **blanc** en donjon, en raid et en champ de bataille.
+
+**Ce qui a mis sur la voie** — c'est un blanc, pas le vert du client. Une teinte
+qu'on ne pose pas laisse celle du jeu ; un blanc franc ne peut venir que de nous.
+Le symptôme désignait donc notre repli, pas notre garde.
+
+**Cause** — en instance et en PvP, le client protège l'identité des unités :
+`UnitClass` rend une chaîne **secrète**. Le garde `U.IsSecret` la voyait très
+bien et sortait — comme il devait — mais tombait alors sur
+`return T.COLOR.WHITE:GetRGB()`, écrasant la teinte du client par un blanc qui
+n'informe personne.
+
+Le garde était juste, le repli était mal placé. C'est une erreur plus discrète
+qu'un secret lu par mégarde : rien ne lève, rien n'apparaît dans BugSack, et la
+fonctionnalité marche partout où l'on pense à la tester.
+
+**Ce qu'on fait** — deux choses, et la seconde vaut au-delà d'ici :
+
+- **on tente le passage.** Un secret traverse l'addon, il ne s'y arrête pas :
+  `T.SecretClassColor` remet le jeton tel quel à `C_ClassColor.GetClassColor`,
+  qui a le droit de le comprendre, et rend trois nombres qu'on ne regarde jamais.
+  Le tout sous `pcall` — un refus ne coûte rien ;
+- **on ne se replie plus sur une couleur.** Quand le passage échoue, on
+  s'abstient de peindre et le client garde la main de bout en bout.
+
+**Le drapeau de retour n'est pas une commodité.** Les nombres rendus peuvent être
+secrets à leur tour, et un secret ne se **teste** pas plus qu'il ne se lit :
+`if r then` lève exactement comme `if flag then` sur un booléen secret. La
+fonction rend donc un booléen **qu'on a fabriqué soi-même**, seul de la chaîne
+que l'appelant ait le droit de regarder. Même raison pour le `found` interne :
+`r == nil` ne conviendrait pas, comparer un secret lève aussi.
+
+**La leçon générale** — face à une valeur protégée, il y a trois conduites et
+elles ne se valent pas : la lire (lève), s'en passer par un repli (silencieux, et
+souvent pire que rien), ou la **faire circuler** jusqu'à une API du client.
+La troisième est celle que le mécanisme prévoit ; la deuxième est celle qu'on
+écrit sans y penser.
+
+**Ce qui reste limité** — la couleur de classe des adversaires sur la barre de
+vie (`pvpClassColor`) a la même contrainte. Elle dégrade proprement, elle :
+faute de classe lisible, `healthColor` retombe sur `UnitSelectionColor`,
+c'est-à-dire sur la teinte du client. Pas de blanc, donc pas de symptôme — mais
+pas de couleur de classe en instance non plus.

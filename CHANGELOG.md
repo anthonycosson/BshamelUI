@@ -2,6 +2,17 @@
 
 ## Non publié
 
+### Corrigé
+- **Barres d'infos — le nom des alliés ne vire plus au blanc en instance.** En
+  donjon, en raid et en champ de bataille, le jeu protège l'identité des unités :
+  la classe ne se lit pas. L'addon posait alors un blanc, qui recouvrait la
+  teinte que le jeu aurait mise — un repli plus gênant que l'absence de réglage.
+
+  Le jeton de classe est désormais **transmis au jeu sans être lu**, ce qu'il
+  autorise : la couleur de classe s'affiche donc aussi en instance. Et s'il
+  refuse ce passage, l'addon ne pose plus rien du tout et lui laisse la main de
+  bout en bout.
+
 ## 0.7.14 — 2026-08-04
 
 ### Ajouté

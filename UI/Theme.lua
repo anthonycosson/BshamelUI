@@ -1453,6 +1453,43 @@ function T.ResourceTextSize(cellHeight)
     return size
 end
 
+--- Couleur d'une classe **qu'on n'a pas le droit de lire**.
+---
+--- En instance et en PvP, le client protège l'identité des unités : `UnitClass`
+--- rend une chaîne *secrète*. `T.ClassColor` ne peut rien en faire — son cache
+--- l'indexerait, et indexer avec un secret lève.
+---
+--- On ne la lit donc pas : on la **fait passer** telle quelle à la fonction du
+--- client, qui a le droit de la comprendre, et on rend les trois nombres sans
+--- jamais les regarder. C'est tout l'esprit du mécanisme : un secret traverse
+--- l'addon, il ne s'y arrête pas.
+---
+--- **Le drapeau de retour n'est pas une commodité.** Les trois nombres rendus
+--- peuvent être secrets à leur tour, et un secret ne se teste pas plus qu'il ne
+--- se lit — `if r then` lèverait chez l'appelant. Il lui faut donc une réponse
+--- qu'il ait le droit de regarder, et c'est ce booléen-là.
+---
+--- Tout est sous `pcall` : si le client refuse le passage, on rend `false` et
+--- l'appelant s'abstient de peindre. Ne rien poser vaut mieux qu'un repli qui
+--- écrase la teinte du client par une couleur qui n'informe personne.
+---@param class any  jeton de classe, éventuellement secret
+---@return boolean ok, number? r, number? g, number? b
+function T.SecretClassColor(class)
+    if not (C_ClassColor and C_ClassColor.GetClassColor) then return false end
+
+    -- `found` est **notre** booléen, pas celui du client : c'est le seul de la
+    -- chaîne qu'on ait le droit de tester. Un `r == nil` ne conviendrait pas —
+    -- comparer un secret lève au même titre que le lire.
+    local ok, found, r, g, b = pcall(function()
+        local color = C_ClassColor.GetClassColor(class)
+        if not color then return false end
+        return true, color:GetRGB()
+    end)
+
+    if not ok or not found then return false end
+    return true, r, g, b
+end
+
 --- Couleur du thème sous la forme que la base de réglages sait ranger.
 ---
 --- Un `ColorMixin` porte des méthodes : rangé tel quel dans le SavedVariables,

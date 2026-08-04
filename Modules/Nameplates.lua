@@ -2094,27 +2094,43 @@ end
 --- personne. Un allié, on lit son nom pour le reconnaître, et le vert que le jeu
 --- lui donne est une réponse défendable.
 ---
---- `nil` veut dire « le client garde la main de bout en bout » — pas « blanc ».
---- C'est ce qui rend la case réversible sans qu'on ait à retenir une teinte
---- d'origine : on ne rend pas une couleur, on s'abstient d'en poser une.
+--- `false` veut dire « le client garde la main de bout en bout » — pas
+--- « blanc ». C'est ce qui rend la case réversible sans qu'on ait à retenir une
+--- teinte d'origine : on ne rend pas une couleur, on s'abstient d'en poser une.
+---
+--- **Le premier retour est un drapeau, et il le faut.** En instance et en PvP,
+--- les trois nombres peuvent être *secrets* : ils traversent l'addon jusqu'à
+--- `SetTextColor` sans qu'on ait le droit de les lire, et `if r then` chez
+--- l'appelant lèverait. Le drapeau est la seule réponse qu'il puisse regarder.
 ---@param mod table
 ---@param unit string
----@return number? r, number? g, number? b
+---@return boolean paint, number? r, number? g, number? b
 local function nameColor(mod, unit)
     if not U.IsTrue(UnitIsPlayer(unit)) then
-        return T.COLOR.WHITE:GetRGB()
+        return true, T.COLOR.WHITE:GetRGB()
     end
 
     if isFriendlyPlayer(unit) and not mod:Get("allyClassColor") then
-        return nil
+        return false
     end
 
     local _, class = UnitClass(unit)
-    if not U.IsSecret(class) then
-        local color = T.ClassColor(class)
-        if color then return color:GetRGB() end
+
+    -- **Identité protégée : donjon, raid, champ de bataille.** La classe est
+    -- une chaîne secrète, qu'on ne peut ni lire ni indexer. On la fait passer au
+    -- client sans la regarder (voir `T.SecretClassColor`).
+    --
+    -- C'est ici que le nom d'un allié virait au blanc : le garde voyait le
+    -- secret, sortait, et tombait sur le repli du bas. Le repli n'etait pas
+    -- faux en soi — il l'etait a cet endroit, parce qu'un blanc pose vaut moins
+    -- que la teinte que le client aurait mise.
+    if U.IsSecret(class) then
+        return T.SecretClassColor(class)
     end
-    return T.COLOR.WHITE:GetRGB()
+
+    local color = T.ClassColor(class)
+    if color then return true, color:GetRGB() end
+    return true, T.COLOR.WHITE:GetRGB()
 end
 
 --- Redemande au client de peindre le nom de chaque plaque suivie.
@@ -2187,8 +2203,10 @@ local function hookNameColor(fontString, unitFrame)
         -- du joueur, ou une plaque déjà retirée dont le cadre traîne encore.
         if not plates[unit] then return end
 
-        local r, g, b = nameColor(mod, unit)
-        if not r then return end
+        -- Le drapeau et non la couleur : les trois nombres peuvent être secrets,
+        -- et un secret ne se teste pas (voir `nameColor`).
+        local ok, r, g, b = nameColor(mod, unit)
+        if not ok then return end
 
         settingNameColor = true
         pcall(self.SetTextColor, self, r, g, b)
@@ -3078,8 +3096,8 @@ local function paint(mod, plate, unit)
         -- repasse ici après coup.
         hookNameColor(name, unitFrame)
 
-        local r, g, b = nameColor(mod, unit)
-        if r then
+        local ok, r, g, b = nameColor(mod, unit)
+        if ok then
             settingNameColor = true
             pcall(name.SetTextColor, name, r, g, b)
             settingNameColor = false
