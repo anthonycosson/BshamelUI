@@ -3284,3 +3284,72 @@ pas : ce n'est pas nous qui levons, c'est le client, parce que nous l'avons
 réveillé. Il n'y a pas de version prudente de cet appel — la règle reste **on
 n'entre pas dans le code de mise en page du client**, et un template qui le
 réveille en fait partie.
+
+---
+
+## Rendre un portrait au client sans lui demander de le redessiner
+
+**Symptôme** — trois cent sept erreurs dans une session d'arène, dans le code du
+client, sans qu'aucun réglage de la page *Cadres d'unités* n'ait jamais été
+allumé :
+
+```
+Blizzard_UnitFrame/Mainline/UnitFrame.lua:1054: attempt to perform boolean test
+on local 'isMyPlayer' (a secret boolean value, while execution tainted by
+'BshamelUI')
+  UnitFrame_ShouldReplacePortrait
+```
+
+**Cause** — deux fautes qui se multiplient l'une l'autre.
+
+La première est un appel. `restorePortraits` rendait le portrait au client en
+rappelant `UnitFramePortrait_Update`, au motif que lui seul sait s'il aurait
+dessiné un visage ou une icône de classe. Sauf que la façon dont il le sait est
+exactement ce qui casse :
+
+```lua
+function UnitFrame_ShouldReplacePortrait(self)
+    if UnitIsHumanPlayer(self.unit) then
+        local isMyPlayer = UnitIsUnit(self.unit, "player");
+        if isMyPlayer then                       -- ligne 1054
+```
+
+`UnitIsUnit` répond en booléen **secret** dès que l'identité de l'unité est
+protégée — une arène, un champ de bataille. Le client teste ce booléen en
+direct, ce qu'il a parfaitement le droit de faire depuis son propre code ; il
+n'en a plus le droit quand l'exécution est teintée par un addon, et elle l'est
+puisque c'est l'addon qui a lancé l'appel. C'est le même constat que pour
+`UpdateNamePlateOptions` (voir « Appeler le pilote de barres d'infos teinte tout
+ce qu'il touche ») : **on n'entre pas dans le code du client**, et il n'existe
+pas de version prudente de cet appel — ni `pcall`, ni garde, ni moment opportun.
+Ici `BUI.safecall` attrapait bien l'erreur, ce qui l'empêchait de casser le
+passage mais pas de remplir BugSack.
+
+La seconde faute est un compteur. La restitution passait sur les cinq cadres à
+**chaque** rafraîchissement — changement de cible, de focus, de groupe — et pas
+seulement quand l'option venait de s'éteindre. Un joueur qui n'a jamais coché la
+case payait donc cinq appels par changement de cible pour rendre des portraits
+auxquels personne n'avait touché. D'où le compteur à trois cent sept.
+
+**Ce qu'on fait** — les deux, et il faut les deux :
+
+- **on ne rend que ce qu'on a pris.** Une table `painted` retient les cadres sur
+  lesquels l'icône a réellement été posée ; la restitution ne parcourt qu'elle,
+  et la vide. Quand rien n'a été peint, elle ne fait rien du tout ;
+- **on refait le choix du client au lieu de le lui demander.** `replacementAtlas`
+  reprend `UnitFrame_ShouldReplacePortrait` avec des gardes de secret là où il
+  teste en direct, et `SetPortraitTexture` — la fonction qu'il appelle lui-même
+  pour un visage — pose le reste. `U.IsTrue` fait qu'un secret vaut « non » : on
+  retombe alors sur le visage, qui est son défaut.
+
+Le commentaire qui vivait là disait « reposer une texture à la main choisirait à
+sa place ». Il avait raison sur le principe et tort sur la conclusion : la copie
+d'une décision de six lignes se paie une fois par patch, l'appel se paie une fois
+par cadre et par changement de cible.
+
+**La leçon générale** — une restitution est une **transition**, pas un état à
+réaffirmer. Tant qu'elle est écrite comme « à chaque passage, remets tout en
+place », son coût est celui du chemin le plus chaud, et elle s'exécute surtout
+pour des joueurs qui n'ont jamais demandé la fonctionnalité. Retenir ce qu'on a
+modifié coûte une table ; ne pas le retenir coûte un appel dans le code du client
+à chaque battement.

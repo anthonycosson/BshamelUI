@@ -453,6 +453,13 @@ end
 --- notre propre pose ; ce drapeau coupe la boucle.
 local painting = false
 
+--- cadre -> unité qu'il montrait quand on a peint dessus.
+---
+--- **On ne rend que ce qu'on a pris.** Sans cette trace, la restitution repassait
+--- sur les cinq cadres à chaque rafraîchissement, y compris quand l'option n'a
+--- jamais été allumée — c'est-à-dire par défaut, et pour tout le monde.
+local painted = {}
+
 --- Pose l'icône de spécialisation à la place du portrait.
 ---
 --- Les coordonnées de texture sont **remises à plein cadre**. Le client ne pose
@@ -475,21 +482,78 @@ local function paintPortrait(frame, unit)
         pcall(portrait.SetTexCoord, portrait, 0, 1, 0, 1)
     end
     painting = false
+
+    painted[frame] = unit
     return true
 end
 
---- Rend son portrait au client.
+--- Atlas de classe que le client poserait à la place du visage, ou `nil` s'il
+--- montrerait un visage.
 ---
---- On ne le repeint pas nous-mêmes : `UnitFramePortrait_Update` est la fonction
---- qui décide, selon les réglages du joueur, entre un visage et une icône de
---- classe. La rappeler rend exactement ce qu'il aurait dessiné — reposer une
---- texture à la main choisirait à sa place.
-local function restorePortraits()
-    if type(UnitFramePortrait_Update) ~= "function" then return end
+--- C'est la reprise de `UnitFrame_ShouldReplacePortrait`, avec des gardes de
+--- secret là où le client teste en direct. `U.IsTrue` fait qu'un secret vaut
+--- « non » : on retombe alors sur le visage, qui est le défaut du client et le
+--- seul repli honnête quand il refuse de nous dire à qui on parle.
+---@param unit string
+---@return string|nil
+local function replacementAtlas(unit)
+    if type(UnitIsHumanPlayer) ~= "function" then return nil end
+    if not U.IsTrue(UnitIsHumanPlayer(unit)) then return nil end
+    if type(GetClassAtlas) ~= "function" then return nil end
 
-    eachUnitFrame(function(frame)
-        if frame.unit then BUI.safecall(UnitFramePortrait_Update, frame) end
-    end)
+    local cvar = U.IsTrue(UnitIsUnit(unit, "player"))
+                 and "ReplaceMyPlayerPortrait"
+                 or  "ReplaceOtherPlayerPortraits"
+    if U.GetCVar(cvar) ~= "1" then return nil end
+
+    local _, class = UnitClass(unit)
+    if U.IsSecret(class) or type(class) ~= "string" then return nil end
+    return GetClassAtlas(class)
+end
+
+--- Rend son portrait au client, sans entrer dans son code.
+---
+--- **On ne rappelle pas `UnitFramePortrait_Update`, et c'est le point à ne pas
+--- perdre.** Cette fonction demande à `UnitFrame_ShouldReplacePortrait` s'il faut
+--- une icône de classe, qui lit `UnitIsUnit` et **teste le booléen rendu**. Ce
+--- booléen est secret dès que l'identité de l'unité est protégée — une arène, un
+--- champ de bataille — et un secret ne se teste pas depuis une exécution teintée
+--- par un addon : c'est le code du client qui lève, une fois par cadre et par
+--- passage. C'est la règle déjà écrite pour le pilote des barres d'infos : on
+--- n'entre pas dans le code de mise en page du client, et il n'existe pas de
+--- version prudente de cet appel.
+---
+--- On refait donc son choix nous-mêmes, et de la même façon : l'icône de classe
+--- s'il l'aurait posée, le visage sinon. `SetPortraitTexture` est la fonction
+--- qu'il appelle lui-même dans ce dernier cas ; elle ne lit rien de secret.
+---@param frame table
+---@param unit string
+local function repaintPortrait(frame, unit)
+    local portrait = portraitOf(frame)
+    if not portrait then return end
+
+    painting = true
+
+    if type(portrait.SetTexCoord) == "function" then
+        pcall(portrait.SetTexCoord, portrait, 0, 1, 0, 1)
+    end
+
+    local atlas = replacementAtlas(unit)
+    if atlas and type(portrait.SetAtlas) == "function" then
+        pcall(portrait.SetAtlas, portrait, atlas)
+    elseif type(SetPortraitTexture) == "function" then
+        pcall(SetPortraitTexture, portrait, unit, frame.disablePortraitMask)
+    end
+
+    painting = false
+end
+
+--- Rend leur portrait aux seuls cadres sur lesquels on a peint.
+local function restorePortraits()
+    for frame, unit in pairs(painted) do
+        repaintPortrait(frame, unit)
+    end
+    wipe(painted)
 end
 
 ---@param mod table

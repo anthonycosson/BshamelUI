@@ -70,6 +70,7 @@
 
     "TargetFrameToT", "FocusFrameToT", "PartyFrame",
     "UnitFrameHealthBar_Update", "UnitFramePortrait_Update",
+    "UnitIsHumanPlayer", "GetClassAtlas", "SetPortraitTexture",
     "CompactUnitFrame_UpdateHealthColor", "CompactUnitFrame_UpdateName",
     "NamePlateConstants", "ColorPickerFrame", "C_DurationUtil",
     "UnitSelectionColor", "UnitClassification", "UnitLevel", "UnitEffectiveLevel",

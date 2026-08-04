@@ -27,6 +27,20 @@
   La fenêtre suit la cible tant qu'elle reste ouverte ; les bandeaux la suivent,
   et se vident plutôt que de garder l'équipement du joueur précédent.
 
+### Corrigé
+- **Cadres d'unités — des centaines d'erreurs en arène et en champ de
+  bataille**, y compris pour qui n'a jamais allumé un seul réglage de la page.
+  Pour rendre un portrait au jeu, l'addon lui demandait de le redessiner ; et il
+  le lui demandait à chaque changement de cible, même quand il n'avait rien
+  peint dessus — c'est-à-dire par défaut. Or cette fonction du jeu cherche à
+  savoir si l'unité est vous, réponse qu'il refuse de donner là où il protège
+  l'identité des joueurs : appelée depuis un addon, elle lève dans son propre
+  code, une fois par cadre et par changement de cible.
+
+  L'addon ne rend désormais que les portraits qu'il a réellement remplacés, et
+  il les rend sans entrer dans le code du jeu — il refait le même choix que lui,
+  icône de classe ou visage, selon les mêmes réglages.
+
 ## 0.7.12 — 2026-08-04
 
 ### Retiré

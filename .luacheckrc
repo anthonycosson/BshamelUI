@@ -136,6 +136,11 @@ read_globals = {
     -- Cadres d'unités
     "TargetFrameToT", "FocusFrameToT", "PartyFrame",
     "UnitFrameHealthBar_Update", "UnitFramePortrait_Update",
+    -- `UnitFramePortrait_Update` est **coiffée, jamais appelée** : elle teste un
+    -- booléen secret (`UnitIsUnit`) et lève dans le code du client dès qu'on
+    -- l'appelle depuis chez nous. Les trois noms qui suivent sont ce avec quoi on
+    -- refait son travail sans y entrer (voir `dev/docs/API_NOTES.md`).
+    "UnitIsHumanPlayer", "GetClassAtlas", "SetPortraitTexture",
     "UnitExists", "UnitIsPlayer", "UnitIsUnit", "UnitClass", "UnitGUID",
     "RAID_CLASS_COLORS", "C_ClassColor",
 
