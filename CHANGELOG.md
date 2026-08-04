@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.14 — 2026-08-04
+
 ### Ajouté
 - **Clés mythiques — parler aux PNJ du donjon.** Un nouveau réglage clique pour
   vous la seule ligne d'un dialogue ouvert dans un donjon : les prisonniers à
