@@ -332,6 +332,16 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
+    -- `/bui glow` : ce que le mode sombre a fait au cadre sous le curseur. Le
+    -- moteur est hors des modules, comme celui de la minicarte : on l'appelle
+    -- donc directement, sans passer par le registre.
+    if arg == "glow" then
+        if BUI.Shade and BUI.Shade.Diagnose then
+            BUI.safecall(BUI.Shade.Diagnose, BUI.Shade)
+        end
+        return
+    end
+
     -- `/bui blocked` : écrit dans le chat le nom de chaque action refusée par le
     -- client. La fenêtre « action réservée à l'IU de Blizzard » ne le dit pas, et
     -- sans lui il n'y a rien à chercher (voir `BUI:ToggleActionWatch`).

@@ -863,6 +863,15 @@ BUI:RegisterLocale("frFR", {
     ["Tokens"]                         = "jetons",
     ["Aura diagnostic unavailable"]    = "Le module Barres d'infos n'est pas actif.",
 
+    -- Diagnostic `/bui glow` : la prose seulement — les noms de textures sont
+    -- ceux du client, ils ne se traduisent pas.
+    ["Glow diagnostic"] =
+        "Diagnostic du mode sombre : survolez le bouton maintenant. Ses textures "
+        .. "s'écrivent dans trois secondes, et celles que l'addon a assombries sont "
+        .. "signalées.",
+    ["Glow diagnostic nothing"]        = "Il n'y avait rien sous le curseur.",
+    ["Glow diagnostic darkened"]       = "assombrie par l'addon",
+
     -- Ressource de classe (Modules/ClassResource.lua)
     ["Class resource"]                 = "Ressource de classe",
     ["Class resource notice"] =

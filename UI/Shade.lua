@@ -182,6 +182,35 @@ local BORDER_KEYS = { "Border", "IconBorder" }
 --- peint la surface, les huit autres dessinent le cadre.
 local BACKGROUND_KEYS = { "Center", "Bg", "Background" }
 
+--- Éléments dont la texture `Border` n'est pas de l'habillage mais un **signal**.
+---
+--- Sur un bouton d'action, l'habillage est porté par `NormalTexture`, `SlotArt`,
+--- `SlotBackground` et `BorderShadow`. `Border`, elle, reste masquée la plupart
+--- du temps et ne s'affiche que pour **dire** quelque chose : le jeu la montre en
+--- vert pour marquer un objet équipé posé sur la barre — un bijou à effet
+--- utilisable, typiquement.
+---
+--- Le nom trompe, et c'est tout le piège : « bordure » se lit comme de
+--- l'habillage, et rien dans le classement ne distinguait celle-ci d'un cadre de
+--- fenêtre. L'assombrir éteignait le seul repère qui distingue un bijou d'un
+--- sort. Ailleurs — une infobulle, un cadre d'unité — une bordure est bien de
+--- l'habillage, d'où la liste par élément plutôt qu'une règle générale.
+local BORDER_SIGNALS = { actionBars = true }
+
+--- Éléments dont on ne descend pas sous les **boutons**.
+---
+--- Un bouton d'action porte une douzaine de cadres enfants, et pas un seul n'est
+--- de l'habillage : animations d'incantation, réticule de cible, éclat de fin de
+--- temps de recharge, halo d'attaque automatique, balayages. Tous disent quelque
+--- chose, tous étaient assombris — donc éteints —, et plusieurs sont **anonymes**,
+--- si bien qu'aucune liste de noms ne pouvait les rattraper.
+---
+--- On s'arrête donc au bouton : ses propres textures sont teintées, ce qu'il
+--- porte ne l'est pas. Les barres elles-mêmes restent parcourues, elles sont
+--- citées à part dans `FRAMES` — c'est là qu'est l'habillage d'une barre
+--- d'action, jamais sous un bouton.
+local FLAT_BUTTONS = { actionBars = true }
+
 --- Éléments dont on assombrit le contour **sans toucher au fond**.
 ---
 --- Une infobulle est le cas d'école : son fond fait partie de sa lisibilité, le
@@ -266,7 +295,27 @@ local STATE_TEXTURES = {
 --- classé comme habillage — donc assombri, donc éteint au moment précis où il a
 --- quelque chose à dire. Le défaut ne se voit qu'à distance, ce qui explique
 --- qu'il ait tenu.
-local STATE_KEYS = { "OutOfRange" }
+---
+--- Les quatre suivantes sont la même histoire sur un bouton d'action : la lueur
+--- d'un procédé, celle d'un sort suggéré, celle d'un objet prêt à servir. Le
+--- symptôme, lui, était trompeur — **la lueur apparaissait au survol**, puis
+--- s'éteignait à l'usage suivant. C'est la signature d'un signal éteint et non
+--- d'un signal absent : le client repeint la texture quand le curseur passe
+--- dessus, notre passage la rassombrit au coup d'après, et on cherche du côté de
+--- ce qui *déclenche* la lueur alors que le problème est ce qui la couvre.
+local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc" }
+
+--- Fragments de nom d'un **cadre entier** qui signale au lieu de décorer.
+---
+--- Une lueur de procédé n'est pas une texture mais un petit cadre, qui en porte
+--- plusieurs : un départ d'animation, une boucle, parfois un halo. Les écarter
+--- une par une revient à parier qu'on les a toutes nommées, et ce pari se perd à
+--- chaque extension qui en ajoute une.
+---
+--- On s'arrête donc à la porte : le cadre n'est pas descendu du tout. C'est la
+--- même économie que `STATE_TEXTURES` — on écarte par ce que la chose *est*, pas
+--- par la liste de ce qu'elle contient.
+local SIGNAL_FRAMES = { "Glow", "Alert", "Proc", "Highlight", "Assisted" }
 
 ---@param owner table
 ---@param region table
@@ -310,6 +359,24 @@ local function debugName(region)
     local name = ask(region, "GetDebugName")
     if type(name) ~= "string" or secret(name) then return nil end
     return name:match("[^.]+$") or name
+end
+
+--- Ce cadre est-il tout entier un signal ?
+---
+--- Le nom seul, sans clé publiée en secours : un cadre de lueur est porté sous
+--- des noms qui changent d'une extension à l'autre, quand il est publié tout
+--- court. Sans nom lisible on ne perd rien de plus qu'avant — le parcours
+--- descend, et les textures se trient une par une comme auparavant.
+---@param frame table
+---@return boolean
+local function signalsFrame(frame)
+    local name = debugName(frame)
+    if not name then return false end
+
+    for i = 1, #SIGNAL_FRAMES do
+        if name:find(SIGNAL_FRAMES[i], 1, true) then return true end
+    end
+    return false
 end
 
 --- Cette texture dit-elle un état au joueur, plutôt que de décorer ?
@@ -381,6 +448,13 @@ local function collectFrom(frame, out, seen, rules)
     if ask(frame, "IsForbidden") == true then return end
     if ask(frame, "GetObjectType") == "Cooldown" then return end
 
+    -- Un cadre qui n'existe que pour signaler ne se visite pas : ni lui, ni ce
+    -- qu'il porte. Protégé comme le reste du classement — un doute se tranche en
+    -- ne touchant pas, ce qui laisse au pire une lueur claire sur une barre
+    -- sombre, là où l'erreur inverse éteint le signal.
+    local known, signals = pcall(signalsFrame, frame)
+    if not known or signals then return end
+
     -- Ce que ce cadre affiche pour informer, et non pour décorer : le
     -- remplissage de sa barre (vie, ressource, temps restant) et ses textures
     -- d'état. Rien de tout cela ne s'assombrit.
@@ -410,7 +484,11 @@ local function collectFrom(frame, out, seen, rules)
         local known, signals = pcall(signalsState, frame, region)
         if not known or signals then return end
 
+        -- Deux motifs distincts de laisser une bordure tranquille, et ils ne se
+        -- confondent pas : ici on la rhabille nous-mêmes, là elle ne décore pas.
         if rules.reskins and publishedAs(frame, region, BORDER_KEYS) then return end
+        if rules.borderSignals and publishedAs(frame, region, BORDER_KEYS) then return end
+
         if rules.keepBackground and publishedAs(frame, region, BACKGROUND_KEYS) then return end
 
         local ok, kind = pcall(classify, frame, region)
@@ -431,6 +509,10 @@ local function collectFrom(frame, out, seen, rules)
         take(ask(frame, BUTTON_TEXTURES[i]))
     end
 
+    -- Ce que porte un bouton n'est pas son habillage : c'est ce qu'il a à dire.
+    -- On s'arrête ici, après avoir pris ses textures à lui (voir `FLAT_BUTTONS`).
+    if rules.flatButtons and ask(frame, "GetObjectType") == "Button" then return end
+
     for _, child in ipairs(askAll(frame, "GetChildren")) do
         collectFrom(child, out, seen, rules)
     end
@@ -443,6 +525,8 @@ local function rulesFor(element)
     return {
         reskins        = ICON_BORDERS[element] == true,
         keepBackground = KEEP_BACKGROUND[element] == true,
+        borderSignals  = BORDER_SIGNALS[element] == true,
+        flatButtons    = FLAT_BUTTONS[element] == true,
     }
 end
 
@@ -732,4 +816,79 @@ function S:Refresh(element)
     for name, factor in pairs(active) do
         self:Apply(name, factor)
     end
+end
+
+-- =========================================================================
+--  Diagnostic
+-- =========================================================================
+-- `/bui glow` : ce que le mode sombre a fait au bouton sous le curseur.
+--
+-- Il existe pour une raison précise. Une texture de **signal** assombrie ne
+-- ressemble pas à une texture assombrie : elle ressemble à une lueur qui
+-- n'apparaît qu'au survol, ou à une bordure absente. Le symptôme désigne le
+-- déclencheur, jamais le voile (voir `dev/docs/API_NOTES.md`). Reconnaître le cas
+-- de l'extérieur demande de savoir *lequel* des vingt calques d'un bouton porte
+-- la lueur — ce qu'aucune capture d'écran ne dit, et ce que ce fichier sait.
+--
+-- Il ne relève rien qu'on ne relève déjà : `originals` porte l'apparence d'avant
+-- teinte de chaque texture qu'on a touchée. Répondre « celle-ci est à nous » est
+-- une lecture de table, pas une mesure.
+
+--- Trois secondes pour amener le curseur sur le bouton. Taper la commande occupe
+--- la souris : sonder à l'instant même ne rendrait jamais que la fenêtre de chat.
+local DIAGNOSE_DELAY = 3
+
+--- Nom lisible d'une région, ou un repli.
+---@param region table
+---@return string
+local function reportName(region)
+    return debugName(region) or "?"
+end
+
+--- Une ligne par région : son nom, si elle est affichée, et si c'est nous qui
+--- l'avons teintée. C'est la troisième colonne qui répond à la question posée —
+--- les deux premières ne servent qu'à savoir de quelle texture on parle.
+---@param region table
+---@param mine string
+local function reportRegion(region, mine)
+    local shown = ask(region, "IsShown") == true and "" or " (hidden)"
+    local ours  = originals[region] ~= nil and (" <- " .. mine) or ""
+    BUI:Print("  " .. reportName(region) .. shown .. ours)
+end
+
+--- Écrit dans le chat ce que porte le cadre sous le curseur.
+---
+--- On ne descend qu'**un** niveau d'enfants : c'est là que vivent les cadres de
+--- lueur, et l'arbre complet d'un bouton d'action tient sur trente lignes qu'on
+--- ne relit pas. Ce qu'on cherche est un nom, pas un inventaire.
+function S:Diagnose()
+    BUI:Print(ns.L["Glow diagnostic"])
+
+    C_Timer.After(DIAGNOSE_DELAY, function()
+        local focus = GetMouseFoci and GetMouseFoci()[1]
+        if not focus and GetMouseFocus then focus = GetMouseFocus() end
+
+        if type(focus) ~= "table" or type(focus.GetRegions) ~= "function" then
+            BUI:Print(ns.L["Glow diagnostic nothing"])
+            return
+        end
+
+        local mine = ns.L["Glow diagnostic darkened"]
+        BUI:Print(reportName(focus))
+
+        for _, region in ipairs(askAll(focus, "GetRegions")) do
+            if ask(region, "GetObjectType") == "Texture" then
+                reportRegion(region, mine)
+            end
+        end
+
+        for _, child in ipairs(askAll(focus, "GetChildren")) do
+            BUI:Print("  [" .. reportName(child) .. "]")
+            for _, region in ipairs(askAll(child, "GetRegions")) do
+                if ask(region, "GetObjectType") == "Texture" then
+                    reportRegion(region, mine)
+                end
+            end
+        end
+    end)
 end

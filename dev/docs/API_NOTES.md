@@ -3456,3 +3456,84 @@ place », son coût est celui du chemin le plus chaud, et elle s'exécute surtou
 pour des joueurs qui n'ont jamais demandé la fonctionnalité. Retenir ce qu'on a
 modifié coûte une table ; ne pas le retenir coûte un appel dans le code du client
 à chaque battement.
+
+---
+
+## Une lueur qui n'apparaît qu'au survol est une lueur éteinte, pas absente
+
+**Symptôme** — la petite lueur verte que le client pose sur un bijou à effet
+utilisable, dans la barre d'action, ne s'affiche pas. Elle apparaît dès qu'on
+survole le bouton avec le curseur, puis disparaît à la première utilisation.
+
+**Ce que le symptôme fait croire** — que quelque chose *déclenche* la lueur trop
+tard, et qu'il manque un événement à écouter. On cherche alors du côté de ce qui
+l'allume.
+
+**Cause** — c'est l'inverse : la lueur est allumée depuis le début, et on la
+couvre. Le mode sombre classait sa texture comme de l'habillage et la multipliait
+par `T.SHADE_FACTOR`, ce qui la rend noire donc invisible. Le survol fait
+repeindre le bouton par le client, qui repose sa couleur de sommet ; notre
+passage suivant — déclenché par l'utilisation d'une action — la rassombrit.
+
+D'où la règle de lecture, qui vaut au-delà d'ici : **une chose qui apparaît au
+survol et repart ensuite n'est pas une chose qui manque, c'est une chose qu'on
+efface.** Le survol n'est pas un déclencheur, c'est le seul moment où le client
+réécrit sans qu'on repasse derrière.
+
+C'est exactement le défaut de la texture `OutOfRange` du gestionnaire de temps de
+recharge, deux entrées plus haut, avec un symptôme différent parce que ce qui
+repeint n'est pas le même.
+
+**Ce qu'on fait** — deux listes, parce qu'il y a deux formes :
+
+- `STATE_KEYS` gagne `SpellHighlight`, `Glow`, `Alert` et `Proc` : les textures
+  de signal posées directement sur le bouton ;
+- `SIGNAL_FRAMES` est nouvelle et écarte des **cadres entiers**. Une lueur de
+  procédé n'est pas une texture mais un petit cadre qui en porte plusieurs —
+  départ d'animation, boucle, halo. Les nommer une par une revient à parier
+  qu'on les a toutes, et ce pari se reperd à chaque extension. On s'arrête à la
+  porte : le cadre n'est pas descendu.
+
+Le doute se tranche toujours dans le même sens : ne pas toucher. Au pire il
+reste une lueur claire sur une barre sombre ; l'erreur inverse éteint un signal.
+
+---
+
+## La bordure d'un bouton d'action n'est pas de l'habillage
+
+**Symptôme** — le liseré vert que le jeu pose autour d'un **objet équipé** placé
+sur une barre d'action (un bijou à effet utilisable, typiquement) ne s'affiche
+pas. Il apparaît au survol du bouton et repart à l'utilisation suivante.
+
+**Cause** — la texture est `ActionButtonNNBorder`, publiée sous la clé `Border`.
+Le mode sombre la classait comme de l'habillage et l'assombrissait.
+
+Le nom est tout le piège : « bordure » se lit comme du décor, et rien dans le
+classement ne la distinguait du cadre d'une fenêtre. Sur un bouton d'action, elle
+ne décore rien — l'habillage y est porté par `NormalTexture`, `SlotArt`,
+`SlotBackground` et `BorderShadow`. `Border` reste masquée la plupart du temps et
+ne s'affiche **que pour dire quelque chose** ; le jeu la montre teintée de vert
+(`0, 1, 0`) pour marquer un objet équipé.
+
+**Ce qu'on fait** — `BORDER_SIGNALS`, par élément : sur les barres d'action, la
+bordure est laissée intacte. Ailleurs — infobulle, cadre d'unité — une bordure
+est bien de l'habillage, d'où la liste par élément plutôt qu'une règle générale.
+
+**Le corollaire, plus large** — le relevé qui a tranché (`/bui glow`, ajouté pour
+l'occasion) a montré que *tout* ce qu'un bouton d'action porte en cadres enfants
+était assombri : animations d'incantation, réticule de cible, éclat de fin de
+temps de recharge, halo d'attaque automatique. Aucun n'est de l'habillage, tous
+disent quelque chose, et **plusieurs sont anonymes** — aucune liste de noms ne
+pouvait donc les rattraper.
+
+D'où `FLAT_BUTTONS` : sur les barres d'action, le parcours s'arrête au bouton.
+Ses propres textures sont teintées, ce qu'il porte ne l'est pas. C'est la leçon
+générale de cette famille de défauts — **écarter par ce que la chose est, pas par
+la liste de ce qu'elle contient**, parce que la seconde se reperd à chaque
+extension.
+
+**Comment on l'a su** — pas en lisant le code du client ni en devinant : en
+demandant à l'addon ce qu'il avait touché. C'est ce que fait `/bui glow`, et
+c'est pourquoi il reste livré. Une texture de signal assombrie ne ressemble pas à
+une texture assombrie : elle ressemble à une lueur qui manque, et le symptôme
+désigne toujours le déclencheur plutôt que le voile.

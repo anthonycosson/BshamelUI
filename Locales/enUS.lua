@@ -836,6 +836,14 @@ BUI:RegisterLocale("enUS", {
     ["Tokens"]                         = "tokens",
     ["Aura diagnostic unavailable"]    = "The Nameplates module is not running.",
 
+    -- Diagnostic `/bui glow` : la prose seulement — les noms de textures sont
+    -- ceux du client, ils ne se traduisent pas.
+    ["Glow diagnostic"] =
+        "Dark mode diagnostic: hover the button now. Its textures are listed in three "
+        .. "seconds, and the ones the addon darkened are marked.",
+    ["Glow diagnostic nothing"]        = "Nothing was under the cursor.",
+    ["Glow diagnostic darkened"]       = "darkened by the addon",
+
     -- Ressource de classe (Modules/ClassResource.lua)
     ["Class resource"]                 = "Class resource",
     ["Class resource notice"] =

@@ -85,6 +85,25 @@
   repeignait. On se branche désormais sur l'écriture elle-même, ce qui rend le
   chemin sans importance.
 
+- **Mode sombre — les boutons d'action ne perdent plus leurs signaux.** Le
+  liseré vert qui marque un **objet équipé** posé sur une barre — un bijou à
+  effet utilisable — était assombri avec l'habillage. Il réapparaissait au
+  survol, parce que le jeu repeint alors le bouton, puis repartait à
+  l'utilisation suivante : une chose qui n'apparaît qu'au survol n'est pas une
+  chose qui manque, c'est une chose qu'on efface.
+
+  Le même passage éteignait tout ce qu'un bouton porte d'autre — animation
+  d'incantation, réticule de cible, éclat de fin de temps de recharge, halo
+  d'attaque automatique. Le mode sombre s'arrête désormais au bouton : ses
+  propres textures sont teintées, ce qu'il porte ne l'est pas. L'habillage d'une
+  barre, lui, est traité comme avant.
+
+- **Une commande `/bui glow`**, sur le modèle de `/bui auras` : elle écrit dans
+  le chat ce que porte le bouton sous le curseur, en signalant les textures que
+  le mode sombre a assombries. C'est elle qui a permis de trouver ce qui
+  précède — une texture de signal éteinte ne ressemble pas à une texture
+  éteinte, elle ressemble à une lueur qui manque.
+
 ## 0.7.12 — 2026-08-04
 
 ### Retiré
