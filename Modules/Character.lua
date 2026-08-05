@@ -626,6 +626,15 @@ local function buildSlots(sheet)
         if button and slotID then
             local info = W.SlotInfo(button)
             if info then
+                -- **Toutes les colonnes s'accrochent par le haut.** Centrée sur
+                -- sa case, une colonne fait descendre sa première ligne d'un
+                -- demi-cran chaque fois qu'une ligne s'ajoute : une pièce sans
+                -- gemme et sa voisine qui en a trois n'écrivaient plus leur
+                -- niveau d'objet à la même hauteur, et la fiche perdait l'usage
+                -- qu'on en attend — parcourir seize nombres d'un seul coup d'œil.
+                -- Accrochées par le haut, ces seize lignes tombent au même
+                -- endroit, et ce sont les icônes qui descendent plus ou moins.
+                --
                 -- Les armes empilent leur colonne **au-dessus** de la case.
                 -- Elles sont côte à côte sous le modèle : les ranger sur les
                 -- côtés mettait celle de droite contre les statistiques et
@@ -634,7 +643,7 @@ local function buildSlots(sheet)
                 -- ressemblent, et la place est libre depuis que le niveau
                 -- d'objet du personnage est monté en tête de fiche.
                 info:SetPlacement(WEAPON_SLOTS[name] and "ABOVE"
-                                  or PLACEMENT[name] or "RIGHT")
+                                  or PLACEMENT[name] or "RIGHT", true)
                 sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
 

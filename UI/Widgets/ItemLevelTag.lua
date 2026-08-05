@@ -51,6 +51,10 @@ local headlines = setmetatable({}, { __mode = "k" })
 --- statistiques et le pose sur la barre de titre. Les deux emplacements de tête
 --- bornent exactement la zone d'équipement, et le milieu de cette largeur est le
 --- milieu du modèle.
+---
+--- Il tombe sur **la même ligne** que leurs deux niveaux d'objet : c'est la
+--- première ligne de la fiche, et le nombre qui parle du personnage entier est
+--- celui qui l'ouvre.
 ---@param left table   l'emplacement qui ouvre la colonne de gauche
 ---@param right table  celui qui ouvre la colonne de droite
 ---@return table|nil
@@ -62,12 +66,21 @@ function W.SheetItemLevel(left, right)
     if not headline then
         headline = left:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_HEADLINE)
         headline:SetJustifyH("CENTER")
+
+        -- **La hauteur d'une ligne de bandeau**, centrée dedans comme elles le
+        -- sont. C'est ce qui le fait tomber sur la même ligne que les niveaux
+        -- d'objet du casque et des gants, alors qu'il n'a ni leur police ni leur
+        -- taille : aligner deux bords hauts alignerait les cadres, pas les
+        -- textes.
+        headline:SetHeight(T.SIZE.SLOT_LINE_H)
+        headline:SetJustifyV("MIDDLE")
+
         headlines[left] = headline
     end
 
     headline:ClearAllPoints()
-    headline:SetPoint("TOPLEFT",  left,  "TOPRIGHT", 0, -T.SIZE.SHEET_HEADLINE_DROP)
-    headline:SetPoint("TOPRIGHT", right, "TOPLEFT",  0, -T.SIZE.SHEET_HEADLINE_DROP)
+    headline:SetPoint("TOPLEFT",  left,  "TOPRIGHT", 0, 0)
+    headline:SetPoint("TOPRIGHT", right, "TOPLEFT",  0, 0)
 
     return headline
 end
