@@ -109,6 +109,14 @@ local PLACEMENT = {
     MainHandSlot = "LEFT", SecondaryHandSlot = "RIGHT",
 }
 
+--- Les deux emplacements qui ouvrent les colonnes, de gauche à droite à l'écran.
+---
+--- Ils bornent la zone d'équipement, et le milieu de cette largeur est le milieu
+--- du modèle : c'est là que se pose le niveau d'objet du personnage. Se centrer
+--- sur le cadre du client donnerait autre chose — il englobe le panneau de
+--- caractéristiques, et son milieu tombe entre le modèle et les statistiques.
+local HEADLINE_ANCHORS = { "HeadSlot", "HandsSlot" }
+
 --- Les deux emplacements qui n'ont pas de voisin au-dessus d'eux.
 ---
 --- Ce sont les seuls dont la colonne peut s'empiler vers le haut sans recouvrir
@@ -629,10 +637,13 @@ local function buildSlots(sheet)
                                   or PLACEMENT[name] or "RIGHT")
                 sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
+
+            if name == HEADLINE_ANCHORS[1] then sheet.topLeft  = button end
+            if name == HEADLINE_ANCHORS[2] then sheet.topRight = button end
         end
     end
 
-    sheet.headline = W.SheetItemLevel(sheet.Frame())
+    sheet.headline = W.SheetItemLevel(sheet.topLeft, sheet.topRight)
 
     return #sheet.slots > 0
 end

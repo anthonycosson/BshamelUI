@@ -421,10 +421,6 @@ T.SIZE = {
     SLOT_ICON       = 14,
     SLOT_ICON_GAP   = 2,
 
-    -- Descente du niveau d'objet du personnage depuis le haut de la fiche : la
-    -- hauteur de la barre de titre du client, plus de quoi respirer. Il se pose
-    -- juste dessous, là où l'œil arrive.
-    SHEET_HEADLINE_TOP = 28,
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
     -- de sa case.

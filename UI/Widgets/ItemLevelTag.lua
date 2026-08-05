@@ -40,25 +40,34 @@ local headlines = setmetatable({}, { __mode = "k" })
 --- celui-ci dit où en est le personnage — c'est le nombre qu'une inscription en
 --- donjon regarde, et le client ne l'écrit nulle part sur cette fiche.
 ---
---- Posé **en tête de fiche**, sous la barre de titre. Il vivait au-dessus des
---- armes, au bas du modèle : la place était libre, mais c'était l'endroit où l'on
---- regarde les deux pièces les plus détaillées de la fiche, et un nombre qui
---- parle du personnage entier s'y lisait comme un troisième nombre d'arme. En
---- tête, il n'est en concurrence avec rien et se trouve là où l'œil arrive.
----@param frame table  la fiche elle-même
+--- Posé **en haut de la zone d'équipement**, entre les deux emplacements qui
+--- ouvrent les colonnes. Il vivait au-dessus des armes, au bas du modèle : la
+--- place était libre, mais c'était l'endroit où l'on regarde les deux pièces les
+--- plus détaillées de la fiche, et un nombre qui parle du personnage entier s'y
+--- lisait comme un troisième nombre d'arme.
+---
+--- **Entre les deux colonnes, pas en haut du cadre.** Le cadre du client englobe
+--- le panneau de caractéristiques : s'y centrer déporte le nombre vers les
+--- statistiques et le pose sur la barre de titre. Les deux emplacements de tête
+--- bornent exactement la zone d'équipement, et le milieu de cette largeur est le
+--- milieu du modèle.
+---@param left table   l'emplacement qui ouvre la colonne de gauche
+---@param right table  celui qui ouvre la colonne de droite
 ---@return table|nil
-function W.SheetItemLevel(frame)
-    if not (frame and frame.CreateFontString) then return nil end
+function W.SheetItemLevel(left, right)
+    if not (left and left.CreateFontString) then return nil end
+    right = right or left
 
-    local headline = headlines[frame]
+    local headline = headlines[left]
     if not headline then
-        headline = frame:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_HEADLINE)
+        headline = left:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_HEADLINE)
         headline:SetJustifyH("CENTER")
-        headlines[frame] = headline
+        headlines[left] = headline
     end
 
     headline:ClearAllPoints()
-    headline:SetPoint("TOP", frame, "TOP", 0, -T.SIZE.SHEET_HEADLINE_TOP)
+    headline:SetPoint("TOPLEFT",  left,  "TOPRIGHT", 0, 0)
+    headline:SetPoint("TOPRIGHT", right, "TOPLEFT",  0, 0)
 
     return headline
 end
