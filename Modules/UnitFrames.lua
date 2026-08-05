@@ -134,19 +134,62 @@ end
 --- change bien, mais jamais pour celle qu'on a demandée. Désaturer rend la
 --- texture grise, et la couleur de sommet redevient la couleur affichée.
 ---
+--- Repose l'état d'origine d'**une** barre, et l'oublie.
+---
+--- C'est la moitié qui manquait, et son absence se voyait sur les boss. Un cadre
+--- d'unité est **réemployé** : la même barre montre un chaman, puis le boss
+--- qu'on cible ensuite. Or le client ne repeint pas une barre de vie à chaque
+--- mise à jour — il pose son vert une fois et n'y revient que pour dire quelque
+--- chose (unité pillée par un autre, joueur déconnecté). Une barre teinte en
+--- bleu chaman le restait donc jusqu'à ce qu'un de ces cas se présente, et le
+--- boss suivant héritait de la couleur du chaman précédent.
+---
+--- La couleur rendue est celle relevée **avant** notre première teinte, c'est-
+--- à-dire le vert du client. L'oubli compte autant que la restitution : la
+--- prochaine teinte relèvera la couleur d'alors, et non une valeur figée depuis
+--- le début de la session.
+---@param bar table
+local function restoreBar(bar)
+    local state = barColors[bar]
+    if not state then return end
+    barColors[bar] = nil
+
+    if type(bar.SetStatusBarDesaturated) == "function" then
+        pcall(bar.SetStatusBarDesaturated, bar, state.desaturated)
+    end
+    pcall(bar.SetStatusBarColor, bar, state[1], state[2], state[3], state[4])
+end
+
 --- Les unités qui ne sont pas des joueurs gardent la couleur du client : un
 --- sanglier n'a pas de classe, et le vert dit déjà tout ce qu'il y a à dire.
+---
+--- `U.IsTrue` et non le booléen brut : le client rend des réponses **secrètes**
+--- sur l'identité d'une unité là où il refuse de nous laisser conclure, et un
+--- booléen secret ne se teste pas — `if flag then` lève. Un secret vaut donc
+--- « ce n'est pas un joueur », ce qui laisse la barre au client. Certains PNJ
+--- ont une classe dans les données du jeu, chaman compris : sans ce garde-fou,
+--- ce sont eux qui décideraient de la couleur.
 ---@param bar table|nil
 ---@param unit string|nil
 local function colorBar(bar, unit)
     if not (bar and unit) then return end
-    if not (UnitExists(unit) and UnitIsPlayer(unit)) then return end
+
+    if not (U.IsTrue(UnitExists(unit)) and U.IsTrue(UnitIsPlayer(unit))) then
+        restoreBar(bar)
+        return
+    end
 
     local _, class = UnitClass(unit)
-    if U.IsSecret(class) then return end
+    if U.IsSecret(class) then
+        restoreBar(bar)
+        return
+    end
 
     local color = T.ClassColor(class)
-    if not color then return end
+    if not color then
+        restoreBar(bar)
+        return
+    end
     if not remember(bar) then return end
 
     if type(bar.SetStatusBarDesaturated) == "function" then
@@ -841,64 +884,183 @@ local function applyDecorations(mod)
 end
 
 -- =========================================================================
---  Taille des cadres de groupe
+--  Taille des cadres de groupe et d'arène
 -- =========================================================================
--- Le mode Édition règle la taille des cadres de groupe par une échelle, et
--- borne son curseur. On pose la même échelle qu'il poserait, sans la borne.
+-- Le mode Édition règle la taille de ces cadres par une échelle, et borne son
+-- curseur. On pose la même échelle qu'il poserait, sans la borne.
 --
 -- C'est une **échelle absolue** et non un multiplicateur de la sienne : le
 -- réglage remplace le sien tant qu'il est allumé, et le lui rend quand il
 -- s'éteint. Deux valeurs qui se multiplieraient donneraient un résultat que ni
 -- l'une ni l'autre des deux fenêtres n'annonce.
+--
+-- Deux systèmes, un seul mécanisme. Ils ne partagent pas leur réglage — un
+-- cadre de groupe se lit en donjon, un cadre d'arène se lit à trois contre trois,
+-- et rien ne dit que la même taille convienne aux deux — mais tout le reste leur
+-- est commun.
 
---- Les deux styles de cadres de groupe. On agit sur les deux : le mode Édition
---- dit lequel est à l'écran, mais le joueur bascule sans nous prévenir, et
---- redimensionner un cadre caché ne coûte rien.
-local PARTY_FRAMES = { "CompactPartyFrame", "PartyFrame" }
-
---- cadre -> échelle qu'il portait avant qu'on y touche
-local partyScales = {}
-
---- Rend leur échelle aux cadres de groupe.
+--- Systèmes réglables, avec les réglages qui les commandent et les cadres qui
+--- les portent.
 ---
---- L'échelle relevée est reposée, puis le mode Édition est invité à recalculer
---- la sienne s'il sait le faire : il a le dernier mot, parce que le joueur a pu
---- déplacer son curseur pendant que le nôtre tenait la barre.
-local function restorePartyScale()
+--- Les cadres sont désignés par leur nom global et résolus à chaque passage : un
+--- nom qui ne répond pas est simplement sauté. C'est ce qui rend la liste d'arène
+--- sûre à écrire — l'interface d'arène est **chargée à la demande**, et ses cadres
+--- n'existent pas tant qu'on n'est pas entré en arène.
+---
+--- Citer plusieurs noms par système n'est pas de la prudence : le client a **deux
+--- styles** pour ces cadres, celui du jeu et celui « façon raid », et le joueur
+--- bascule de l'un à l'autre sans nous prévenir. Le mode Édition sait lequel est
+--- à l'écran ; nous, non — et mettre à l'échelle un cadre caché ne coûte rien.
+local SCALED_SYSTEMS = {
+    {
+        toggle = "enlargeParty",
+        slider = "partyScale",
+        frames = { "CompactPartyFrame", "PartyFrame" },
+    },
+    {
+        toggle = "enlargeArena",
+        slider = "arenaScale",
+        -- `CompactArenaFrame` est le style façon raid, celui qui porte des
+        -- `CompactArenaFrameMemberN` ; les deux autres sont le style du jeu — le
+        -- conteneur de la rencontre, et celui de la phase de préparation. Ce
+        -- dernier compte : une taille qui change au moment où les portes
+        -- s'ouvrent se lit comme un défaut.
+        frames = { "CompactArenaFrame",
+                   "ArenaEnemyFramesContainer", "ArenaEnemyPrepFramesContainer" },
+    },
+}
+
+--- cadre -> échelle qu'il portait avant qu'on y touche.
+---
+--- Un seul registre pour les deux systèmes : c'est le cadre qui porte son
+--- échelle d'origine, pas le réglage qui l'a changée.
+local frameScales = {}
+
+--- Repose l'échelle d'un cadre et l'oublie.
+---
+--- Le mode Édition est ensuite invité à recalculer la sienne s'il sait le faire :
+--- il a le dernier mot, parce que le joueur a pu déplacer son curseur pendant que
+--- le nôtre tenait la barre.
+---@param frame table
+local function restoreFrameScale(frame)
+    local scale = frameScales[frame]
+    if not scale then return end
+    frameScales[frame] = nil
+
+    BUI.safecall(frame.SetScale, frame, scale)
+    if type(frame.UpdateSystemSettingFrameSize) == "function" then
+        BUI.safecall(frame.UpdateSystemSettingFrameSize, frame)
+    end
+end
+
+--- Rend leur échelle aux cadres d'un système.
+---@param system table
+local function restoreSystemScale(system)
     if InCombatLockdown() then return end
 
-    for frame, scale in pairs(partyScales) do
-        BUI.safecall(frame.SetScale, frame, scale)
-        if type(frame.UpdateSystemSettingFrameSize) == "function" then
-            BUI.safecall(frame.UpdateSystemSettingFrameSize, frame)
-        end
+    for i = 1, #system.frames do
+        local frame = _G[system.frames[i]]
+        if type(frame) == "table" then restoreFrameScale(frame) end
     end
-    wipe(partyScales)
+end
+
+--- Rend son échelle à tout ce qu'on a agrandi, sans relire un seul réglage.
+--- Appelé par `OnDisable` : le module s'éteint, ce qu'il a posé doit disparaître
+--- même si les interrupteurs restent cochés.
+local function restoreAllScales()
+    if InCombatLockdown() then return end
+
+    for frame in pairs(frameScales) do
+        restoreFrameScale(frame)
+    end
+    wipe(frameScales)
+end
+
+--- Ce cadre descend-il d'un autre cadre du même système ?
+---
+--- Deux échelles emboîtées se **multiplient** : citer par mégarde un cadre et son
+--- parent poserait 150 % deux fois, soit 225 %, et le curseur mentirait sans que
+--- rien ne le signale — un réglage qui « va trop loin » ne ressemble pas à une
+--- liste mal écrite. Les listes ci-dessus sont écrites en frères, mais elles sont
+--- écrites à la main, à partir de noms relevés sur un client : on vérifie plutôt
+--- que de parier, et la vérification coûte une remontée de parents sur un chemin
+--- qui n'est pas chaud.
+---@param frame table
+---@param others table  cadre -> vrai, les cadres du même système
+---@return boolean
+local function nestedIn(frame, others)
+    local parent = frame
+    while true do
+        if type(parent.GetParent) ~= "function" then return false end
+        parent = parent:GetParent()
+        if type(parent) ~= "table" then return false end
+        if others[parent] then return true end
+    end
 end
 
 ---@param mod table
-local function applyPartyScale(mod)
+---@param system table
+local function applySystemScale(mod, system)
     -- Cadres protégés : les redimensionner en combat lève une erreur d'action
     -- bloquée. Ce qui est refusé ici est rattrapé à la sortie de combat, où
     -- `OnEnable` rappelle cette fonction.
+    --
+    -- L'arène en paie le prix le plus visible : on y est en combat du début à la
+    -- fin d'une manche. C'est la phase de préparation qui sauve le réglage — les
+    -- portes fermées, on est hors combat, et l'échelle posée là tient pour toute
+    -- la manche puisque rien ne la repose entre-temps.
     if InCombatLockdown() then return end
 
-    if not mod:Get("enlargeParty") then
-        restorePartyScale()
+    if not mod:Get(system.toggle) then
+        restoreSystemScale(system)
         return
     end
 
-    local scale = mod:Get("partyScale") / 100
+    local scale = mod:Get(system.slider) / 100
 
-    for i = 1, #PARTY_FRAMES do
-        local frame = _G[PARTY_FRAMES[i]]
+    -- Les cadres présents à cet instant sont relevés **avant** d'être touchés :
+    -- écarter celui qui descend d'un autre suppose de connaître déjà les autres.
+    local present, order = {}, {}
+    for i = 1, #system.frames do
+        local frame = _G[system.frames[i]]
         if type(frame) == "table" and type(frame.SetScale) == "function" then
-            if partyScales[frame] == nil then
-                partyScales[frame] = frame:GetScale() or 1
+            present[frame]    = true
+            order[#order + 1] = frame
+        end
+    end
+
+    for i = 1, #order do
+        local frame = order[i]
+        if not nestedIn(frame, present) then
+            if frameScales[frame] == nil then
+                frameScales[frame] = frame:GetScale() or 1
             end
             BUI.safecall(frame.SetScale, frame, scale)
         end
     end
+end
+
+---@param mod table
+local function applyScales(mod)
+    for i = 1, #SCALED_SYSTEMS do
+        applySystemScale(mod, SCALED_SYSTEMS[i])
+    end
+end
+
+--- Garde d'un système, construite une fois. Elle retrouve le module au lieu de
+--- le capturer : `hookScaledFrames` est rappelée à chaque changement de groupe,
+--- et une fermeture par appel serait une fermeture jetée à chaque appel (règle 7).
+---@param toggle string
+---@return fun(): boolean
+local function scaleGuard(toggle)
+    return function()
+        local mod = BUI.Modules:Get(MODULE)
+        return (mod and mod:IsEnabled() and mod:Get(toggle) == true) or false
+    end
+end
+
+for i = 1, #SCALED_SYSTEMS do
+    SCALED_SYSTEMS[i].guard = scaleGuard(SCALED_SYSTEMS[i].toggle)
 end
 
 --- S'accroche au moment où le mode Édition repose sa taille.
@@ -908,17 +1070,18 @@ end
 --- l'air de « ne pas tenir ». Le hook ne rappelle pas la fonction qu'il coiffe :
 --- il repose l'échelle directement, il n'y a donc pas de boucle.
 ---@param mod table
-local function hookPartyFrames(mod)
-    local guard = function()
-        return mod:IsEnabled() and mod:Get("enlargeParty") == true
-    end
+local function hookScaledFrames(mod)
+    for i = 1, #SCALED_SYSTEMS do
+        local system = SCALED_SYSTEMS[i]
 
-    for i = 1, #PARTY_FRAMES do
-        local frame = _G[PARTY_FRAMES[i]]
-        if type(frame) == "table" and type(frame.UpdateSystemSettingFrameSize) == "function" then
-            U.GuardedHook(frame, "UpdateSystemSettingFrameSize", function()
-                applyPartyScale(mod)
-            end, guard)
+        for j = 1, #system.frames do
+            local frame = _G[system.frames[j]]
+            if type(frame) == "table"
+               and type(frame.UpdateSystemSettingFrameSize) == "function" then
+                U.GuardedHook(frame, "UpdateSystemSettingFrameSize", function()
+                    applySystemScale(mod, system)
+                end, system.guard)
+            end
         end
     end
 end
@@ -933,7 +1096,7 @@ local function applyAll(mod)
     applySpecIcons(mod)
     applyReputationColor(mod)
     applyDecorations(mod)
-    applyPartyScale(mod)
+    applyScales(mod)
 end
 
 --- Réglage -> fonction qui le pose.
@@ -941,8 +1104,10 @@ local APPLIERS = {
     classColorHealth    = applyClassColors,
     specIcon            = applySpecIcons,
     hideReputationColor = applyReputationColor,
-    enlargeParty        = applyPartyScale,
-    partyScale          = applyPartyScale,
+    enlargeParty        = applyScales,
+    partyScale          = applyScales,
+    enlargeArena        = applyScales,
+    arenaScale          = applyScales,
 }
 
 for key in pairs(DECORATIONS) do
@@ -975,6 +1140,9 @@ BUI:RegisterModule(MODULE, {
         -- toucher au curseur ne change donc rien à l'écran, ce qui est la seule
         -- valeur de départ honnête — le joueur monte ensuite jusqu'où il veut.
         partyScale   = 100,
+
+        enlargeArena = false,
+        arenaScale   = 100,
     },
 
     options = {
@@ -987,18 +1155,11 @@ BUI:RegisterModule(MODULE, {
         },
         {
             type    = "toggle",
-            key     = "hideReputationColor",
-            text    = L["Hide reputation color"],
-            tooltip = L["Hide reputation color tip"],
-        },
-
-        { type = "header", text = L["Specialization"] },
-        {
-            type    = "toggle",
             key     = "specIcon",
             text    = L["Show spec icon"],
             tooltip = L["Show spec icon tip"],
         },
+
         { type = "header", text = L["Decorations"] },
         {
             type    = "toggle",
@@ -1024,6 +1185,12 @@ BUI:RegisterModule(MODULE, {
             text    = L["Hide PvP icon"],
             tooltip = L["Hide PvP icon tip"],
         },
+        {
+            type    = "toggle",
+            key     = "hideReputationColor",
+            text    = L["Hide reputation color"],
+            tooltip = L["Hide reputation color tip"],
+        },
 
         { type = "header", text = L["Party frames"] },
         {
@@ -1042,6 +1209,24 @@ BUI:RegisterModule(MODULE, {
             step     = 5,
             disabled = requires("enlargeParty"),
         },
+
+        { type = "header", text = L["Arena frames"] },
+        {
+            type    = "toggle",
+            key     = "enlargeArena",
+            text    = L["Enlarge arena frames"],
+            tooltip = L["Enlarge arena frames tip"],
+        },
+        {
+            type     = "slider",
+            key      = "arenaScale",
+            text     = L["Arena frame scale"],
+            tooltip  = L["Arena frame scale tip"],
+            min      = 100,
+            max      = 250,
+            step     = 5,
+            disabled = requires("enlargeArena"),
+        },
     },
 
     OnEnable = function(self)
@@ -1050,7 +1235,7 @@ BUI:RegisterModule(MODULE, {
         hookHealthBars(self)
         hookPortraits(self)
         hookReputationColor(self)
-        hookPartyFrames(self)
+        hookScaledFrames(self)
 
         -- **Ce qui se voit ne passe pas par ici.** Barre de vie, portrait et
         -- plaque de faction sont reposés par les hooks ci-dessus, au moment même
@@ -1099,8 +1284,8 @@ BUI:RegisterModule(MODULE, {
         -- hook ne se pose que sur un cadre qui existe : on repasse. `GuardedHook`
         -- ne pose jamais deux fois le même, rappeler ne coûte donc rien.
         local rescale = function()
-            hookPartyFrames(self)
-            applyPartyScale(self)
+            hookScaledFrames(self)
+            applyScales(self)
 
             -- Les décorations pendent de cadres protégés, comme les cadres de
             -- groupe : elles se reposent aux mêmes moments, et pour la même
@@ -1114,6 +1299,23 @@ BUI:RegisterModule(MODULE, {
 
         -- Ce que le combat a refusé est rattrapé ici.
         self:RegisterEvent("PLAYER_REGEN_ENABLED", rescale)
+
+        -- L'interface d'arène est **chargée à la demande** : aucun des événements
+        -- ci-dessus ne tombe après la naissance de ses cadres, et poser un hook
+        -- sur un cadre qui n'existe pas encore ne fait rien. On repasse donc au
+        -- chargement de son addon, puis à chaque annonce d'adversaire — le client
+        -- monte et cache ces cadres au fil de la manche.
+        --
+        -- Les décorations n'ont pas bougé : on ne repasse que sur les échelles.
+        local rescaleArena = function()
+            hookScaledFrames(self)
+            applyScales(self)
+        end
+
+        self:RegisterEvent("ADDON_LOADED", function(_, name)
+            if name == "Blizzard_ArenaUI" then rescaleArena() end
+        end)
+        self:RegisterEvent("ARENA_OPPONENT_UPDATE", rescaleArena)
     end,
 
     OnDisable = function()
@@ -1123,7 +1325,7 @@ BUI:RegisterModule(MODULE, {
         restorePortraits()
         restoreReputationColor()
         releaseAll()
-        restorePartyScale()
+        restoreAllScales()
     end,
 
     OnSettingChanged = function(self, key)
