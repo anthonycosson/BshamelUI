@@ -347,12 +347,8 @@ BUI:RegisterLocale("enUS", {
     ["Dungeon dialogue"]               = "Dungeon dialogue",
     ["Auto dungeon gossip"]            = "Talk to dungeon NPCs for you",
     ["Auto dungeon gossip tip"] =
-        "Clicks the single line of dialogue for you, inside a dungeon: the prisoner to free, the "
-        .. "buff to pick up, the NPC who opens a way through. No dungeon is named in the setting, "
-        .. "so the ones from later seasons will work the same.\n\n"
-        .. "A dialogue that offers a choice or carries a quest is never touched. Beware though: "
-        .. "an NPC who starts an encounter also has a single line, and talking to them starts it "
-        .. "right away.",
+        "Clicks through dialogues for you so you keep moving: Algeth'ar, Pit of Saron, the "
+        .. "cauldron in Maisara.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Group finder",

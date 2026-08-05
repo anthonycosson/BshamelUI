@@ -340,12 +340,8 @@ BUI:RegisterLocale("frFR", {
     ["Dungeon dialogue"]               = "Dialogues de donjon",
     ["Auto dungeon gossip"]            = "Parler aux PNJ à votre place",
     ["Auto dungeon gossip tip"] =
-        "Clique pour vous la seule ligne d'un dialogue, dans un donjon : le prisonnier à "
-        .. "libérer, le bienfait à prendre, le PNJ qui ouvre un passage. Aucun donjon n'est "
-        .. "nommé dans le réglage, donc ceux des saisons suivantes marcheront pareil.\n\n"
-        .. "Un dialogue qui propose un choix ou porte une quête n'est jamais touché. Attention "
-        .. "en revanche : un PNJ qui lance une rencontre n'a lui aussi qu'une seule ligne, et "
-        .. "lui parler la déclenche aussitôt.",
+        "Valide les dialogues à votre place pour aller plus vite : Algeth'ar, la Fosse de "
+        .. "Saron, le chaudron de Maisara.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Recherche de groupe",
