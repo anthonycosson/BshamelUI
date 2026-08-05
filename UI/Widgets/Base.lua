@@ -173,96 +173,95 @@ function W.Inset(parent)
     return inset
 end
 
---- Refait le haut d'un contour à partir de son bas.
+--- Redessine intégralement le contour d'un cadre monté sur un template de
+--- fenêtre : huit pièces à nous, aucune du template.
 ---
---- **Refait, et non retouché.** On a d'abord essayé de reposer la texture du bas
---- sur les pièces du haut : elles n'ont ni la même hauteur ni la même largeur —
---- un coin haut porte le renflement du titre —, si bien que le dessin arrivait
---- étiré et que les côtés, ancrés sous ces pièces, ne montaient plus jusqu'en
---- haut du cadre. Les corriger revenait à refaire leur géométrie entière.
+--- **Tout reprendre plutôt que retoucher.** Trois tentatives ont échoué à
+--- corriger le haut du contour du client sans toucher au reste, et pour la même
+--- raison à chaque fois : ses pièces s'appuient les unes sur les autres. Changer
+--- la taille d'un coin déplace le bord qui lui est accroché, décrocher un bord
+--- lui fait perdre la largeur qu'il tenait de ses ancrages, et chaque correction
+--- en appelle une autre. On ne sait pas ce dont on hérite.
 ---
---- On masque donc le haut d'origine et on en pose trois nouvelles, taillées et
---- placées d'après les pièces du bas, puis on fait remonter les côtés jusqu'aux
---- nouveaux coins. Le contour devient le miroir exact de son bas, ce qui est la
---- seule façon que ses arrondis se rejoignent.
+--- Les pièces d'origine sont donc **toutes** masquées, et huit textures à nous
+--- prennent leur place : quatre coins, quatre bords, chacun copié d'une pièce du
+--- client et ancré par nous. Le haut est le bas retourné, les coins hauts sont
+--- les coins bas retournés. Plus rien n'est hérité, donc plus rien ne surprend.
 ---@param border table
-local function rebuildTop(border)
-    if border._topRebuilt then return end
+local function rebuildBorder(border)
+    if border._rebuilt then return end
 
-    local botLeft  = T.BorderPiece(border, T.BORDER.BOTTOM_LEFT)
-    local botRight = T.BorderPiece(border, T.BORDER.BOTTOM_RIGHT)
-    local bottom   = T.BorderPiece(border, T.BORDER.BOTTOM)
-    if not (botLeft and botRight and bottom) then return end
+    local P = T.BORDER
+    local botLeft  = T.BorderPiece(border, P.BOTTOM_LEFT)
+    local botRight = T.BorderPiece(border, P.BOTTOM_RIGHT)
+    local bottom   = T.BorderPiece(border, P.BOTTOM)
+    local left     = T.BorderPiece(border, P.LEFT)
+    local right    = T.BorderPiece(border, P.RIGHT)
 
-    -- **Rien tant que le cadre n'est pas mesuré.** Les dimensions du haut se
-    -- relèvent sur les pièces du bas, et celles-ci valent zéro tant que le cadre
-    -- n'a pas sa taille : construit à la création, le haut naissait plat. On
-    -- attend donc le premier `OnSizeChanged`, qui arrive de toute façon.
-    if bottom:GetHeight() <= 0 then return end
+    if not (botLeft and botRight and bottom and left and right) then return end
 
-    border._topRebuilt = true
+    -- **Rien tant que le cadre n'est pas mesuré.** Les dimensions se relèvent sur
+    -- les pièces du client, et elles valent zéro tant qu'il n'a pas sa taille :
+    -- construit à la création, le contour naissait plat. Le premier
+    -- `OnSizeChanged` arrive de toute façon.
+    if bottom:GetHeight() <= 0 or left:GetWidth() <= 0 then return end
 
-    for _, names in ipairs({ T.BORDER.TOP_LEFT, T.BORDER.TOP_RIGHT, T.BORDER.TOP }) do
+    border._rebuilt = true
+
+    local cornerW, cornerH = botLeft:GetWidth(), botLeft:GetHeight()
+    local rightW, rightH   = botRight:GetWidth(), botRight:GetHeight()
+    local edgeH, edgeW     = bottom:GetHeight(), left:GetWidth()
+    local layer, sublevel  = bottom:GetDrawLayer()
+
+    for _, names in pairs(P) do
         local piece = T.BorderPiece(border, names)
         if piece then piece:Hide() end
     end
 
-    -- Le même calque que le bas : le contour est d'une seule pièce, il ne se
-    -- dessine pas à deux profondeurs.
-    local layer, sublevel = bottom:GetDrawLayer()
-
-    ---@param source table  la pièce du bas dont celle-ci est le reflet
-    ---@param size table    la pièce du bas dont elle prend les dimensions
+    ---@param source table
+    ---@param flip boolean
     ---@return table
-    local function newPiece(source, size)
+    local function newPiece(source, flip)
         local piece = border:CreateTexture(nil, layer, nil, sublevel)
-        T.CopyFlipped(piece, source)
-        piece:SetSize(size:GetWidth(), size:GetHeight())
+        T.CopyTexture(piece, source, flip)
         return piece
     end
 
-    -- Croisé : un demi-tour retourne aussi la gauche et la droite, donc c'est le
-    -- coin bas-droit qui devient le coin haut-gauche. Les dimensions, elles,
-    -- viennent du coin du même côté.
-    local topLeft = newPiece(botRight, botLeft)
-    topLeft:SetPoint("TOPLEFT", border, "TOPLEFT", 0, 0)
+    local bl = newPiece(botLeft,  false)
+    bl:SetSize(cornerW, cornerH)
+    bl:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", 0, 0)
 
-    local topRight = newPiece(botLeft, botRight)
-    topRight:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
+    local br = newPiece(botRight, false)
+    br:SetSize(rightW, rightH)
+    br:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, 0)
 
-    local top = border:CreateTexture(nil, layer, nil, sublevel)
-    T.CopyFlipped(top, bottom)
-    top:SetHeight(bottom:GetHeight())
-    top:SetPoint("TOPLEFT",  topLeft,  "TOPRIGHT", 0, 0)
-    top:SetPoint("TOPRIGHT", topRight, "TOPLEFT",  0, 0)
-    if bottom.GetHorizTile and top.SetHorizTile then
-        top:SetHorizTile(bottom:GetHorizTile())
-    end
+    local tl = newPiece(botLeft,  true)
+    tl:SetSize(cornerW, cornerH)
+    tl:SetPoint("TOPLEFT", border, "TOPLEFT", 0, 0)
 
-    -- Les côtés remontent jusqu'aux nouveaux coins. Sans cela ils restent ancrés
-    -- sous les anciens, plus hauts : le contour laisse alors un trou de chaque
-    -- côté, et c'est ce qui donnait l'impression qu'il ne prenait pas toute la
-    -- hauteur du cadre.
-    --
-    -- **Leur largeur se relève avant de les décrocher, et se repose après.** Un
-    -- bord tenait la sienne de ses deux ancrages horizontaux ; ne lui en laisser
-    -- que du côté de son bord le réduit à rien, et le côté gauche disparaissait.
-    ---@param piece table|nil
-    ---@param corner table
-    ---@param bottomCorner table
-    ---@param edge string  "LEFT" ou "RIGHT"
-    local function stretchSide(piece, corner, bottomCorner, edge)
-        if not piece then return end
+    local tr = newPiece(botRight, true)
+    tr:SetSize(rightW, rightH)
+    tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
 
-        local width = piece:GetWidth()
-        piece:ClearAllPoints()
-        piece:SetPoint("TOP" .. edge,    corner,       "BOTTOM" .. edge, 0, 0)
-        piece:SetPoint("BOTTOM" .. edge, bottomCorner, "TOP" .. edge,    0, 0)
-        if width > 0 then piece:SetWidth(width) end
-    end
+    local bo = newPiece(bottom, false)
+    bo:SetHeight(edgeH)
+    bo:SetPoint("BOTTOMLEFT",  bl, "BOTTOMRIGHT", 0, 0)
+    bo:SetPoint("BOTTOMRIGHT", br, "BOTTOMLEFT",  0, 0)
 
-    stretchSide(T.BorderPiece(border, T.BORDER.LEFT),  topLeft,  botLeft,  "LEFT")
-    stretchSide(T.BorderPiece(border, T.BORDER.RIGHT), topRight, botRight, "RIGHT")
+    local to = newPiece(bottom, true)
+    to:SetHeight(edgeH)
+    to:SetPoint("TOPLEFT",  tl, "TOPRIGHT", 0, 0)
+    to:SetPoint("TOPRIGHT", tr, "TOPLEFT",  0, 0)
+
+    local le = newPiece(left, false)
+    le:SetWidth(edgeW)
+    le:SetPoint("TOPLEFT",    tl, "BOTTOMLEFT", 0, 0)
+    le:SetPoint("BOTTOMLEFT", bl, "TOPLEFT",    0, 0)
+
+    local ri = newPiece(right, false)
+    ri:SetWidth(right:GetWidth())
+    ri:SetPoint("TOPRIGHT",    tr, "BOTTOMRIGHT", 0, 0)
+    ri:SetPoint("BOTTOMRIGHT", br, "TOPRIGHT",    0, 0)
 end
 
 --- Contour d'un panneau : **celui de la fenêtre d'options**, sans sa barre de
@@ -273,11 +272,9 @@ end
 --- ni la même matière ni la même épaisseur, et deux panneaux de la même famille
 --- ne peuvent pas porter deux contours différents.
 ---
---- On monte donc le template de fenêtre et on lui retire ce qui n'est pas le
---- contour : son fond, sa bande de titre, son titre, son bouton de fermeture. Ce
---- qui reste est asymétrique — les coins hauts du métal portent le renflement du
---- titre et l'échancrure de la croix —, et `rebuildTop` refait le haut d'après le
---- bas.
+--- On monte le template de fenêtre pour ses textures, puis `rebuildBorder`
+--- redessine le contour entier à partir d'elles — symétrique, donc sans barre de
+--- titre ni logement de croix.
 ---
 --- Repli sur le contour de dialogue si aucun template de fenêtre n'existe : moins
 --- ressemblant, jamais cassé.
@@ -292,16 +289,14 @@ function W.PanelBorder(parent)
     border:EnableMouse(false)
 
     T.HidePanelFill(border)
-    rebuildTop(border)
 
-    -- **Et à chaque changement de taille.** Un template repose ses propres pièces
-    -- quand le cadre grandit : le fond réapparaîtrait au premier panneau qui
-    -- s'agrandit, c'est-à-dire au menu de téléportation, qui se dimensionne une
-    -- fois ses rangées construites. Le haut, lui, tient par ses ancrages et n'est
-    -- refait qu'une fois.
+    -- Un template repose ses propres pièces quand le cadre grandit : le fond
+    -- réapparaîtrait au premier panneau qui se dimensionne. Le contour, lui, est
+    -- à nous et tient par ses ancrages — il n'est redessiné qu'une fois, à la
+    -- première mesure.
     border:HookScript("OnSizeChanged", function(self)
         T.HidePanelFill(self)
-        rebuildTop(self)
+        rebuildBorder(self)
     end)
 
     return border

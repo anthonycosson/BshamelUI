@@ -1423,38 +1423,57 @@ T.BORDER = {
     RIGHT        = { "RightBorder", "RightEdge" },
 }
 
---- Recopie une texture sur une autre, tournée d'un demi-tour. Publique : le
---- contour de panneau s'en sert pour se refaire un haut à partir de son bas.
+--- Recopie une texture sur une autre, éventuellement retournée verticalement.
 ---
---- Deux chemins parce qu'une texture du client se donne de deux façons : par un
+--- Un **retournement vertical** et non une demi-rotation : le bas d'un contour
+--- retourné haut pour bas donne son haut, tandis qu'une demi-rotation
+--- l'échangerait aussi de gauche à droite. Sur un coin arrondi les deux ne
+--- donnent pas le même dessin.
+---
+--- Deux chemins, parce qu'une texture du client se donne de deux façons : par un
 --- **atlas**, qui porte son propre découpage dans une planche, ou par un
---- **fichier** et des coordonnées. Le premier se retourne par `SetRotation` ; le
---- second par ses coordonnées, un demi-tour échangeant les coins en diagonale.
----
---- Mélanger les deux ne marche pas : `SetRotation` réécrit les coordonnées qu'on
---- vient de poser.
+--- **fichier** et des coordonnées. Les contours de fenêtre sont du second genre.
 ---@param piece table
 ---@param source table
-function T.CopyFlipped(piece, source)
+---@param flip? boolean  retourner haut pour bas
+---@return boolean copied
+function T.CopyTexture(piece, source, flip)
     local atlas = source.GetAtlas and source:GetAtlas()
+    local info  = atlas and C_Texture and C_Texture.GetAtlasInfo
+                  and C_Texture.GetAtlasInfo(atlas)
 
-    if atlas then
+    if atlas and not (flip and info) then
         piece:SetAtlas(atlas)
-        if piece.SetRotation then piece:SetRotation(math.pi) end
-        return true
+    elseif info then
+        -- Un atlas retourné se repose par son fichier : `SetTexCoord` après
+        -- `SetAtlas` ne parle plus du découpage, mais de la planche entière.
+        piece:SetTexture(info.file or info.filename)
+        piece:SetTexCoord(info.leftTexCoord, info.rightTexCoord,
+                          info.bottomTexCoord, info.topTexCoord)
+    else
+        local file = source:GetTexture()
+        if not file then return false end
+
+        piece:SetTexture(file)
+
+        -- Les huit valeurs sont les quatre coins, dans l'ordre haut-gauche,
+        -- bas-gauche, haut-droit, bas-droit. Un retournement vertical échange
+        -- chaque coin avec celui qui est sous lui.
+        local ulx, uly, llx, lly, urx, ury, lrx, lry = source:GetTexCoord()
+        if ulx then
+            if flip then
+                piece:SetTexCoord(llx, lly, ulx, uly, lrx, lry, urx, ury)
+            else
+                piece:SetTexCoord(ulx, uly, llx, lly, urx, ury, lrx, lry)
+            end
+        end
     end
 
-    local file = source:GetTexture()
-    if not file then return false end
-
-    piece:SetTexture(file)
-
-    -- Les huit valeurs sont les quatre coins, dans l'ordre haut-gauche,
-    -- bas-gauche, haut-droit, bas-droit. Un demi-tour échange chaque coin avec
-    -- son opposé.
-    local ulx, uly, llx, lly, urx, ury, lrx, lry = source:GetTexCoord()
-    if ulx then
-        piece:SetTexCoord(lrx, lry, urx, ury, llx, lly, ulx, uly)
+    if source.GetHorizTile and piece.SetHorizTile then
+        piece:SetHorizTile(source:GetHorizTile())
+    end
+    if source.GetVertTile and piece.SetVertTile then
+        piece:SetVertTile(source:GetVertTile())
     end
 
     return true
