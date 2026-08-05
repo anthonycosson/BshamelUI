@@ -192,37 +192,71 @@ function W.DialogBorder(parent)
     return frame
 end
 
---- Le contour de la fenêtre d'options, sans sa barre de titre.
+--- Nom du découpage neuf que porte le template de fenêtre, relevé une fois.
 ---
---- **Le template de fenêtre lui-même**, dépouillé, et non un contour qui lui
---- ressemble. `DIALOG_BORDER` donne un liseré ouvragé fin ; la fenêtre d'options
---- porte la pierre du client, plus épaisse et plus sourde, et deux panneaux qui
---- se veulent de la même famille ne peuvent pas porter deux contours différents.
---- Monter le vrai template est ce qui garantit qu'ils resteront d'accord même si
---- `T.Template("WINDOW")` retombe un jour sur un autre candidat.
+--- `false` veut dire « cherché et introuvable », `nil` « pas encore cherché » :
+--- sans cette distinction, un client sans découpage neuf paierait la construction
+--- d'un cadre témoin à chaque panneau.
+local windowLayout
+
+---@return string|nil
+local function windowBorderLayout()
+    if windowLayout ~= nil then return windowLayout or nil end
+    windowLayout = false
+
+    local template = T.Template("WINDOW")
+    if not (template and NineSliceUtil and NineSliceUtil.ApplyLayoutByName) then
+        return nil
+    end
+
+    -- Un cadre témoin, monté une seule fois et jamais montré, juste pour lui
+    -- demander le nom de son découpage. Le relever plutôt que l'écrire en dur
+    -- garde le contour d'accord avec la fenêtre d'options même si le candidat
+    -- retenu par `T.Template` change un jour — c'est le même raisonnement que
+    -- `T.CaptureTitleBar`.
+    local probe = CreateFrame("Frame", nil, UIParent, template)
+    probe:Hide()
+
+    local slice = probe.NineSlice
+    if slice and slice.layoutType then windowLayout = slice.layoutType end
+
+    return windowLayout or nil
+end
+
+--- Le contour de la fenêtre d'options, et rien d'autre.
 ---
---- Ce qu'on lui retire est ce qui fait une *fenêtre* et non un panneau : le fond
---- central, le fond de barre de titre, le titre et le bouton de fermeture. Le
---- contour, lui, est symétrique — les quatre côtés sortent de la même pierre, et
---- la bande de titre n'était qu'une texture posée par-dessus le côté haut.
+--- **Le découpage seul, pas le template qui le porte.** On a d'abord monté le
+--- template de fenêtre entier pour lui retirer ensuite ce qui n'était pas le
+--- contour : barre de titre, titre, bouton de fermeture. Retirer par une liste de
+--- noms suppose de les connaître tous, et il en restait — d'où la bosse de titre
+--- et l'emplacement vide d'une croix absente en haut des panneaux.
 ---
---- Sans template disponible, on retombe sur le liseré des dialogues : moins
+--- Ce que le template pose autour de son contour ne peut pas apparaître si on ne
+--- monte pas le template : on ne demande donc au client que son **découpage
+--- neuf**, appliqué à un cadre nu. Il n'y a plus rien à masquer, donc plus rien
+--- à oublier de masquer.
+---
+--- La matière reste celle de la fenêtre d'options, puisque c'est son découpage à
+--- elle qu'on relève. Reste son asymétrie, que `T.MirrorTopEdge` corrige.
+---
+--- Sans découpage disponible, on retombe sur le liseré des dialogues : moins
 --- ressemblant, jamais cassé.
 ---@param parent table
 ---@return table
 function W.WindowBorder(parent)
-    local template = T.Template("WINDOW")
-    if not template then return W.DialogBorder(parent) end
+    local layout = windowBorderLayout()
+    if not layout then return W.DialogBorder(parent) end
 
-    -- `T.ClearPanelBackground` n'a rien à faire ici : elle cache **toutes** les
-    -- régions, contour compris, ce qui donne un rectangle noir sans bord. On
-    -- retire nommément ce qui n'est pas le contour.
-    local border = CreateFrame("Frame", nil, parent, template)
-    T.HideWindowChrome(border)
+    local border = CreateFrame("Frame", nil, parent)
 
     -- Un contour ne prend pas les clics : sous le menu de téléportation, il
     -- avalerait ceux des rangées qu'il encadre.
     border:EnableMouse(false)
+
+    NineSliceUtil.ApplyLayoutByName(border, layout)
+    if border.Center then border.Center:Hide() end
+    T.MirrorTopEdge(border)
+
     return border
 end
 

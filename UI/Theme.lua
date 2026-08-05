@@ -2035,25 +2035,7 @@ function T.CaptureTitleBar(frame)
     end
 end
 
---- Ce qu'un template de fenêtre pose **en plus** de son contour : les surfaces
---- qui le remplissent, et les pièces qui en font une fenêtre.
----
---- Une liste nommée, et surtout pas « toutes les régions ». Le contour d'un
---- template du client est fait de textures lui aussi : les cacher toutes cache le
---- contour avec le reste, et laisse un rectangle noir sans bord — ce qui est
---- exactement ce qu'on obtenait. On ne cache donc que ce qu'on sait nommer, et un
---- nom inconnu laisse au pire une surface de trop, jamais un panneau sans
---- contour.
----
---- Les cadres sont dans la même liste que les textures : un bouton de fermeture
---- n'est pas une région, et resterait cliquable au coin d'un panneau qui ne se
---- ferme pas.
-local WINDOW_CHROME_KEYS = {
-    "Bg", "Background", "TitleBg", "TopTileStreaks",
-    "TitleContainer", "TitleText", "CloseButton", "PortraitContainer",
-}
-
---- Pièces du haut d'un découpage neuf, et celle du bas dont chacune se déduit.
+--- Pièces du haut d'un contour, et celle du bas dont chacune se déduit.
 ---
 --- **Croisées pour les coins.** Une demi-rotation retourne aussi la gauche et la
 --- droite : le coin bas-droit devient le coin haut-gauche, et réciproquement.
@@ -2064,20 +2046,18 @@ local MIRRORED_TOP = {
     { piece = "TopEdge",        from = "BottomEdge"        },
 }
 
---- Rend le haut du contour identique à son bas.
+--- Rend le haut d'un contour identique à son bas.
 ---
 --- Le contour de métal du client n'est **pas symétrique** : ses deux coins hauts
---- portent le renflement de la barre de titre et l'échancrure du bouton de
---- fermeture. C'est ce qui reste d'une fenêtre sur un panneau qui n'en est pas
---- une, et c'est justement ce qu'on ne veut pas.
+--- portent le renflement de la barre de titre. C'est ce qui reste d'une fenêtre
+--- sur un panneau qui n'en est pas une, et c'est justement ce qu'on ne veut pas.
 ---
 --- Le bas de ce même contour est un bord franc. On le recopie donc en haut avec
 --- une demi-rotation, plutôt que d'aller chercher un autre jeu de textures : la
 --- matière reste exactement celle des trois autres côtés, ce qui est tout le
 --- propos.
----@param frame table
-local function mirrorTopEdge(frame)
-    local slice = frame.NineSlice
+---@param slice table  le cadre qui porte les neuf pièces
+function T.MirrorTopEdge(slice)
     if not slice then return end
 
     for i = 1, #MIRRORED_TOP do
@@ -2094,24 +2074,6 @@ local function mirrorTopEdge(frame)
             end
         end
     end
-end
-
---- Retire d'un cadre monté sur un template de fenêtre tout ce qui en fait une
---- fenêtre, pour ne garder que le contour.
----@param frame table
-function T.HideWindowChrome(frame)
-    for i = 1, #WINDOW_CHROME_KEYS do
-        local part = frame[WINDOW_CHROME_KEYS[i]]
-        if part and part.Hide then part:Hide() end
-    end
-
-    -- Le centre du découpage neuf porte le fond des templates récents. Les bords
-    -- du même découpage sont le contour : on n'y touche pas.
-    if frame.NineSlice and frame.NineSlice.Center then
-        frame.NineSlice.Center:Hide()
-    end
-
-    mirrorTopEdge(frame)
 end
 
 --- Applique cette apparence à une texture. Renvoie `false` si rien n'a été
