@@ -421,11 +421,10 @@ T.SIZE = {
     SLOT_ICON       = 14,
     SLOT_ICON_GAP   = 2,
 
-    -- Écart entre le niveau d'objet du personnage et l'arme au-dessus de laquelle
-    -- il se pose. Assez pour qu'il respire au-dessus de la rangée d'armes, assez
-    -- peu pour qu'il reste **rattaché à la fiche** plutôt qu'au modèle qui la
-    -- surplombe.
-    SLOT_HEADLINE_GAP = 12,
+    -- Descente du niveau d'objet du personnage depuis le haut de la fiche : la
+    -- hauteur de la barre de titre du client, plus de quoi respirer. Il se pose
+    -- juste dessous, là où l'œil arrive.
+    SHEET_HEADLINE_TOP = 28,
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
     -- de sa case.

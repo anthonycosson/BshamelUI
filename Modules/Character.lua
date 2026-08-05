@@ -109,18 +109,10 @@ local PLACEMENT = {
     MainHandSlot = "LEFT", SecondaryHandSlot = "RIGHT",
 }
 
---- Les deux emplacements au-dessus desquels se pose le niveau d'objet du
---- personnage, de gauche à droite à l'écran.
+--- Les deux emplacements qui n'ont pas de voisin au-dessus d'eux.
 ---
---- Le bas du modèle et le milieu de la fiche : le seul endroit qui n'appartienne
---- ni à une pièce ni aux statistiques, ce qui est exactement le statut de ce
---- nombre-là. Les deux et non l'une, pour qu'il se centre sur la **paire**.
-local HEADLINE_ANCHORS = { "MainHandSlot", "SecondaryHandSlot" }
-
---- Les deux emplacements qui n'ont pas de voisin sous eux.
----
---- Ce sont les seuls dont la colonne peut s'accrocher par le haut sans risquer
---- de déborder : sous les quatorze autres il y a l'emplacement suivant.
+--- Ce sont les seuls dont la colonne peut s'empiler vers le haut sans recouvrir
+--- la case suivante : les quatorze autres sont en file le long du modèle.
 local WEAPON_SLOTS = {
     MainHandSlot      = true,
     SecondaryHandSlot = true,
@@ -626,24 +618,21 @@ local function buildSlots(sheet)
         if button and slotID then
             local info = W.SlotInfo(button)
             if info then
-                -- Les armes accrochent leur colonne par le haut : leurs deux
-                -- niveaux d'objet se lisent alors sur la même ligne quel que
-                -- soit ce que chacune porte en enchantement et en gemmes, et
-                -- c'est ce qui les rend comparables d'un coup d'œil.
-                info:SetPlacement(PLACEMENT[name] or "RIGHT", WEAPON_SLOTS[name])
+                -- Les armes empilent leur colonne **au-dessus** de la case.
+                -- Elles sont côte à côte sous le modèle : les ranger sur les
+                -- côtés mettait celle de droite contre les statistiques et
+                -- celle de gauche dans le vide, deux voisinages différents pour
+                -- deux pièces qu'on lit ensemble. Au-dessus, elles se
+                -- ressemblent, et la place est libre depuis que le niveau
+                -- d'objet du personnage est monté en tête de fiche.
+                info:SetPlacement(WEAPON_SLOTS[name] and "ABOVE"
+                                  or PLACEMENT[name] or "RIGHT")
                 sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
-
-            if name == HEADLINE_ANCHORS[1] then sheet.leftHand  = button end
-            if name == HEADLINE_ANCHORS[2] then sheet.rightHand = button end
         end
     end
 
-    -- Le niveau d'objet du personnage s'ancre sur les deux armes à la fois, donc
-    -- une fois la boucle finie : il lui faut les deux boutons.
-    if sheet.leftHand then
-        sheet.headline = W.SheetItemLevel(sheet.leftHand, sheet.rightHand)
-    end
+    sheet.headline = W.SheetItemLevel(sheet.Frame())
 
     return #sheet.slots > 0
 end

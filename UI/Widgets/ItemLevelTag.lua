@@ -40,32 +40,25 @@ local headlines = setmetatable({}, { __mode = "k" })
 --- celui-ci dit où en est le personnage — c'est le nombre qu'une inscription en
 --- donjon regarde, et le client ne l'écrit nulle part sur cette fiche.
 ---
---- Posé **au-dessus des deux armes**, c'est-à-dire au bas du modèle et au milieu :
---- c'est le seul endroit de la fiche qui ne soit ni une pièce ni une statistique,
---- et le seul qui appartienne au personnage entier plutôt qu'à un emplacement.
----
---- Il s'ancre **par ses deux bords**, à la gauche de la première arme et à la
---- droite de la seconde, puis se centre dans cette largeur. Posé au-dessus d'une
---- seule des deux, il aurait été centré sur elle et non sur la paire — décalé
---- d'une demi-case, ce qui se voit d'autant plus que rien d'autre ne se trouve là
---- pour donner l'échelle.
----@param left table   l'arme de gauche à l'écran
----@param right table  celle de droite
+--- Posé **en tête de fiche**, sous la barre de titre. Il vivait au-dessus des
+--- armes, au bas du modèle : la place était libre, mais c'était l'endroit où l'on
+--- regarde les deux pièces les plus détaillées de la fiche, et un nombre qui
+--- parle du personnage entier s'y lisait comme un troisième nombre d'arme. En
+--- tête, il n'est en concurrence avec rien et se trouve là où l'œil arrive.
+---@param frame table  la fiche elle-même
 ---@return table|nil
-function W.SheetItemLevel(left, right)
-    if not (left and left.CreateFontString) then return nil end
-    right = right or left
+function W.SheetItemLevel(frame)
+    if not (frame and frame.CreateFontString) then return nil end
 
-    local headline = headlines[left]
+    local headline = headlines[frame]
     if not headline then
-        headline = left:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_HEADLINE)
+        headline = frame:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_HEADLINE)
         headline:SetJustifyH("CENTER")
-        headlines[left] = headline
+        headlines[frame] = headline
     end
 
     headline:ClearAllPoints()
-    headline:SetPoint("BOTTOMLEFT",  left,  "TOPLEFT",  0, T.SIZE.SLOT_HEADLINE_GAP)
-    headline:SetPoint("BOTTOMRIGHT", right, "TOPRIGHT", 0, T.SIZE.SLOT_HEADLINE_GAP)
+    headline:SetPoint("TOP", frame, "TOP", 0, -T.SIZE.SHEET_HEADLINE_TOP)
 
     return headline
 end
