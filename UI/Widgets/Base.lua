@@ -473,9 +473,35 @@ end
 --  État actif / inactif
 -- =========================================================================
 
+--- Allume ou éteint un contrôle, quel qu'il soit.
+---
+--- Les trois chemins ne sont pas une prudence de plus : `SetEnabled` est récent
+--- et n'existe pas sur tous les types de contrôle, `Enable`/`Disable` sont
+--- l'ancienne paire, et un contrôle qui n'a ni l'un ni l'autre se contente de
+--- l'opacité. C'est la seule chose que toutes les lignes de l'addon partagent
+--- vraiment, d'où une fonction plutôt qu'un bloc recopié.
+---@param control table
+---@param enabled boolean
+function W.SetControlEnabled(control, enabled)
+    if control.SetEnabled then
+        control:SetEnabled(enabled)
+    elseif enabled and control.Enable then
+        control:Enable()
+    elseif control.Disable then
+        control:Disable()
+    end
+    control:SetAlpha(enabled and 1 or T.ALPHA.CONTROL_OFF)
+end
+
 --- Applique l'état actif à un widget produit par cette fabrique.
 --- Un widget inactif reste visible et survolable : l'infobulle explique
 --- pourquoi il est grisé, ce qui vaut mieux qu'un contrôle qui disparaît.
+---
+--- Une ligne peut porter **plus d'un** contrôle — la glissière a sa case de
+--- saisie —, et rien ici ne sait lequel. Elle déclare alors `OnEnabled`, et dit
+--- elle-même ce que devient le reste. Sans ce crochet, un second contrôle
+--- resterait vivant sous une ligne grisée : un réglage qu'on nous dit
+--- indisponible et qui se règle quand même.
 ---@param widget table
 ---@param enabled boolean
 ---@param reason? string
@@ -486,16 +512,10 @@ function W.SetEnabled(widget, enabled, reason)
         T.SetTextEnabled(widget.label, enabled)
     end
 
-    local control = widget.control
-    if control then
-        if control.SetEnabled then
-            control:SetEnabled(enabled)
-        elseif enabled and control.Enable then
-            control:Enable()
-        elseif control.Disable then
-            control:Disable()
-        end
-        control:SetAlpha(enabled and 1 or T.ALPHA.CONTROL_OFF)
+    if widget.OnEnabled then widget:OnEnabled(enabled) end
+
+    if widget.control then
+        W.SetControlEnabled(widget.control, enabled)
     end
 end
 
@@ -506,11 +526,20 @@ end
 --- Répartit le libellé et le contrôle d'après la largeur **courante** de la
 --- ligne.
 ---
---- `CONTROL_X` reste la position de référence, et c'est toujours elle qui aligne
---- les contrôles d'une page à l'autre. Mais une ligne peut être étroite — une
---- page en deux colonnes en fait des moitiés —, et à cette largeur-là une
---- abscisse fixe pousserait les glissières hors du cadre. Le contrôle recule donc
---- jusqu'à la place qu'il lui faut, et le libellé prend ce qui reste.
+--- `CONTROL_X` est la position de référence, et c'est elle qui aligne les
+--- contrôles d'une page à l'autre. Elle cède dans les deux sens, et pour deux
+--- raisons opposées :
+---
+---   · vers la **gauche**, quand la ligne est étroite — une page en deux colonnes
+---     en fait des moitiés —, sans quoi une abscisse fixe pousserait les
+---     glissières hors du cadre ;
+---   · vers la **droite**, quand un libellé ne tient pas dans cette place-là. La
+---     mise en page relève alors le plus long de la colonne et le passe ici par
+---     `_controlX` (voir `PageBuilder`). Un intitulé coupé ne se lit pas, et ces
+---     lignes ont une hauteur fixe : le retour à la ligne n'est pas une option.
+---
+--- Le rétrécissement a le dernier mot : la largeur disponible n'est pas
+--- négociable, le confort de lecture si.
 ---
 --- Appelée à la construction, puis par la mise en page chaque fois que la largeur
 --- change. Définie une fois et partagée par toutes les lignes : une fermeture par
@@ -520,7 +549,9 @@ local function arrangeRow(row)
     local S = T.SIZE
     local width = row:GetWidth() or 0
 
-    local x = S.CONTROL_X
+    local x = row._controlX or S.CONTROL_X
+    if x < S.CONTROL_X then x = S.CONTROL_X end
+
     if width > 0 then
         local latest = width - S.CONTROL_RESERVE
         if latest < x then

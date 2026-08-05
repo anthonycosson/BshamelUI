@@ -19,6 +19,11 @@ BUI:RegisterLocale("enUS", {
         "Shrinks everything inside the window without changing the window itself, "
         .. "so more settings fit. Click to pick a size.",
     ["Scale percent"]           = "%d%%",
+    -- Infobulle de la case de valeur d'une glissière (UI/Widgets/Slider.lua).
+    -- Vaut pour toutes les glissières de l'addon : elle décrit un geste de
+    -- l'interface, pas un réglage.
+    ["Slider value tip"] =
+        "Right-click to type an exact value. Enter confirms, Escape cancels.",
     ["Reset page confirm"]      = "Reset every setting on this page to its default value?",
     ["Yes"]                     = "Yes",
     ["Cancel"]                  = "Cancel",
@@ -83,7 +88,10 @@ BUI:RegisterLocale("enUS", {
     ["Camera zoom factor"]             = "Zoom factor",
     ["Camera zoom factor tip"] =
         "Multiplies the client's zoom-out limit. 2.9 is the highest the client accepts.",
-    ["Game menu"]                      = "Game menu",
+    -- La touche est dans l'intitulé de la section : « menu du jeu » ne désigne
+    -- rien pour qui ne l'a jamais lu écrit, alors que tout le monde connaît le
+    -- menu qui s'ouvre sur Échap.
+    ["Game menu"]                      = "Game menu (Esc)",
     ["Compact game menu"]              = "Shrink the game menu",
     ["Compact game menu tip"]          = "Scales down the menu opened with Escape, which the client draws very large.",
     ["Game menu scale"]                = "Menu size",
@@ -117,40 +125,30 @@ BUI:RegisterLocale("enUS", {
     ["Item details"]                   = "Item details",
     ["Show item level"]                = "Show item level",
     ["Show item level on slots tip"] =
-        "Shows the item level of every equipped piece on its own slot, scaling included.",
+        "Shows the item level of every equipped piece beside its slot, scaling included.",
     ["Show upgrade level"]             = "Show upgrade level",
-    ["Show upgrade level tip"]         = "Shows the upgrade rank of each equipped piece.",
-    ["Warn partial upgrade"]           = "Warn on partial upgrades",
-    ["Warn partial upgrade tip"] =
-        "Turns the rank orange until the piece reaches its maximum. Off, every rank stays green.",
+    ["Show upgrade level tip"] =
+        "Shows the upgrade rank beside the item level, in brackets. Both take the colour of "
+        .. "the upgrade track: orange for Myth, purple for Hero, blue for Champion, green for "
+        .. "Veteran, white below that.",
     ["Show enchants"]                  = "Show enchants",
     ["Show enchants tip"] =
         "Green on every slot that can take an enchant and has one, red on those that are missing it.",
     ["Show gems"]                      = "Show gems",
     ["Show gems tip"]                  = "Green when every socket is filled, red as soon as one is empty.",
-    ["Show void core"]                 = "Show void core",
-    ["Show void core tip"]             = "Flags weapons and trinkets that have not been voidforged yet.",
     ["Bags and bank"]                  = "Bags and bank",
     ["Show item level in bags"]        = "Show item level on stored gear",
     ["Show item level in bags tip"] =
         "Prints the item level on every piece of gear in your bags, your bank and the warband bank.",
 
-    -- Pastilles posées à côté d'un emplacement, une par ligne. C'est leur
-    -- couleur qui informe, le mot ne fait que nommer la question — il gagne donc
-    -- à être lisible plutôt que court, quitte à empiéter sur le modèle du
-    -- personnage, qu'aucune information ne recouvre.
+    -- Titres et indications des icônes posées à côté d'un emplacement. Ce sont
+    -- des **infobulles**, pas des pastilles : l'icône dit déjà de quoi il s'agit,
+    -- le texte n'est là que pour qui s'arrête dessus.
     ["Enchant badge"]                  = "Enchant",
     ["Gem badge"]                      = "Gem",
-    ["Void core badge"]                = "Void core",
-
-    -- Intitulé cherché dans l'infobulle d'une pièce pour savoir si elle porte un
-    -- noyau du vide. Aucun identifiant stable n'étant exposé côté objet, c'est la
-    -- seule chose du module qui dépende de la langue du client : une locale dont
-    -- l'intitulé est faux montre les armes et bijoux en rouge à tort.
-    --
-    -- La forme française est relevée en jeu. **La forme anglaise est une
-    -- supposition** et reste à vérifier sur un client anglais.
-    ["Void core marker"]               = "Ascendant Voidforge",
+    ["No enchant hint"]                = "This slot can take an enchant and has none.",
+    ["Empty socket"]                   = "Empty socket",
+    ["Empty socket hint"]              = "Click to socket a gem from your bags.",
 
     -- Bouton de l'addon (module General)
     -- `Buttons` coiffe aussi les pages Addons et Téléportations : c'est le même
@@ -167,11 +165,12 @@ BUI:RegisterLocale("enUS", {
 
     ["Addon buttons empty"]            = "No addon icon to show.",
     ["Group addon buttons"]            = "Group the addon buttons",
+    -- Trois phrases au plus, et la première dit le geste : c'est la seule chose
+    -- qu'il faut savoir pour retrouver ses boutons une fois qu'ils ont disparu
+    -- du pourtour de la carte.
     ["Group addon buttons tip"] =
-        "Tidies every other addon's minimap button into a drawer that opens beside the BshamelUI "
-        .. "button, on left-click. The game's own buttons are left alone, and turning this off "
-        .. "puts each button back exactly where it was. Needs the BshamelUI button: it is what "
-        .. "opens the drawer.",
+        "Tidies the other addons' minimap buttons into a drawer. Left-click the BshamelUI "
+        .. "button to open it. Turning this off puts each button back exactly where it was.",
 
     -- Module Teleports
     ["Teleports"]                      = "Teleports",
@@ -243,7 +242,6 @@ BUI:RegisterLocale("enUS", {
     ["Hide reputation color"]          = "Hide the reputation color",
     ["Hide reputation color tip"] =
         "Removes the faction-colored plate behind the name on the target and focus frames.",
-    ["Specialization"]                 = "Specialization",
     ["Show spec icon"]                 = "Show the specialization icon",
     ["Show spec icon tip"] =
         "Replaces the portrait with the specialization icon on the player, target, focus and " ..
@@ -269,6 +267,15 @@ BUI:RegisterLocale("enUS", {
         "Scales the party frames past the maximum the Edit Mode slider allows.",
     ["Party frame scale"]              = "Party frame scale",
     ["Party frame scale tip"] =
+        "Percentage of the original size. 100% is the size the frames already have.",
+    ["Arena frames"]                   = "Arena frames",
+    ["Enlarge arena frames"]           = "Enlarge the arena frames",
+    ["Enlarge arena frames tip"] =
+        "Scales the enemy arena frames past the maximum the Edit Mode slider allows. The size "
+        .. "is set during the preparation phase: the game refuses to resize these frames while "
+        .. "you are fighting.",
+    ["Arena frame scale"]              = "Arena frame scale",
+    ["Arena frame scale tip"] =
         "Percentage of the original size. 100% is the size the frames already have.",
 
     -- Module CooldownManager
@@ -637,6 +644,11 @@ BUI:RegisterLocale("enUS", {
     ["Crowd control auras notice"] =
         "To the right of the health bar. A sheeped mob is sheeped no matter who "
         .. "cast it.",
+    ["Aura shaded"]                    = "Addon border on the icons",
+    ["Aura shaded tip"] =
+        "Ticked, an icon of this row wears the addon's usual border — the game's "
+        .. "own bevelled spell frame, tinted to say what the aura is. Unticked, "
+        .. "it keeps the one-pixel square outline in the same colour.",
     ["Own aura size"]                  = "Icon size (pixels)",
     ["Own aura size tip"]              = "Side of an aura icon in this row.",
     ["Aura offset X"]                  = "Offset X (pixels)",
@@ -851,7 +863,7 @@ BUI:RegisterLocale("enUS", {
         .. "holy power, chi, soul shards, arcane charges, essence, runes, or Maelstrom "
         .. "Weapon stacks. The row picks the right one when you change specialisation, "
         .. "and stays hidden on a character who has none.",
-    ["Show resource bar"]              = "Show the resource row",
+    ["Show resource bar"]              = "Show the class resource",
     ["Show resource bar tip"] =
         "Adds a row of squares that you place yourself. It replaces nothing: the game "
         .. "keeps showing its own resource under your character.",
@@ -870,11 +882,14 @@ BUI:RegisterLocale("enUS", {
     ["Resource cell gap"]              = "Gap between squares",
     ["Resource cell gap tip"] =
         "Space between two squares. At zero they touch, separated only by their outline.",
-    ["Resource cells per row"]         = "Squares per row",
-    ["Resource cells per row tip"] =
-        "Folds the row after this many squares. At five, ten Maelstrom Weapon stacks "
-        .. "become two rows of five. Zero keeps everything on a single row. A row that "
-        .. "does not fill up stays left-aligned, in the order the squares fill.",
+    ["Resource cell count"]            = "Number of squares",
+    ["Resource cell count tip"] =
+        "How many squares the row has, whatever the resource counts. Past that, it "
+        .. "**starts over** in the same squares instead of growing: at five, ten Maelstrom "
+        .. "Weapon stacks fit in five large squares rather than ten small ones, in the same "
+        .. "space. Zero gives one square per point. A full row then means five points or "
+        .. "ten: the colour change says which, and so does the number in the middle if you "
+        .. "show it.",
     ["Resource count"]                 = "Show the number",
     ["Resource count tip"]             = "Writes the current count in the middle of the row.",
     ["Hide empty resource"]            = "Hide when empty",
@@ -897,7 +912,25 @@ BUI:RegisterLocale("enUS", {
         "From this many points on, the whole row takes the colour below. Zero turns it off.",
     ["Resource threshold colour"]      = "Colour past that point",
     ["Resource threshold colour tip"] =
-        "Colour the row takes once the count above is reached.",
+        "Colour the row takes once the matching count is reached.",
+    ["Resource threshold 2"]           = "Second step from",
+    ["Resource threshold 2 tip"] =
+        "A second colour change, higher than the first. The highest step reached always "
+        .. "wins: it overrides the one above it.",
+    ["Resource threshold colour 2"]    = "Second step colour",
+    ["Resource threshold 3"]           = "Third step from",
+    ["Resource threshold 3 tip"] =
+        "The last colour change. Like the others, it overrides the steps below it.",
+    ["Resource threshold colour 3"]    = "Third step colour",
+    ["Resource threshold needs previous"] =
+        "Set the step above first.",
+    ["Resource threshold glow"]        = "Show a shine effect",
+    ["Resource threshold glow tip"] =
+        "Puts the same glow the game shows on an action button when a spell procs onto "
+        .. "the filled squares. It has its own trigger and follows no colour step.",
+    ["Resource glow threshold"]        = "Shine from",
+    ["Resource glow threshold tip"] =
+        "How many points before the squares start to shine.",
     ["Resource threshold colour needs threshold"] =
         "Set a colour change point first.",
 })

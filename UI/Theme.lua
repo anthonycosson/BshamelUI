@@ -104,11 +104,32 @@ T.SIZE = {
     -- liraient comme deux idées.
     LABEL_SUB_INDENT = 18,
 
+    -- Case où s'écrit la valeur d'une glissière, posée à sa droite.
+    --
+    -- Une **case** et non un nombre posé à même la page : la valeur s'y saisit au
+    -- clavier (clic droit), et rien d'autre ne dit qu'un nombre est modifiable.
+    -- C'est le cadre qui porte l'information, pas une infobulle qu'il faut aller
+    -- chercher.
+    --
+    -- La largeur tient le plus long nombre que les glissières de l'addon
+    -- affichent — quatre chiffres et un séparateur décimal — plus les retraits
+    -- que le cadre du client prend sur ses deux bords. La hauteur est celle des
+    -- contrôles étroits de l'addon : elle doit rester sous `ROW_H`, sans quoi la
+    -- case déborde de sa ligne.
+    SLIDER_VALUE_W  = 54,
+    SLIDER_VALUE_H  = 20,
+    SLIDER_VALUE_GAP = 10,  -- écart entre la glissière et sa case
+
     -- Place qu'une ligne réserve à droite pour son contrôle : la largeur d'une
-    -- glissière, le nombre qui la suit, et de l'air au bord. C'est ce qui permet
+    -- glissière, la case qui la suit, et de l'air au bord. C'est ce qui permet
     -- à `CONTROL_X` de céder quand la ligne est étroite — dans une colonne, par
     -- exemple — au lieu de pousser les glissières hors du cadre.
-    CONTROL_RESERVE = 216,
+    --
+    -- C'est une somme, pas un goût : `CONTROL_W` + `SLIDER_VALUE_GAP` +
+    -- `SLIDER_VALUE_W`. Elle se recalcule à la main parce qu'une table Lua ne se
+    -- lit pas pendant qu'on l'écrit — changer l'un des trois oblige à repasser
+    -- ici.
+    CONTROL_RESERVE = 224,
 
     -- En deçà, un libellé n'est plus lisible mais tronqué. Une ligne qui ne peut
     -- offrir ni cette largeur ni la réserve ci-dessus est une ligne qu'il ne faut
@@ -390,6 +411,16 @@ T.SIZE = {
                             -- quoi les pastilles paraissent collées au cadre
     SLOT_TEXT_INSET = 2,    -- retrait du niveau d'objet posé sur l'icône
 
+    -- Rangée d'icônes de la colonne : enchantement, puis gemmes. Une **rangée**
+    -- et non une pile, contrairement au reste de la colonne : ces icônes-là
+    -- répondent à deux questions différentes sur la même pièce, et se lisent
+    -- ensemble. Empilées, elles doubleraient la hauteur du bandeau pour rien.
+    --
+    -- Un peu plus haute qu'une ligne de texte : une icône de quatorze pixels
+    -- reste reconnaissable, une de dix devient une tache colorée.
+    SLOT_ICON       = 14,
+    SLOT_ICON_GAP   = 2,
+
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
     -- de sa case.
     --
@@ -495,6 +526,63 @@ T.SIZE = {
     RESOURCE_TEXT_MIN   = 8,
     RESOURCE_TEXT_MAX   = 32,
 
+    -- Épaisseur du **cœur** de la lueur de bord, en proportion de la hauteur d'une
+    -- case. Une proportion et non un nombre fixe : deux pixels se voient sur une
+    -- case de vingt et disparaissent sur une case de quatre-vingts.
+    --
+    -- Le plancher vaut deux : à un pixel, le trait clignote au gré de l'échelle
+    -- de l'interface — c'est une ligne, pas une image, elle ne se sous-échantillonne
+    -- pas gracieusement.
+    RESOURCE_GLOW_TH_RATIO = 0.1,
+    RESOURCE_GLOW_TH_MIN   = 2,
+    RESOURCE_GLOW_TH_MAX   = 5,
+
+    -- Épaisseur du **halo**, en multiples de celle du cœur, de chaque côté.
+    --
+    -- C'est lui qui fait la différence entre un trait et une lumière. Un cœur
+    -- seul, si vif soit-il, garde des bords nets : l'œil y lit un liseré. Ce qui
+    -- se lit comme une lueur est le **fondu** autour.
+    --
+    -- Deux fois le cœur, et c'est mesuré sur la référence : un noyau de quatre
+    -- pixels pour un flou de six, plus un pixel d'étalement, soit un halo d'un peu
+    -- moins du double de chaque côté. On était à trois fois et demie — assez large
+    -- pour que le fondu se dilue et cesse d'être lu comme appartenant au trait.
+    RESOURCE_GLOW_BLOOM = 2.0,
+
+    -- La comète qui court sur le bord : sa **tête**, le dernier point de sa
+    -- **traînée**, et l'écart entre deux points de celle-ci. Les deux premiers en
+    -- multiples de l'épaisseur du cœur du bord, le troisième en multiples de la
+    -- tête.
+    --
+    -- Se mesurer sur le cœur et non sur la rangée est ce qui garde l'effet
+    -- discret : une tête à peine plus grosse que le trait qu'elle parcourt se lit
+    -- comme une lumière qui court **dans** la bordure. Proportionnelle à la
+    -- hauteur de la rangée, elle en faisait le double et devenait une pastille qui
+    -- glisse à côté — le mouvement primait sur ce qu'il éclaire, et c'est
+    -- l'inverse qu'on veut.
+    --
+    -- Une tête d'une fois et demie la queue : assez pour qu'on voie où va la
+    -- comète, pas assez pour qu'elle se lise comme deux objets.
+    --
+    -- **L'écart décide de tout.** Il vaut un cinquième d'un point, c'est-à-dire
+    -- que chaque point recouvre les quatre suivants : la traînée cesse d'être une
+    -- suite de boules pour devenir une seule forme continue, arrondie à ses deux
+    -- bouts et plus haute d'un côté que de l'autre. À un demi-point, on compte les
+    -- boules ; à un cinquième, on ne les voit plus.
+    RESOURCE_GLOW_HEAD = 4.5,
+    RESOURCE_GLOW_TAIL = 3.0,
+    RESOURCE_GLOW_GAP  = 0.2,
+
+    -- Point posé à chacun des quatre coins du bord fixe, en multiples de
+    -- l'épaisseur du cœur.
+    --
+    -- Quatre bandes droites se coupent à angle droit, et un angle droit se lit
+    -- comme un carré quoi qu'on fasse du reste. Une petite boule de lumière posée
+    -- sur chaque coin en arrondit la lecture : ce n'est pas le coin qu'on change,
+    -- c'est ce que l'œil y voit.
+    RESOURCE_GLOW_CORNER = 4.0,
+
+
     -- De combien la rangée descend sous le centre de l'écran à la première
     -- ouverture. Ce n'est pas une position définitive — elle se déplace à la
     -- souris — mais le centre exact de l'écran est le pire endroit possible pour
@@ -503,21 +591,26 @@ T.SIZE = {
     -- les siennes.
     RESOURCE_DROP = 180,
 
-    -- Repères des paliers d'une clé, posés sur la barre de chrono du client.
+    -- Repères des paliers d'une clé : une **fine pilule** posée en travers de la
+    -- barre de chrono du client, et **entièrement contenue dedans**.
     --
-    -- Huit pixels de large sur dix de haut, **cadrés en haut** de la barre. Deux
-    -- tentatives maison ont précédé ces deux nombres — un trait de trois pixels sur
-    -- toute la hauteur du cadre, qui dépassait du bleu ; puis une proportion centrée,
-    -- qui dépassait encore. Ce sont les mesures d'Angry Keystones, et elles marchent
-    -- pour une raison qu'aucune des deux n'avait vue : la marge transparente de
-    -- l'atlas du remplissage n'est pas symétrique. Dix pixels depuis le **haut** en
-    -- laissent trois en bas, ce qui est exactement là où elle est.
+    -- Les trois proportions se prennent sur la hauteur de la barre, relevée à
+    -- l'exécution : le client a retouché la sienne d'une extension à l'autre, et
+    -- une proportion survit là où un pixel ne survit pas.
     --
-    -- La largeur n'est pas non plus un détail : un repère de huit pixels avec ses
-    -- bords en dégradé se lit comme une graduation ; un trait fin se lit comme une
-    -- nervure de plus du remplissage, qui en porte déjà.
-    KEY_TIER_W     = 8,
-    KEY_TIER_H     = 10,
+    -- **Rien ne dépasse, ni en haut ni en bas.** Un repère qui sort de la barre se
+    -- lit comme une marque posée *devant* elle plutôt que dedans.
+    --
+    -- La hauteur ne vaut pas la barre entière mais un peu moins : la marge
+    -- transparente de l'atlas de remplissage n'est pas symétrique, et le bleu
+    -- visible occupe environ trois quarts du cadre, **cadrés en haut**. C'est cette
+    -- part-là qu'on remplit, et c'est pourquoi le repère s'ancre par le haut.
+    --
+    -- Le plancher de largeur est le seul nombre absolu : sous deux pixels, un
+    -- trait vertical papillote au gré de l'échelle de l'interface.
+    KEY_TIER_H_RATIO = 0.75,
+    KEY_TIER_W_RATIO = 0.16,
+    KEY_TIER_W_MIN   = 2,
 
     -- Écart entre deux nombres de la rangée du chrono : entre le temps restant et
     -- le premier palier, puis entre les deux paliers. Assez pour que deux nombres ne
@@ -539,6 +632,11 @@ T.SIZE = {
     -- un cadre, donc un repère au sous-calque zéro passerait dessous. La valeur
     -- n'a pas à être serrée — elle doit seulement dépasser celles du client, et
     -- rien ne se dessine entre les deux.
+    --
+    -- **C'est aussi le plafond que le moteur accepte** : un sous-calque vit entre
+    -- moins huit et sept, et en demander huit ne dégrade pas — la création de la
+    -- texture lève. Un repère en plusieurs épaisseurs doit donc s'empiler **vers
+    -- le bas** depuis ce nombre, jamais vers le haut.
     KEY_TIER_LEVEL = 7,
 
     -- Fraction rognée sur chaque bord d'une icône avant d'y poser le contour.
@@ -688,6 +786,20 @@ T.TIMING = {
     -- la teinte qui change à partir de X cases —, assez rapide pour qu'on ne
     -- l'attende pas en réglant la position.
     RESOURCE_PREVIEW = 0.6,
+
+    -- Durée d'un tour complet du contour par la lueur de bord.
+    --
+    -- Lent : ce qui court ici parcourt le **périmètre** d'une rangée, quelques
+    -- centaines de pixels. À la seconde, les segments filent et se lisent comme
+    -- des projectiles ; à quatre, ils tournent.
+    RESOURCE_GLOW_LAP  = 4.0,
+
+    -- Cadence de la lueur de bord (règle 7). Quarante pas par seconde suffisent à
+    -- ce qu'un trait paraisse glisser ; on n'en paie pas soixante pour un
+    -- mouvement que l'œil ne suit pas de toute façon. Elle ne tourne que pendant
+    -- que la lueur est à l'écran.
+    RESOURCE_GLOW_STEP = 0.025,
+
 
     HOVER         = 0.1,   -- sondage de la fenêtre survolée, pendant qu'un
                             -- modificateur est tenu. Assez court pour que le
@@ -942,6 +1054,36 @@ T.COLOR.TIER_THREE = T.COLOR.FRAME_GOLD
 T.COLOR.RESOURCE_FILL  = T.COLOR.ACCENT
 T.COLOR.RESOURCE_ALERT = T.COLOR.FRAME_GOLD
 
+-- Teintes de départ des deux paliers suivants. Trois paliers se lisent comme une
+-- **montée**, et une montée a un vocabulaire déjà écrit dans l'addon : l'or de ce
+-- qui prime, puis l'orange de « ça part de travers », puis le rouge. Ce sont les
+-- mêmes couleurs qu'ailleurs, et elles y veulent dire la même chose.
+--
+-- Elles se changent une par une dans la page : ce qui est décidé ici, c'est ce
+-- que le joueur trouve en arrivant.
+T.COLOR.RESOURCE_ALERT2 = T.COLOR.ORANGE
+T.COLOR.RESOURCE_ALERT3 = T.COLOR.RED
+
+-- Lueur de bord de la rangée : **deux teintes et non une**. Un cœur, et le halo
+-- un cran plus chaud qui l'entoure.
+--
+-- Ce sont deux ambres **relevés sur une référence** — la lueur dorée qu'un
+-- tableau de bord de guilde pose sur un palier de grand coffre atteint, dont le
+-- rendu était celui qu'on cherchait. Un cœur `#FCD34D` et un halo `#FBBF24` à
+-- neuf dixièmes d'opacité.
+--
+-- On était parti d'un cœur presque blanc, en se disant qu'une lumière forte
+-- sature l'œil avant de lui montrer sa couleur. C'est vrai d'une source
+-- éblouissante ; ce n'est pas vrai d'un liseré de quelques pixels, qui n'a pas
+-- de quoi éblouir et se contente alors de paraître **délavé**. À cette taille, la
+-- chaleur passe par la saturation, pas par l'intensité.
+--
+-- L'or plutôt que l'accent de l'addon, et plutôt que la teinte du palier : c'est
+-- la couleur que le jeu donne à tout ce qui s'allume — un procédé, un objet prêt,
+-- un sort suggéré. Elle veut déjà dire « maintenant », et on ne la réapprend pas.
+T.COLOR.GLOW_CORE = CreateColor(0.988, 0.827, 0.302)
+T.COLOR.GLOW_HALO = CreateColor(0.984, 0.749, 0.141)
+
 -- -------------------------------------------------------------------------
 --  Barres de nom
 -- -------------------------------------------------------------------------
@@ -1072,6 +1214,27 @@ T.ALPHA = {
     -- Liseré des cases. Pleine : c'est le noir qui les sépare, et un noir dilué
     -- laisse deux cases pleines se toucher.
     RESOURCE_EDGE   = 1.00,
+
+    -- Lueur de bord, en deux temps.
+    --
+    -- Le **fond** couvre tout le contour et ne bouge jamais : c'est lui qui fait
+    -- que la rangée entière a l'air allumée plutôt que traversée par des traits.
+    -- Il est discret par construction — permanent, il serait fatigant à pleine
+    -- intensité, et posé en mode additif il blanchirait les cases au lieu de les
+    -- border.
+    --
+    -- Les **comètes** qui le parcourent : c'est leur écart avec le fond qui se lit
+    -- comme un mouvement, pas leur intensité absolue.
+    --
+    -- Ces deux opacités-là ne sont **pas** celles qu'on voit. Une comète est faite
+    -- de points qui se recouvrent largement, et le mode additif les additionne :
+    -- quatre points empilés à 0,4 donnent un blanc franc. Ce sont donc des
+    -- opacités **par point**, réglées pour que leur somme tombe juste — les monter
+    -- ne rend pas la comète plus lumineuse, elle la brûle.
+    GLOW_CORE       = 0.55,
+    GLOW_HALO       = 0.30,
+    GLOW_SPARK      = 0.40,
+    GLOW_TRAIL      = 0.16,
 }
 
 -- =========================================================================
@@ -1333,6 +1496,59 @@ function T.ItemQualityColor(quality)
     return T.COLOR.WHITE:GetRGB()
 end
 
+--- Pistes d'amélioration, par l'identifiant que le client leur donne, et la
+--- qualité d'objet dont chacune emprunte la couleur.
+---
+--- **Un identifiant, pas un nom.** `C_Item.GetItemUpgradeInfo` rend les deux :
+--- `trackString`, traduit, et `trackStringID`, qui ne l'est pas. C'est le second
+--- qu'on lit — une piste reconnue par son intitulé français serait une piste
+--- inconnue sur un client anglais.
+---
+--- **Les couleurs ne sont pas inventées : ce sont celles des qualités d'objet.**
+--- Orange pour le mythe, violet pour l'héroïque, bleu pour le champion, vert pour
+--- le vétéran, blanc pour l'aventurier — c'est l'échelle que le joueur lit déjà
+--- sur chaque objet du jeu, et la piste est elle aussi une échelle. En inventer
+--- une seconde reviendrait à lui faire apprendre deux fois la même hiérarchie.
+---
+--- Les identifiants sont **relevés en jeu**, sur un personnage équipé des cinq
+--- pistes : rien ne les publie en table. Les quatre premières se suivent, la
+--- cinquième non — le mythe est à 978 quand l'héroïque est à 974, et cet écart
+--- interdit de deviner les autres par le calcul. On ne les déduit donc pas, on
+--- les relève.
+---
+--- Une piste absente retombe sur la qualité de l'objet, c'est-à-dire sur ce que
+--- le module faisait avant : on perd la nuance, jamais la couleur.
+local TRACK_QUALITY = {
+    [971] = 1,   -- Aventurier → blanc
+    [972] = 2,   -- Vétéran    → vert
+    [973] = 3,   -- Champion   → bleu
+    [974] = 4,   -- Héros      → violet
+    [978] = 5,   -- Mythe      → orange
+}
+
+--- Couleur d'une piste d'amélioration, ou `nil` si on ne la connaît pas.
+---@param trackStringID? number
+---@return number|nil r, number|nil g, number|nil b
+function T.TrackColor(trackStringID)
+    local quality = trackStringID and TRACK_QUALITY[trackStringID]
+    if not quality then return nil end
+    return T.ItemQualityColor(quality)
+end
+
+--- Nom d'atlas de l'étoile de rang d'un enchantement, ou `nil` si le client ne la
+--- connaît pas.
+---@param tier? number  1 à 5
+---@return string|nil
+function T.EnchantTierAtlas(tier)
+    if type(tier) ~= "number" then return nil end
+
+    local name = T.ATLAS.ENCHANT_TIER .. tier
+    if C_Texture and C_Texture.GetAtlasInfo and not C_Texture.GetAtlasInfo(name) then
+        return nil
+    end
+    return name
+end
+
 --- Couleur d'un état « fait / pas fait ».
 ---
 --- Les deux couleurs que porte une pastille de la fiche de personnage, et elles
@@ -1343,24 +1559,6 @@ end
 function T.StatusColor(ok)
     local color = ok and T.COLOR.GREEN or T.COLOR.RED
     return color:GetRGB()
-end
-
---- Couleur d'un rang d'amélioration.
----
---- Trois états et non deux, parce que la question n'est pas la même : une pièce
---- améliorable **est** améliorée, elle ne l'est simplement pas à fond. Le rouge
---- des autres pastilles dirait « il manque quelque chose », ce qui est faux et
---- ferait crier toute une colonne pour un travail en cours.
----
---- Sans l'avertissement, le rang non maximal reste **vert** plutôt que gris ou
---- neutre : le joueur qui coupe ce réglage dit qu'il ne veut pas être relancé
---- là-dessus, pas qu'il veut une pastille de moins.
----@param maxed boolean
----@param warn boolean  teinter les rangs non maximaux ?
----@return number r, number g, number b
-function T.UpgradeColor(maxed, warn)
-    if maxed or not warn then return T.COLOR.GREEN:GetRGB() end
-    return T.COLOR.ORANGE:GetRGB()
 end
 
 --- jeton de classe -> sa couleur, ou `false` si le client n'en connaît pas.
@@ -1614,7 +1812,26 @@ T.ATLAS = {
     -- un second cadre à l'intérieur du premier.
     SHADE_BORDER = "Adventures-Spell-Border",
 
+    -- Étoiles de rang des métiers, de la grise à la dorée. C'est **exactement**
+    -- ce que le jeu pose au bout de la ligne d'enchantement d'une infobulle : le
+    -- joueur y lit déjà le rang de ce qu'il porte, et le reprendre ailleurs ne lui
+    -- demande rien de neuf.
+    --
+    -- Le rang complète le nom : `Professions-ChatIcon-Quality-Tier3`. Voir
+    -- `T.EnchantTierAtlas`.
+    ENCHANT_TIER = "Professions-ChatIcon-Quality-Tier",
 }
+
+--- Épaisseur du trait de la lueur de bord, d'après la hauteur d'une case.
+--- Voir `T.SIZE.RESOURCE_GLOW_TH_RATIO` pour le pourquoi de la proportion.
+---@param cellHeight? number
+---@return number
+function T.ResourceGlowThickness(cellHeight)
+    local th = (cellHeight or T.SIZE.RESOURCE_CELL_H) * T.SIZE.RESOURCE_GLOW_TH_RATIO
+    if th < T.SIZE.RESOURCE_GLOW_TH_MIN then return T.SIZE.RESOURCE_GLOW_TH_MIN end
+    if th > T.SIZE.RESOURCE_GLOW_TH_MAX then return T.SIZE.RESOURCE_GLOW_TH_MAX end
+    return th
+end
 
 --- Chemins de texture, pour les rares cas sans atlas équivalent.
 --- Toute nouvelle entrée passe par ici : aucun chemin littéral dans un widget.
@@ -1690,6 +1907,56 @@ T.TEXTURE = {
     --     mat — la « couleur standard » de la page.
     STATUSBAR_FLAT    = "Interface\\Buttons\\WHITE8x8",
     STATUSBAR_RAID    = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
+
+    -- Carré blanc du moteur. Même fichier que `STATUSBAR_FLAT` ci-dessus, sous un
+    -- autre nom parce qu'il sert à tout autre chose : là c'est le remplissage
+    -- d'une barre, ici c'est de la **couleur pure** à qui l'on donne sa forme par
+    -- ancrage.
+    --
+    -- C'est ce qui en fait la matière des lueurs **étendues** : une image porte
+    -- des détails, et des détails étirés sur quatre fois leur largeur deviennent
+    -- flous et crénelés. Une couleur unie n'a rien à perdre — elle est aussi nette
+    -- sur trois pixels que sur trois cents.
+    SOLID             = "Interface\\Buttons\\WHITE8x8",
+
+    -- Emplacement dépourvu d'enchantement : l'icône du métier d'enchanteur, celle
+    -- que le jeu donne à la compétence elle-même. Elle est **désaturée** à
+    -- l'affichage, ce qui suffit à dire « il manque quelque chose ici » sans
+    -- écrire un mot — une icône éteinte se lit comme une case vide.
+    ENCHANT_NONE      = "Interface\\Icons\\Trade_Engraving",
+
+    -- Châsse vide, celle du cadre de sertissage du client. Prismatique parce
+    -- qu'on ne cherche pas à dire **quelle** couleur de gemme irait : la question
+    -- posée est « y a-t-il un trou », pas « lequel ».
+    EMPTY_SOCKET      = "Interface\\ItemSocketingFrame\\UI-EmptySocket-Prismatic",
+
+    -- Point lumineux qui court le long du bord, découpé dans la planche des armes
+    -- prodigieuses (voir `T.TEXCOORD.GLOW_SPARK`).
+    --
+    -- **Une image, et cette fois c'est le bon outil.** Ce qui s'étire mal est une
+    -- image *détaillée* ; celle-ci n'est qu'un fondu radial — aucun trait, aucun
+    -- contour, rien qui puisse se créneler. Réduite à la taille d'un point, elle
+    -- reste un dégradé rond, ce qu'une couleur unie ne sait pas faire : un aplat
+    -- s'arrête net, et un bout net est précisément ce qui se lit comme un pixel.
+    --
+    -- **Pleine, et c'est ce qui la distingue des halos du client.** Ceux-ci — le
+    -- cadre de qualité d'un objet, la bordure d'un bouton — sont **creux** : leur
+    -- lumière est sur le pourtour et leur centre est transparent. Réduits à la
+    -- taille d'un point, ils ne donnent pas une boule mais un petit carré vide,
+    -- ce qui est exactement ce qu'on ne veut pas.
+    --
+    -- Repérée dans `LibCustomGlow-1.0`, qui s'en sert pour les étincelles tournant
+    -- autour d'un bouton : on lit pour savoir *quel asset* résout le problème, on
+    -- n'en copie pas le code (règle 8).
+    GLOW_SPARK        = "Interface\\Artifacts\\Artifacts",
+}
+
+--- Découpes dans les planches du client, pour les textures qui n'occupent qu'une
+--- part de leur fichier.
+T.TEXCOORD = {
+    -- Le point lumineux, dans le coin bas-droit de la planche des armes
+    -- prodigieuses.
+    GLOW_SPARK = { 0.8115234375, 0.9169921875, 0.8798828125, 0.9853515625 },
 }
 
 --- Coordonnées de l'icône de ciblage n° `index` dans la planche

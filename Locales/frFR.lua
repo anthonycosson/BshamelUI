@@ -21,6 +21,8 @@ BUI:RegisterLocale("frFR", {
         .. "elle-même : il y tient donc plus de réglages. Cliquez pour choisir "
         .. "une taille.",
     ["Scale percent"]           = "%d %%",
+    ["Slider value tip"] =
+        "Clic droit pour saisir une valeur exacte. Entrée valide, Échap annule.",
     ["Reset page confirm"]      = "Remettre tous les réglages de cette page à leur valeur par défaut ?",
     ["Yes"]                     = "Oui",
     ["Cancel"]                  = "Annuler",
@@ -87,7 +89,10 @@ BUI:RegisterLocale("frFR", {
     ["Camera zoom factor"]             = "Facteur de zoom",
     ["Camera zoom factor tip"] =
         "Multiplie la limite de recul du client. 2,9 est le maximum qu'il accepte.",
-    ["Game menu"]                      = "Menu du jeu",
+    -- La touche est dans l'intitulé de la section : « menu du jeu » ne désigne
+    -- rien pour qui ne l'a jamais lu écrit, alors que tout le monde connaît le
+    -- menu qui s'ouvre sur Échap.
+    ["Game menu"]                      = "Menu du jeu (Échap)",
     ["Compact game menu"]              = "Réduire le menu du jeu",
     ["Compact game menu tip"] =
         "Rapetisse le menu ouvert par Échap, que le client dessine très grand.",
@@ -125,12 +130,13 @@ BUI:RegisterLocale("frFR", {
     ["Item details"]                   = "Détails des objets",
     ["Show item level"]                = "Afficher le niveau d'objet",
     ["Show item level on slots tip"] =
-        "Affiche le niveau d'objet de chaque pièce équipée sur son emplacement, mise à l'échelle comprise.",
+        "Affiche le niveau d'objet de chaque pièce équipée à côté de son emplacement, mise à "
+        .. "l'échelle comprise.",
     ["Show upgrade level"]             = "Afficher le niveau d'amélioration",
-    ["Show upgrade level tip"]         = "Affiche le rang d'amélioration de chaque pièce équipée.",
-    ["Warn partial upgrade"]           = "Signaler les améliorations incomplètes",
-    ["Warn partial upgrade tip"] =
-        "Passe le rang en orange tant que la pièce n'est pas au maximum. Décoché, tous les rangs restent verts.",
+    ["Show upgrade level tip"] =
+        "Affiche le rang d'amélioration à côté du niveau d'objet, entre parenthèses. Les deux "
+        .. "prennent la couleur de la piste d'amélioration : orange pour le mythe, violet pour "
+        .. "l'héroïque, bleu pour le champion, vert pour le vétéran, blanc en dessous.",
     ["Show enchants"]                  = "Afficher les enchantements",
     ["Show enchants tip"] =
         "Vert sur chaque emplacement qui peut recevoir un enchantement et en a un, rouge sur ceux qui n'en ont pas.",
@@ -141,16 +147,11 @@ BUI:RegisterLocale("frFR", {
     ["Show item level in bags"]        = "Afficher le niveau d'objet sur l'équipement rangé",
     ["Show item level in bags tip"] =
         "Inscrit le niveau d'objet sur chaque pièce d'équipement dans les sacs, la banque et la banque de bataillon.",
-    ["Show void core"]                 = "Afficher le noyau du vide",
-    ["Show void core tip"] =
-        "Signale les armes et les bijoux qui n'ont pas encore reçu la forge du vide ascendant.",
     ["Enchant badge"]                  = "Enchantement",
     ["Gem badge"]                      = "Gemme",
-    ["Void core badge"]                = "Noyau du vide",
-
-    -- Relevé en jeu sur une arme portant un noyau. Voir enUS pour ce que cette
-    -- clé décide.
-    ["Void core marker"]               = "Forge du vide ascendant",
+    ["No enchant hint"]                = "Cet emplacement peut être enchanté et ne l'est pas.",
+    ["Empty socket"]                   = "Châsse vide",
+    ["Empty socket hint"]              = "Cliquez pour y sertir une gemme de vos sacs.",
 
     -- Modules ActionBars et UnitFrames
     ["Action bars"]                    = "Barres d'action",
@@ -177,7 +178,6 @@ BUI:RegisterLocale("frFR", {
     ["Hide reputation color tip"] =
         "Retire la plaque aux couleurs de la faction posée derrière le nom, sur le cadre de la " ..
         "cible et sur celui du focus.",
-    ["Specialization"]                 = "Spécialisation",
     ["Show spec icon"]                 = "Afficher l'icône de spécialisation",
     ["Show spec icon tip"] =
         "Remplace le portrait par l'icône de spécialisation sur les cadres du joueur, de la cible, " ..
@@ -204,6 +204,15 @@ BUI:RegisterLocale("frFR", {
         "Agrandit les cadres de groupe au-delà du maximum qu'autorise le curseur du mode Édition.",
     ["Party frame scale"]              = "Échelle des cadres de groupe",
     ["Party frame scale tip"] =
+        "Pourcentage de la taille d'origine. 100 % est la taille que les cadres ont déjà.",
+    ["Arena frames"]                   = "Cadres d'arène",
+    ["Enlarge arena frames"]           = "Agrandir les cadres d'arène",
+    ["Enlarge arena frames tip"] =
+        "Agrandit les cadres des adversaires en arène au-delà du maximum qu'autorise le curseur "
+        .. "du mode Édition. La taille se pose pendant la phase de préparation : le jeu refuse "
+        .. "de redimensionner ces cadres pendant le combat.",
+    ["Arena frame scale"]              = "Échelle des cadres d'arène",
+    ["Arena frame scale tip"] =
         "Pourcentage de la taille d'origine. 100 % est la taille que les cadres ont déjà.",
 
     -- Module CooldownManager
@@ -248,10 +257,9 @@ BUI:RegisterLocale("frFR", {
     ["Addon buttons empty"]            = "Aucune icône d'addon à afficher.",
     ["Group addon buttons"]            = "Regrouper les boutons d'addons",
     ["Group addon buttons tip"] =
-        "Range le bouton de minicarte de chaque autre addon dans un tiroir qui s'ouvre à côté "
-        .. "du bouton BshamelUI, au clic gauche. Les boutons du jeu ne sont pas touchés, et "
-        .. "éteindre le réglage remet chaque bouton exactement où il était. Demande le bouton "
-        .. "BshamelUI : c'est lui qui ouvre le tiroir.",
+        "Range les boutons de minicarte des autres addons dans un tiroir. Clic gauche sur le "
+        .. "bouton BshamelUI pour les retrouver. Éteindre le réglage remet chaque bouton "
+        .. "exactement où il était.",
 
     -- Module Teleports
     ["Teleports"]                      = "Téléportations",
@@ -653,6 +661,12 @@ BUI:RegisterLocale("frFR", {
     ["Crowd control auras notice"] =
         "À droite de la barre de vie. Un mob mouton est mouton, peu importe qui "
         .. "l'a lancé.",
+    ["Aura shaded"]                    = "Contour de l'addon sur les icônes",
+    ["Aura shaded tip"] =
+        "Cochée, une icône de cette rangée porte le contour habituel de "
+        .. "l'addon — la bordure de sort du jeu, aux coins en biseau, teintée "
+        .. "pour dire ce qu'est l'aura. Décochée, elle garde le liseré carré "
+        .. "d'un pixel, de la même couleur.",
     ["Own aura size"]                  = "Taille des icônes (pixels)",
     ["Own aura size tip"]              = "Côté d'une icône d'aura de cette rangée.",
     ["Aura offset X"]                  = "Décalage X (pixels)",
@@ -879,7 +893,7 @@ BUI:RegisterLocale("frFR", {
         .. "combo, puissance sacrée, chi, fragments d'âme, charges des arcanes, essence, "
         .. "runes ou cumuls d'Arme-tempête. La rangée choisit la bonne quand vous changez "
         .. "de spécialisation, et reste cachée sur un personnage qui n'en a aucune.",
-    ["Show resource bar"]              = "Afficher la rangée",
+    ["Show resource bar"]              = "Afficher la ressource de classe",
     ["Show resource bar tip"] =
         "Ajoute une rangée de cases que vous placez vous-même. Elle ne remplace rien : le "
         .. "jeu continue d'afficher sa propre ressource sous le personnage.",
@@ -898,11 +912,14 @@ BUI:RegisterLocale("frFR", {
     ["Resource cell gap"]              = "Écart entre les cases",
     ["Resource cell gap tip"] =
         "Espace entre deux cases. À zéro elles se touchent, séparées par leur seul liseré.",
-    ["Resource cells per row"]         = "Cases par rangée",
-    ["Resource cells per row tip"] =
-        "Plie la rangée après ce nombre de cases. À cinq, les dix cumuls d'Arme-tempête "
-        .. "deviennent deux rangées de cinq. Zéro garde tout d'un tenant. Une rangée qui "
-        .. "ne se remplit pas reste calée à gauche, dans l'ordre où les cases se remplissent.",
+    ["Resource cell count"]            = "Nombre de cases",
+    ["Resource cell count tip"] =
+        "Combien de cases la rangée compte, quel que soit le nombre de points de la "
+        .. "ressource. Au-delà, elle **repart de zéro** dans les mêmes cases au lieu de "
+        .. "s'allonger : à cinq, les dix cumuls d'Arme-tempête tiennent dans cinq grandes "
+        .. "cases plutôt que dix petites, au même endroit. Zéro donne une case par point. "
+        .. "Une rangée pleine veut alors dire cinq points ou dix : c'est le changement de "
+        .. "couleur qui le dit, et le nombre au milieu si vous l'affichez.",
     ["Resource count"]                 = "Afficher le nombre",
     ["Resource count tip"]             = "Écrit le compte courant au milieu de la rangée.",
     ["Hide empty resource"]            = "Masquer quand c'est vide",
@@ -926,7 +943,27 @@ BUI:RegisterLocale("frFR", {
         .. "Zéro éteint le mécanisme.",
     ["Resource threshold colour"]      = "Couleur au-delà du palier",
     ["Resource threshold colour tip"] =
-        "Teinte que prend la rangée une fois le nombre ci-dessus atteint.",
+        "Teinte que prend la rangée une fois le nombre correspondant atteint.",
+    ["Resource threshold 2"]           = "Deuxième palier à partir de",
+    ["Resource threshold 2 tip"] =
+        "Un second changement de couleur, plus haut que le premier. C'est toujours le "
+        .. "palier le plus haut atteint qui l'emporte : il écrase celui du dessus.",
+    ["Resource threshold colour 2"]    = "Couleur du deuxième palier",
+    ["Resource threshold 3"]           = "Troisième palier à partir de",
+    ["Resource threshold 3 tip"] =
+        "Le dernier changement de couleur. Comme les précédents, il écrase ceux qui sont "
+        .. "en dessous de lui.",
+    ["Resource threshold colour 3"]    = "Couleur du troisième palier",
+    ["Resource threshold needs previous"] =
+        "Posez d'abord le palier du dessus.",
+    ["Resource threshold glow"]        = "Afficher un effet brillant",
+    ["Resource threshold glow tip"] =
+        "Pose sur les cases pleines la lueur que le jeu met sur un bouton d'action quand "
+        .. "un sort devient utilisable — la même exactement. Elle a son propre seuil et "
+        .. "ne suit aucun palier de couleur.",
+    ["Resource glow threshold"]        = "Effet brillant à partir de",
+    ["Resource glow threshold tip"] =
+        "Nombre de points à partir duquel les cases brillent.",
     ["Resource threshold colour needs threshold"] =
         "Choisissez d'abord un palier.",
 })

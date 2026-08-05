@@ -141,6 +141,79 @@ local function buildWidget(page, mod, descriptor)
     return nil
 end
 
+--- Place qu'il faudrait à cette ligne pour écrire son libellé en entier.
+---
+--- La contrainte de largeur est **levée le temps de la mesure**. Une chaîne bornée
+--- rend volontiers la largeur qu'on lui a imposée plutôt que la sienne : la
+--- colonne mesurerait alors sa propre limite, et ne pourrait jamais s'élargir.
+--- `Arrange` repose une largeur juste après, dans la même passe.
+---
+--- Sans mesure lisible on rend zéro : la colonne garde `CONTROL_X`, c'est-à-dire
+--- ce qu'elle faisait avant qu'on sache mesurer.
+---@param frame table
+---@return number
+local function labelReach(frame)
+    local label = frame.label
+    if not (label and type(label.GetStringWidth) == "function") then return 0 end
+
+    label:SetWidth(0)
+    local text = label:GetStringWidth()
+    if BUI.Util.IsSecret(text) or type(text) ~= "number" then return 0 end
+
+    return (frame._labelX or 0) + text + T.SIZE.LABEL_INDENT
+end
+
+--- Abscisse à laquelle les contrôles s'alignent, une par colonne.
+---
+--- `CONTROL_X` est le **plancher** autant que la référence : une colonne ne
+--- remonte jamais au-dessus, et c'est ce qui fait qu'une case à cocher tombe au
+--- même endroit d'une page à l'autre dès que les libellés sont courts. Elle
+--- recule quand il le faut, jusqu'au plus long libellé qu'elle porte — « Augmenter
+--- la distance maximale de la caméra » ne tenait pas, et un intitulé coupé ne se
+--- lit pas.
+---
+--- **C'est la colonne entière qui bouge, jamais la ligne fautive seule.** Une case
+--- décalée au milieu de dix autres se lit comme un défaut d'alignement, ce qui est
+--- pire que le texte coupé qu'on voulait réparer.
+---
+--- Le plafond est la place que le contrôle réclame à droite : une colonne qui
+--- reculerait au-delà gagnerait un libellé entier en poussant les glissières hors
+--- du cadre.
+---@param page table
+---@param split boolean
+---@param colWidth number
+---@return table  { colonne 1, colonne 2 }
+local function columnControlX(page, split, colWidth)
+    local S       = T.SIZE
+    local entries = page._entries
+    local at      = { S.CONTROL_X, S.CONTROL_X }
+    local col     = 1
+
+    for i = 1, #entries do
+        if split and page._breakAt == i - 1 then col = 2 end
+
+        local entry  = entries[i]
+        local hidden = entry.descriptor.hidden and entry.descriptor.hidden() or false
+
+        -- Seules les lignes qui portent un contrôle décident de la colonne : un
+        -- paragraphe ou un en-tête court sur toute la largeur et n'a rien à
+        -- aligner.
+        if not hidden and entry.frame.control then
+            local reach = labelReach(entry.frame)
+            if reach > at[col] then at[col] = reach end
+        end
+    end
+
+    local ceiling = colWidth - S.CONTROL_RESERVE
+    for c = 1, 2 do
+        if at[c] > ceiling then
+            at[c] = (ceiling > S.CONTROL_X) and ceiling or S.CONTROL_X
+        end
+    end
+
+    return at
+end
+
 --- Empile les widgets et renvoie la hauteur totale utilisée.
 ---
 --- Une page peut demander une **coupure de colonne** : tout ce qui suit se pose
@@ -162,6 +235,11 @@ local function layout(page)
     local split    = page._breakAt ~= nil
                      and width >= S.COLUMN_MIN_W * 2 + S.COLUMN_GAP
     local colWidth = split and (width - S.COLUMN_GAP) / 2 or width
+
+    -- Relevé **avant** de poser quoi que ce soit : chaque ligne a besoin de la
+    -- décision de sa colonne pour se répartir, et cette décision se prend en
+    -- regardant toutes les lignes.
+    local controlX = columnControlX(page, split, colWidth)
 
     -- Une ordonnée par colonne, et le rang de la première ligne de chacune : un
     -- en-tête respire davantage, sauf en tête de sa propre colonne.
@@ -189,6 +267,8 @@ local function layout(page)
             entry.frame:ClearAllPoints()
             entry.frame:SetPoint("TOPLEFT", page, "TOPLEFT", x, y[col])
             if colWidth > 0 then entry.frame:SetWidth(colWidth) end
+
+            entry.frame._controlX = controlX[col]
 
             -- La largeur vient d'être posée : les lignes peuvent répartir leur
             -- libellé et leur contrôle, et les paragraphes se mesurer.
