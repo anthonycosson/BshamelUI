@@ -123,7 +123,12 @@ BUI:RegisterLocale("enUS", {
     -- Module Character
     ["Character sheet"]                = "Character sheet",
     ["Item details"]                   = "Item details",
-    ["Show item level"]                = "Show item level",
+    ["Show average item level"]        = "Show the character's item level",
+    ["Show average item level tip"] =
+        "Writes the average item level above the weapons. The one you wear, not the one "
+        .. "your bags promise.",
+    ["Average item level"]             = "Item level %.1f",
+    ["Show item level"]                = "Show item level on each piece",
     ["Show item level on slots tip"] =
         "Shows the item level of every equipped piece beside its slot, scaling included.",
     ["Show upgrade level"]             = "Show upgrade level",

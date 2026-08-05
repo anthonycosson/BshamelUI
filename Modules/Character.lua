@@ -109,6 +109,13 @@ local PLACEMENT = {
     MainHandSlot = "LEFT", SecondaryHandSlot = "RIGHT",
 }
 
+--- Emplacement au-dessus duquel se pose le niveau d'objet du personnage.
+---
+--- La main droite, donc l'arme de gauche à l'écran. C'est le bas du modèle et le
+--- milieu de la fiche : le seul endroit qui n'appartienne ni à une pièce ni aux
+--- statistiques, ce qui est exactement le statut de ce nombre-là.
+local HEADLINE_ANCHOR = "MainHandSlot"
+
 --- Cet emplacement porte-t-il une arme ?
 ---
 --- Ne se pose que pour la main gauche, qui reçoit indifféremment une arme, un
@@ -265,7 +272,15 @@ local function enchantInfo(unit, slotID)
             local text = line.leftText
             if type(text) ~= "string" or U.IsSecret(text) then return 0, nil end
 
-            return tonumber(text:match("Quality%-Tier(%d)")) or 0, plain(text)
+            -- **Le rang se cherche sur « Tier » seul**, sans le nom d'atlas
+            -- complet qui le précède. Le client glisse cette étoile tantôt par
+            -- un atlas, tantôt par un chemin de texture, et les deux formes ne
+            -- s'écrivent pas pareil autour du même mot. La casse est libre pour
+            -- la même raison.
+            --
+            -- Le motif ne peut pas se confondre avec un nom d'enchantement : il
+            -- exige un chiffre collé au mot, ce qu'aucune traduction n'écrit.
+            return tonumber(text:match("[Tt]ier(%d)")) or 0, plain(text)
         end
     end
 
@@ -604,10 +619,67 @@ local function buildSlots(sheet)
                 info:SetPlacement(PLACEMENT[name] or "RIGHT")
                 sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
+
+            -- Le niveau d'objet du personnage se pose au-dessus de la main
+            -- droite, donc au bas du modèle et au milieu de la fiche.
+            if name == HEADLINE_ANCHOR then
+                sheet.headline = W.SheetItemLevel(button)
+            end
         end
     end
 
     return #sheet.slots > 0
+end
+
+--- Écrit le niveau d'objet du personnage, ou l'efface.
+---
+--- **Celui qu'il porte, pas celui qu'il possède.** `GetAverageItemLevel` rend les
+--- deux : le premier nombre compte le meilleur équipement des sacs, le second ce
+--- qui est réellement équipé. C'est le second qu'on affiche — le premier promet
+--- un niveau qu'il faudrait aller chercher.
+---
+--- Sur une fiche d'inspection, ce chemin n'existe pas : la fonction ne parle que
+--- du joueur. On somme alors les seize pièces, ce qui est exactement ce que le
+--- client fait lui-même — armes comprises, et une seule fois quand il n'y en a
+--- qu'une, la main gauche vide reprenant la valeur de la droite.
+---@param mod table
+---@param sheet table
+---@param unit string
+local function paintHeadline(mod, sheet, unit)
+    local headline = sheet.headline
+    if not headline then return end
+
+    if not mod:Get("showAverageLevel") then
+        headline:Hide()
+        return
+    end
+
+    local level
+    if unit == "player" and GetAverageItemLevel then
+        level = select(2, GetAverageItemLevel())
+    end
+
+    if not level then
+        local total, count = 0, 0
+        for i = 1, #sheet.slots do
+            local slot = sheet.slots[i]
+            local link = GetInventoryItemLink(unit, slot.id)
+            local each = link and itemLevel(unit, slot.id, link)
+            if each then
+                total = total + each
+                count = count + 1
+            end
+        end
+        if count == 0 then
+            headline:Hide()
+            return
+        end
+        level = total / count
+    end
+
+    headline:SetText(string.format(L["Average item level"], level))
+    headline:SetTextColor(T.COLOR.NORMAL:GetRGB())
+    headline:Show()
 end
 
 --- La première ligne de la colonne : le niveau d'objet et le rang d'amélioration,
@@ -711,11 +783,16 @@ end
 -- sertit. Trois gestes remplacés par deux, sur un chemin qu'on emprunte à chaque
 -- pièce qui change.
 --
--- **Tout se fait pendant le traitement du clic, et c'est une contrainte du jeu,
--- pas un choix.** Le sertissage est une action protégée : il n'est permis que
--- pendant qu'un vrai clic est traité. On enchaîne donc l'ouverture du cadre de
--- sertissage, la prise de la gemme, sa pose et la validation dans la même
--- foulée — rien ne peut être différé, ni attendre un événement.
+-- **Le geste se fait en deux temps, et le premier essai n'en tenait pas compte.**
+-- `SocketInventoryItem` ne remplit pas le cadre de sertissage sur-le-champ : il
+-- le demande au serveur, qui répond par `SOCKET_INFO_UPDATE`. Enchaîner la prise
+-- de la gemme et sa pose dans la même foulée revenait donc à cliquer une châsse
+-- qui n'existait pas encore — rien ne se passait, et rien ne le disait.
+--
+-- On ouvre donc le cadre, on **retient ce qu'on voulait faire**, et on le fait à
+-- la réponse. Le filet de sécurité compte autant : le cadre peut être déjà
+-- ouvert sur la bonne pièce, auquel cas rien n'est annoncé et la réponse
+-- n'arrive jamais. Une reprise brève rattrape ce cas-là.
 --
 -- Chaque étape est isolée : si la validation est refusée, la gemme reste sur le
 -- curseur avec le cadre du client ouvert, et le geste s'achève à la main. C'est
@@ -723,6 +800,36 @@ end
 
 --- La liste de gemmes, construite au premier clic et jamais détruite.
 local picker
+
+--- Ce qu'on s'apprête à sertir, en attendant que le cadre soit prêt.
+local pending
+
+--- Pose la gemme retenue dans sa châsse, si le cadre est prêt à la recevoir.
+---
+--- **Idempotent** : l'événement et la reprise différée l'appellent tous les deux,
+--- et le premier des deux qui aboutit efface la demande.
+local function completeSocket()
+    local order = pending
+    if not order then return end
+
+    local pickup = C_Container and C_Container.PickupContainerItem
+    if not (pickup and ClickSocketButton) then
+        pending = nil
+        return
+    end
+
+    -- Le cadre montre-t-il bien la pièce qu'on visait ? Sans cette question, une
+    -- réponse arrivée pour autre chose — le joueur a ouvert le sertissage sur une
+    -- autre pièce entre-temps — sertirait la gemme au mauvais endroit.
+    if GetSocketItemInfo and not GetSocketItemInfo() then return end
+
+    pending = nil
+
+    pickup(order.bag, order.bagSlot)
+    ClickSocketButton(order.socketIndex)
+
+    if AcceptSockets then BUI.safecall(AcceptSockets) end
+end
 
 --- Sertit une gemme d'un sac dans une châsse d'une pièce équipée.
 ---@param slotID integer
@@ -733,16 +840,17 @@ local function socketGem(slotID, socketIndex, bag, bagSlot)
     -- Le client refuse d'ouvrir son cadre de sertissage en combat, et le refus
     -- laisserait une gemme sur le curseur.
     if InCombatLockdown() then return end
-    if not (SocketInventoryItem and ClickSocketButton) then return end
+    if not SocketInventoryItem then return end
 
-    local pickup = C_Container and C_Container.PickupContainerItem
-    if not pickup then return end
+    pending = { slotID = slotID, socketIndex = socketIndex,
+                bag = bag, bagSlot = bagSlot }
 
     SocketInventoryItem(slotID)
-    pickup(bag, bagSlot)
-    ClickSocketButton(socketIndex)
 
-    if AcceptSockets then BUI.safecall(AcceptSockets) end
+    -- La reprise, pour le cas où le cadre était déjà ouvert sur cette pièce et
+    -- n'annonce donc rien. Elle ne coûte rien quand l'événement a déjà fait le
+    -- travail : la demande est alors effacée et l'appel ressort aussitôt.
+    C_Timer.After(T.TIMING.SOCKET_SETTLE, completeSocket)
 end
 
 --- Les gemmes des sacs, prêtes à être proposées.
@@ -894,6 +1002,7 @@ local function clearSheet(sheet)
     for i = 1, #sheet.slots do
         sheet.slots[i].info:Clear()
     end
+    if sheet.headline then sheet.headline:Hide() end
 end
 
 --- Repeint les seize bandeaux d'une fiche.
@@ -914,6 +1023,8 @@ local function updateAll(mod, sheet)
     for i = 1, #sheet.slots do
         BUI.safecall(updateSlot, mod, sheet.slots[i], unit)
     end
+
+    BUI.safecall(paintHeadline, mod, sheet, unit)
 end
 
 --- Repeint les fiches ouvertes, et elles seules.
@@ -1054,6 +1165,8 @@ BUI:RegisterModule(MODULE, {
     order    = 30,
 
     defaults = {
+        showAverageLevel = false,
+
         showItemLevel    = false,
         showUpgradeLevel = false,
         showEnchants     = false,
@@ -1063,6 +1176,17 @@ BUI:RegisterModule(MODULE, {
     },
 
     options = {
+        -- Le niveau d'objet du personnage ouvre la page, avant les seize autres
+        -- nombres : c'est le seul qui parle du personnage entier, et c'est celui
+        -- qu'on vient chercher en premier sur une fiche.
+        { type = "header", text = L["General"] },
+        {
+            type    = "toggle",
+            key     = "showAverageLevel",
+            text    = L["Show average item level"],
+            tooltip = L["Show average item level tip"],
+        },
+
         { type = "header", text = L["Item details"] },
         {
             type    = "toggle",
@@ -1105,6 +1229,11 @@ BUI:RegisterModule(MODULE, {
             watchSheet(SHEETS[i], guard)
         end
         setShown(true)
+
+        -- La réponse du serveur au cadre de sertissage : c'est elle qui rend une
+        -- châsse cliquable, et donc elle qu'on attend pour y poser la gemme
+        -- choisie dans la liste (voir `completeSocket`).
+        self:RegisterEvent("SOCKET_INFO_UPDATE", completeSocket)
 
         -- La fiche d'inspection vit dans un addon chargé à la demande : elle
         -- n'existe pas encore ici, et la première inspection est aussi le

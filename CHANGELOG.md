@@ -2,6 +2,41 @@
 
 ## Non publié
 
+### Ajouté
+- **Fiche de personnage — le niveau d'objet du personnage, au-dessus des armes.**
+  Un seul nombre pour toute la fiche, là où le reste du module en pose seize : il
+  répond à une autre question. Les seize disent laquelle des pièces traîne,
+  celui-ci dit où en est le personnage — et le jeu ne l'écrit nulle part sur
+  cette fiche.
+
+  C'est le niveau **porté**, pas celui que les sacs promettent : le jeu rend les
+  deux, et le premier annonce un équipement qu'il faudrait aller chercher. Sur
+  une fiche d'inspection, ce chemin n'existe pas et les seize pièces sont
+  moyennées, ce qui est exactement ce que le jeu fait lui-même.
+
+  Sa case ouvre la page, avant les nombres qui parlent des pièces.
+
+### Corrigé
+- **Fiche de personnage — sertir depuis la fiche marche.** Le geste ne faisait
+  rien. `SocketInventoryItem` ne remplit pas le cadre de sertissage sur-le-champ :
+  il le demande au serveur, qui répond ensuite. Enchaîner la prise de la gemme et
+  sa pose dans la même foulée revenait donc à cliquer une châsse qui n'existait
+  pas encore — et rien ne le signalait.
+
+  On ouvre désormais le cadre, on retient ce qu'on voulait faire, et on le fait à
+  la réponse. Une reprise brève couvre le cas où le cadre était déjà ouvert sur
+  la bonne pièce, auquel cas rien n'est annoncé.
+
+- **Fiche de personnage — l'étoile d'enchantement distingue les rangs.** Elle
+  montrait l'étoile dorée quelle que soit la qualité de l'enchantement : le rang
+  se cherchait sous un nom d'atlas précis, et le jeu écrit cette étoile tantôt
+  par un atlas, tantôt par un chemin de texture.
+
+### Modifié
+- **Fiche de personnage** — *Afficher le niveau d'objet* devient *Afficher le
+  niveau d'objet des pièces*, maintenant qu'un second réglage parle du niveau
+  d'objet du personnage.
+
 ## 0.7.16 — 2026-08-05
 
 ## 0.7.15 — 2026-08-05

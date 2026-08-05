@@ -421,6 +421,11 @@ T.SIZE = {
     SLOT_ICON       = 14,
     SLOT_ICON_GAP   = 2,
 
+    -- Écart entre le niveau d'objet du personnage et l'arme au-dessus de laquelle
+    -- il se pose. Assez pour qu'il ne touche pas la case, assez peu pour qu'il
+    -- reste **rattaché à la fiche** plutôt qu'au modèle qui la surplombe.
+    SLOT_HEADLINE_GAP = 6,
+
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
     -- de sa case.
     --
@@ -691,6 +696,12 @@ T.TIMING = {
                             -- que la fiche : on parcourt l'arbre de chaque
                             -- conteneur ouvert, et un tri de sacs émet des
                             -- dizaines d'événements
+    -- Reprise du sertissage lancé depuis la fiche de personnage, quand le cadre
+    -- du client n'annonce rien parce qu'il était déjà ouvert sur la bonne pièce.
+    -- Court : c'est un filet, pas un délai qu'on attend — la voie normale est
+    -- l'événement, qui arrive bien avant.
+    SOCKET_SETTLE = 0.2,
+
     SLOT_INFO_SETTLE = 0.5, -- la même relecture, quand elle ne sert qu'à
                             -- rattraper des données d'objet arrivées en retard.
                             -- L'événement qui la déclenche est émis pour
@@ -841,6 +852,11 @@ local FONT_CANDIDATES = {
     -- Texte du bandeau posé à côté d'un emplacement. La plus petite police
     -- lisible du client : seize bandeaux tiennent dans la hauteur de la fiche.
     SLOT_INFO    = { "GameFontHighlightSmall" },
+
+    -- Niveau d'objet du personnage, posé au-dessus des armes. Nettement plus
+    -- grand que les seize autres nombres de la fiche, et c'est ce qui le
+    -- distingue : ceux-là se comparent entre eux, celui-ci se lit seul.
+    SLOT_HEADLINE = { "GameFontNormalLarge", "GameFontNormal" },
 
     -- Texte de la fenêtre de copie. La police du chat d'abord : on y relit ce
     -- qu'on vient de lire dans le chat, à la même largeur de caractère.

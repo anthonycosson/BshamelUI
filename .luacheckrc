@@ -92,7 +92,8 @@ read_globals = {
     -- Équipement du personnage. `GetItemStats` et `GetItemGem` ont migré dans
     -- `C_Item` ; les globales existent encore et servent de repli.
     "GetInventoryItemLink", "GetInventorySlotInfo", "GetItemStats", "GetItemGem",
-    "GetDetailedItemLevelInfo", "GetItemIcon",
+    "GetDetailedItemLevelInfo", "GetItemIcon", "GetAverageItemLevel",
+    "GetSocketItemInfo",
     -- Sertissage d'une gemme depuis la fiche de personnage. Ces trois-là n'ont
     -- pas d'équivalent dans un espace de noms : elles n'existent qu'en globales,
     -- et le geste n'est permis que pendant le traitement d'un clic.

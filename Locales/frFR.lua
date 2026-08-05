@@ -128,7 +128,12 @@ BUI:RegisterLocale("frFR", {
     -- Module Character
     ["Character sheet"]                = "Fiche de personnage",
     ["Item details"]                   = "Détails des objets",
-    ["Show item level"]                = "Afficher le niveau d'objet",
+    ["Show average item level"]        = "Afficher le niveau d'objet du personnage",
+    ["Show average item level tip"] =
+        "Écrit le niveau d'objet moyen au-dessus des armes. C'est celui que vous portez, "
+        .. "pas celui que vos sacs promettent.",
+    ["Average item level"]             = "Niveau d'objet %.1f",
+    ["Show item level"]                = "Afficher le niveau d'objet des pièces",
     ["Show item level on slots tip"] =
         "Affiche le niveau d'objet de chaque pièce équipée à côté de son emplacement, mise à "
         .. "l'échelle comprise.",
