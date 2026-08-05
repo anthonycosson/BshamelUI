@@ -132,6 +132,7 @@ BUI:RegisterLocale("frFR", {
     ["Show average item level tip"] =
         "Écrit le niveau d'objet moyen au-dessus des armes. C'est celui que vous portez, "
         .. "pas celui que vos sacs promettent.",
+    ["Item level headline"]            = "Ilvl : %s",
     ["Item level decimals"]            = "Décimales",
     ["Item level decimals tip"] =
         "Précision du niveau d'objet du personnage. À zéro, il est arrondi à l'entier.",

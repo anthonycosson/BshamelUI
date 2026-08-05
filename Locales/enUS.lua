@@ -127,6 +127,10 @@ BUI:RegisterLocale("enUS", {
     ["Show average item level tip"] =
         "Writes the average item level above the weapons. The one you wear, not the one "
         .. "your bags promise.",
+    -- L'intitulé du niveau d'objet du personnage. Abrégé, parce qu'il tient sous
+    -- le modèle entre deux armes : le mot entier y prendrait plus de place que le
+    -- nombre qu'il annonce, et « Ilvl » est ce que les joueurs écrivent déjà.
+    ["Item level headline"]            = "Ilvl: %s",
     ["Item level decimals"]            = "Decimal places",
     ["Item level decimals tip"] =
         "How precise the character's item level should be. Zero rounds it to a whole "

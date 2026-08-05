@@ -735,10 +735,12 @@ local function paintHeadline(mod, sheet, unit)
         level = total / count
     end
 
-    -- Le format se construit à partir du réglage, ce qui n'est pas une chaîne
-    -- affichée : le nombre est tout ce qu'on écrit là, et il ne se traduit pas.
+    -- Le format du nombre se construit à partir du réglage. Ce n'est pas une
+    -- chaîne affichée : il ne dit que la précision, et c'est l'intitulé qui porte
+    -- le texte traduisible autour.
     local decimals = mod:Get("levelDecimals") or 0
-    headline:SetText(string.format("%." .. decimals .. "f", level))
+    headline:SetText(L["Item level headline"]
+                     :format(string.format("%." .. decimals .. "f", level)))
     headline:SetTextColor(headlineColor(sheet, unit))
     headline:Show()
 end

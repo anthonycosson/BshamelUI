@@ -14,11 +14,9 @@
   une fiche d'inspection, ce chemin n'existe pas et les seize pièces sont
   moyennées, ce qui est exactement ce que le jeu fait lui-même.
 
-  **Le nombre seul**, centré sur la paire d'armes et non sur l'une des deux, et
+  Écrit « Ilvl : XXX », centré sur la paire d'armes et non sur l'une des deux, et
   coloré comme les pièces le sont : à la piste d'amélioration la plus répandue de
-  l'équipement — orange pour Mythe, violet pour Héros, et ainsi de suite. Un
-  intitulé devant lui ne dirait rien de plus qu'un nombre à une décimale posé au
-  milieu de la fiche.
+  l'équipement — orange pour Mythe, violet pour Héros, et ainsi de suite.
 
   Sa case ouvre la page, avant les nombres qui parlent des pièces, et un réglage
   dit combien de **décimales** on veut derrière — de zéro à deux. Au-delà le
