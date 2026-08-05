@@ -20,7 +20,11 @@
   intitulé devant lui ne dirait rien de plus qu'un nombre à une décimale posé au
   milieu de la fiche.
 
-  Sa case ouvre la page, avant les nombres qui parlent des pièces.
+  Sa case ouvre la page, avant les nombres qui parlent des pièces, et un réglage
+  dit combien de **décimales** on veut derrière — de zéro à deux. Au-delà le
+  nombre n'apprend plus rien : une moyenne de seize entiers est un multiple de
+  0,0625, et la troisième décimale ne sépare aucun équipement qu'on puisse
+  porter.
 
 ### Supprimé
 - **Fiche de personnage — sertir une gemme depuis la fiche.** Le geste est
@@ -46,7 +50,22 @@
   moyens de tenir. Un rang illisible affiche désormais l'icône du métier, qui dit
   exactement ce qu'on sait : la pièce est enchantée.
 
+- **Fiche de personnage — le niveau d'objet du personnage suit l'équipement.**
+  Changer de pièce ne le faisait pas bouger : il fallait fermer la fiche et la
+  rouvrir. Le jeu ne recalcule pas ce nombre au moment où l'on s'équipe, il le
+  recalcule juste après et le dit alors — on repeignait donc avant la mise à
+  jour, avec l'ancienne valeur. La fiche écoute désormais ce second signal.
+
 ### Modifié
+- **Fiche de personnage — l'étoile d'enchantement ne compte plus les rangs, elle
+  les partage en deux.** Le jeu numérote les rangs de 1 à 5, mais le rang maximum
+  change d'un enchantement à l'autre : la même étoile de rang 2 se posait sur une
+  pièce finie et sur une pièce à moitié faite, sans rien qui les sépare.
+
+  Deux dessins désormais, pour la seule question qui vaut : l'étoile terne au
+  rang le plus bas, la dorée dès qu'on en est sorti.
+
+
 - **Fiche de personnage** — *Afficher le niveau d'objet* devient *Afficher le
   niveau d'objet des pièces*, maintenant qu'un second réglage parle du niveau
   d'objet du personnage.

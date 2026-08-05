@@ -1545,14 +1545,28 @@ function T.TrackColor(trackStringID)
     return T.ItemQualityColor(quality)
 end
 
+--- Les deux seules étoiles qu'on pose : la terne et la dorée.
+---
+--- **Deux, et non cinq.** Le jeu numérote les rangs d'enchantement de 1 à 5 et
+--- donne une étoile par numéro, mais aucun enchantement n'utilise toute
+--- l'échelle : le rang maximum est 2 ici, 3 là, et le même dessin ne veut donc
+--- pas dire la même chose d'une pièce à l'autre. Reprendre l'échelle telle quelle
+--- affichait une étoile de rang 2 sur une pièce au maximum et sur une pièce à
+--- moitié faite, sans rien qui les sépare.
+---
+--- La question qu'on pose à cette icône est binaire — « est-ce le rang le plus
+--- bas ? » —, et deux dessins y répondent mieux que cinq : l'étoile terne pour le
+--- premier rang, la dorée dès qu'on en est sorti.
+local ENCHANT_RANK_LOW  = 1
+local ENCHANT_RANK_HIGH = 5
+
 --- Nom d'atlas de l'étoile de rang d'un enchantement, ou `nil` si le client ne la
 --- connaît pas.
----@param tier? number  1 à 5
+---@param lowest boolean  vrai au rang le plus bas
 ---@return string|nil
-function T.EnchantTierAtlas(tier)
-    if type(tier) ~= "number" then return nil end
-
-    local name = T.ATLAS.ENCHANT_TIER .. tier
+function T.EnchantRankAtlas(lowest)
+    local name = T.ATLAS.ENCHANT_TIER
+                 .. (lowest and ENCHANT_RANK_LOW or ENCHANT_RANK_HIGH)
     if C_Texture and C_Texture.GetAtlasInfo and not C_Texture.GetAtlasInfo(name) then
         return nil
     end
@@ -1828,7 +1842,7 @@ T.ATLAS = {
     -- demande rien de neuf.
     --
     -- Le rang complète le nom : `Professions-ChatIcon-Quality-Tier3`. Voir
-    -- `T.EnchantTierAtlas`.
+    -- `T.EnchantRankAtlas`.
     ENCHANT_TIER = "Professions-ChatIcon-Quality-Tier",
 }
 

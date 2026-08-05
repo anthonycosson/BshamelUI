@@ -675,6 +675,14 @@ local function headlineColor(sheet, unit)
     return T.COLOR.NORMAL:GetRGB()
 end
 
+--- Décimales que le réglage laisse demander.
+---
+--- Deux, parce que c'est là que le nombre cesse de dire quelque chose : le niveau
+--- d'objet moyen est une somme de seize entiers divisée par seize, donc un
+--- multiple de 0,0625 — la troisième décimale existe, mais elle ne distingue
+--- aucune paire d'équipements qu'on puisse porter.
+local MAX_LEVEL_DECIMALS = 2
+
 --- Écrit le niveau d'objet du personnage, ou l'efface.
 ---
 --- **Celui qu'il porte, pas celui qu'il possède.** `GetAverageItemLevel` rend les
@@ -721,7 +729,10 @@ local function paintHeadline(mod, sheet, unit)
         level = total / count
     end
 
-    headline:SetText(string.format(L["Average item level"], level))
+    -- Le format se construit à partir du réglage, ce qui n'est pas une chaîne
+    -- affichée : le nombre est tout ce qu'on écrit là, et il ne se traduit pas.
+    local decimals = mod:Get("levelDecimals") or 0
+    headline:SetText(string.format("%." .. decimals .. "f", level))
     headline:SetTextColor(headlineColor(sheet, unit))
     headline:Show()
 end
@@ -781,12 +792,17 @@ local function levelLine(mod, slot, unit, link)
     return text, r, g, b
 end
 
+--- Rang le plus bas qu'un enchantement puisse porter.
+local LOWEST_ENCHANT_RANK = 1
+
 --- L'icône d'enchantement d'un emplacement : l'étoile de son rang, ou le
 --- grimoire éteint s'il n'y en a pas.
 ---
---- Le rang inconnu prend l'étoile la plus haute plutôt qu'aucune : la plupart des
---- enchantements n'ont pas de rang du tout, et les montrer sans étoile les ferait
---- passer pour incomplets.
+--- **L'étoile ne dit que « premier rang ou au-dessus ».** Le jeu numérote les
+--- rangs de 1 à 5, mais le rang maximum change d'un enchantement à l'autre :
+--- reprendre le numéro tel quel faisait porter le même dessin à une pièce finie
+--- et à une pièce à moitié faite. La question qui vaut d'être posée à une fiche
+--- est celle du rang bâclé, et elle n'a que deux réponses.
 ---@param unit string
 ---@param slotID integer
 ---@return BUI.SlotIcon
@@ -806,7 +822,7 @@ local function enchantIcon(unit, slotID)
     -- c'est le seul texte qui existe pour un enchantement, faute de lien d'objet
     -- à tendre à une infobulle.
     local spec  = { title = L["Enchant badge"], hint = label }
-    local atlas = tier > 0 and T.EnchantTierAtlas(tier) or nil
+    local atlas = tier > 0 and T.EnchantRankAtlas(tier <= LOWEST_ENCHANT_RANK) or nil
 
     if atlas then
         spec.atlas = atlas
@@ -1069,6 +1085,7 @@ BUI:RegisterModule(MODULE, {
 
     defaults = {
         showAverageLevel = false,
+        levelDecimals    = 1,
 
         showItemLevel    = false,
         showUpgradeLevel = false,
@@ -1088,6 +1105,19 @@ BUI:RegisterModule(MODULE, {
             key     = "showAverageLevel",
             text    = L["Show average item level"],
             tooltip = L["Show average item level tip"],
+        },
+        {
+            type     = "slider",
+            key      = "levelDecimals",
+            text     = L["Item level decimals"],
+            tooltip  = L["Item level decimals tip"],
+            min      = 0,
+            max      = MAX_LEVEL_DECIMALS,
+            step     = 1,
+            disabled = function()
+                local mod = BUI.Modules:Get(MODULE)
+                return not (mod and mod:Get("showAverageLevel"))
+            end,
         },
 
         { type = "header", text = L["Item details"] },
@@ -1165,6 +1195,15 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED", refresh)
         self:RegisterEvent("PLAYER_ENTERING_WORLD",    refresh)
         self:RegisterEvent("SOCKET_INFO_UPDATE",       refresh)
+
+        -- **Le niveau d'objet moyen ne suit pas l'équipement, il le suit d'un
+        -- cran derrière.** Au changement de pièce, `GetAverageItemLevel` rend
+        -- encore l'ancienne valeur : le client recalcule et prévient ensuite. La
+        -- fiche repeinte sur le seul `PLAYER_EQUIPMENT_CHANGED` réaffichait donc
+        -- le nombre d'avant, et il fallait la fermer et la rouvrir pour le voir
+        -- bouger — ce qui donnait l'impression qu'elle ne se mettait jamais à
+        -- jour, alors que les seize pièces, elles, étaient bien à jour.
+        self:RegisterEvent("PLAYER_AVG_ITEM_LEVEL_UPDATE", refresh)
 
         -- Un objet dont les données ne sont pas encore descendues du serveur rend
         -- un lien sans gemme et sans qualité. Le client prévient quand elles
