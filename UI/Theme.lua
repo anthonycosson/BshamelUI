@@ -421,6 +421,12 @@ T.SIZE = {
     SLOT_ICON       = 14,
     SLOT_ICON_GAP   = 2,
 
+    -- Descente du niveau d'objet du personnage sous le haut des deux
+    -- emplacements de tête. Aligné sur eux, il touchait le haut de la zone
+    -- d'équipement ; un cran plus bas, il se pose sur le modèle sans rien
+    -- recouvrir.
+    SHEET_HEADLINE_DROP = 20,
+
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
     -- de sa case.
@@ -1397,11 +1403,54 @@ local PANEL_FILL_KEYS = {
 --- **Croisées pour les coins.** Une demi-rotation retourne aussi la gauche et la
 --- droite : le coin bas-droit devient le coin haut-gauche, et réciproquement.
 --- Les reprendre du même côté donnerait deux coins tournés vers l'extérieur.
+--- Deux jeux de noms, parce que les templates du client en ont deux : le
+--- découpage neuf dit `BottomLeftCorner` et `BottomEdge`, l'ancien `BotLeftCorner`
+--- et `BottomBorder`. On essaie les deux plutôt que de parier sur le template
+--- qu'un patch aura retenu — et le contour des fenêtres est justement de l'ancien
+--- genre, ses pièces étant posées à même le cadre sans découpage du tout.
 local MIRRORED_TOP = {
-    { piece = "TopLeftCorner",  from = "BottomRightCorner" },
-    { piece = "TopRightCorner", from = "BottomLeftCorner"  },
-    { piece = "TopEdge",        from = "BottomEdge"        },
+    { piece = "TopLeftCorner",  from = { "BotRightCorner", "BottomRightCorner" } },
+    { piece = "TopRightCorner", from = { "BotLeftCorner",  "BottomLeftCorner"  } },
+    { piece = "TopBorder",      from = { "BottomBorder" } },
+    { piece = "TopEdge",        from = { "BottomEdge"   } },
 }
+
+--- Recopie une texture sur une autre, tournée d'un demi-tour.
+---
+--- Deux chemins parce qu'une texture du client se donne de deux façons : par un
+--- **atlas**, qui porte son propre découpage dans une planche, ou par un
+--- **fichier** et des coordonnées. Le premier se retourne par `SetRotation` ; le
+--- second par ses coordonnées, un demi-tour échangeant les coins en diagonale.
+---
+--- Mélanger les deux ne marche pas : `SetRotation` réécrit les coordonnées qu'on
+--- vient de poser.
+---@param piece table
+---@param source table
+local function mirrorPiece(piece, source)
+    local atlas = source.GetAtlas and source:GetAtlas()
+
+    if atlas then
+        piece:SetAtlas(atlas)
+        if piece.SetRotation then piece:SetRotation(math.pi) end
+    else
+        local file = source:GetTexture()
+        if not file then return end
+
+        piece:SetTexture(file)
+
+        -- Les huit valeurs sont les quatre coins, dans l'ordre haut-gauche,
+        -- bas-gauche, haut-droit, bas-droit. Un demi-tour échange chaque coin
+        -- avec son opposé.
+        local ulx, uly, llx, lly, urx, ury, lrx, lry = source:GetTexCoord()
+        if ulx then
+            piece:SetTexCoord(lrx, lry, urx, ury, llx, lly, ulx, uly)
+        end
+    end
+
+    -- La hauteur vient du bas elle aussi : un coin haut est plus haut qu'un coin
+    -- bas, et garder l'ancienne étirerait la texture.
+    piece:SetHeight(source:GetHeight())
+end
 
 --- Rend le haut d'un contour identique à son bas.
 ---
@@ -1414,22 +1463,21 @@ local MIRRORED_TOP = {
 --- demi-rotation. La matière reste exactement celle des trois autres côtés, ce
 --- qui est tout le propos — aller chercher un autre jeu de textures donnerait un
 --- contour qui ne serait plus celui de la fenêtre d'options.
----@param slice table  le cadre qui porte les neuf pièces
-local function mirrorTopEdge(slice)
-    if not slice then return end
+---@param holder table  le cadre qui porte les pièces du contour
+local function mirrorTopEdge(holder)
+    if not holder then return end
 
     for i = 1, #MIRRORED_TOP do
-        local piece  = slice[MIRRORED_TOP[i].piece]
-        local source = slice[MIRRORED_TOP[i].from]
+        local piece = holder[MIRRORED_TOP[i].piece]
+        local names = MIRRORED_TOP[i].from
 
-        if piece and source and source.GetAtlas and piece.SetRotation then
-            local atlas = source:GetAtlas()
-            if atlas then
-                piece:SetAtlas(atlas)
-                -- La hauteur vient du bas elle aussi : un coin haut est plus haut
-                -- qu'un coin bas, et garder l'ancienne étirerait la texture.
-                piece:SetHeight(source:GetHeight())
-                piece:SetRotation(math.pi)
+        if piece and piece.SetTexture then
+            for j = 1, #names do
+                local source = holder[names[j]]
+                if source and source.GetTexture then
+                    mirrorPiece(piece, source)
+                    break
+                end
             end
         end
     end
@@ -1437,8 +1485,12 @@ end
 
 --- Réduit un cadre monté sur un template de fenêtre à son seul contour.
 ---
---- Idempotente : elle se rappelle à chaque changement de taille, le découpage
---- neuf reposant ses propres pièces quand le cadre grandit.
+--- Idempotente : elle se rappelle à chaque changement de taille, un template
+--- reposant ses propres pièces quand le cadre grandit.
+---
+--- Les pièces se cherchent sur le **découpage neuf s'il y en a un, sur le cadre
+--- sinon** : le contour de fenêtre du client courant n'en a pas, ses textures
+--- sont posées directement dessus.
 ---@param frame table
 function T.StripWindowFrame(frame)
     T.HidePanelFill(frame)
