@@ -124,8 +124,21 @@ function W.SlotInfo(button)
     --- `"LEFT"` et `"RIGHT"` disent de quel côté ; `"ABOVE"` empile au-dessus,
     --- centré. Le bord d'alignement des pastilles est toujours celui qui touche
     --- la case : à gauche de l'icône elles s'alignent à droite, et inversement.
+    ---
+    --- `top` accroche la colonne par le **haut** de la case au lieu de la centrer
+    --- sur elle. Centrée, la première ligne descend d'un demi-cran chaque fois
+    --- qu'une ligne s'ajoute : deux emplacements voisins n'ayant ni le même
+    --- nombre d'enchantements ni le même nombre de gemmes, leurs niveaux d'objet
+    --- ne se lisent plus sur une ligne commune. Accrochée par le haut, la
+    --- première ligne ne bouge plus et ce sont les icônes qui descendent.
+    ---
+    --- Ce n'est pas le bon choix partout : sur les quatorze emplacements qui
+    --- bordent le modèle, les cases sont serrées et une colonne qui ne grandit
+    --- que vers le bas déborde sur la suivante. Les armes, elles, ont le vide
+    --- sous elles.
     ---@param where string  "LEFT", "RIGHT" ou "ABOVE"
-    function info:SetPlacement(where)
+    ---@param top? boolean  accrocher par le haut plutôt que centrer
+    function info:SetPlacement(where, top)
         row:ClearAllPoints()
 
         if where == "ABOVE" then
@@ -133,10 +146,12 @@ function W.SlotInfo(button)
             row:SetPoint("BOTTOM", button, "TOP", 0, T.SIZE.SLOT_INFO_GAP)
         elseif where == "LEFT" then
             self._edge = "RIGHT"
-            row:SetPoint("RIGHT", button, "LEFT", -T.SIZE.SLOT_INFO_GAP, 0)
+            row:SetPoint(top and "TOPRIGHT" or "RIGHT", button,
+                         top and "TOPLEFT" or "LEFT", -T.SIZE.SLOT_INFO_GAP, 0)
         else
             self._edge = "LEFT"
-            row:SetPoint("LEFT", button, "RIGHT", T.SIZE.SLOT_INFO_GAP, 0)
+            row:SetPoint(top and "TOPLEFT" or "LEFT", button,
+                         top and "TOPRIGHT" or "RIGHT", T.SIZE.SLOT_INFO_GAP, 0)
         end
 
         arrange(self)

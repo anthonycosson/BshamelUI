@@ -117,6 +117,15 @@ local PLACEMENT = {
 --- nombre-là. Les deux et non l'une, pour qu'il se centre sur la **paire**.
 local HEADLINE_ANCHORS = { "MainHandSlot", "SecondaryHandSlot" }
 
+--- Les deux emplacements qui n'ont pas de voisin sous eux.
+---
+--- Ce sont les seuls dont la colonne peut s'accrocher par le haut sans risquer
+--- de déborder : sous les quatorze autres il y a l'emplacement suivant.
+local WEAPON_SLOTS = {
+    MainHandSlot      = true,
+    SecondaryHandSlot = true,
+}
+
 --- Cet emplacement porte-t-il une arme ?
 ---
 --- Ne se pose que pour la main gauche, qui reçoit indifféremment une arme, un
@@ -617,7 +626,11 @@ local function buildSlots(sheet)
         if button and slotID then
             local info = W.SlotInfo(button)
             if info then
-                info:SetPlacement(PLACEMENT[name] or "RIGHT")
+                -- Les armes accrochent leur colonne par le haut : leurs deux
+                -- niveaux d'objet se lisent alors sur la même ligne quel que
+                -- soit ce que chacune porte en enchantement et en gemmes, et
+                -- c'est ce qui les rend comparables d'un coup d'œil.
+                info:SetPlacement(PLACEMENT[name] or "RIGHT", WEAPON_SLOTS[name])
                 sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
 
