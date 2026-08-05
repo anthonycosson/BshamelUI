@@ -1390,8 +1390,65 @@ function T.ClearPanelBackground(frame)
     end
 end
 
---- Noms sous lesquels un template du client range la surface qui le remplit.
-local PANEL_FILL_KEYS = { "Bg", "Background", "Center" }
+--- Noms sous lesquels un template du client range la surface qui le remplit, et
+--- les pièces qui font de lui une *fenêtre* plutôt qu'un contour.
+local PANEL_FILL_KEYS = {
+    "Bg", "Background", "Center", "TitleBg", "TopTileStreaks",
+    "TitleContainer", "TitleText", "CloseButton", "PortraitContainer",
+}
+
+--- Pièces du haut d'un contour, et celle du bas dont chacune se déduit.
+---
+--- **Croisées pour les coins.** Une demi-rotation retourne aussi la gauche et la
+--- droite : le coin bas-droit devient le coin haut-gauche, et réciproquement.
+--- Les reprendre du même côté donnerait deux coins tournés vers l'extérieur.
+local MIRRORED_TOP = {
+    { piece = "TopLeftCorner",  from = "BottomRightCorner" },
+    { piece = "TopRightCorner", from = "BottomLeftCorner"  },
+    { piece = "TopEdge",        from = "BottomEdge"        },
+}
+
+--- Rend le haut d'un contour identique à son bas.
+---
+--- Le métal du client n'est **pas symétrique** : ses coins hauts portent le
+--- renflement de la barre de titre et l'échancrure du bouton de fermeture. C'est
+--- ce qui reste d'une fenêtre sur un panneau qui n'en est pas une — la croix a
+--- beau être masquée, son logement est dessiné dans la texture.
+---
+--- Le bas du même contour est un bord franc : on le recopie en haut avec une
+--- demi-rotation. La matière reste exactement celle des trois autres côtés, ce
+--- qui est tout le propos — aller chercher un autre jeu de textures donnerait un
+--- contour qui ne serait plus celui de la fenêtre d'options.
+---@param slice table  le cadre qui porte les neuf pièces
+local function mirrorTopEdge(slice)
+    if not slice then return end
+
+    for i = 1, #MIRRORED_TOP do
+        local piece  = slice[MIRRORED_TOP[i].piece]
+        local source = slice[MIRRORED_TOP[i].from]
+
+        if piece and source and source.GetAtlas and piece.SetRotation then
+            local atlas = source:GetAtlas()
+            if atlas then
+                piece:SetAtlas(atlas)
+                -- La hauteur vient du bas elle aussi : un coin haut est plus haut
+                -- qu'un coin bas, et garder l'ancienne étirerait la texture.
+                piece:SetHeight(source:GetHeight())
+                piece:SetRotation(math.pi)
+            end
+        end
+    end
+end
+
+--- Réduit un cadre monté sur un template de fenêtre à son seul contour.
+---
+--- Idempotente : elle se rappelle à chaque changement de taille, le découpage
+--- neuf reposant ses propres pièces quand le cadre grandit.
+---@param frame table
+function T.StripWindowFrame(frame)
+    T.HidePanelFill(frame)
+    mirrorTopEdge(frame.NineSlice or frame)
+end
 
 --- Retire le fond d'un contour, **nommément**.
 ---

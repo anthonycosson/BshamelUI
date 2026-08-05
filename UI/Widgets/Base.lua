@@ -173,28 +173,40 @@ function W.Inset(parent)
     return inset
 end
 
---- Contour d'un panneau : quatre côtés identiques, sans barre de titre ni
---- échancrure de bouton de fermeture.
+--- Contour d'un panneau : **celui de la fenêtre d'options**, sans sa barre de
+--- titre.
 ---
---- Son propre template (`T.TEMPLATES.PANEL_BORDER`), et non celui des fenêtres
---- dépouillé. Un template de fenêtre pose un titre et une croix ; les lui retirer
---- demande de savoir sous quels noms il les range, et il en restait toujours un —
---- d'où la bosse qui coiffait les panneaux. Un template qui ne pose que le
---- contour n'a rien à démonter.
+--- Le métal du client, celui qu'il pose autour de presque tous ses menus, et non
+--- un contour qui lui ressemble : un liseré de dialogue a la même silhouette mais
+--- ni la même matière ni la même épaisseur, et deux panneaux de la même famille
+--- ne peuvent pas porter deux contours différents.
 ---
---- **On ne lui retire que son fond**, et nommément : celui du panneau suffit, et
---- deux surfaces empilées éclaircissent la zone au lieu de la délimiter. Cacher
---- toutes ses régions — ce qu'on faisait — cachait le contour avec, puisque le
---- contour d'un template du client est fait de textures lui aussi.
+--- On monte donc le template de fenêtre et on lui retire ce qui n'est pas le
+--- contour : son fond, sa bande de titre, son titre, son bouton de fermeture. Ce
+--- qui reste est asymétrique — les coins hauts du métal portent le renflement du
+--- titre et l'échancrure de la croix —, et `T.StripWindowFrame` retourne le bas
+--- pour en faire le haut.
+---
+--- Repli sur le contour de dialogue si aucun template de fenêtre n'existe : moins
+--- ressemblant, jamais cassé.
 ---@param parent table
 ---@return table
 function W.PanelBorder(parent)
-    local border = CreateFrame("Frame", nil, parent, T.Template("PANEL_BORDER"))
-    T.HidePanelFill(border)
+    local template = T.Template("WINDOW") or T.Template("PANEL_BORDER")
+    local border = CreateFrame("Frame", nil, parent, template)
 
     -- Un contour ne prend pas les clics : sous le menu de téléportation, il
     -- avalerait ceux des rangées qu'il encadre.
     border:EnableMouse(false)
+
+    T.StripWindowFrame(border)
+
+    -- **Et à chaque changement de taille.** Le découpage neuf se replace quand le
+    -- cadre grandit, et repose alors ses propres pièces : le retournement du haut
+    -- serait défait au premier panneau qui s'agrandit — c'est-à-dire au menu de
+    -- téléportation, qui se dimensionne une fois ses rangées construites.
+    border:HookScript("OnSizeChanged", function(self) T.StripWindowFrame(self) end)
+
     return border
 end
 
