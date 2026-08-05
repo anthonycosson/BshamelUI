@@ -127,7 +127,11 @@ BUI:RegisterLocale("enUS", {
     ["Show average item level tip"] =
         "Writes the average item level above the weapons. The one you wear, not the one "
         .. "your bags promise.",
-    ["Average item level"]             = "Item level %.1f",
+    -- Le nombre seul, sans intitulé. Il est posé au milieu de la fiche de
+    -- personnage, au-dessus des armes : à cet endroit-là, rien d'autre ne
+    -- pourrait être un nombre à une décimale, et « Niveau d'objet » devant lui
+    -- ne fait que le rendre deux fois plus long à lire.
+    ["Average item level"]             = "%.1f",
     ["Show item level"]                = "Show item level on each piece",
     ["Show item level on slots tip"] =
         "Shows the item level of every equipped piece beside its slot, scaling included.",
@@ -153,7 +157,6 @@ BUI:RegisterLocale("enUS", {
     ["Gem badge"]                      = "Gem",
     ["No enchant hint"]                = "This slot can take an enchant and has none.",
     ["Empty socket"]                   = "Empty socket",
-    ["Empty socket hint"]              = "Click to socket a gem from your bags.",
 
     -- Bouton de l'addon (module General)
     -- `Buttons` coiffe aussi les pages Addons et Téléportations : c'est le même

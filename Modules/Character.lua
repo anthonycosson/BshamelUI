@@ -109,12 +109,13 @@ local PLACEMENT = {
     MainHandSlot = "LEFT", SecondaryHandSlot = "RIGHT",
 }
 
---- Emplacement au-dessus duquel se pose le niveau d'objet du personnage.
+--- Les deux emplacements au-dessus desquels se pose le niveau d'objet du
+--- personnage, de gauche à droite à l'écran.
 ---
---- La main droite, donc l'arme de gauche à l'écran. C'est le bas du modèle et le
---- milieu de la fiche : le seul endroit qui n'appartienne ni à une pièce ni aux
---- statistiques, ce qui est exactement le statut de ce nombre-là.
-local HEADLINE_ANCHOR = "MainHandSlot"
+--- Le bas du modèle et le milieu de la fiche : le seul endroit qui n'appartienne
+--- ni à une pièce ni aux statistiques, ce qui est exactement le statut de ce
+--- nombre-là. Les deux et non l'une, pour qu'il se centre sur la **paire**.
+local HEADLINE_ANCHORS = { "MainHandSlot", "SecondaryHandSlot" }
 
 --- Cet emplacement porte-t-il une arme ?
 ---
@@ -614,15 +615,64 @@ local function buildSlots(sheet)
                 sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
 
-            -- Le niveau d'objet du personnage se pose au-dessus de la main
-            -- droite, donc au bas du modèle et au milieu de la fiche.
-            if name == HEADLINE_ANCHOR then
-                sheet.headline = W.SheetItemLevel(button)
-            end
+            if name == HEADLINE_ANCHORS[1] then sheet.leftHand  = button end
+            if name == HEADLINE_ANCHORS[2] then sheet.rightHand = button end
         end
     end
 
+    -- Le niveau d'objet du personnage s'ancre sur les deux armes à la fois, donc
+    -- une fois la boucle finie : il lui faut les deux boutons.
+    if sheet.leftHand then
+        sheet.headline = W.SheetItemLevel(sheet.leftHand, sheet.rightHand)
+    end
+
     return #sheet.slots > 0
+end
+
+--- Table de travail du décompte des pistes, réutilisée d'un passage à l'autre.
+local trackTally = {}
+
+--- La couleur du niveau d'objet du personnage : celle de la piste **la plus
+--- portée**.
+---
+--- Un niveau moyen n'a pas de piste à lui — c'est un nombre, pas une pièce. On ne
+--- peut donc pas la lire, il faut la déduire, et deux façons de le faire ont été
+--- écartées avant celle-ci :
+---
+---   * **par paliers de niveau d'objet** : il faudrait une table de seuils, qui
+---     est fausse au premier jour d'une saison et qu'il faudrait tenir à chaque
+---     patch. C'est exactement le genre de nombre que ce dépôt refuse d'écrire ;
+---   * **par la piste la plus haute** : une seule pièce mythique suffirait alors
+---     à peindre toute la fiche en orange, ce qui dit le contraire de la vérité.
+---
+--- La plus fréquente, elle, décrit ce que le personnage porte vraiment. À égalité
+--- c'est la plus haute qui gagne : entre deux moitiés, la fiche annonce la
+--- meilleure — un personnage à moitié mythique n'est pas un personnage héroïque.
+---
+--- Sans aucune piste lisible, `nil` remonte et l'appelant garde le doré des
+--- libellés, qui n'affirme rien.
+---@param sheet table
+---@param unit string
+---@return number r, number g, number b
+local function headlineColor(sheet, unit)
+    wipe(trackTally)
+
+    for i = 1, #sheet.slots do
+        local link = GetInventoryItemLink(unit, sheet.slots[i].id)
+        local track = link and select(3, upgradeOf(link))
+        if track then trackTally[track] = (trackTally[track] or 0) + 1 end
+    end
+
+    local best, bestCount
+    for track, count in pairs(trackTally) do
+        if not bestCount or count > bestCount or (count == bestCount and track > best) then
+            best, bestCount = track, count
+        end
+    end
+
+    local r, g, b = T.TrackColor(best)
+    if r then return r, g, b end
+    return T.COLOR.NORMAL:GetRGB()
 end
 
 --- Écrit le niveau d'objet du personnage, ou l'efface.
@@ -672,7 +722,7 @@ local function paintHeadline(mod, sheet, unit)
     end
 
     headline:SetText(string.format(L["Average item level"], level))
-    headline:SetTextColor(T.COLOR.NORMAL:GetRGB())
+    headline:SetTextColor(headlineColor(sheet, unit))
     headline:Show()
 end
 
@@ -773,140 +823,6 @@ local function enchantIcon(unit, slotID)
     return spec
 end
 
--- =========================================================================
---  Sertir une gemme depuis la fiche
--- =========================================================================
--- Cliquer une châsse ouvre la liste des gemmes du sac, et en choisir une la
--- sertit. Trois gestes remplacés par deux, sur un chemin qu'on emprunte à chaque
--- pièce qui change.
---
--- **Le geste se fait en deux temps, et le premier essai n'en tenait pas compte.**
--- `SocketInventoryItem` ne remplit pas le cadre de sertissage sur-le-champ : il
--- le demande au serveur, qui répond par `SOCKET_INFO_UPDATE`. Enchaîner la prise
--- de la gemme et sa pose dans la même foulée revenait donc à cliquer une châsse
--- qui n'existait pas encore — rien ne se passait, et rien ne le disait.
---
--- On ouvre donc le cadre, on **retient ce qu'on voulait faire**, et on le fait à
--- la réponse. Le filet de sécurité compte autant : le cadre peut être déjà
--- ouvert sur la bonne pièce, auquel cas rien n'est annoncé et la réponse
--- n'arrive jamais. Une reprise brève rattrape ce cas-là.
---
--- Chaque étape est isolée : si la validation est refusée, la gemme reste sur le
--- curseur avec le cadre du client ouvert, et le geste s'achève à la main. C'est
--- une dégradation, pas une panne.
-
---- La liste de gemmes, construite au premier clic et jamais détruite.
-local picker
-
---- Ce qu'on s'apprête à sertir, en attendant que le cadre soit prêt.
-local pending
-
---- Pose la gemme retenue dans sa châsse, si le cadre est prêt à la recevoir.
----
---- **Idempotent** : l'événement et la reprise différée l'appellent tous les deux,
---- et le premier des deux qui aboutit efface la demande.
-local function completeSocket()
-    local order = pending
-    if not order then return end
-
-    local pickup = C_Container and C_Container.PickupContainerItem
-    if not (pickup and ClickSocketButton) then
-        pending = nil
-        return
-    end
-
-    -- Le cadre montre-t-il bien la pièce qu'on visait ? Sans cette question, une
-    -- réponse arrivée pour autre chose — le joueur a ouvert le sertissage sur une
-    -- autre pièce entre-temps — sertirait la gemme au mauvais endroit.
-    if GetSocketItemInfo and not GetSocketItemInfo() then return end
-
-    pending = nil
-
-    pickup(order.bag, order.bagSlot)
-    ClickSocketButton(order.socketIndex)
-
-    if AcceptSockets then BUI.safecall(AcceptSockets) end
-end
-
---- Sertit une gemme d'un sac dans une châsse d'une pièce équipée.
----@param slotID integer
----@param socketIndex integer
----@param bag integer
----@param bagSlot integer
-local function socketGem(slotID, socketIndex, bag, bagSlot)
-    -- Le client refuse d'ouvrir son cadre de sertissage en combat, et le refus
-    -- laisserait une gemme sur le curseur.
-    if InCombatLockdown() then return end
-    if not SocketInventoryItem then return end
-
-    pending = { slotID = slotID, socketIndex = socketIndex,
-                bag = bag, bagSlot = bagSlot }
-
-    SocketInventoryItem(slotID)
-
-    -- La reprise, pour le cas où le cadre était déjà ouvert sur cette pièce et
-    -- n'annonce donc rien. Elle ne coûte rien quand l'événement a déjà fait le
-    -- travail : la demande est alors effacée et l'appel ressort aussitôt.
-    C_Timer.After(T.TIMING.SOCKET_SETTLE, completeSocket)
-end
-
---- Les gemmes des sacs, prêtes à être proposées.
----
---- Un objet est une gemme si le **client** le range dans cette classe, pas si son
---- nom y ressemble : `GetItemInfoInstant` rend la classe sans rien demander au
---- serveur, et c'est la seule réponse qui vaille pour un objet qu'on n'a jamais
---- survolé.
----@param slotID integer
----@param socketIndex integer
----@return table entries
-local function bagGems(slotID, socketIndex)
-    local entries = {}
-
-    local container = C_Container
-    if not (container and container.GetContainerNumSlots
-            and container.GetContainerItemLink) then
-        return entries
-    end
-
-    local gemClass = (Enum and Enum.ItemClass and Enum.ItemClass.Gem) or 3
-    local icons    = (C_Item and C_Item.GetItemIconByID) or GetItemIcon
-
-    for bag = 0, NUM_BAG_SLOTS or 4 do
-        for bagSlot = 1, container.GetContainerNumSlots(bag) or 0 do
-            local link = container.GetContainerItemLink(bag, bagSlot)
-
-            if link and C_Item and C_Item.GetItemInfoInstant then
-                local name, _, _, _, _, classID = C_Item.GetItemInfoInstant(link)
-                if classID == gemClass then
-                    entries[#entries + 1] = {
-                        link = link,
-                        name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(link)
-                               or name or link,
-                        icon = icons and icons(link),
-                        onChoose = function()
-                            socketGem(slotID, socketIndex, bag, bagSlot)
-                        end,
-                    }
-                end
-            end
-        end
-    end
-
-    return entries
-end
-
---- Ouvre la liste des gemmes sur une châsse.
----@param slotID integer
----@param socketIndex integer
----@param anchor table
-local function openGemPicker(slotID, socketIndex, anchor)
-    if not picker then
-        picker = W.ItemPicker()
-        if not picker then return end
-    end
-    picker:Open(bagGems(slotID, socketIndex), anchor)
-end
-
 --- Ajoute une icône par châsse : la gemme sertie, ou la châsse vide.
 ---
 --- **Une par châsse, et non un compte.** Trois châsses dont une vide se lisent
@@ -914,18 +830,12 @@ end
 --- savoir ce que valent les deux nombres.
 ---@param info table
 ---@param link string
----@param unit string
----@param slotID integer
-local function addGemIcons(info, link, unit, slotID)
+local function addGemIcons(info, link)
     local total = sockets(link)
     if total <= 0 then return end
 
     local readGem = (C_Item and C_Item.GetItemGem) or GetItemGem
     local icons   = (C_Item and C_Item.GetItemIconByID) or GetItemIcon
-
-    -- Sertir ne se propose que sur **son propre** équipement : on ne touche pas
-    -- à celui qu'on inspecte, et le jeu ne le permettrait pas davantage.
-    local mine = unit == "player"
 
     for index = 1, total do
         local gemLink = readGem and select(2, readGem(link, index))
@@ -936,14 +846,10 @@ local function addGemIcons(info, link, unit, slotID)
 
             -- L'infobulle de la gemme quand il y en a une : ce qu'on veut savoir
             -- devant elle est ce qu'elle apporte, et le client le dit mieux que
-            -- nous. Devant un trou il n'y a rien à demander au client.
+            -- nous. Devant un trou il n'y a rien à demander au client — c'est à
+            -- nous de dire que la châsse est vide.
             link  = gemLink,
             title = not gemLink and L["Empty socket"] or nil,
-            hint  = (not gemLink and mine) and L["Empty socket hint"] or nil,
-
-            onClick = mine and function(button)
-                openGemPicker(slotID, index, button)
-            end or nil,
         })
     end
 end
@@ -988,7 +894,7 @@ local function updateSlot(mod, slot, unit)
         info:AddIcon(enchantIcon(unit, slot.id))
     end
 
-    if mod:Get("showGems") then addGemIcons(info, link, unit, slot.id) end
+    if mod:Get("showGems") then addGemIcons(info, link) end
 
     info:EndIcons()
 end
@@ -1226,11 +1132,6 @@ BUI:RegisterModule(MODULE, {
             watchSheet(SHEETS[i], guard)
         end
         setShown(true)
-
-        -- La réponse du serveur au cadre de sertissage : c'est elle qui rend une
-        -- châsse cliquable, et donc elle qu'on attend pour y poser la gemme
-        -- choisie dans la liste (voir `completeSocket`).
-        self:RegisterEvent("SOCKET_INFO_UPDATE", completeSocket)
 
         -- La fiche d'inspection vit dans un addon chargé à la demande : elle
         -- n'existe pas encore ici, et la première inspection est aussi le

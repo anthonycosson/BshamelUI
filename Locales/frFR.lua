@@ -132,7 +132,7 @@ BUI:RegisterLocale("frFR", {
     ["Show average item level tip"] =
         "Écrit le niveau d'objet moyen au-dessus des armes. C'est celui que vous portez, "
         .. "pas celui que vos sacs promettent.",
-    ["Average item level"]             = "Niveau d'objet %.1f",
+    ["Average item level"]             = true,
     ["Show item level"]                = "Afficher le niveau d'objet des pièces",
     ["Show item level on slots tip"] =
         "Affiche le niveau d'objet de chaque pièce équipée à côté de son emplacement, mise à "
@@ -156,7 +156,6 @@ BUI:RegisterLocale("frFR", {
     ["Gem badge"]                      = "Gemme",
     ["No enchant hint"]                = "Cet emplacement peut être enchanté et ne l'est pas.",
     ["Empty socket"]                   = "Châsse vide",
-    ["Empty socket hint"]              = "Cliquez pour y sertir une gemme de vos sacs.",
 
     -- Modules ActionBars et UnitFrames
     ["Action bars"]                    = "Barres d'action",

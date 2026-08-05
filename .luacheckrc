@@ -93,11 +93,6 @@ read_globals = {
     -- `C_Item` ; les globales existent encore et servent de repli.
     "GetInventoryItemLink", "GetInventorySlotInfo", "GetItemStats", "GetItemGem",
     "GetDetailedItemLevelInfo", "GetItemIcon", "GetAverageItemLevel",
-    "GetSocketItemInfo",
-    -- Sertissage d'une gemme depuis la fiche de personnage. Ces trois-là n'ont
-    -- pas d'équivalent dans un espace de noms : elles n'existent qu'en globales,
-    -- et le geste n'est permis que pendant le traitement d'un clic.
-    "SocketInventoryItem", "ClickSocketButton", "AcceptSockets",
     -- Temps de recharge d'un objet — donc aussi d'un jouet. La fonction a migré
     -- dans `C_Item` ; la globale sert de repli, comme partout ailleurs.
     "GetItemCooldown",

@@ -60,8 +60,6 @@
     "CharacterFrame", "InspectFrame",
     "GetInventorySlotInfo", "GetInventoryItemLink",
     "GetItemStats", "GetItemGem", "GetItemIcon", "GetAverageItemLevel",
-    "SocketInventoryItem", "ClickSocketButton", "AcceptSockets",
-    "GetSocketItemInfo",
     "C_Container", "ContainerFrameCombinedBags", "BankFrame", "GetDetailedItemLevelInfo",
     "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags",
 

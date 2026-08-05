@@ -40,21 +40,32 @@ local headlines = setmetatable({}, { __mode = "k" })
 --- celui-ci dit où en est le personnage — c'est le nombre qu'une inscription en
 --- donjon regarde, et le client ne l'écrit nulle part sur cette fiche.
 ---
---- Posé **au-dessus des armes**, c'est-à-dire au bas du modèle et au milieu :
+--- Posé **au-dessus des deux armes**, c'est-à-dire au bas du modèle et au milieu :
 --- c'est le seul endroit de la fiche qui ne soit ni une pièce ni une statistique,
 --- et le seul qui appartienne au personnage entier plutôt qu'à un emplacement.
----@param anchor table  le bouton au-dessus duquel se poser
+---
+--- Il s'ancre **par ses deux bords**, à la gauche de la première arme et à la
+--- droite de la seconde, puis se centre dans cette largeur. Posé au-dessus d'une
+--- seule des deux, il aurait été centré sur elle et non sur la paire — décalé
+--- d'une demi-case, ce qui se voit d'autant plus que rien d'autre ne se trouve là
+--- pour donner l'échelle.
+---@param left table   l'arme de gauche à l'écran
+---@param right table  celle de droite
 ---@return table|nil
-function W.SheetItemLevel(anchor)
-    if not (anchor and anchor.CreateFontString) then return nil end
+function W.SheetItemLevel(left, right)
+    if not (left and left.CreateFontString) then return nil end
+    right = right or left
 
-    local headline = headlines[anchor]
+    local headline = headlines[left]
     if not headline then
-        headline = anchor:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_HEADLINE)
-        headline:SetPoint("BOTTOM", anchor, "TOP", 0, T.SIZE.SLOT_HEADLINE_GAP)
+        headline = left:CreateFontString(nil, "OVERLAY", T.FONT.SLOT_HEADLINE)
         headline:SetJustifyH("CENTER")
-        headlines[anchor] = headline
+        headlines[left] = headline
     end
+
+    headline:ClearAllPoints()
+    headline:SetPoint("BOTTOMLEFT",  left,  "TOPLEFT",  0, T.SIZE.SLOT_HEADLINE_GAP)
+    headline:SetPoint("BOTTOMRIGHT", right, "TOPRIGHT", 0, T.SIZE.SLOT_HEADLINE_GAP)
 
     return headline
 end

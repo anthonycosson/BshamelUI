@@ -52,7 +52,6 @@ UI\Widgets\SecureMenu.lua
 UI\Widgets\Countdown.lua
 UI\Widgets\ShadeBorder.lua
 UI\Widgets\SlotInfo.lua
-UI\Widgets\ItemPicker.lua
 UI\Widgets\ItemLevelTag.lua
 UI\Widgets\Mover.lua
 UI\Widgets\ChatTools.lua

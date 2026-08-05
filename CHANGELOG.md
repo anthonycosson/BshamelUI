@@ -14,19 +14,27 @@
   une fiche d'inspection, ce chemin n'existe pas et les seize pièces sont
   moyennées, ce qui est exactement ce que le jeu fait lui-même.
 
+  **Le nombre seul**, centré sur la paire d'armes et non sur l'une des deux, et
+  coloré comme les pièces le sont : à la piste d'amélioration la plus répandue de
+  l'équipement — orange pour Mythe, violet pour Héros, et ainsi de suite. Un
+  intitulé devant lui ne dirait rien de plus qu'un nombre à une décimale posé au
+  milieu de la fiche.
+
   Sa case ouvre la page, avant les nombres qui parlent des pièces.
 
+### Supprimé
+- **Fiche de personnage — sertir une gemme depuis la fiche.** Le geste est
+  retiré. Il ne tenait pas sa promesse : le cadre de sertissage du jeu ne se
+  remplit pas sur-le-champ, il se demande au serveur, et le geste dépendait donc
+  d'un aller-retour qu'aucune reprise ne rendait fiable.
+
+  Reste ce qui répondait à la question posée : **une icône par châsse**, la gemme
+  et son infobulle quand il y en a une, la châsse vide quand il n'y en a pas.
+  C'était la vraie utilité de cette rangée — dire ce qui manque. Le sertir se
+  fait très bien depuis les sacs, et un raccourci qui échoue une fois sur deux
+  vaut moins qu'un chemin qui marche toujours.
+
 ### Corrigé
-- **Fiche de personnage — sertir depuis la fiche marche.** Le geste ne faisait
-  rien. `SocketInventoryItem` ne remplit pas le cadre de sertissage sur-le-champ :
-  il le demande au serveur, qui répond ensuite. Enchaîner la prise de la gemme et
-  sa pose dans la même foulée revenait donc à cliquer une châsse qui n'existait
-  pas encore — et rien ne le signalait.
-
-  On ouvre désormais le cadre, on retient ce qu'on voulait faire, et on le fait à
-  la réponse. Une reprise brève couvre le cas où le cadre était déjà ouvert sur
-  la bonne pièce, auquel cas rien n'est annoncé.
-
 - **Fiche de personnage — l'étoile d'enchantement ne ment plus sur le rang.**
   Elle montrait l'étoile dorée quelle que soit la qualité de l'enchantement. Deux
   causes : le rang se cherchait sous un nom d'atlas précis, alors que le jeu

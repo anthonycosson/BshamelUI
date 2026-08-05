@@ -696,12 +696,6 @@ T.TIMING = {
                             -- que la fiche : on parcourt l'arbre de chaque
                             -- conteneur ouvert, et un tri de sacs émet des
                             -- dizaines d'événements
-    -- Reprise du sertissage lancé depuis la fiche de personnage, quand le cadre
-    -- du client n'annonce rien parce qu'il était déjà ouvert sur la bonne pièce.
-    -- Court : c'est un filet, pas un délai qu'on attend — la voie normale est
-    -- l'événement, qui arrive bien avant.
-    SOCKET_SETTLE = 0.2,
-
     SLOT_INFO_SETTLE = 0.5, -- la même relecture, quand elle ne sert qu'à
                             -- rattraper des données d'objet arrivées en retard.
                             -- L'événement qui la déclenche est émis pour

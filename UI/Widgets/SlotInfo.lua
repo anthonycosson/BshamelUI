@@ -217,7 +217,6 @@ function W.SlotInfo(button)
     ---@field link? string      lien d'objet ; son infobulle prime sur le reste
     ---@field title? string
     ---@field hint? string
-    ---@field onClick? fun(button: table)
 
     --- Ajoute une icône à la rangée en cours.
     ---@param spec BUI.SlotIcon
@@ -239,7 +238,7 @@ function W.SlotInfo(button)
             -- Devant une gemme sertie, ce qu'on veut savoir est ce qu'elle
             -- apporte — et cela, le client le dit déjà mieux que nous. Devant une
             -- châsse vide il n'y a pas d'objet, donc rien à demander au client :
-            -- c'est à nous de dire ce qu'il manque et ce qu'un clic ferait.
+            -- c'est à nous de dire ce qu'il manque.
             --
             -- Écrite une fois à la construction : ce sont les champs du bouton
             -- qui changent d'un emplacement à l'autre, pas ses scripts.
@@ -273,11 +272,6 @@ function W.SlotInfo(button)
             cell.icon:SetTexture(spec.texture)
         end
         cell.icon:SetDesaturated(spec.desaturated and true or false)
-
-        -- Le clic n'est armé que pour l'icône qui en veut un, et **désarmé** pour
-        -- les autres : un bouton réemployé d'un emplacement à l'autre garderait
-        -- sinon le geste de son occupant précédent.
-        cell:SetScript("OnClick", spec.onClick)
 
         cell:ClearAllPoints()
         if index == 1 then
