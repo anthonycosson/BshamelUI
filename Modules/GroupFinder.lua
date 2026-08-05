@@ -98,6 +98,16 @@ end
 --  Confirmations
 -- =========================================================================
 
+--- Fenêtres candidates du client pour la demande de rôles, de la plus récente à
+--- la plus ancienne. Test de capacité et non de version (règle 1) : sur le client
+--- courant, seule `LFDRoleCheckPopup` existe.
+---@return table|nil
+local function rolePopup()
+    if LFGRoleCheckPopup and LFGRoleCheckPopup.HookScript then return LFGRoleCheckPopup end
+    if LFDRoleCheckPopup and LFDRoleCheckPopup.HookScript then return LFDRoleCheckPopup end
+    return nil
+end
+
 --- Vrai tant que la demande de rôles en cours a déjà reçu notre réponse.
 ---
 --- Deux chemins y mènent — l'événement et l'ouverture de la fenêtre — et rien ne
@@ -117,16 +127,15 @@ local function answerRoleCheck(mod)
 
     roleCheckAnswered = true
     CompleteLFGRoleCheck(true)
-    return true
-end
 
---- Fenêtres candidates du client pour la demande de rôles, de la plus récente à
---- la plus ancienne. Test de capacité et non de version (règle 1).
----@return table|nil
-local function rolePopup()
-    if LFGRoleCheckPopup and LFGRoleCheckPopup.HookScript then return LFGRoleCheckPopup end
-    if LFDRoleCheckPopup and LFDRoleCheckPopup.HookScript then return LFDRoleCheckPopup end
-    return nil
+    -- Et si elle est déjà là, on la referme. Le crochet posé sur son ouverture
+    -- l'empêche d'être dessinée quand il a pu être posé à temps ; ceci rattrape
+    -- le cas où elle nous a précédés, et raccourcit alors ce qu'on ne peut plus
+    -- supprimer.
+    local popup = rolePopup()
+    if popup and popup:IsShown() then popup:Hide() end
+
+    return true
 end
 
 --- Empêche la fenêtre de demande de rôles de s'afficher quand on y répond seul.
@@ -319,11 +328,19 @@ BUI:RegisterModule(MODULE, {
         -- n'exister qu'une fois la recherche de groupe ouverte. On retente une
         -- fois la rafale retombée ; `U.GuardedScript` ne pose jamais deux fois
         -- le même script.
-        local settle = U.Debounce(T.TIMING.CHAT_SETTLE, function()
-            hookSignupNote(self)
+        local settle = U.Debounce(T.TIMING.CHAT_SETTLE, function() hookSignupNote(self) end)
+
+        -- La fenêtre de rôles, elle, se raccroche **sans temporisation**. Elle
+        -- vit dans un module du client chargé à la demande, et rien n'interdit
+        -- qu'une demande de rôles arrive dans la foulée de ce chargement : le
+        -- cinquième de seconde qui suffit largement à la fenêtre d'inscription
+        -- serait ici le seul moment où l'on ne peut pas la retenir. Le crochet ne
+        -- coûte que deux lectures de globale, et `U.GuardedScript` ne le pose
+        -- jamais deux fois.
+        self:RegisterEvent("ADDON_LOADED", function()
             hookRoleCheck(self)
+            settle()
         end)
-        self:RegisterEvent("ADDON_LOADED",                    settle)
         self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", settle)
         self:RegisterEvent("LFG_LIST_AVAILABILITY_UPDATE",     settle)
 
