@@ -11,6 +11,11 @@
   Le repère est approximatif d'un cran vers le haut, et c'est délibéré : on
   arrive juste au-dessus de son point de lecture, avec le contexte devant soi.
 
+- **Chat — la fenêtre de copie ne sélectionne plus tout d'office.** On y vient
+  chercher trois lignes, pas l'historique entier : la sélection posée d'avance
+  était à défaire avant de faire la sienne, et un `Ctrl+C` réflexe emportait tout
+  le reste sans prévenir. `Ctrl+A` reste là pour qui veut vraiment tout.
+
 ## 0.7.17 — 2026-08-05
 
 ### Ajouté

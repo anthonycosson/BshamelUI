@@ -251,7 +251,8 @@ BUI:RegisterLocale("frFR", {
     ["Copy button tip"] =
         "Ajoute un bouton discret dans le coin haut-droit de chaque fenêtre de chat.",
     ["Copy chat"]                      = "Copier le chat",
-    ["Copy chat hint"]                 = "Tout est sélectionné : Ctrl+C pour copier.",
+    ["Copy chat hint"] =
+        "Sélectionnez ce que vous voulez, Ctrl+C pour copier. Ctrl+A sélectionne tout.",
 
     -- Bouton de l'addon (module General)
     ["Buttons"]                        = "Boutons",

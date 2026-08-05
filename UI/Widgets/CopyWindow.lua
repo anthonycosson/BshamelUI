@@ -118,10 +118,15 @@ function W.CopyWindow(globalName, titleText, hintText, submitLabel, onSubmit)
             math.max(0, math.min(range, ratio * (range + view) - view)))
     end
 
-    --- Affiche la fenêtre sur un texte, tout sélectionné et prêt à être copié.
+    --- Affiche la fenêtre sur un texte, prêt à être sélectionné.
     ---
-    --- Sans `at`, le texte est présenté par son début : c'est le sens de lecture,
-    --- et la sélection porte de toute façon sur l'intégralité.
+    --- **Rien n'est sélectionné d'avance.** La fenêtre présentait tout en bloc,
+    --- ce qui ne rend service qu'à celui qui veut tout — et emporter l'historique
+    --- entier n'est pas le geste courant : on vient y chercher trois lignes. Une
+    --- sélection posée d'office oblige alors à la défaire avant de faire la
+    --- sienne, et un `Ctrl+C` réflexe emporte le reste sans prévenir.
+    ---
+    --- Sans `at`, le texte est présenté par son début : c'est le sens de lecture.
     ---@param text string
     ---@param at? number  fraction du texte à amener sous les yeux
     function frame:Open(text, at)
@@ -129,7 +134,6 @@ function W.CopyWindow(globalName, titleText, hintText, submitLabel, onSubmit)
 
         edit:SetText(text or "")
         edit:SetCursorPosition(0)
-        edit:HighlightText()
         scroll:SetVerticalScroll(0)
         edit:SetFocus()
 

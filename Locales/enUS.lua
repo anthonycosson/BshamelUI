@@ -315,7 +315,8 @@ BUI:RegisterLocale("enUS", {
     ["Copy button tip"] =
         "Adds a discreet button to the top-right corner of every chat window.",
     ["Copy chat"]                      = "Copy chat",
-    ["Copy chat hint"]                 = "Everything is selected: press Ctrl+C to copy.",
+    ["Copy chat hint"] =
+        "Select what you want, then Ctrl+C to copy. Ctrl+A selects everything.",
 
     -- Module Bags
     ["Bags and repairs"]               = "Bags and repairs",
