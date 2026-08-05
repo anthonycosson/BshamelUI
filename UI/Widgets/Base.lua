@@ -173,103 +173,38 @@ function W.Inset(parent)
     return inset
 end
 
---- Contour ouvragé d'un dialogue du client, sans barre de titre ni bouton de
---- fermeture.
+--- Contour d'un panneau : quatre côtés identiques, sans barre de titre ni
+--- échancrure de bouton de fermeture.
 ---
---- C'est la bordure des fenêtres du jeu, réduite à ce qu'elle est : quatre côtés
---- identiques. Les templates de *fenêtre* (`T.TEMPLATES.WINDOW`) portent la même
---- bordure mais lui ajoutent une bande de titre en haut — utile sur une fenêtre
---- qu'on remplit, encombrante sur un panneau de deux rangées.
+--- Son propre template (`T.TEMPLATES.PANEL_BORDER`), et non celui des fenêtres
+--- dépouillé. Un template de fenêtre pose un titre et une croix ; les lui retirer
+--- demande de savoir sous quels noms il les range, et il en restait toujours un —
+--- d'où la bosse qui coiffait les panneaux. Un template qui ne pose que le
+--- contour n'a rien à démonter.
 ---
---- Comme `W.Inset`, on lui retire son fond : celui du panneau suffit, et deux
---- surfaces empilées éclaircissent la zone au lieu de la délimiter.
+--- **On ne lui retire que son fond**, et nommément : celui du panneau suffit, et
+--- deux surfaces empilées éclaircissent la zone au lieu de la délimiter. Cacher
+--- toutes ses régions — ce qu'on faisait — cachait le contour avec, puisque le
+--- contour d'un template du client est fait de textures lui aussi.
 ---@param parent table
 ---@return table
-function W.DialogBorder(parent)
-    local template = T.Template("DIALOG_BORDER")
-    local frame = CreateFrame("Frame", nil, parent, template)
-    T.ClearPanelBackground(frame)
-    return frame
-end
-
---- Nom du découpage neuf que porte le template de fenêtre, relevé une fois.
----
---- `false` veut dire « cherché et introuvable », `nil` « pas encore cherché » :
---- sans cette distinction, un client sans découpage neuf paierait la construction
---- d'un cadre témoin à chaque panneau.
-local windowLayout
-
----@return string|nil
-local function windowBorderLayout()
-    if windowLayout ~= nil then return windowLayout or nil end
-    windowLayout = false
-
-    local template = T.Template("WINDOW")
-    if not (template and NineSliceUtil and NineSliceUtil.ApplyLayoutByName) then
-        return nil
-    end
-
-    -- Un cadre témoin, monté une seule fois et jamais montré, juste pour lui
-    -- demander le nom de son découpage. Le relever plutôt que l'écrire en dur
-    -- garde le contour d'accord avec la fenêtre d'options même si le candidat
-    -- retenu par `T.Template` change un jour — c'est le même raisonnement que
-    -- `T.CaptureTitleBar`.
-    local probe = CreateFrame("Frame", nil, UIParent, template)
-    probe:Hide()
-
-    local slice = probe.NineSlice
-    if slice and slice.layoutType then windowLayout = slice.layoutType end
-
-    return windowLayout or nil
-end
-
---- Le contour de la fenêtre d'options, et rien d'autre.
----
---- **Le découpage seul, pas le template qui le porte.** On a d'abord monté le
---- template de fenêtre entier pour lui retirer ensuite ce qui n'était pas le
---- contour : barre de titre, titre, bouton de fermeture. Retirer par une liste de
---- noms suppose de les connaître tous, et il en restait — d'où la bosse de titre
---- et l'emplacement vide d'une croix absente en haut des panneaux.
----
---- Ce que le template pose autour de son contour ne peut pas apparaître si on ne
---- monte pas le template : on ne demande donc au client que son **découpage
---- neuf**, appliqué à un cadre nu. Il n'y a plus rien à masquer, donc plus rien
---- à oublier de masquer.
----
---- La matière reste celle de la fenêtre d'options, puisque c'est son découpage à
---- elle qu'on relève. Reste son asymétrie, que `T.MirrorTopEdge` corrige.
----
---- Sans découpage disponible, on retombe sur le liseré des dialogues : moins
---- ressemblant, jamais cassé.
----@param parent table
----@return table
-function W.WindowBorder(parent)
-    local layout = windowBorderLayout()
-    if not layout then return W.DialogBorder(parent) end
-
-    local border = CreateFrame("Frame", nil, parent)
+function W.PanelBorder(parent)
+    local border = CreateFrame("Frame", nil, parent, T.Template("PANEL_BORDER"))
+    T.HidePanelFill(border)
 
     -- Un contour ne prend pas les clics : sous le menu de téléportation, il
     -- avalerait ceux des rangées qu'il encadre.
     border:EnableMouse(false)
-
-    NineSliceUtil.ApplyLayoutByName(border, layout)
-    if border.Center then border.Center:Hide() end
-    T.MirrorTopEdge(border)
-
     return border
 end
 
---- Habillage d'un panneau flottant : **celui de la fenêtre d'options, moins sa
---- barre de titre**.
+--- Habillage d'un panneau flottant : le fond de la fenêtre d'options, et le
+--- contour de panneau.
 ---
 --- Deux pièces qui ne se séparent pas, d'où une seule fonction. Le fond est la
 --- pierre du client teintée (`T.WindowStone`) et non un aplat : c'est ce qui fait
 --- la différence entre le noir profond de la fenêtre d'options et le gris bleuté
---- que la même couleur donne posée telle quelle. Le contour est celui des
---- dialogues du jeu, c'est-à-dire exactement celui de la fenêtre d'options —
---- laquelle n'y ajoute que la bande de titre, encombrante sur un panneau de deux
---- rangées.
+--- que la même couleur donne posée telle quelle.
 ---
 --- Les prendre séparément est ce qui avait produit trois habillages différents
 --- pour trois panneaux qui se ressemblent : le menu de téléportation et le
@@ -283,7 +218,7 @@ function W.PanelChrome(frame)
     T.WindowStone(background)
     frame.background = background
 
-    local border = W.WindowBorder(frame)
+    local border = W.PanelBorder(frame)
     border:SetAllPoints()
     return border
 end

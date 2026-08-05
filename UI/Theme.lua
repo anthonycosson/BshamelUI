@@ -1390,6 +1390,30 @@ function T.ClearPanelBackground(frame)
     end
 end
 
+--- Noms sous lesquels un template du client range la surface qui le remplit.
+local PANEL_FILL_KEYS = { "Bg", "Background", "Center" }
+
+--- Retire le fond d'un contour, **nommément**.
+---
+--- La variante prudente de `T.ClearPanelBackground`, et la seule qui convienne à
+--- un template dont la bordure est faite de régions et non d'un nine-slice :
+--- cacher toutes les régions cacherait la bordure avec, et laisserait un
+--- rectangle sans bord. On ne cache donc que ce qu'on sait nommer.
+---
+--- Un nom qu'on n'aurait pas prévu laisse au pire une surface de trop — visible,
+--- corrigible, et sans commune mesure avec un panneau qui perd son contour.
+---@param frame table
+function T.HidePanelFill(frame)
+    for i = 1, #PANEL_FILL_KEYS do
+        local part = frame[PANEL_FILL_KEYS[i]]
+        if part and part.Hide then part:Hide() end
+    end
+
+    if frame.NineSlice and frame.NineSlice.Center then
+        frame.NineSlice.Center:Hide()
+    end
+end
+
 --- Teinte une texture d'un dégradé d'une seule couleur : pleine d'un côté,
 --- transparente de l'autre.
 ---
@@ -2035,47 +2059,6 @@ function T.CaptureTitleBar(frame)
     end
 end
 
---- Pièces du haut d'un contour, et celle du bas dont chacune se déduit.
----
---- **Croisées pour les coins.** Une demi-rotation retourne aussi la gauche et la
---- droite : le coin bas-droit devient le coin haut-gauche, et réciproquement.
---- Les reprendre du même côté donnerait deux coins tournés vers l'extérieur.
-local MIRRORED_TOP = {
-    { piece = "TopLeftCorner",  from = "BottomRightCorner" },
-    { piece = "TopRightCorner", from = "BottomLeftCorner"  },
-    { piece = "TopEdge",        from = "BottomEdge"        },
-}
-
---- Rend le haut d'un contour identique à son bas.
----
---- Le contour de métal du client n'est **pas symétrique** : ses deux coins hauts
---- portent le renflement de la barre de titre. C'est ce qui reste d'une fenêtre
---- sur un panneau qui n'en est pas une, et c'est justement ce qu'on ne veut pas.
----
---- Le bas de ce même contour est un bord franc. On le recopie donc en haut avec
---- une demi-rotation, plutôt que d'aller chercher un autre jeu de textures : la
---- matière reste exactement celle des trois autres côtés, ce qui est tout le
---- propos.
----@param slice table  le cadre qui porte les neuf pièces
-function T.MirrorTopEdge(slice)
-    if not slice then return end
-
-    for i = 1, #MIRRORED_TOP do
-        local piece  = slice[MIRRORED_TOP[i].piece]
-        local source = slice[MIRRORED_TOP[i].from]
-
-        if piece and source and source.GetAtlas and piece.SetRotation then
-            local atlas = source:GetAtlas()
-            if atlas and T.TrySetAtlas(piece, atlas) then
-                -- La hauteur vient du bas, elle aussi : un coin haut est plus
-                -- haut qu'un coin bas, et garder l'ancienne étirerait la texture.
-                piece:SetHeight(source:GetHeight())
-                piece:SetRotation(math.pi)
-            end
-        end
-    end
-end
-
 --- Applique cette apparence à une texture. Renvoie `false` si rien n'a été
 --- relevé — l'appelant doit alors se rabattre sur son propre fond.
 ---@param texture table
@@ -2122,11 +2105,19 @@ T.TEMPLATES = {
     WINDOW     = { "BasicFrameTemplate", "BasicFrameTemplateWithInset", "UIPanelDialogTemplate" },
     INSET      = { "InsetFrameTemplate3", "InsetFrameTemplate2", "InsetFrameTemplate" },
 
-    -- La bordure des dialogues du client, seule : quatre côtés identiques, sans
-    -- la bande de titre que `WINDOW` ajoute en haut. Repli sur le creux — moins
-    -- ouvragé, jamais cassé.
-    DIALOG_BORDER = { "DialogBorderTemplate", "DialogBorderDarkTemplate",
-                      "InsetFrameTemplate3" },
+    -- Le contour d'un **panneau** : quatre côtés identiques, sans la bande de
+    -- titre ni l'échancrure de bouton de fermeture que `WINDOW` ajoute en haut.
+    --
+    -- Deux entrées et non une, parce que ce sont deux besoins et non deux
+    -- variantes du même. Une fenêtre a un titre et se ferme ; un panneau n'a ni
+    -- l'un ni l'autre, et le haut de `WINDOW` réserve pourtant la place des deux.
+    -- On a essayé de démonter `WINDOW` pour n'en garder que le contour : retirer
+    -- par une liste de noms suppose de les connaître tous, et il en restait
+    -- toujours un. Un template qui ne pose que ce qu'on veut n'a rien à démonter.
+    --
+    -- Repli sur le creux — moins ouvragé, jamais cassé.
+    PANEL_BORDER = { "DialogBorderTemplate", "DialogBorderDarkTemplate",
+                     "InsetFrameTemplate3" },
     -- `NamePlatePreviewTemplate` a vécu ici. Le monter réveille le gestionnaire
     -- de barres d'infos du panneau de réglages, qui repasse sur les **vraies**
     -- plaques en étant teinté par nous : erreur dans le code du client, et
