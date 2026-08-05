@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.17 — 2026-08-05
+
 ### Ajouté
 - **Fiche de personnage — le niveau d'objet du personnage, au-dessus des armes.**
   Un seul nombre pour toute la fiche, là où le reste du module en pose seize : il
