@@ -328,6 +328,11 @@ local function publishedAs(owner, region, keys)
     return false
 end
 
+--- région -> son nom de débogage, relevé une fois. Clés faibles : ce cache ne
+--- retient rien en vie, et il voit passer bien plus de monde que `originals` —
+--- portraits et signaux compris, qu'on ne teinte jamais.
+local names = setmetatable({}, { __mode = "k" })
+
 --- Nom de débogage d'une région, quand le client sait le donner. Les cadres du
 --- client nomment leurs textures : « …Portrait », « …Icon » s'y lisent, ce qui
 --- rattrape les textures qu'aucune clé ne publie.
@@ -353,12 +358,28 @@ end
 --- Sans nom, on ne perd que le rattrapage : le classement retombe sur les clés
 --- que le cadre publie, et le nom n'a jamais servi qu'à **écarter**, jamais à
 --- décider qu'une texture est touchable.
+---
+--- **Le nom est relevé une fois par région.** `GetDebugName` reconstruit le
+--- chemin complet en remontant les parents un à un : c'est la lecture la plus
+--- chère du parcours, et elle est demandée deux fois par région — une fois pour
+--- écarter les signaux, une fois pour classer. Or ce nom ne bouge pas : une aura
+--- sortie d'un pool garde son parent et son rang dans la liste, et un cadre du
+--- client ne change pas de nom en cours de session. Seules les **réussites**
+--- entrent dans `names` : un nom illisible l'est parce que l'exécution était
+--- teintée à cet instant précis, et le retenir figerait un accident de passage
+--- pour le reste de la session.
 ---@param region table
 ---@return string|nil
 local function debugName(region)
+    local known = names[region]
+    if known then return known end
+
     local name = ask(region, "GetDebugName")
     if type(name) ~= "string" or secret(name) then return nil end
-    return name:match("[^.]+$") or name
+
+    name = name:match("[^.]+$") or name
+    names[region] = name
+    return name
 end
 
 --- Ce cadre est-il tout entier un signal ?
@@ -789,6 +810,23 @@ function S:ApplyTo(element, frame)
 
     for i = 1, #out.art do lists.art[#lists.art + 1] = out.art[i] end
     for i = 1, #out.icon do lists.icon[#lists.icon + 1] = out.icon[i] end
+end
+
+--- Intensité en vigueur sur un élément, ou `nil` s'il n'est pas assombri.
+---
+--- La seule question qu'un cadre **à nous** ait à poser au moteur. La rangée
+--- d'auras des barres d'infos porte le contour commun de l'addon : il se dessine
+--- à pleine couleur d'ordinaire, et doit foncer avec le reste quand la teinte des
+--- auras est allumée.
+---
+--- Poser la question au moteur et non au module `DarkMode` est délibéré : ce qui
+--- décide est l'intensité **réellement appliquée**, pas l'état d'une case. Lire la
+--- case reviendrait à refaire ailleurs le raisonnement qui vit ici — la case
+--- maîtresse, celle de l'élément, et un module qui peut être éteint.
+---@param element string
+---@return number|nil
+function S:FactorFor(element)
+    return active[element]
 end
 
 ---@param element string

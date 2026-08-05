@@ -977,7 +977,7 @@ local AURA_GROUPS = {
     { key = "cc", kind = "CC", own = "ownAuraCc", bit = "CrowdControl",
       point = "LEFT", relative = "RIGHT",
       size = "auraCcSize", x = "auraCcX", y = "auraCcY", gap = "auraCcGap",
-      timer = "auraCcTimer", max = "auraCcMax" },
+      timer = "auraCcTimer", max = "auraCcMax", shaded = "auraCcShaded" },
 }
 
 --- L'addon tient-il **cette rangée-là** ? La case maîtresse et celle de la
@@ -1281,9 +1281,10 @@ end
 --- deux**, et elles finissent dans le même widget — le luxe tient tout ici.
 ---
 --- `force` relit les auras même si les rangées sont peuplées. Sans lui, une
---- plaque visible garde ce qu'elle montre : `paint` passe à chaque battement de
---- vie, et relire quarante auras à ce rythme est ce que la règle 7 interdit.
---- C'est `UNIT_AURA` qui force — il ne parle que quand une aura change.
+--- plaque visible garde ce qu'elle montre : une peinture complète survient pour
+--- toutes sortes de raisons — un changement de cible, de camp, de menace — et
+--- relire quarante auras à chacune ne dirait jamais rien de neuf. C'est
+--- `UNIT_AURA` qui force, et il ne parle que quand une aura change.
 ---@param mod table
 ---@param plate table
 ---@param unit string
@@ -1338,7 +1339,7 @@ local function applyOwnAuras(mod, plate, unit, force)
                     list.max = mod:Get(group.max)
                     W.AuraRowSet(row, list,
                                  mod:Get(group.size), mod:Get(group.gap),
-                                 mod:Get(group.timer))
+                                 mod:Get(group.timer), mod:Get(group.shaded))
                 else
                     row:Hide()
                 end
@@ -1371,7 +1372,7 @@ local function applyOwnAuras(mod, plate, unit, force)
                 list.max = mod:Get(group.max)
                 W.AuraRowSet(row, list,
                              mod:Get(group.size), mod:Get(group.gap),
-                             mod:Get(group.timer))
+                             mod:Get(group.timer), mod:Get(group.shaded))
             else
                 -- Rangée laissée au jeu : la nôtre se cache, et la sienne n'a
                 -- jamais été éteinte (voir `applyClientAuras`). C'est le seul
@@ -2585,6 +2586,25 @@ local function auraSliders(prefix, ownKey)
     }
 end
 
+--- La case d'apparence d'une rangée : le contour commun de l'addon, ou le liseré
+--- carré d'origine. Elle vit avec les curseurs de la rangée — elle décide de la
+--- même chose qu'eux, à quoi ressemble une vignette — et porte donc le même
+--- verrou : les réglages d'une rangée laissée au jeu ne veulent rien dire.
+---@param key string  "auraCcShaded"
+---@param ownKey string
+---@return table
+local function auraShadeToggle(key, ownKey)
+    return {
+        type     = "toggle",
+        key      = key,
+        text     = L["Aura shaded"],
+        tooltip  = L["Aura shaded tip"],
+        indent   = true,
+        disabled = AURAS_PAUSED and aurasPaused or requires("ownAuras", ownKey),
+        disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
+    }
+end
+
 --- Un curseur du marqueur. Même fabrique que ceux des rangées, et pour la même
 --- raison : ils portent le même verrou, et trois descripteurs recopiés seraient
 --- trois occasions d'en oublier un le jour où la pause se lève.
@@ -3052,6 +3072,50 @@ end
 --  Peinture
 -- =========================================================================
 
+--- La peinture **légère** : les deux couleurs que le client vient d'effacer, et
+--- rien d'autre.
+---
+--- C'est elle que déclenchent les deux fonctions coiffées par `hookPainting`, et
+--- elles se déclenchent à **chaque battement de vie de chaque plaque** — soit,
+--- au plus fort d'une pull, quelques centaines de fois par seconde.
+---
+--- Tout ce qui n'est pas une couleur en a donc été retiré. Une hauteur de barre,
+--- un corps de texte, une texture, une opacité, une rangée d'auras, un marqueur :
+--- rien de tout cela ne bouge parce qu'un adversaire a perdu des points de vie,
+--- et chacun a **son propre hook gardé** pour se reposer le jour où le client y
+--- touche. Les repayer ici, c'était refaire cent fois par seconde un travail que
+--- personne n'avait défait — et fabriquer au passage, à chaque fois, les
+--- fermetures et les clés de tous ces hooks (règle 7).
+---
+--- Les couleurs restent, elles : la barre de vie est précisément ce que le
+--- client vient de repeindre en nous appelant.
+---@param mod table
+---@param unitFrame table
+---@param unit string
+local function tint(mod, unitFrame, unit)
+    local bar = healthBarOf(unitFrame)
+    if bar and type(bar.SetStatusBarColor) == "function" then
+        local r, g, b = healthColor(mod, unit)
+        pcall(bar.SetStatusBarColor, bar, r, g, b)
+    end
+
+    local name = unitFrame.name
+    if type(name) == "table" and type(name.SetTextColor) == "function" then
+        local ok, r, g, b = nameColor(mod, unit)
+        if ok then
+            settingNameColor = true
+            pcall(name.SetTextColor, name, r, g, b)
+            settingNameColor = false
+        end
+    end
+end
+
+--- La peinture **complète** : tout ce qu'une plaque porte de nous.
+---
+--- Elle ne tourne qu'aux moments où quelque chose a réellement pu changer : une
+--- plaque qui change de main, un changement de cible, de camp, de menace, de
+--- spécialisation, une frontière de zone, un réglage touché. Jamais sur un
+--- battement de vie — voir `tint`, juste au-dessus.
 ---@param mod table
 ---@param plate table
 ---@param unit string
@@ -3082,27 +3146,16 @@ local function paint(mod, plate, unit)
         releaseAlpha(unitFrame)
     end
 
-    local bar = healthBarOf(unitFrame)
-    if bar and type(bar.SetStatusBarColor) == "function" then
-        local r, g, b = healthColor(mod, unit)
-        pcall(bar.SetStatusBarColor, bar, r, g, b)
-    end
-
     local name = unitFrame.name
     if type(name) == "table" and type(name.SetTextColor) == "function" then
-        -- Posé à chaque peinture, comme le hook du corps des textes : la pose
-        -- est idempotente (`U.GuardedHook` ne pose qu'une fois par cadre), et
-        -- attendre un autre moment reviendrait à attendre qu'une plaque
-        -- repasse ici après coup.
+        -- Posé à chaque peinture complète, comme le hook du corps des textes :
+        -- la pose est idempotente (`U.GuardedHook` ne pose qu'une fois par
+        -- cadre), et attendre un autre moment reviendrait à attendre qu'une
+        -- plaque repasse ici après coup.
         hookNameColor(name, unitFrame)
-
-        local ok, r, g, b = nameColor(mod, unit)
-        if ok then
-            settingNameColor = true
-            pcall(name.SetTextColor, name, r, g, b)
-            settingNameColor = false
-        end
     end
+
+    tint(mod, unitFrame, unit)
 
     applyBarTexture(mod, unitFrame, isTarget)
     applyBarHeight(mod, unitFrame)
@@ -3196,6 +3249,10 @@ end
 --
 -- `U.GuardedHook` est le seul motif autorisé (règle 6) : posé une fois,
 -- définitivement, il devient inerte dès que le module s'éteint.
+--
+-- Ce sont aussi les deux fonctions les plus **fréquentes** du client sur une
+-- plaque : la première part à chaque battement de vie. Ce qu'on y fait tient
+-- donc dans `tint`, et pas une écriture de plus.
 
 --- Le cadre que le client vient de peindre est-il une de nos plaques ?
 ---@param unitFrame table
@@ -3208,12 +3265,12 @@ local function trackedUnit(unitFrame)
     return unit
 end
 
---- Pas de garde de récursion, et ce n'est pas un oubli : notre peinture ne pose
---- que des couleurs, une opacité et des ancrages — aucune de ces écritures ne
---- rappelle les deux fonctions coiffées ici. Le seul endroit qui les rappelle
---- est `release`, et il ne tourne qu'une fois le module déjà éteint, donc une
---- fois le hook déjà inerte. Un drapeau de plus n'aurait rien gardé, et resterait
---- levé pour toujours le jour où une écriture lèverait au milieu.
+--- Pas de garde de récursion, et ce n'est pas un oubli : notre repeinture ne
+--- pose que deux couleurs — aucune de ces écritures ne rappelle les deux
+--- fonctions coiffées ici. Le seul endroit qui les rappelle est `release`, et il
+--- ne tourne qu'une fois le module déjà éteint, donc une fois le hook déjà
+--- inerte. Un drapeau de plus n'aurait rien gardé, et resterait levé pour
+--- toujours le jour où une écriture lèverait au milieu.
 local function hookPainting()
     local guard = function()
         local mod = module()
@@ -3224,8 +3281,13 @@ local function hookPainting()
         local unit = trackedUnit(unitFrame)
         if not unit then return end
 
+        -- Le garde que `paint` prenait par `unitFrameOf` : le client nous tend
+        -- ici le cadre sans passer par la plaque, et un cadre interdit — ceux
+        -- d'une arène — lève à la première méthode appelée dessus.
+        if isForbidden(unitFrame) then return end
+
         local mod = module()
-        if mod then paint(mod, plates[unit], unit) end
+        if mod then tint(mod, unitFrame, unit) end
     end
 
     if type(CompactUnitFrame_UpdateHealthColor) == "function" then
@@ -3404,6 +3466,14 @@ BUI:RegisterModule(MODULE, {
         auraCcX      = 4,
         auraCcY      = 0,
         auraCcTimer  = T.SIZE.PLATE_AURA_TIMER,
+
+        -- **Allumé**, contrairement à tout le reste de la page, et ce n'est pas
+        -- une entorse à la règle « tout est éteint par défaut ». Cette case-là
+        -- ne prend rien au client : elle dit à quoi ressemble une vignette **de
+        -- l'addon**, qui n'existe que si le joueur a déjà coché la rangée. Le
+        -- liseré carré qu'elle remplace était le seul endroit de l'addon où une
+        -- icône n'avait pas le contour commun.
+        auraCcShaded = true,
 
         resizeCast = false,
         castHeight = T.SIZE.PLATE_CAST_BAR_H,
@@ -3812,6 +3882,7 @@ BUI:RegisterModule(MODULE, {
         { type = "header", text = L["Crowd control auras"] },
         { type = "description", text = L["Crowd control auras notice"] },
         auraRowToggle("ownAuraCc", L["Take over crowd control tip"]),
+        auraShadeToggle("auraCcShaded", "ownAuraCc"),
         auraSliders("auraCc", "ownAuraCc"),
 
         -- Le marqueur ferme la section : il se règle comme une rangée — une
@@ -4161,6 +4232,14 @@ BUI:RegisterModule(MODULE, {
             if plates[unit] then paint(self, plates[unit], unit) end
         end)
 
+        -- **Le marqueur d'un mob qu'on vient de marquer.** Sa taille et sa
+        -- vignette se posent à la peinture complète ; son ancrage, lui, a son
+        -- hook. Sans cet abonnement, marquer une cible en plein combat ne
+        -- déclencherait plus rien — la peinture de chaque battement de vie le
+        -- rattrapait par accident, et elle ne le rattrape plus. Le client
+        -- annonce chaque marqueur posé ou retiré, et c'est rare.
+        self:RegisterEvent("RAID_TARGET_UPDATE", function() paintAll(self) end)
+
         -- **Une unité change de camp sans changer de plaque.** Un contrôle
         -- mental la rend alliée pour quelques secondes, puis adverse à nouveau,
         -- et la plaque ne repart pas au recyclage entre les deux.
@@ -4190,6 +4269,21 @@ BUI:RegisterModule(MODULE, {
             refreshRole()
             paintAll(self)
         end)
+
+        -- **Le seul réglage d'un autre module qui nous regarde.** Le contour de
+        -- nos vignettes d'auras fonce avec le mode sombre (voir `setEdge` dans
+        -- `UI/Widgets/PlatePreview.lua`), et il faut le redessiner quand la case
+        -- bascule — sans quoi le changement n'apparaîtrait qu'à la prochaine aura
+        -- qui bouge, ce qui se lit comme un réglage qui n'a pas pris.
+        --
+        -- On l'apprend par le message que le core émet, jamais en allant lire la
+        -- base d'un autre module. Les deux messages, parce qu'il y a deux façons
+        -- d'éteindre le mode sombre : décocher sa case, ou éteindre le module.
+        local darkChanged = function(_, name)
+            if name == "DarkMode" then paintAll(self) end
+        end
+        self:RegisterMessage(BUI.MESSAGES.SETTING_CHANGED, darkChanged)
+        self:RegisterMessage(BUI.MESSAGES.MODULE_STATE,    darkChanged)
 
         local function enteredWorld()
             -- Le client refait ses plaques en chargeant une zone, sans

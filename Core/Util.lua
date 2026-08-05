@@ -273,7 +273,38 @@ end
 -- =========================================================================
 
 --- Hooks déjà posés, pour ne jamais en poser deux fois le même.
-local posted = {}
+---
+--- **Trois registres et non un**, parce qu'une clé unique se payait cher. Un
+--- hook de méthode se reconnaît à son hôte *et* au nom de la méthode ; la clé
+--- était donc `tostring(hôte) .. "::" .. nom`, une chaîne fabriquée à chaque
+--- appel — y compris, et surtout, pour ressortir aussitôt puisque le hook était
+--- déjà là. Or ces fonctions se rappellent à chaque repeinture d'une barre de
+--- nom : cette clé jetable était devenue l'une des allocations les plus
+--- fréquentes de l'addon (règle 7). L'hôte est déjà une clé parfaite, et
+--- s'indexer ne coûte rien.
+---
+--- Clés faibles pour les deux registres à hôte : un cadre que plus personne ne
+--- tient n'a pas à être retenu ici.
+local postedNames   = {}
+local postedMethods = setmetatable({}, { __mode = "k" })
+local postedScripts = setmetatable({}, { __mode = "k" })
+
+--- Ce hook était-il déjà posé ? L'inscrit si ce n'est pas le cas.
+---@param registry table
+---@param host table
+---@param name string
+---@return boolean  vrai si le hook était déjà là, et qu'il n'y a rien à faire
+local function noteOnce(registry, host, name)
+    local mine = registry[host]
+    if not mine then
+        mine = {}
+        registry[host] = mine
+    end
+
+    if mine[name] then return true end
+    mine[name] = true
+    return false
+end
 
 --- `hooksecurefunc` est irréversible : on ne peut pas déposer un hook.
 --- Le seul motif correct est donc de hooker **une fois**, définitivement, et de
@@ -289,20 +320,24 @@ local posted = {}
 ---@param bodyOrGuard function
 ---@param guard? fun(): boolean
 function U.GuardedHook(target, methodOrFn, bodyOrGuard, guard)
-    local key, body, isEnabled
+    local body, isEnabled
 
     if type(target) == "table" then
-        key       = tostring(target) .. "::" .. tostring(methodOrFn)
         body      = bodyOrGuard
         isEnabled = guard
+
+        -- Sur une table hôte, le second argument est **toujours** un nom de
+        -- méthode : c'est la forme `U.GuardedHook(frame, "UpdateAuras", …)`.
+        -- L'analyse statique ne peut pas le déduire du seul `type(target)`, on
+        -- le lui dit.
+        ---@cast methodOrFn string
+        if noteOnce(postedMethods, target, methodOrFn) then return end
     else
-        key       = target
         body      = methodOrFn
         isEnabled = bodyOrGuard
+        if postedNames[target] then return end
+        postedNames[target] = true
     end
-
-    if posted[key] then return end
-    posted[key] = true
 
     local wrapped = function(...)
         if isEnabled and not isEnabled() then return end
@@ -334,9 +369,10 @@ end
 function U.GuardedScript(frame, script, body, guard)
     if type(frame) ~= "table" or type(frame.HookScript) ~= "function" then return end
 
-    local key = tostring(frame) .. "::script::" .. script
-    if posted[key] then return end
-    posted[key] = true
+    -- Son propre registre, et non celui des méthodes : rien ne garantit qu'un
+    -- cadre n'ait pas une méthode portant le nom d'un de ses scripts, et un
+    -- préfixe qui les distinguerait serait une chaîne à fabriquer.
+    if noteOnce(postedScripts, frame, script) then return end
 
     frame:HookScript(script, function(...)
         if guard and not guard() then return end

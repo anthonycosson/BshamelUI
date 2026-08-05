@@ -115,8 +115,63 @@ local function iconOf(row, i)
     icon.count = icon:CreateFontString(nil, "OVERLAY", T.FONT.PLATE_STACK)
     icon.count:SetPoint("BOTTOMRIGHT", 0, 0)
 
+    -- Le contour commun de l'addon, posé sur la vignette et laissé caché : c'est
+    -- le réglage qui décide (voir `setEdge`). `nil` si le client ne connaît pas
+    -- l'atlas — la vignette garde alors son liseré, et rien n'est cassé.
+    icon.border = W.ShadeBorder(icon.face)
+
     row._icons[i] = icon
     return icon
+end
+
+--- Deux façons de border une vignette, et une seule à la fois.
+---
+---   · **le liseré**, un carré d'un pixel de la couleur de la nature de l'aura.
+---     C'est ce que la rangée a toujours porté ;
+---   · **le contour de l'addon**, la bordure de sort du jeu — coins en biseau —,
+---     teintée de la même couleur pour ne rien perdre de ce que disait le
+---     liseré.
+---
+--- Le second demande de **rogner l'image du sort** : une icône de sort porte son
+--- propre liseré noir dans son dessin, et poser un contour par-dessus en fait
+--- deux (même raison que `cropIcon` dans `UI/Shade.lua`). Le premier ne le
+--- demande pas — il *est* un second bord, mais collé au dessin, ce qui se lit
+--- comme un seul.
+---
+--- **Le mode sombre décide de l'intensité, pas de la présence.** Le contour se
+--- dessine à pleine couleur d'ordinaire, et fonce avec le reste de l'interface
+--- quand la teinte des auras est allumée — ce qu'on demande au moteur, qui seul
+--- sait ce qui est réellement appliqué (`Shade:FactorFor`). Sans mode sombre
+--- chargé, pleine couleur : un moteur absent n'est pas un moteur éteint, et la
+--- rangée doit se border dans les deux cas.
+---
+--- Les deux se rendent l'un l'autre : c'est une case qui bascule, pas un état
+--- qu'on pose une fois.
+---@param icon table
+---@param kind string
+---@param shaded boolean
+---@param side number  côté de la vignette, celui que le curseur vient de poser
+local function setEdge(icon, kind, shaded, side)
+    if shaded and icon.border then
+        local from, to = T.SIZE.SHADE_ICON_CROP, 1 - T.SIZE.SHADE_ICON_CROP
+        icon.face:SetTexCoord(from, to, from, to)
+        icon.edge:Hide()
+
+        -- Le côté est **donné**, jamais mesuré : une vignette descend d'une
+        -- barre de nom, et le client rend ses mesures en valeurs secrètes, sur
+        -- lesquelles le moindre calcul lève (voir `smallestSide` dans
+        -- `UI/Widgets/ShadeBorder.lua`). Celui du contour est celui de l'image,
+        -- donc la vignette moins son retrait des deux côtés.
+        local face   = side - 2 * T.SIZE.PLATE_AURA_EDGE
+        local factor = BUI.Shade and BUI.Shade:FactorFor("auras") or 1
+        icon.border:Draw(factor, edgeColor(kind), face)
+        return
+    end
+
+    icon.face:SetTexCoord(0, 1, 0, 1)
+    icon.edge:SetColorTexture(edgeColor(kind):GetRGB())
+    icon.edge:Show()
+    if icon.border then icon.border.Hide() end
 end
 
 --- Affiche une liste d'auras : `{ icon =, kind =, count =, duration =,
@@ -145,7 +200,8 @@ end
 ---@param side number
 ---@param gap number
 ---@param timer number  corps du décompte
-function W.AuraRowSet(row, list, side, gap, timer)
+---@param shaded boolean  contour de l'addon plutôt que liseré, voir `setEdge`
+function W.AuraRowSet(row, list, side, gap, timer, shaded)
     -- La rangée vit **hors de l'échelle de la plaque** (voir `W.AuraRow`) : le
     -- nombre du curseur est donc un nombre de pixels d'écran, et il le reste
     -- quand la plaque de la cible grossit.
@@ -165,8 +221,12 @@ function W.AuraRowSet(row, list, side, gap, timer)
         icon:ClearAllPoints()
         icon:SetPoint("LEFT", row, "LEFT", (i - 1) * (side + gap), 0)
 
-        icon.edge:SetColorTexture(edgeColor(entry.kind):GetRGB())
         icon.face:SetTexture(entry.icon)
+
+        -- Le bord se repose **après** la taille et l'image : le débordement du
+        -- contour se mesure sur l'icône, et le rognage se pose sur la texture
+        -- qu'on vient de lui donner.
+        setEdge(icon, entry.kind, shaded, side)
 
         if icon.cooldown then
             -- L'horloge d'une aura est un **objet de durée**, pas deux nombres :

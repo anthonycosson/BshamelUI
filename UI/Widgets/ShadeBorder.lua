@@ -21,6 +21,7 @@
 local _, ns = ...
 local BUI = ns.BUI
 local T    = BUI.Theme
+local U    = BUI.Util
 local W    = BUI.Widgets
 
 --- Clés sous lesquelles un cadre du client publie son contour.
@@ -85,6 +86,31 @@ local function restore(texture, state)
     texture:SetShown(state.shown)
 end
 
+--- Le plus petit côté d'une icône, ou `nil` quand il ne se lit pas.
+---
+--- **Une mesure est une valeur du client comme une autre**, et le client la rend
+--- *secrète* dès que le cadre descend de quelque chose qu'il protège — une barre
+--- de nom, typiquement. Un nombre secret n'est pas un nombre : `math.min` lève
+--- dessus, et l'erreur remonte hors de l'appel fautif. C'est exactement ce qui
+--- est arrivé le jour où la rangée d'auras des barres d'infos a demandé un
+--- contour, alors que les deux appelants d'avant — le suivi de Bloodlust, sur
+--- notre propre panneau, et le mode sombre, qui enveloppe son tracé d'un
+--- `pcall` — ne pouvaient pas le rencontrer.
+---
+--- Sans mesure, l'appelant peut donner la sienne (voir `Draw`) ; à défaut, le
+--- retrait fixe du thème, qui n'est jamais faux, seulement moins juste.
+---@param icon table
+---@return number|nil
+local function smallestSide(icon)
+    local okW, width  = pcall(icon.GetWidth, icon)
+    local okH, height = pcall(icon.GetHeight, icon)
+    if not (okW and okH) then return nil end
+    if U.IsSecret(width) or U.IsSecret(height) then return nil end
+    if type(width) ~= "number" or type(height) ~= "number" then return nil end
+
+    return math.min(width, height)
+end
+
 --- Contour sombre autour d'une icône.
 --- Renvoie `nil` si l'icône n'a pas de porteur, ou si le client ne connaît pas
 --- l'atlas — l'appelant doit alors se passer de contour.
@@ -115,8 +141,25 @@ function W.ShadeBorder(icon)
 
     local border = {}
 
-    ---@param factor number  multiplicateur de couleur, voir `T.ShadeFactor`
-    function border:Draw(factor)
+    --- `color` sert là où le contour **dit** quelque chose en plus d'habiller.
+    --- Une vignette de la rangée d'auras des barres d'infos est le seul cas
+    --- rencontré : la nature de l'aura — entrave, débuff, buff — était portée par
+    --- un liseré carré d'un pixel, que ce contour-ci remplace. Sans teinte, poser
+    --- le contour aurait effacé l'information ; avec, elle passe dans le trait.
+    ---
+    --- Sans couleur, le blanc : la multiplication ne donne alors que le gris du
+    --- facteur, ce qu'attendent le mode sombre et le suivi de Bloodlust.
+    --- `side` est le côté de l'icône, quand l'appelant le connaît déjà — il vient
+    --- alors d'un réglage, et non d'une mesure. C'est le cas de la rangée d'auras
+    --- des barres d'infos, qui vient de poser cette taille elle-même : la donner
+    --- évite une lecture que le client refuse sur une plaque (voir
+    --- `smallestSide`), et garde le retrait proportionnel à l'icône — sur une
+    --- vignette de cinquante pixels, le repli fixe donnerait un trait trop
+    --- maigre.
+    ---@param factor number  multiplicateur de couleur, voir `T.SHADE_FACTOR`
+    ---@param color? ColorMixin  teinte du trait, blanc par défaut
+    ---@param side? number  côté de l'icône, à défaut de pouvoir le mesurer
+    function border:Draw(factor, color, side)
         T.TrySetAtlas(texture, T.ATLAS.SHADE_BORDER)
         texture:SetTexCoord(0, 1, 0, 1)
 
@@ -124,7 +167,10 @@ function W.ShadeBorder(icon)
         -- multiplier sans le désaturer donnerait un contour teinté foncé au lieu
         -- d'un contour sombre (même raison que pour l'habillage).
         if texture.SetDesaturated then texture:SetDesaturated(true) end
-        texture:SetVertexColor(factor, factor, factor)
+
+        local r, g, b = 1, 1, 1
+        if color then r, g, b = color:GetRGB() end
+        texture:SetVertexColor(r * factor, g * factor, b * factor)
         texture:SetAlpha(1)
 
         -- Le contour est reposé sur l'icône dans les deux cas, mais pas au même
@@ -140,9 +186,10 @@ function W.ShadeBorder(icon)
         local pad = T.SIZE.SHADE_BORDER_PAD
 
         if not borrowed then
-            local width  = icon:GetWidth()  or 0
-            local height = icon:GetHeight() or 0
-            pad = T.ShadeBorderPad(math.min(width, height))
+            -- Ce que l'appelant sait d'abord, la mesure ensuite, le repli du
+            -- thème en dernier : `T.ShadeBorderPad` rend le retrait fixe pour
+            -- une taille absente ou nulle.
+            pad = T.ShadeBorderPad(side or smallestSide(icon))
         end
 
         texture:ClearAllPoints()
