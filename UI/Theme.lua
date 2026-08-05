@@ -426,6 +426,11 @@ T.SIZE = {
     -- en lui et qu'elle n'a pas.
     SLOT_STRIP_GAP  = 3,
 
+    -- Descente d'une colonne accrochée par le haut. Le bord haut d'une case est
+    -- un trait, pas une ligne de texte : posée dessus, la première pastille a
+    -- l'air de sortir de la case plutôt que de lui répondre.
+    SLOT_TOP_DROP   = 3,
+
 
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit

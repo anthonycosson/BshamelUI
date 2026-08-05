@@ -78,9 +78,11 @@ function W.SheetItemLevel(left, right)
         headlines[left] = headline
     end
 
+    -- La même descente que les seize colonnes : elles partagent une ligne, elles
+    -- partagent donc ce qui la déplace.
     headline:ClearAllPoints()
-    headline:SetPoint("TOPLEFT",  left,  "TOPRIGHT", 0, 0)
-    headline:SetPoint("TOPRIGHT", right, "TOPLEFT",  0, 0)
+    headline:SetPoint("TOPLEFT",  left,  "TOPRIGHT", 0, -T.SIZE.SLOT_TOP_DROP)
+    headline:SetPoint("TOPRIGHT", right, "TOPLEFT",  0, -T.SIZE.SLOT_TOP_DROP)
 
     return headline
 end

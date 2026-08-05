@@ -153,11 +153,13 @@ function W.SlotInfo(button)
         elseif where == "LEFT" then
             self._edge = "RIGHT"
             row:SetPoint(top and "TOPRIGHT" or "RIGHT", button,
-                         top and "TOPLEFT" or "LEFT", -T.SIZE.SLOT_INFO_GAP, 0)
+                         top and "TOPLEFT" or "LEFT", -T.SIZE.SLOT_INFO_GAP,
+                         top and -T.SIZE.SLOT_TOP_DROP or 0)
         else
             self._edge = "LEFT"
             row:SetPoint(top and "TOPLEFT" or "LEFT", button,
-                         top and "TOPRIGHT" or "RIGHT", T.SIZE.SLOT_INFO_GAP, 0)
+                         top and "TOPRIGHT" or "RIGHT", T.SIZE.SLOT_INFO_GAP,
+                         top and -T.SIZE.SLOT_TOP_DROP or 0)
         end
 
         arrange(self)
