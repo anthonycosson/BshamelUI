@@ -135,6 +135,14 @@ end
 ---
 --- `U.GuardedScript` est le seul motif autorisé pour cela (règle 6) : le hook
 --- est posé une fois et devient inerte quand le module s'éteint.
+---
+--- **Se rappelle**, et c'est le point qui manquait. Les deux fenêtres de lecture
+--- vivent dans des modules du client chargés à la demande : au moment où le
+--- module s'allume, elles n'existent pas encore, et l'appel unique repartait
+--- sans rien accrocher. Le réglage n'avait alors aucun effet — pas un effet
+--- partiel, aucun. On rappelle donc cette fonction chaque fois qu'une séquence
+--- commence, moment où les cadres existent forcément, et la touche qui suit
+--- trouve le hook en place.
 ---@param mod table
 local function hookCinematicKeys(mod)
     local guard = function() return mod:IsEnabled() and mod:Get("skipCinematics") end
@@ -232,11 +240,22 @@ BUI:RegisterModule(MODULE, {
         applyLuaErrors(self)
         hookCinematicKeys(self)
 
-        self:RegisterEvent("CINEMATIC_START", function() skipCinematic(self) end)
+        -- Les cadres de lecture arrivent avec leur module du client : on
+        -- retente l'accroche à chaque chargement, et de nouveau au début de
+        -- chaque séquence — là, ils existent forcément.
+        self:RegisterEvent("ADDON_LOADED", function() hookCinematicKeys(self) end)
+
+        self:RegisterEvent("CINEMATIC_START", function()
+            hookCinematicKeys(self)
+            skipCinematic(self)
+        end)
         -- Une scène qui se termine sans avoir été coupée ne doit pas laisser son
         -- annulation armée derrière elle.
         self:RegisterEvent("CINEMATIC_STOP",  function() sceneSkipArmed = false end)
-        self:RegisterEvent("PLAY_MOVIE",      function() skipMovie(self) end)
+        self:RegisterEvent("PLAY_MOVIE",      function()
+            hookCinematicKeys(self)
+            skipMovie(self)
+        end)
         self:RegisterEvent("TALKINGHEAD_REQUESTED", function() hideTalkingHead(self) end)
     end,
 

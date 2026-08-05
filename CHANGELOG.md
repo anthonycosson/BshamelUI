@@ -2,6 +2,24 @@
 
 ## Non publié
 
+### Modifié
+- **Le menu de téléportation et le tiroir d'addons prennent l'habillage de la
+  fenêtre d'options.** Ils posaient un aplat de la couleur des fenêtres, qui
+  donne un gris bleuté là où la fenêtre d'options est presque noire : la même
+  couleur y multiplie la pierre du client au lieu de se poser telle quelle. Le
+  contour passe du creux au contour ouvragé des dialogues — celui de la fenêtre
+  d'options, sans la bande de titre.
+
+  Les trois panneaux flottants partagent désormais une seule fonction
+  d'habillage, ce qui est la seule façon qu'ils restent d'accord.
+
+### Corrigé
+- **Passer les cinématiques ne faisait rien.** Les deux fenêtres de lecture
+  vivent dans des modules du jeu chargés à la demande : à l'allumage du module
+  elles n'existent pas encore, et l'accroche aux touches, tentée une seule fois,
+  repartait sans rien accrocher. Elle se retente maintenant au début de chaque
+  séquence, moment où les cadres existent forcément.
+
 ## 0.7.18 — 2026-08-06
 
 ### Corrigé
