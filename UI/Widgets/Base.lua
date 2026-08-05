@@ -173,6 +173,85 @@ function W.Inset(parent)
     return inset
 end
 
+--- Refait le haut d'un contour à partir de son bas.
+---
+--- **Refait, et non retouché.** On a d'abord essayé de reposer la texture du bas
+--- sur les pièces du haut : elles n'ont ni la même hauteur ni la même largeur —
+--- un coin haut porte le renflement du titre —, si bien que le dessin arrivait
+--- étiré et que les côtés, ancrés sous ces pièces, ne montaient plus jusqu'en
+--- haut du cadre. Les corriger revenait à refaire leur géométrie entière.
+---
+--- On masque donc le haut d'origine et on en pose trois nouvelles, taillées et
+--- placées d'après les pièces du bas, puis on fait remonter les côtés jusqu'aux
+--- nouveaux coins. Le contour devient le miroir exact de son bas, ce qui est la
+--- seule façon que ses arrondis se rejoignent.
+---@param border table
+local function rebuildTop(border)
+    if border._topRebuilt then return end
+
+    local botLeft  = T.BorderPiece(border, T.BORDER.BOTTOM_LEFT)
+    local botRight = T.BorderPiece(border, T.BORDER.BOTTOM_RIGHT)
+    local bottom   = T.BorderPiece(border, T.BORDER.BOTTOM)
+    if not (botLeft and botRight and bottom) then return end
+
+    border._topRebuilt = true
+
+    for _, names in ipairs({ T.BORDER.TOP_LEFT, T.BORDER.TOP_RIGHT, T.BORDER.TOP }) do
+        local piece = T.BorderPiece(border, names)
+        if piece then piece:Hide() end
+    end
+
+    -- Le même calque que le bas : le contour est d'une seule pièce, il ne se
+    -- dessine pas à deux profondeurs.
+    local layer, sublevel = bottom:GetDrawLayer()
+
+    ---@param source table  la pièce du bas dont celle-ci est le reflet
+    ---@param size table    la pièce du bas dont elle prend les dimensions
+    ---@return table
+    local function newPiece(source, size)
+        local piece = border:CreateTexture(nil, layer, nil, sublevel)
+        T.CopyFlipped(piece, source)
+        piece:SetSize(size:GetWidth(), size:GetHeight())
+        return piece
+    end
+
+    -- Croisé : un demi-tour retourne aussi la gauche et la droite, donc c'est le
+    -- coin bas-droit qui devient le coin haut-gauche. Les dimensions, elles,
+    -- viennent du coin du même côté.
+    local topLeft = newPiece(botRight, botLeft)
+    topLeft:SetPoint("TOPLEFT", border, "TOPLEFT", 0, 0)
+
+    local topRight = newPiece(botLeft, botRight)
+    topRight:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
+
+    local top = border:CreateTexture(nil, layer, nil, sublevel)
+    T.CopyFlipped(top, bottom)
+    top:SetHeight(bottom:GetHeight())
+    top:SetPoint("TOPLEFT",  topLeft,  "TOPRIGHT", 0, 0)
+    top:SetPoint("TOPRIGHT", topRight, "TOPLEFT",  0, 0)
+    if bottom.GetHorizTile and top.SetHorizTile then
+        top:SetHorizTile(bottom:GetHorizTile())
+    end
+
+    -- Les côtés remontent jusqu'aux nouveaux coins. Sans cela ils restent ancrés
+    -- sous les anciens, plus hauts : le contour laisse alors un trou de chaque
+    -- côté, et c'est ce qui donnait l'impression qu'il ne prenait pas toute la
+    -- hauteur du cadre.
+    local left = T.BorderPiece(border, T.BORDER.LEFT)
+    if left then
+        left:ClearAllPoints()
+        left:SetPoint("TOPLEFT",    topLeft, "BOTTOMLEFT", 0, 0)
+        left:SetPoint("BOTTOMLEFT", botLeft, "TOPLEFT",    0, 0)
+    end
+
+    local right = T.BorderPiece(border, T.BORDER.RIGHT)
+    if right then
+        right:ClearAllPoints()
+        right:SetPoint("TOPRIGHT",    topRight, "BOTTOMRIGHT", 0, 0)
+        right:SetPoint("BOTTOMRIGHT", botRight, "TOPRIGHT",    0, 0)
+    end
+end
+
 --- Contour d'un panneau : **celui de la fenêtre d'options**, sans sa barre de
 --- titre.
 ---
@@ -184,8 +263,8 @@ end
 --- On monte donc le template de fenêtre et on lui retire ce qui n'est pas le
 --- contour : son fond, sa bande de titre, son titre, son bouton de fermeture. Ce
 --- qui reste est asymétrique — les coins hauts du métal portent le renflement du
---- titre et l'échancrure de la croix —, et `T.StripWindowFrame` retourne le bas
---- pour en faire le haut.
+--- titre et l'échancrure de la croix —, et `rebuildTop` refait le haut d'après le
+--- bas.
 ---
 --- Repli sur le contour de dialogue si aucun template de fenêtre n'existe : moins
 --- ressemblant, jamais cassé.
@@ -199,13 +278,18 @@ function W.PanelBorder(parent)
     -- avalerait ceux des rangées qu'il encadre.
     border:EnableMouse(false)
 
-    T.StripWindowFrame(border)
+    T.HidePanelFill(border)
+    rebuildTop(border)
 
-    -- **Et à chaque changement de taille.** Le découpage neuf se replace quand le
-    -- cadre grandit, et repose alors ses propres pièces : le retournement du haut
-    -- serait défait au premier panneau qui s'agrandit — c'est-à-dire au menu de
-    -- téléportation, qui se dimensionne une fois ses rangées construites.
-    border:HookScript("OnSizeChanged", function(self) T.StripWindowFrame(self) end)
+    -- **Et à chaque changement de taille.** Un template repose ses propres pièces
+    -- quand le cadre grandit : le fond réapparaîtrait au premier panneau qui
+    -- s'agrandit, c'est-à-dire au menu de téléportation, qui se dimensionne une
+    -- fois ses rangées construites. Le haut, lui, tient par ses ancrages et n'est
+    -- refait qu'une fois.
+    border:HookScript("OnSizeChanged", function(self)
+        T.HidePanelFill(self)
+        rebuildTop(self)
+    end)
 
     return border
 end

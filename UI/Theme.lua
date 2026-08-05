@@ -426,11 +426,6 @@ T.SIZE = {
     -- en lui et qu'elle n'a pas.
     SLOT_STRIP_GAP  = 3,
 
-    -- Descente du niveau d'objet du personnage sous le haut des deux
-    -- emplacements de tête. Aligné sur eux, il touchait le haut de la zone
-    -- d'équipement ; un cran plus bas, il se pose sur le modèle sans rien
-    -- recouvrir.
-    SHEET_HEADLINE_DROP = 20,
 
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
@@ -1408,19 +1403,23 @@ local PANEL_FILL_KEYS = {
 --- **Croisées pour les coins.** Une demi-rotation retourne aussi la gauche et la
 --- droite : le coin bas-droit devient le coin haut-gauche, et réciproquement.
 --- Les reprendre du même côté donnerait deux coins tournés vers l'extérieur.
---- Deux jeux de noms, parce que les templates du client en ont deux : le
---- découpage neuf dit `BottomLeftCorner` et `BottomEdge`, l'ancien `BotLeftCorner`
---- et `BottomBorder`. On essaie les deux plutôt que de parier sur le template
---- qu'un patch aura retenu — et le contour des fenêtres est justement de l'ancien
---- genre, ses pièces étant posées à même le cadre sans découpage du tout.
-local MIRRORED_TOP = {
-    { piece = "TopLeftCorner",  from = { "BotRightCorner", "BottomRightCorner" } },
-    { piece = "TopRightCorner", from = { "BotLeftCorner",  "BottomLeftCorner"  } },
-    { piece = "TopBorder",      from = { "BottomBorder" } },
-    { piece = "TopEdge",        from = { "BottomEdge"   } },
+--- Noms des pièces d'un contour, du plus ancien jeu au plus récent.
+---
+--- Les pièces du haut y figurent pour être **masquées** : ce sont elles qui
+--- portent le renflement de la barre de titre et le logement de la croix.
+T.BORDER = {
+    TOP_LEFT     = { "TopLeftCorner" },
+    TOP_RIGHT    = { "TopRightCorner" },
+    TOP          = { "TopBorder", "TopEdge" },
+    BOTTOM_LEFT  = { "BotLeftCorner",  "BottomLeftCorner"  },
+    BOTTOM_RIGHT = { "BotRightCorner", "BottomRightCorner" },
+    BOTTOM       = { "BottomBorder", "BottomEdge" },
+    LEFT         = { "LeftBorder",  "LeftEdge"  },
+    RIGHT        = { "RightBorder", "RightEdge" },
 }
 
---- Recopie une texture sur une autre, tournée d'un demi-tour.
+--- Recopie une texture sur une autre, tournée d'un demi-tour. Publique : le
+--- contour de panneau s'en sert pour se refaire un haut à partir de son bas.
 ---
 --- Deux chemins parce qu'une texture du client se donne de deux façons : par un
 --- **atlas**, qui porte son propre découpage dans une planche, ou par un
@@ -1431,75 +1430,46 @@ local MIRRORED_TOP = {
 --- vient de poser.
 ---@param piece table
 ---@param source table
-local function mirrorPiece(piece, source)
+function T.CopyFlipped(piece, source)
     local atlas = source.GetAtlas and source:GetAtlas()
 
     if atlas then
         piece:SetAtlas(atlas)
         if piece.SetRotation then piece:SetRotation(math.pi) end
-    else
-        local file = source:GetTexture()
-        if not file then return end
-
-        piece:SetTexture(file)
-
-        -- Les huit valeurs sont les quatre coins, dans l'ordre haut-gauche,
-        -- bas-gauche, haut-droit, bas-droit. Un demi-tour échange chaque coin
-        -- avec son opposé.
-        local ulx, uly, llx, lly, urx, ury, lrx, lry = source:GetTexCoord()
-        if ulx then
-            piece:SetTexCoord(lrx, lry, urx, ury, llx, lly, ulx, uly)
-        end
+        return true
     end
 
-    -- La hauteur vient du bas elle aussi : un coin haut est plus haut qu'un coin
-    -- bas, et garder l'ancienne étirerait la texture.
-    piece:SetHeight(source:GetHeight())
-end
+    local file = source:GetTexture()
+    if not file then return false end
 
---- Rend le haut d'un contour identique à son bas.
----
---- Le métal du client n'est **pas symétrique** : ses coins hauts portent le
---- renflement de la barre de titre et l'échancrure du bouton de fermeture. C'est
---- ce qui reste d'une fenêtre sur un panneau qui n'en est pas une — la croix a
---- beau être masquée, son logement est dessiné dans la texture.
----
---- Le bas du même contour est un bord franc : on le recopie en haut avec une
---- demi-rotation. La matière reste exactement celle des trois autres côtés, ce
---- qui est tout le propos — aller chercher un autre jeu de textures donnerait un
---- contour qui ne serait plus celui de la fenêtre d'options.
----@param holder table  le cadre qui porte les pièces du contour
-local function mirrorTopEdge(holder)
-    if not holder then return end
+    piece:SetTexture(file)
 
-    for i = 1, #MIRRORED_TOP do
-        local piece = holder[MIRRORED_TOP[i].piece]
-        local names = MIRRORED_TOP[i].from
-
-        if piece and piece.SetTexture then
-            for j = 1, #names do
-                local source = holder[names[j]]
-                if source and source.GetTexture then
-                    mirrorPiece(piece, source)
-                    break
-                end
-            end
-        end
+    -- Les huit valeurs sont les quatre coins, dans l'ordre haut-gauche,
+    -- bas-gauche, haut-droit, bas-droit. Un demi-tour échange chaque coin avec
+    -- son opposé.
+    local ulx, uly, llx, lly, urx, ury, lrx, lry = source:GetTexCoord()
+    if ulx then
+        piece:SetTexCoord(lrx, lry, urx, ury, llx, lly, ulx, uly)
     end
+
+    return true
 end
 
---- Réduit un cadre monté sur un template de fenêtre à son seul contour.
+--- Première pièce trouvée parmi plusieurs noms possibles.
 ---
---- Idempotente : elle se rappelle à chaque changement de taille, un template
---- reposant ses propres pièces quand le cadre grandit.
----
---- Les pièces se cherchent sur le **découpage neuf s'il y en a un, sur le cadre
---- sinon** : le contour de fenêtre du client courant n'en a pas, ses textures
---- sont posées directement dessus.
----@param frame table
-function T.StripWindowFrame(frame)
-    T.HidePanelFill(frame)
-    mirrorTopEdge(frame.NineSlice or frame)
+--- Deux jeux de noms cohabitent chez le client — l'ancien dit `BotLeftCorner` et
+--- `BottomBorder`, le neuf `BottomLeftCorner` et `BottomEdge` — et rien ne dit
+--- lequel portera le template qu'un patch aura retenu.
+---@param holder table
+---@param names string[]
+---@return table|nil
+function T.BorderPiece(holder, names)
+    if not holder then return nil end
+    for i = 1, #names do
+        local piece = holder[names[i]]
+        if piece and piece.GetTexture then return piece end
+    end
+    return nil
 end
 
 --- Retire le fond d'un contour, **nommément**.
