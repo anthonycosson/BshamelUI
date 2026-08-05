@@ -422,9 +422,10 @@ T.SIZE = {
     SLOT_ICON_GAP   = 2,
 
     -- Écart entre le niveau d'objet du personnage et l'arme au-dessus de laquelle
-    -- il se pose. Assez pour qu'il ne touche pas la case, assez peu pour qu'il
-    -- reste **rattaché à la fiche** plutôt qu'au modèle qui la surplombe.
-    SLOT_HEADLINE_GAP = 6,
+    -- il se pose. Assez pour qu'il respire au-dessus de la rangée d'armes, assez
+    -- peu pour qu'il reste **rattaché à la fiche** plutôt qu'au modèle qui la
+    -- surplombe.
+    SLOT_HEADLINE_GAP = 12,
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
     -- de sa case.
@@ -847,10 +848,14 @@ local FONT_CANDIDATES = {
     -- lisible du client : seize bandeaux tiennent dans la hauteur de la fiche.
     SLOT_INFO    = { "GameFontHighlightSmall" },
 
-    -- Niveau d'objet du personnage, posé au-dessus des armes. Nettement plus
-    -- grand que les seize autres nombres de la fiche, et c'est ce qui le
-    -- distingue : ceux-là se comparent entre eux, celui-ci se lit seul.
-    SLOT_HEADLINE = { "GameFontNormalLarge", "GameFontNormal" },
+    -- Niveau d'objet du personnage, posé au-dessus des armes. Plus grand que les
+    -- seize autres nombres de la fiche, et c'est ce qui le distingue : ceux-là se
+    -- comparent entre eux, celui-ci se lit seul.
+    --
+    -- D'un cran seulement. La taille au-dessus le faisait passer pour un titre de
+    -- la fiche plutôt que pour une de ses valeurs, alors qu'il n'a de sens que
+    -- rapproché des seize autres.
+    SLOT_HEADLINE = { "GameFontNormal" },
 
     -- Texte de la fenêtre de copie. La police du chat d'abord : on y relit ce
     -- qu'on vient de lire dans le chat, à la même largeur de caractère.
