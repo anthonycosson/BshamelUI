@@ -59,7 +59,8 @@
     "C_TooltipInfo", "TooltipUtil", "ItemLocation",
     "CharacterFrame", "InspectFrame",
     "GetInventorySlotInfo", "GetInventoryItemLink",
-    "GetItemStats", "GetItemGem",
+    "GetItemStats", "GetItemGem", "GetItemIcon",
+    "SocketInventoryItem", "ClickSocketButton", "AcceptSockets",
     "C_Container", "ContainerFrameCombinedBags", "BankFrame", "GetDetailedItemLevelInfo",
     "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags",
 

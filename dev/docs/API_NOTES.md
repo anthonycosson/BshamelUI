@@ -3586,3 +3586,190 @@ vie (`pvpClassColor`) a la même contrainte. Elle dégrade proprement, elle :
 faute de classe lisible, `healthColor` retombe sur `UnitSelectionColor`,
 c'est-à-dire sur la teinte du client. Pas de blanc, donc pas de symptôme — mais
 pas de couleur de classe en instance non plus.
+
+---
+
+## Une planche d'images posée par son atlas ne s'anime pas toute seule
+
+**Symptôme** — la lueur de procédé du client, reprise sur une rangée de cases,
+s'affiche mais reste **fixe**. Elle ne ressemble pas à une panne : à la taille
+d'une case de ressource, la planche entière tassée dans la place d'une vignette
+passe très bien pour une lueur floue. On cherche donc du côté de l'animation,
+alors que la texture n'est même pas cadrée.
+
+**Cause** — `UI-HUD-ActionBar-Proc-Loop-Flipbook` n'est pas une image mais une
+**planche de trente vignettes**. `SetAtlas` la pose en entier ; c'est une
+animation `FlipBook` qui, chez le client, en montre une à la fois. Brancher cette
+animation depuis Lua demande de désigner la texture animée par une clé publiée
+sur le cadre (`Animation:SetChildKey`), un détour dont l'échec **ne se voit
+pas** : rien ne lève, l'animation ne fait simplement rien.
+
+**Ce qu'on fait** — le montage complet a été **relevé sur `LibCustomGlow-1.0`**,
+l'implémentation de référence des addons, qui le tient elle-même du code
+d'interface du client. On l'a lue pour savoir *quelles pièces d'API* résolvent le
+problème, puis on a écrit les nôtres (règle 8). Aucune ligne n'en vient, et la
+bibliothèque n'est pas embarquée.
+
+Trois pièces, dont aucune ne se devine — on a passé une demi-douzaine de tours à
+les deviner, et à chaque fois le symptôme désignait autre chose :
+
+1. **Une animation d'opacité immobile accompagne le défilement.** Sur la même
+   texture (`SetChildKey`), au même rang (`SetOrder(0)`), d'une durée nulle, et
+   qui va de 1 à 1. Elle ne fait rien — elle est là pour que le groupe ait une
+   opacité à tenir sur la texture pendant que la planche défile. Sans elle, la
+   planche **ne défile pas**, et une planche qui ne défile pas s'affiche en
+   entier : trente vignettes tassées dans la place d'une, ce qui ressemble à une
+   lueur floue et non à une panne.
+2. **La lueur passe au-dessus**, et de plusieurs crans de niveau (huit).
+3. **Elle n'est pas additive.** C'est le contre-pied de l'intuition — une lueur,
+   on la veut lumineuse — mais la planche porte déjà sa propre lumière :
+   l'additionner à ce qu'il y a dessous la brûle jusqu'au blanc. C'est ce qui
+   donnait une tache blanche là où on attendait un tourbillon. Seule la vignette
+   de *départ*, un éclat bref, est additive chez le client.
+
+À quoi s'ajoute la géométrie : le cadre de la lueur déborde d'un cinquième **de
+chaque côté** — de la largeur à gauche et à droite, de la hauteur en haut et en
+bas —, ce qui lui donne la forme de ce qu'il entoure.
+
+**La grille se vérifie, elle ne se devine pas.** `GetAtlasInfo` ne rend pas le
+découpage, mais il rend `width` et `height` — et une planche de vignettes
+**carrées** se recoupe de là. Pour celle-ci : 333 × 400, soit 333/5 = 66,6 et
+400/6 = 66,7 sur une grille de 5 colonnes × 6 rangées. Les deux tombent sur le
+même nombre, la grille est donc la bonne — ce que la référence a confirmé. Un
+découpage faux se serait vu à ces deux quotients qui ne se rejoignent pas.
+
+**Une lueur par élément, jamais une pour l'ensemble — et c'est une question de
+netteté, pas de goût.** Une vignette de cette planche mesure soixante-six pixels
+de côté. Tirée aux mesures d'une rangée entière — deux cent cinquante de large
+sur trente de haut —, elle est agrandie de quatre fois dans un sens et réduite de
+moitié dans l'autre : elle devient floue et crénelée. Aucun réglage ne rend à une
+image des pixels qu'elle n'a pas.
+
+À l'échelle d'un élément, la même vignette n'est que **réduite** dans les deux
+sens, donc nette. Les lueurs voisines se recouvrent et se lisent de toute façon
+comme une seule bande : on obtient l'effet d'ensemble sans payer l'étirement.
+C'est la règle générale pour toute planche du client — elle est dessinée à la
+taille d'un bouton, et c'est à cette taille-là qu'elle se pose.
+
+**Ce qui doit rester lisible au-dessus de la lueur a besoin de son propre cadre.**
+Le nombre posé au milieu de la rangée en est un : une texture du panneau passe
+sous n'importe quel cadre enfant, quel que soit son calque.
+
+**La leçon de méthode, et c'est la vraie.** Sur un effet visuel du client, le
+symptôme ne désigne presque jamais le réglage. Une planche qui ne défile pas
+paraît **discrète** ; une lueur additive paraît **trop grande** ; une lueur
+rangée derrière paraît **fixe**. Les trois poussent à toucher la taille et la
+vitesse, et aucun des trois n'en vient — on a monté le débordement deux fois,
+ralenti jusqu'à onze fois la vitesse du client, essayé de faire voyager la lueur
+autour du cadre, pour finir exactement sur les valeurs de départ.
+
+Le bon réflexe n'est pas d'ajuster, c'est d'**aller lire une implémentation qui
+marche**. Elles sont à portée : les bibliothèques embarquées dans les addons de
+`Interface\AddOns` sont du code qui tourne sur ce client-ci. La règle 8 permet de
+les lire pour identifier les pièces d'API ; ce qu'elle interdit est d'en copier.
+Une demi-douzaine d'allers-retours de réglages au jugé contre dix minutes de
+lecture.
+
+---
+
+## Une lueur qui doit s'étendre ne se fait pas avec une image
+
+**Symptôme** — la lueur de procédé du client, montée correctement, rendue sur une
+rangée large et basse : floue, crénelée, « hyper étendue ». Réduite à l'échelle
+d'un élément elle redevient nette, mais on perd l'effet d'ensemble qu'on voulait.
+
+**Cause** — c'est une **image**, et une image a une taille. Une vignette de cette
+planche mesure soixante-six pixels de côté ; posée sur deux cent cinquante, elle
+est agrandie de quatre fois. Aucun réglage ne rend à une image des pixels qu'elle
+n'a pas, et c'est vrai de toutes les lueurs dessinées du client — planches de
+procédé, halos de bouton, contours ouvragés. Elles sont faites pour un bouton.
+
+**Ce qu'on fait** — on change de matière. La lueur est faite de **rectangles de
+couleur unie** (`Interface\Buttons\WHITE8x8`, teinté par `SetVertexColor`) dont
+la forme vient de l'ancrage et la position d'un calcul. Rien n'est échantillonné,
+donc rien ne se dégrade : c'est aussi net sur trois pixels que sur trois cents,
+quelles que soient les proportions du cadre.
+
+Des segments courent le long du contour : pour chacun, on prend son intervalle
+sur le périmètre et on l'intersecte avec les quatre côtés, ce qui donne au plus
+quatre morceaux à poser. Les côtés sont visités deux fois, décalés d'un tour,
+pour qu'un segment à cheval sur le coin de départ retrouve sa part rebouclée sans
+qu'on traite ce cas à part.
+
+**C'est le procédé des lueurs « au pixel » des addons**, relevé sur
+`LibCustomGlow-1.0` pour savoir quelles pièces d'API le rendent possible, puis
+réécrit (règle 8). La bibliothèque, elle, découpe la bande par une **texture de
+masque** inset de l'épaisseur du trait, ce qui lui permet de n'ancrer que deux
+coins par segment ; on a préféré calculer les morceaux côté par côté — un peu
+plus d'arithmétique, aucune dépendance à un masque ni à une texture tierce.
+
+**La règle générale** — devant une lueur à poser sur un cadre dont on ne connaît
+pas d'avance les proportions, la question n'est pas « quelle texture » mais
+**« image ou couleur »**. Une image tient si le cadre est à peu près carré et à
+peu près de la taille d'un bouton ; sinon il faut de la couleur, qu'on peut
+étirer sans fin. On a passé plusieurs itérations à chercher la bonne image avant
+de se poser la question.
+
+**Un aplat n'est pas une lueur, un dégradé si.** Le premier essai en couleur unie
+donnait un liseré : net, franc, et parfaitement plat. Ce que l'œil lit comme de la
+lumière n'est pas l'intensité mais le **fondu** — un trait qui s'éteint
+progressivement autour de lui. `SetGradient` le donne sans image, et le dégradé
+est calculé par sommet : il ne se pixellise pas davantage que l'aplat, ce qui
+préserve tout l'intérêt de la couleur pure.
+
+Deux teintes, enfin, et non une : un cœur presque **blanc**, un halo coloré. Une
+lumière forte sature l'œil avant de lui montrer sa couleur, et c'est en
+s'éloignant qu'elle la prend. Un halo de la teinte du cœur ne donne pas une lueur
+plus colorée — il donne un trait plus épais.
+
+**Le dernier mot : ni l'une ni l'autre, les deux.** La couleur pure n'a pas
+suffi. Un aplat **s'arrête net** : ses deux bouts sont des cassures franches, et
+une cassure franche se lit comme un pixel, quelle que soit la douceur du fondu
+sur ses côtés. On peut adoucir les flancs indéfiniment, jamais les extrémités.
+
+D'où le partage retenu :
+
+- **le fond**, continu et immobile, en couleur pure. Il n'a pas d'extrémités —
+  il fait le tour — donc rien à trahir, et il s'étire à volonté ;
+- **les éclats** qui le parcourent, en image. Mais une image qui n'est qu'un
+  **fondu radial** : ni trait, ni contour, ni détail. Agrandie, elle reste un
+  dégradé rond. C'est précisément ce qu'un aplat ne sait pas produire.
+
+La règle « image ou couleur » n'était donc pas la bonne question. La bonne est
+**« l'image a-t-elle des détails ? »** : une planche de tourbillon en a, un fondu
+radial n'en a pas. Le second s'étire aussi bien qu'une couleur unie, et sait en
+plus ce qu'elle ne saura jamais faire — finir en douceur.
+
+**Les teintes, elles, se relèvent — elles ne se raisonnent pas.** On était parti
+d'un cœur presque blanc, sur le raisonnement qu'une lumière forte sature l'œil
+avant de lui montrer sa couleur. C'est vrai d'une source éblouissante ; ça ne
+l'est pas d'un liseré de quelques pixels, qui n'a pas de quoi éblouir et se
+contente de paraître **délavé**. À cette taille, la chaleur passe par la
+saturation, pas par l'intensité.
+
+Les valeurs retenues sont celles d'une interface web dont le rendu était celui
+qu'on cherchait, lues dans sa feuille de style : un noyau `#FCD34D`, un halo
+`#FBBF24` à neuf dixièmes, et un flou d'une fois et demie l'épaisseur du noyau.
+Ce dernier rapport comptait autant que les couleurs — on avait un halo deux fois
+plus large, assez dilué pour ne plus se lire comme appartenant au trait.
+
+---
+
+## Un sous-calque de texture ne dépasse pas sept
+
+**Symptôme** — `Frame:CreateTexture(): Sublevel must be between -8 and 7`, à la
+construction, dès qu'un repère a été refait en plusieurs épaisseurs.
+
+**Cause** — le sous-calque du repère de palier valait déjà sept, le plafond, et
+les épaisseurs ajoutées s'empilaient **au-dessus** de lui. C'est le piège d'une
+constante nommée par son rôle (« au-dessus de ce que le client dessine ») et non
+par sa position dans une échelle bornée : rien dans son nom ne dit qu'il n'y a
+plus de place au-dessus.
+
+**Ce qu'on fait** — on empile **vers le bas** depuis la constante : elle marque le
+dessus de la pile, et chaque couche supplémentaire se range en dessous. La borne
+est notée avec elle, pour que le prochain qui l'utilise n'ait pas à la
+redécouvrir par une erreur.
+
+**À retenir** — un sous-calque n'est pas une valeur qu'on ajuste, c'est un rang
+dans une échelle de seize crans. Les deux bouts lèvent, ils ne saturent pas.

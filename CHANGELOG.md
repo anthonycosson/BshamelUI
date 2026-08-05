@@ -2,7 +2,266 @@
 
 ## Non publié
 
+### Ajouté
+- **Barres d'infos — les icônes d'entraves portent le contour de l'addon.** La
+  rangée de contrôles était le seul endroit de l'addon où une icône n'avait pas
+  le contour commun : elle portait un liseré carré d'un pixel, et l'image du
+  sort gardait par-dessus le bord noir que le jeu dessine dedans — deux bords
+  collés, d'où l'aspect anguleux à côté de tout le reste.
+
+  Une icône de la rangée porte désormais la **bordure de sort du jeu**, aux coins
+  en biseau — celle que le mode sombre pose déjà sur toutes les autres icônes
+  d'auras —, et l'image est rognée pour ne pas doubler le trait. Elle reste
+  **teintée selon la nature de l'aura** : ce que disait le liseré n'est pas
+  perdu, il est passé dans le trait.
+
+  Le contour se dessine à pleine couleur, et **fonce avec le reste de l'interface
+  quand le mode sombre teinte les auras** — la rangée suit la case sans qu'on ait
+  à la régler deux fois. Une case *Contour de l'addon sur les icônes* permet de
+  revenir au liseré carré ; elle est cochée d'origine, et ne décide de rien tant
+  que la rangée n'est pas prise au jeu.
+
+- **Cadres d'unités — agrandir les cadres d'arène.** Un second réglage, jumeau de
+  celui des cadres de groupe : les cadres des adversaires en arène dépassent la
+  borne du curseur du mode Édition. Les deux ont leur propre échelle — un cadre
+  de groupe se lit en donjon, un cadre d'arène à trois contre trois, et rien ne
+  dit que la même taille convienne aux deux.
+
+  Les **deux styles** sont couverts, celui du jeu et celui façon raid : le mode
+  Édition sait lequel est à l'écran, nous non, et mettre à l'échelle un cadre
+  caché ne coûte rien.
+
+  La taille se pose pendant la **phase de préparation** : le jeu refuse de
+  redimensionner ces cadres pendant le combat, et une manche d'arène en est un du
+  début à la fin. Posée portes fermées, elle tient jusqu'au bout.
+
+- **Ressource de classe — trois paliers de couleur au lieu d'un.** Chacun a son
+  nombre de points et sa teinte, et **le plus haut atteint écrase les autres** :
+  à sept points avec des paliers à trois, cinq et huit, c'est celui de cinq qui
+  parle. Les deux nouveaux arrivent déjà teintés — l'or, puis l'orange, puis le
+  rouge, le même vocabulaire de montée que partout ailleurs dans l'addon — et
+  restent gris tant que le palier du dessus n'est pas posé.
+
+- **Ressource de classe — un effet brillant autour de la rangée.** Le contour
+  entier s'allume d'un liseré doré qui s'estompe de part et d'autre, ses quatre
+  coins noyés dans une boule de lumière pour que l'angle droit ne se lise plus.
+  Huit petites **comètes** régulièrement espacées en font le tour par-dessus :
+  des bandes arrondies aux deux bouts, plus hautes en tête qu'en queue, à peine
+  plus épaisses que le trait qu'elles parcourent.
+
+  L'or plutôt que la teinte de la rangée : c'est la couleur que le jeu donne à
+  tout ce qui s'allume, et elle veut déjà dire « maintenant ». Les cases disent
+  où l'on en est, la lueur dit que c'est prêt.
+
+  Deux matières, et chacune pour ce qu'elle sait faire. Le fond est de la
+  **couleur pure**, la seule qui s'étire sans se dégrader — une image détaillée
+  agrandie quatre fois devient floue, et aucun réglage ne lui rend les pixels
+  qu'elle n'a pas. Les éclats sont une image, mais qui n'est qu'un **fondu
+  radial** : ni trait ni contour, rien qui puisse se créneler — et c'est
+  exactement ce qu'un aplat ne sait pas faire, lui qui s'arrête toujours net.
+
+  Elle a son **propre seuil**, indépendant des paliers de couleur : deux façons
+  de dire « c'est prêt », et rien n'oblige les deux à tomber au même endroit.
+  Rien ne tourne tant qu'elle n'est pas à l'écran.
+
+### Modifié
+- **Fiche de personnage — le niveau d'objet rejoint le rang d'amélioration.** Les
+  deux étaient séparés, l'un posé sur l'icône et l'autre dans la colonne à côté.
+  Ce sont pourtant deux mesures de la même chose — ce que vaut la pièce — et on
+  les compare l'une par l'autre : un 289 au rang 6/6 ne se lit pas comme un 289
+  au rang 1/8, le second ayant encore de la marge. Séparés, il fallait porter
+  l'œil à deux endroits pour répondre à une seule question.
+
+  Ils tiennent maintenant sur une ligne, `289 (6/6)`, et **l'ordre s'inverse d'une
+  colonne à l'autre** : le niveau se range toujours contre l'icône, le rang
+  toujours vers l'extérieur. C'est ce qui aligne les niveaux d'objet des deux
+  colonnes contre le modèle, là où l'œil les parcourt.
+
+  Leur couleur est celle de la **piste d'amélioration** et non de la qualité de
+  l'objet — orange pour le mythe, violet pour l'héroïque, bleu pour le champion,
+  vert pour le vétéran, blanc en dessous. En fin de saison, toutes les pièces sont
+  épiques : la qualité ne distingue plus rien, là où la piste dit exactement d'où
+  vient la pièce. Ce sont les couleurs des qualités d'objet, reprises telles
+  quelles : c'est une échelle que le joueur lit déjà partout, en inventer une
+  seconde lui ferait apprendre deux fois la même hiérarchie.
+
+  La case *Signaler les améliorations incomplètes* disparaît avec : le rang n'a
+  plus de teinte à lui.
+
+- **Fiche de personnage — les pastilles « Enchantement » et « Gemme » deviennent
+  des icônes.** Elles nommaient la question et laissaient la couleur y répondre,
+  ce qui obligeait à lire pour savoir de quoi on parlait.
+
+  L'enchantement porte désormais **l'étoile de rang du métier**, celle que le jeu
+  pose déjà au bout de la ligne d'enchantement d'une infobulle — dorée au rang
+  maximum, terne aux premiers. Sans enchantement, c'est l'icône du métier,
+  éteinte : une icône désaturée se lit comme une case vide, sans un mot.
+
+  Les gemmes suivent sur la même rangée, **une icône par châsse** : la gemme
+  sertie, ou la châsse vide. Trois châsses dont une vide se lisent d'un coup
+  d'œil quand on voit deux gemmes et un trou ; un « 2/3 » demandait de savoir ce
+  que valent les deux nombres.
+
+  Le rang est lu dans le **nom de l'atlas** que le jeu glisse dans la ligne, et la
+  ligne est reconnue à son **type** — deux choses qui ne se traduisent pas. Le
+  module gagne cet affichage sans gagner une dépendance à la langue.
+
+  Les deux icônes portent l'**infobulle de l'objet** quand il y en a un : devant
+  une gemme sertie, ce qu'on veut savoir est ce qu'elle apporte, et le jeu le dit
+  mieux que nous. Un enchantement n'a pas de lien d'objet à interroger — c'est
+  alors l'intitulé que le jeu écrit dans l'infobulle de la pièce qui est repris.
+  Devant une châsse vide, il n'y a rien à demander à personne : c'est à nous de
+  dire ce qui manque.
+
+- **Fiche de personnage — le noyau du vide disparaît.** C'était le seul endroit
+  du module où une **chaîne traduite** décidait d'un affichage : le noyau ne se
+  lisant ni dans le lien de l'objet ni dans ses statistiques, il fallait chercher
+  son intitulé dans l'infobulle, et une locale au libellé faux montrait les armes
+  et les bijoux en rouge à tort. Le réglage part, et le défaut avec lui.
+
+- **Fiche de personnage — sertir une gemme depuis la fiche.** Un clic sur une
+  châsse ouvre la liste des gemmes de vos sacs ; en choisir une la sertit.
+
+  Tout se fait pendant le traitement du clic, et c'est une contrainte du jeu :
+  le sertissage n'est permis que là. Rien ne peut être différé — d'où un geste en
+  deux clics et non un enchaînement automatique. Si le jeu refuse la validation,
+  la gemme reste sur le curseur avec sa fenêtre ouverte, et le geste s'achève à
+  la main : c'est une dégradation, pas une panne.
+
+  Seulement sur son propre équipement : on ne sertit pas la pièce de quelqu'un
+  qu'on inspecte, et le jeu ne le permettrait pas davantage.
+
+- **Clés mythiques — les repères de palier deviennent de fines pilules dorées.**
+  Les deux marques posées sur la barre du chrono, aux paliers +2 et +3, sont
+  désormais la **même pilule ambre** que celle de la ressource de classe : mêmes
+  teintes, même dessin. Deux endroits qui disent « ce palier est acquis »
+  n'avaient aucune raison de le dire de deux façons.
+
+  Fines, et **entièrement contenues dans la barre** : un repère qui en sort se
+  lit comme une marque posée devant elle plutôt que dedans.
+
+  Pas de halo autour, contrairement à la ressource de classe. La différence n'est
+  pas de goût : là-bas la lueur bouge, et c'est elle qui dit qu'il se passe
+  quelque chose. Ici le repère est fixe et permanent — un halo autour d'une marque
+  immobile n'ajoute rien à ce qu'elle dit, il l'épaissit.
+
+  Leurs mesures se déduisent de la hauteur de la barre relevée à l'exécution, et
+  non de nombres écrits en dur : le client a retouché la sienne d'une extension à
+  l'autre.
+
+- **Clés mythiques — l'aperçu passe en tête de la page.** On l'allume, puis on
+  règle les trois cases suivantes en voyant ce qu'elles font. En dernier, on
+  découvrait son existence après avoir coché à l'aveugle.
+
+- **Toutes les glissières — la valeur se tape au clavier.** Le nombre posé à
+  droite d'une glissière est désormais dans une **case de saisie** : clic droit
+  dessus, on tape la valeur, Entrée valide et Échap annule. La virgule est
+  acceptée comme le point.
+
+  Une glissière règle vite mais mal : à cent crans sur cent soixante pixels,
+  viser un nombre précis se fait au pixel près. Et c'est le cadre autour du
+  nombre qui dit qu'on peut le saisir — une infobulle ne se lit que sur ce qu'on
+  soupçonne déjà d'être cliquable. La valeur qui s'inscrit reste celle que la
+  glissière retient : bornée, et sur un cran.
+
+- **Regrouper les boutons d'addons** — l'infobulle dit maintenant, en premier,
+  le geste qui rouvre le tiroir : un clic gauche sur le bouton BshamelUI.
+
+- **Menu du jeu** — la section s'intitule « Menu du jeu (Échap) ». Le menu n'a
+  pas de nom affiché en jeu ; c'est la touche qui l'ouvre qui le désigne.
+
+- **Ressource de classe — la rangée boucle au lieu de s'allonger.** *Cases par
+  rangée* devient **Nombre de cases**, et ne plie plus la rangée sur une seconde
+  ligne : au-delà du nombre demandé, elle repart de zéro dans les mêmes cases.
+
+  C'est ce qu'on cherchait en pliant : faire tenir dix cumuls d'Arme-tempête dans
+  l'encombrement de cinq. Sauf qu'une seconde ligne double la hauteur au lieu de
+  la garder — on voulait **cinq grandes cases plutôt que dix petites**, au même
+  endroit et de la même taille à l'écran.
+
+  Une rangée pleine veut alors dire cinq points ou dix, et c'est assumé : le
+  changement de couleur du palier dit à quel tour on en est, le nombre au milieu
+  aussi si on l'affiche. L'aperçu montre le tour complet, boucle comprise.
+
+  Le réglage existant est repris tel quel — cinq voulait dire « cinq de large »
+  et veut toujours dire cela ; seul change ce qui arrive à la sixième.
+
+- **Ressource de classe** — la première case s'intitule *Afficher la ressource de
+  classe* plutôt que *Afficher la rangée*, et la page ouvre sur une section
+  *Général* au lieu d'aligner trois cases sans en-tête. **Mode sombre** ouvre de
+  la même façon, pour la même raison : une case seule sous rien du tout se lit
+  comme un reste, pas comme un début.
+
+- **Fenêtre d'options — les intitulés longs ne sont plus coupés.** « Augmenter la
+  distance maximale de la caméra » s'arrêtait en chemin : la colonne des
+  contrôles était à une abscisse fixe, et ce qui ne tenait pas avant elle était
+  tronqué.
+
+  La colonne recule maintenant jusqu'au plus long libellé qu'elle porte, sans
+  jamais dépasser la place que les contrôles réclament à droite. C'est la
+  **colonne entière** qui bouge, jamais la ligne fautive seule — une case décalée
+  au milieu de dix autres se lirait comme un défaut d'alignement, ce qui est pire
+  que le texte coupé qu'on voulait réparer. Rien ne passe à la ligne : ces lignes
+  ont une hauteur fixe.
+
+- **Cadres d'unités — trois sections au lieu de quatre.** *Masquer la couleur de
+  réputation* rejoint *Décorations*, où sont déjà les quatre autres « masquer » ;
+  *Afficher l'icône de spécialisation* rejoint *Apparence*, où elle est la
+  deuxième façon de changer ce qu'un cadre montre. La section *Spécialisation*,
+  qui ne portait qu'une ligne, disparaît. Aucun réglage ne change de valeur ni de
+  nom : ce qui était coché le reste.
+
 ### Corrigé
+- **Copie du chat — elle ne rend plus rien du tout sur une ligne protégée.** Le
+  jeu rend certaines lignes en valeur *secrète*, celles où il protège l'identité
+  de quelqu'un. Une chaîne secrète est bel et bien une chaîne : le garde de type
+  la laissait passer, et c'est le nettoyage des couleurs qui levait — une erreur,
+  et la copie entière abandonnée.
+
+  Une ligne qu'on n'a pas le droit de lire est désormais **sautée**. On perd
+  cette ligne-là dans le presse-papier ; on perdait tout jusqu'ici.
+
+- **Barres de vie aux couleurs de classe — les boss ne prennent plus la couleur
+  du joueur précédent.** Un cadre d'unité est réemployé : la même barre montre un
+  chaman, puis le boss qu'on cible ensuite. Or le jeu ne repeint pas une barre de
+  vie à chaque mise à jour — il pose son vert une fois et n'y revient que pour
+  dire quelque chose, une unité pillée par un autre ou un joueur déconnecté.
+  Notre bleu de chaman restait donc en place, et le boss suivant en héritait.
+
+  La barre est désormais **rendue** dès que l'unité n'est plus un joueur, dans
+  l'état exact où le jeu l'avait laissée. Les réponses que le jeu garde secrètes
+  sur l'identité d'une unité comptent au passage comme « ce n'est pas un
+  joueur » : c'est le seul repli sûr, et certains PNJ ont bel et bien une classe
+  dans les données du jeu — chaman compris.
+
+- **Mode sombre — il ne coûte plus rien en combat.** Le module se remettait au
+  travail à chaque aura qui battait quelque part : celles des dix-neuf autres
+  membres du raid, celles de leurs familiers, celles de chaque mob du pull. Aucune
+  de ces auras n'a jamais eu la moindre texture à l'écran chez nous — le mode
+  sombre ne teinte que vos propres buffs, ceux de la cible et du focus. En raid
+  comme en clé, il repassait donc l'interface entière cinq fois par seconde pour
+  reteindre exactement les mêmes textures, et c'était devenu le premier poste de
+  dépense de l'addon.
+
+  Il n'écoute plus que les unités qu'il dessine, et le nom de chaque texture — la
+  lecture la plus chère du parcours — n'est relevé qu'une fois au lieu de deux
+  fois par passage. Rien ne change à l'écran.
+
+- **Barres d'infos — elles ne se repeignent plus en entier à chaque point de vie
+  perdu.** Le module refaisait tout son travail sur une plaque chaque fois que le
+  jeu y repeignait la barre de vie : hauteurs, corps de texte, textures, opacité,
+  rangée d'auras, marqueur. Sur une pull de quinze mobs, cela voulait dire
+  quelques centaines de passages par seconde pour reposer, à chaque fois, des
+  valeurs que rien n'avait changées.
+
+  Un battement de vie ne repose plus que les **deux couleurs** que le jeu vient
+  d'effacer — c'est la seule chose qu'il ait défaite. Tout le reste garde ses
+  propres accroches, qui reposent chacune leur réglage à la milliseconde où le
+  jeu y touche, et se refait aux moments qui le méritent : une plaque qui change
+  de main, un changement de cible, de camp, de menace, un réglage modifié. Les
+  marqueurs de ciblage, eux, suivent désormais l'annonce du jeu au lieu d'être
+  rattrapés au passage. Rien ne change à l'écran.
+
 - **Barres d'infos — le nom des alliés ne vire plus au blanc en instance.** En
   donjon, en raid et en champ de bataille, le jeu protège l'identité des unités :
   la classe ne se lit pas. L'addon posait alors un blanc, qui recouvrait la
