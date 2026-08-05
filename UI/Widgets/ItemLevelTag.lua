@@ -66,8 +66,8 @@ function W.SheetItemLevel(left, right)
     end
 
     headline:ClearAllPoints()
-    headline:SetPoint("TOPLEFT",  left,  "TOPRIGHT", 0, 0)
-    headline:SetPoint("TOPRIGHT", right, "TOPLEFT",  0, 0)
+    headline:SetPoint("TOPLEFT",  left,  "TOPRIGHT", 0, -T.SIZE.SHEET_HEADLINE_DROP)
+    headline:SetPoint("TOPRIGHT", right, "TOPLEFT",  0, -T.SIZE.SHEET_HEADLINE_DROP)
 
     return headline
 end
