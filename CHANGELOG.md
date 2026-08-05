@@ -62,8 +62,10 @@
   change d'un enchantement à l'autre : la même étoile de rang 2 se posait sur une
   pièce finie et sur une pièce à moitié faite, sans rien qui les sépare.
 
-  Deux dessins désormais, pour la seule question qui vaut : l'étoile terne au
-  rang le plus bas, la dorée dès qu'on en est sorti.
+  Deux dessins désormais, pour la seule question qui vaut : l'étoile **argentée**
+  au rang le plus bas, la **jaune** dès qu'on en est sorti. Ce sont les deux
+  couleurs que le jeu associe à un enchantement — la famille d'icônes en compte
+  cinq, mais les trois autres appartiennent aux qualités d'artisanat.
 
 
 - **Fiche de personnage** — *Afficher le niveau d'objet* devient *Afficher le

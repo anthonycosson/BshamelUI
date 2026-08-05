@@ -881,13 +881,36 @@ la liste **change d'une extension à l'autre** : la cape et les bracelets
 s'enchantaient hier et ne s'enchantent plus, le casque et les épaules ont fait le
 chemin inverse. Elle se relève en jeu, pas par déduction.
 
-`Modules/Character.lua` porte donc deux tables, `ENCHANTABLE` et `VOID_SLOTS`,
-qui sont des faits de jeu et les deux seules choses du module qui puissent
-afficher du rouge à tort.
+`Modules/Character.lua` porte donc une table, `ENCHANTABLE`, qui est un fait de
+jeu et la seule chose du module qui puisse afficher du rouge à tort.
 
 Un cas se déduit quand même, et il vaut la peine : la **main gauche** ne
-s'enchante — et ne reçoit de noyau — que si c'est une arme. Un bouclier ou un
-objet tenu occupe le même emplacement et n'accepte rien.
+s'enchante que si c'est une arme. Un bouclier ou un objet tenu occupe le même
+emplacement et n'accepte rien.
+
+---
+
+## L'étoile de rang d'un enchantement n'utilise que deux des cinq atlas
+
+Le rang se lit dans la ligne d'infobulle `type = 15`, sous la forme d'un atlas
+`Professions-ChatIcon-Quality-Tier<N>` — le motif `[Tt]ier(%d)` suffit, le client
+écrivant cette étoile tantôt par un atlas et tantôt par un chemin de texture.
+
+**Le numéro n'est pas le rang.** Cette famille sert d'abord les cinq qualités
+d'artisanat, du cuivre à l'orange, et un enchantement ne fait que deux arrêts sur
+l'échelle :
+
+| Rang | Atlas | Couleur |
+|---|---|---|
+| 1 | `…Tier2` | argent |
+| 2 (maximum) | `…Tier3` | jaune |
+
+Prendre les extrémités — `Tier1` et `Tier5` — paraît logique et donne du cuivre
+et de l'orange, deux couleurs que le jeu n'associe jamais à un enchantement. Les
+deux valeurs sont nommées dans `UI/Theme.lua` (`ENCHANT_RANK_LOW`,
+`ENCHANT_RANK_HIGH`).
+
+Il n'y a rien à en déduire pour un troisième rang : il n'en existe pas.
 
 ---
 

@@ -1545,20 +1545,19 @@ function T.TrackColor(trackStringID)
     return T.ItemQualityColor(quality)
 end
 
---- Les deux seules étoiles qu'on pose : la terne et la dorée.
+--- Les deux seules étoiles qu'on pose : l'argentée et la dorée.
 ---
---- **Deux, et non cinq.** Le jeu numérote les rangs d'enchantement de 1 à 5 et
---- donne une étoile par numéro, mais aucun enchantement n'utilise toute
---- l'échelle : le rang maximum est 2 ici, 3 là, et le même dessin ne veut donc
---- pas dire la même chose d'une pièce à l'autre. Reprendre l'échelle telle quelle
---- affichait une étoile de rang 2 sur une pièce au maximum et sur une pièce à
---- moitié faite, sans rien qui les sépare.
+--- **Le numéro d'étoile n'est pas le rang.** Cette famille d'atlas sert les cinq
+--- qualités d'artisanat, du cuivre à l'orange, et le rang d'un enchantement n'y
+--- fait que **deux** arrêts : l'argent et le jaune. Prendre les extrémités de
+--- l'échelle — 1 et 5 — donnait une étoile cuivre au premier rang et une étoile
+--- orange au second, deux couleurs que le jeu n'associe jamais à un
+--- enchantement.
 ---
---- La question qu'on pose à cette icône est binaire — « est-ce le rang le plus
---- bas ? » —, et deux dessins y répondent mieux que cinq : l'étoile terne pour le
---- premier rang, la dorée dès qu'on en est sorti.
-local ENCHANT_RANK_LOW  = 1
-local ENCHANT_RANK_HIGH = 5
+--- Les deux qu'il y associe sont donc nommées ici, et il n'y a rien à en déduire
+--- pour un troisième rang : il n'en existe pas.
+local ENCHANT_RANK_LOW  = 2   -- argent
+local ENCHANT_RANK_HIGH = 3   -- jaune
 
 --- Nom d'atlas de l'étoile de rang d'un enchantement, ou `nil` si le client ne la
 --- connaît pas.
