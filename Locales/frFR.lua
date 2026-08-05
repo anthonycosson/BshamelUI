@@ -336,23 +336,16 @@ BUI:RegisterLocale("frFR", {
     ["Auto slot keystone tip"] =
         "Place votre clé dans la fontaine de puissance dès qu'elle s'ouvre. Une clé déjà posée "
         .. "par quelqu'un d'autre n'est pas touchée.",
-    ["Keystones notice"] =
-        "La réponse est le lien de la clé lui-même dès qu'elle est trouvée dans les sacs : chacun "
-        .. "peut donc la survoler. Sinon, le donjon et le niveau sont écrits en toutes lettres. "
-        .. "Seuls les canaux de groupe, de raid, d'instance et de guilde sont écoutés, jamais un "
-        .. "chuchotement. Votre propre !keys obtient une réponse lui aussi, ce qui est la façon "
-        .. "la plus simple de vérifier que le réglage marche.",
     ["No keystone"]                    = "Pas de clé.",
     ["Dungeon dialogue"]               = "Dialogues de donjon",
     ["Auto dungeon gossip"]            = "Parler aux PNJ à votre place",
     ["Auto dungeon gossip tip"] =
-        "Clique pour vous la seule ligne d'un dialogue dans un donjon : les prisonniers à libérer "
-        .. "à la Fosse de Saron, le bienfait distribué au début de l'Académie Algeth'ar.",
-    ["Dungeon gossip notice"] =
-        "Uniquement dans un donjon, uniquement un dialogue qui propose une seule ligne et aucune "
-        .. "quête, et chaque ligne n'est cliquée qu'une fois par conversation. Une quête reste à "
-        .. "la page « Quêtes », un vrai choix reste à vous. Attention : un dialogue qui lance une "
-        .. "rencontre n'a lui aussi qu'une seule ligne — parler à ce PNJ la déclenche aussitôt.",
+        "Clique pour vous la seule ligne d'un dialogue, dans un donjon : le prisonnier à "
+        .. "libérer, le bienfait à prendre, le PNJ qui ouvre un passage. Aucun donjon n'est "
+        .. "nommé dans le réglage, donc ceux des saisons suivantes marcheront pareil.\n\n"
+        .. "Un dialogue qui propose un choix ou porte une quête n'est jamais touché. Attention "
+        .. "en revanche : un PNJ qui lance une rencontre n'a lui aussi qu'une seule ligne, et "
+        .. "lui parler la déclenche aussitôt.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Recherche de groupe",

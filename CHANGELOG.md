@@ -17,6 +17,17 @@
   la fenêtre n'est jamais masquée sans que la demande ait reçu une réponse.
 
 ### Modifié
+- **Clés mythiques** — les deux paragraphes de bas de section disparaissent :
+  celui qui détaillait la forme de la réponse à `!keys`, et celui qui listait les
+  conditions du dialogue de donjon. Ce qu'ils avaient d'utile tient dans les
+  infobulles.
+
+  Celle de *Parler aux PNJ à votre place* ne nomme plus de donjon. Le réglage
+  n'en connaît aucun — il ne regarde que la forme du dialogue —, et deux noms
+  d'anciennes saisons laissaient croire à une liste qu'il faudrait tenir à jour.
+  Elle garde l'avertissement qui comptait : un PNJ qui lance une rencontre n'a
+  lui aussi qu'une seule ligne.
+
 - **Chat — la fenêtre de copie s'ouvre là où vous lisez.** Elle présentait
   l'historique par son début, c'est-à-dire ce qui s'est dit il y a une heure à
   quelqu'un qui vient de lire la dernière ligne. Elle s'ouvre désormais à hauteur

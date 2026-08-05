@@ -343,22 +343,16 @@ BUI:RegisterLocale("enUS", {
     ["Auto slot keystone tip"] =
         "Puts your keystone into the font of power as soon as it opens. A keystone already "
         .. "slotted by someone else is left alone.",
-    ["Keystones notice"] =
-        "The reply is the keystone link itself whenever it can be found in your bags, so anyone "
-        .. "can hover it. Otherwise the dungeon and the level are written out. Only party, raid, "
-        .. "instance and guild chat are listened to, never a whisper. Your own !keys is answered "
-        .. "too, which is the simplest way to check the setting works.",
     ["No keystone"]                    = "No keystone.",
     ["Dungeon dialogue"]               = "Dungeon dialogue",
     ["Auto dungeon gossip"]            = "Talk to dungeon NPCs for you",
     ["Auto dungeon gossip tip"] =
-        "Clicks the single line of dialogue for you inside a dungeon: the prisoners to free in "
-        .. "Pit of Saron, the buff handed out at the start of Algeth'ar Academy.",
-    ["Dungeon gossip notice"] =
-        "Only inside a dungeon, only a dialogue that offers exactly one line and no quest, and "
-        .. "each line is clicked once per conversation. A quest is left to the Quest page, a real "
-        .. "choice is left to you. Beware that a dialogue which starts an encounter also has a "
-        .. "single line: talking to that NPC starts it right away.",
+        "Clicks the single line of dialogue for you, inside a dungeon: the prisoner to free, the "
+        .. "buff to pick up, the NPC who opens a way through. No dungeon is named in the setting, "
+        .. "so the ones from later seasons will work the same.\n\n"
+        .. "A dialogue that offers a choice or carries a quest is never touched. Beware though: "
+        .. "an NPC who starts an encounter also has a single line, and talking to them starts it "
+        .. "right away.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Group finder",

@@ -293,8 +293,6 @@ BUI:RegisterModule(MODULE, {
             text    = L["Auto slot keystone"],
             tooltip = L["Auto slot keystone tip"],
         },
-        { type = "description", text = L["Keystones notice"] },
-
         { type = "header", text = L["Dungeon dialogue"] },
         {
             type    = "toggle",
@@ -302,7 +300,6 @@ BUI:RegisterModule(MODULE, {
             text    = L["Auto dungeon gossip"],
             tooltip = L["Auto dungeon gossip tip"],
         },
-        { type = "description", text = L["Dungeon gossip notice"] },
     },
 
     OnEnable = function(self)
