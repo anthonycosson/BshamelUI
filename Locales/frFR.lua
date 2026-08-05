@@ -490,11 +490,6 @@ BUI:RegisterLocale("frFR", {
         "Affiche le chrono du jeu hors donjon, sur une clé d'exemple avec des boss et un décompte "
         .. "de troupes d'exemple, pour voir ce que ça donne. Éteignez les options une à une pour "
         .. "voir le suivi tel que le jeu le dessine.",
-    ["Mythic timer notice"] =
-        "Les paliers sont ceux du jeu : terminer sous 80 % du chrono donne +2, sous 60 % donne "
-        .. "+3. Tout ici s'ajoute au chrono du jeu — le temps restant, le niveau et le compteur "
-        .. "de morts restent les siens. Les temps de boss sont retenus par personnage, et "
-        .. "seulement pour les clés réussies dans le chrono.",
     ["Preview dungeon"]                = "Donjon d'exemple",
     ["Preview boss"]                   = "Boss d'exemple %d",
     ["Preview forces"]                 = "Forces ennemies",
@@ -920,12 +915,14 @@ BUI:RegisterLocale("frFR", {
         "Espace entre deux cases. À zéro elles se touchent, séparées par leur seul liseré.",
     ["Resource cell count"]            = "Nombre de cases",
     ["Resource cell count tip"] =
-        "Combien de cases la rangée compte, quel que soit le nombre de points de la "
-        .. "ressource. Au-delà, elle **repart de zéro** dans les mêmes cases au lieu de "
-        .. "s'allonger : à cinq, les dix cumuls d'Arme-tempête tiennent dans cinq grandes "
-        .. "cases plutôt que dix petites, au même endroit. Zéro donne une case par point. "
-        .. "Une rangée pleine veut alors dire cinq points ou dix : c'est le changement de "
-        .. "couleur qui le dit, et le nombre au milieu si vous l'affichez.",
+        "Limite la rangée à X cases avant qu'elle ne reparte au début. Zéro ne la limite "
+        .. "pas.\n\n"
+        .. "Voleur : à 6 points de combo avec une limite à 10, la rangée ne montre pas dix "
+        .. "cases — la limite plafonne, elle n'ajoute rien.\n\n"
+        .. "Chaman Amélioration : à 10 cumuls d'Arme-tempête avec une limite à 5, la rangée "
+        .. "repart de zéro au 6e cumul.\n\n"
+        .. "Le but est d'éviter une rangée de dix petites cases quand deux fois cinq "
+        .. "grandes se lisent mieux.",
     ["Resource count"]                 = "Afficher le nombre",
     ["Resource count tip"]             = "Écrit le compte courant au milieu de la rangée.",
     ["Hide empty resource"]            = "Masquer quand c'est vide",

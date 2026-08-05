@@ -890,27 +890,27 @@ emplacement et n'accepte rien.
 
 ---
 
-## L'étoile de rang d'un enchantement n'utilise que deux des cinq atlas
+## L'étoile de rang d'un enchantement se recopie, elle ne se reconstruit pas
 
-Le rang se lit dans la ligne d'infobulle `type = 15`, sous la forme d'un atlas
-`Professions-ChatIcon-Quality-Tier<N>` — le motif `[Tt]ier(%d)` suffit, le client
-écrivant cette étoile tantôt par un atlas et tantôt par un chemin de texture.
+La ligne d'infobulle `type = 15` porte l'étoile de rang sous la forme
+`|A:nom-d-atlas:h:l|a`. **Prendre le nom entier**, avec
+`text:match("|A:([^:|]+)")`, et le poser tel quel : c'est exactement ce que le
+joueur voit dans l'infobulle, et un nom d'atlas ne se traduit pas.
 
-**Le numéro n'est pas le rang.** Cette famille sert d'abord les cinq qualités
-d'artisanat, du cuivre à l'orange, et un enchantement ne fait que deux arrêts sur
-l'échelle :
+Le piège est d'en lire seulement le chiffre — `[Tt]ier(%d)` — et de reconstruire
+le nom autour d'un préfixe choisi. Cela paraît plus propre et se trompe : le jeu
+a **plusieurs familles d'étoiles de qualité**, et l'échelle diffère selon ce
+qu'on crafte. Une pièce d'équipement va jusqu'à cinq qualités, un consommable ou
+un enchantement s'arrête bien avant, et le rang 1 de l'un n'a ni le dessin ni la
+couleur du rang 1 de l'autre. Reconstruire le nom, c'est parier sur la famille.
 
-| Rang | Atlas | Couleur |
-|---|---|---|
-| 1 | `…Tier2` | argent |
-| 2 (maximum) | `…Tier3` | jaune |
+Trois essais successifs ont raté pour cette seule raison — 1/5, puis 2/3 — avant
+de constater qu'aucun couple de numéros ne pouvait être bon : le numéro seul ne
+dit pas de quelle icône il parle. Le nom, si.
 
-Prendre les extrémités — `Tier1` et `Tier5` — paraît logique et donne du cuivre
-et de l'orange, deux couleurs que le jeu n'associe jamais à un enchantement. Les
-deux valeurs sont nommées dans `UI/Theme.lua` (`ENCHANT_RANK_LOW`,
-`ENCHANT_RANK_HIGH`).
-
-Il n'y a rien à en déduire pour un troisième rang : il n'en existe pas.
+Corollaire, dans `UI/Widgets/SlotInfo.lua` : un atlas venu du client peut ne plus
+exister. `T.TrySetAtlas` rend `false` dans ce cas, et l'icône retombe alors sur
+une texture de repli plutôt que de rester vide.
 
 ---
 

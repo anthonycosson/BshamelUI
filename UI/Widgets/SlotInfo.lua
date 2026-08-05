@@ -266,9 +266,11 @@ function W.SlotInfo(button)
         cell._title = spec.title
         cell._hint  = spec.hint
 
-        if spec.atlas then
-            T.TrySetAtlas(cell.icon, spec.atlas)
-        else
+        -- L'atlas d'abord, la texture en repli — et le repli sert vraiment : le
+        -- nom d'atlas peut venir du client, auquel cas rien ne garantit qu'il
+        -- existe encore. `T.TrySetAtlas` le dit plutôt que de laisser une icône
+        -- vide.
+        if not (spec.atlas and T.TrySetAtlas(cell.icon, spec.atlas)) then
             cell.icon:SetTexture(spec.texture)
         end
         cell.icon:SetDesaturated(spec.desaturated and true or false)

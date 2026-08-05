@@ -1545,33 +1545,6 @@ function T.TrackColor(trackStringID)
     return T.ItemQualityColor(quality)
 end
 
---- Les deux seules étoiles qu'on pose : l'argentée et la dorée.
----
---- **Le numéro d'étoile n'est pas le rang.** Cette famille d'atlas sert les cinq
---- qualités d'artisanat, du cuivre à l'orange, et le rang d'un enchantement n'y
---- fait que **deux** arrêts : l'argent et le jaune. Prendre les extrémités de
---- l'échelle — 1 et 5 — donnait une étoile cuivre au premier rang et une étoile
---- orange au second, deux couleurs que le jeu n'associe jamais à un
---- enchantement.
----
---- Les deux qu'il y associe sont donc nommées ici, et il n'y a rien à en déduire
---- pour un troisième rang : il n'en existe pas.
-local ENCHANT_RANK_LOW  = 2   -- argent
-local ENCHANT_RANK_HIGH = 3   -- jaune
-
---- Nom d'atlas de l'étoile de rang d'un enchantement, ou `nil` si le client ne la
---- connaît pas.
----@param lowest boolean  vrai au rang le plus bas
----@return string|nil
-function T.EnchantRankAtlas(lowest)
-    local name = T.ATLAS.ENCHANT_TIER
-                 .. (lowest and ENCHANT_RANK_LOW or ENCHANT_RANK_HIGH)
-    if C_Texture and C_Texture.GetAtlasInfo and not C_Texture.GetAtlasInfo(name) then
-        return nil
-    end
-    return name
-end
-
 --- Couleur d'un état « fait / pas fait ».
 ---
 --- Les deux couleurs que porte une pastille de la fiche de personnage, et elles
@@ -1834,15 +1807,6 @@ T.ATLAS = {
     -- aucun : ajoutée par-dessus un contour existant, son trait ouvragé dessine
     -- un second cadre à l'intérieur du premier.
     SHADE_BORDER = "Adventures-Spell-Border",
-
-    -- Étoiles de rang des métiers, de la grise à la dorée. C'est **exactement**
-    -- ce que le jeu pose au bout de la ligne d'enchantement d'une infobulle : le
-    -- joueur y lit déjà le rang de ce qu'il porte, et le reprendre ailleurs ne lui
-    -- demande rien de neuf.
-    --
-    -- Le rang complète le nom : `Professions-ChatIcon-Quality-Tier3`. Voir
-    -- `T.EnchantRankAtlas`.
-    ENCHANT_TIER = "Professions-ChatIcon-Quality-Tier",
 }
 
 --- Épaisseur du trait de la lueur de bord, d'après la hauteur d'une case.

@@ -57,15 +57,24 @@
   jour, avec l'ancienne valeur. La fiche écoute désormais ce second signal.
 
 ### Modifié
-- **Fiche de personnage — l'étoile d'enchantement ne compte plus les rangs, elle
-  les partage en deux.** Le jeu numérote les rangs de 1 à 5, mais le rang maximum
-  change d'un enchantement à l'autre : la même étoile de rang 2 se posait sur une
-  pièce finie et sur une pièce à moitié faite, sans rien qui les sépare.
+- **Fiche de personnage — l'étoile d'enchantement est celle du jeu, recopiée.**
+  On n'en lisait que le numéro pour redessiner l'étoile de son côté, ce qui
+  supposait de savoir de quelle famille d'icônes il s'agissait. Le jeu en a
+  plusieurs, et le rang d'un enchantement ne se compte pas sur la même échelle
+  que la qualité d'une pièce d'équipement : d'où le cuivre et l'orange là où
+  l'infobulle montre de l'argent et du jaune.
 
-  Deux dessins désormais, pour la seule question qui vaut : l'étoile **argentée**
-  au rang le plus bas, la **jaune** dès qu'on en est sorti. Ce sont les deux
-  couleurs que le jeu associe à un enchantement — la famille d'icônes en compte
-  cinq, mais les trois autres appartiennent aux qualités d'artisanat.
+  L'icône est désormais reprise entière de l'infobulle. Elle est donc exactement
+  celle que vous y voyez, quelle que soit l'échelle et quoi qu'en fasse une
+  prochaine extension.
+
+- **Ressource de classe** — la description de *Nombre de cases* tient en une
+  phrase, suivie de deux exemples. Elle expliquait le mécanisme avant de dire à
+  quoi il sert.
+
+- **Chrono mythique+** — le paragraphe de bas de page disparaît. Les paliers du
+  jeu et ce que le module ajoute au chrono se voient sur l'aperçu, qui est juste
+  au-dessus.
 
 
 - **Fiche de personnage** — *Afficher le niveau d'objet* devient *Afficher le

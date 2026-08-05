@@ -488,11 +488,6 @@ BUI:RegisterLocale("enUS", {
         "Shows the game's timer outside a dungeon, on a sample key with sample bosses and enemy "
         .. "forces, so you can see how it reads. Turn the options off one by one to see the "
         .. "tracker as the game draws it.",
-    ["Mythic timer notice"] =
-        "The thresholds are what the game grants: finishing under 80% of the timer is +2, under "
-        .. "60% is +3. Everything here is added to the game's own timer — the time left, the "
-        .. "level and the death count stay the game's. Boss times are kept per character, and "
-        .. "only for keys finished in time.",
     ["Preview dungeon"]                = "Sample dungeon",
     ["Preview boss"]                   = "Sample boss %d",
     ["Preview forces"]                 = "Enemy Forces",
@@ -891,12 +886,13 @@ BUI:RegisterLocale("enUS", {
         "Space between two squares. At zero they touch, separated only by their outline.",
     ["Resource cell count"]            = "Number of squares",
     ["Resource cell count tip"] =
-        "How many squares the row has, whatever the resource counts. Past that, it "
-        .. "**starts over** in the same squares instead of growing: at five, ten Maelstrom "
-        .. "Weapon stacks fit in five large squares rather than ten small ones, in the same "
-        .. "space. Zero gives one square per point. A full row then means five points or "
-        .. "ten: the colour change says which, and so does the number in the middle if you "
-        .. "show it.",
+        "Caps the row at X squares before it starts over. Zero means no cap.\n\n"
+        .. "Rogue: at 6 combo points with a cap of 10, the row does not show ten squares — "
+        .. "the cap limits, it never adds.\n\n"
+        .. "Enhancement Shaman: at 10 Maelstrom Weapon stacks with a cap of 5, the row "
+        .. "starts over on the 6th stack.\n\n"
+        .. "The point is to avoid a row of ten small squares when two passes of five large "
+        .. "ones read better.",
     ["Resource count"]                 = "Show the number",
     ["Resource count tip"]             = "Writes the current count in the middle of the row.",
     ["Hide empty resource"]            = "Hide when empty",

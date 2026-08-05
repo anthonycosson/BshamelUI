@@ -459,7 +459,6 @@ BUI:RegisterModule(MODULE, {
             text    = L["Show boss times"],
             tooltip = L["Show boss times tip"],
         },
-        { type = "description", text = L["Mythic timer notice"] },
     },
 
     OnEnable = function(self)

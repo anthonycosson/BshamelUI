@@ -234,25 +234,30 @@ end
 local ENCHANT_LINE = (Enum and Enum.TooltipDataLineType
                       and Enum.TooltipDataLineType.ItemEnchantmentPermanent) or 15
 
---- L'enchantement porté par une pièce : le rang de son étoile de métier, et son
---- intitulé. `nil` si la pièce n'est pas enchantée.
+--- L'enchantement porté par une pièce : l'étoile de son rang, et son intitulé.
 ---
---- Le rang se lit dans le **nom de l'atlas** que le client glisse au bout de la
---- ligne, `Professions-ChatIcon-Quality-Tier3`. Un nom d'atlas ne se traduit pas :
---- c'est ce qui permet de lire le rang sans dépendre de la langue, là où le nom de
---- l'enchantement en dépendrait.
+--- **L'étoile est celle du client, reprise telle quelle.** Il l'écrit au bout de
+--- la ligne sous la forme `|A:nom-d-atlas:h:l|a`, et on garde ce nom entier. Un
+--- nom d'atlas ne se traduit pas : la lecture ne dépend donc pas de la langue,
+--- là où le nom de l'enchantement en dépendrait.
 ---
---- L'intitulé, lui, est **le texte du client sans les échappements** — un
---- enchantement n'a pas de lien d'objet, donc rien à tendre à une infobulle du
---- client : c'est cette ligne-là ou rien.
+--- Surtout, elle est juste par construction. Lire seulement le chiffre du nom et
+--- reconstruire l'atlas autour paraît plus propre et ne l'est pas : le jeu a
+--- plusieurs familles d'étoiles, et le rang d'un enchantement ne se compte pas
+--- sur la même échelle que la qualité d'une pièce d'équipement. Le numéro seul ne
+--- dit donc pas de quelle icône il parle.
 ---
---- Rend un rang de `0` quand la ligne existe sans étoile : la pièce **est**
---- enchantée, on ne sait simplement pas à quel rang. L'appelant pose alors
---- l'étoile la plus haute plutôt que rien — c'est le cas des enchantements sans
---- rang, qui sont les plus nombreux et qui ne sont pas pour autant incomplets.
+--- L'intitulé est **le texte du client sans les échappements** — un enchantement
+--- n'a pas de lien d'objet, donc rien à tendre à une infobulle du client : c'est
+--- cette ligne-là ou rien.
+---
+--- Le premier retour dit seulement si la pièce est enchantée, et il vaut `true`
+--- même quand la ligne est illisible : la pièce **est** enchantée, on ne sait
+--- simplement rien de plus.
 ---@param unit string
 ---@param slotID integer
----@return integer|nil tier
+---@return boolean|nil enchanted
+---@return string|nil atlas
 ---@return string|nil label
 local function enchantInfo(unit, slotID)
     if not (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) then return nil end
@@ -265,17 +270,18 @@ local function enchantInfo(unit, slotID)
     for _, line in ipairs(data.lines or {}) do
         if line.type == ENCHANT_LINE then
             local text = line.leftText
-            if type(text) ~= "string" or U.IsSecret(text) then return 0, nil end
+            if type(text) ~= "string" or U.IsSecret(text) then return true end
 
-            -- **Le rang se cherche sur « Tier » seul**, sans le nom d'atlas
-            -- complet qui le précède. Le client glisse cette étoile tantôt par
-            -- un atlas, tantôt par un chemin de texture, et les deux formes ne
-            -- s'écrivent pas pareil autour du même mot. La casse est libre pour
-            -- la même raison.
+            -- **On reprend le nom d'atlas entier, pas son numéro.** L'étoile de
+            -- rang est écrite dans la ligne sous la forme `|A:nom:h:l|a` : la
+            -- prendre telle quelle garantit qu'on affiche exactement ce que le
+            -- joueur voit dans l'infobulle, sans rien avoir à savoir de l'échelle.
             --
-            -- Le motif ne peut pas se confondre avec un nom d'enchantement : il
-            -- exige un chiffre collé au mot, ce qu'aucune traduction n'écrit.
-            return tonumber(text:match("[Tt]ier(%d)")) or 0, plain(text)
+            -- N'en lire que le chiffre et reconstruire le nom autour, comme on le
+            -- faisait, revenait à parier sur la famille d'icônes — et à se
+            -- tromper de famille : le jeu en a plusieurs, et le rang 1 d'un
+            -- enchantement n'est pas le rang 1 d'une pièce d'équipement.
+            return true, text:match("|A:([^:|]+)"), plain(text)
         end
     end
 
@@ -792,24 +798,15 @@ local function levelLine(mod, slot, unit, link)
     return text, r, g, b
 end
 
---- Rang le plus bas qu'un enchantement puisse porter.
-local LOWEST_ENCHANT_RANK = 1
-
---- L'icône d'enchantement d'un emplacement : l'étoile de son rang, ou le
---- grimoire éteint s'il n'y en a pas.
----
---- **L'étoile ne dit que « premier rang ou au-dessus ».** Le jeu numérote les
---- rangs de 1 à 5, mais le rang maximum change d'un enchantement à l'autre :
---- reprendre le numéro tel quel faisait porter le même dessin à une pièce finie
---- et à une pièce à moitié faite. La question qui vaut d'être posée à une fiche
---- est celle du rang bâclé, et elle n'a que deux réponses.
+--- L'icône d'enchantement d'un emplacement : l'étoile de rang que le client
+--- affiche lui-même, ou le grimoire éteint quand la pièce n'est pas enchantée.
 ---@param unit string
 ---@param slotID integer
 ---@return BUI.SlotIcon
 local function enchantIcon(unit, slotID)
-    local tier, label = enchantInfo(unit, slotID)
+    local enchanted, atlas, label = enchantInfo(unit, slotID)
 
-    if not tier then
+    if not enchanted then
         return {
             texture     = T.TEXTURE.ENCHANT_NONE,
             desaturated = true,
@@ -821,22 +818,16 @@ local function enchantIcon(unit, slotID)
     -- L'intitulé du client tel qu'il l'écrit, débarrassé de ses échappements :
     -- c'est le seul texte qui existe pour un enchantement, faute de lien d'objet
     -- à tendre à une infobulle.
-    local spec  = { title = L["Enchant badge"], hint = label }
-    local atlas = tier > 0 and T.EnchantRankAtlas(tier <= LOWEST_ENCHANT_RANK) or nil
-
-    if atlas then
-        spec.atlas = atlas
-    else
-        -- **Rang illisible : l'icône du métier, saturée, et surtout pas l'étoile
-        -- la plus haute.** On posait celle-ci en se disant qu'un enchantement
-        -- sans rang n'est pas incomplet — sauf qu'elle ne dit pas « sans rang »,
-        -- elle dit « rang maximum », ce qui est une affirmation qu'on n'a pas les
-        -- moyens de tenir. L'icône du métier dit exactement ce qu'on sait : la
-        -- pièce est enchantée.
-        spec.texture = T.TEXTURE.ENCHANT_NONE
-    end
-
-    return spec
+    --
+    -- **L'icône du métier en repli, et surtout pas une étoile choisie par nous.**
+    -- Une étoile posée faute de mieux affirme un rang qu'on n'a pas lu ; le
+    -- grimoire dit exactement ce qu'on sait : la pièce est enchantée.
+    return {
+        title   = L["Enchant badge"],
+        hint    = label,
+        atlas   = atlas,
+        texture = T.TEXTURE.ENCHANT_NONE,
+    }
 end
 
 --- Ajoute une icône par châsse : la gemme sertie, ou la châsse vide.
