@@ -128,6 +128,40 @@ local refreshShade      = refresher(nil)
 -- ferait grossir la liste sans fin (règle 7).
 local refreshCooldowns  = refresher("cooldownManager")
 
+--- Les unités dont les auras sont dessinées par l'élément « auras ».
+---
+--- `UNIT_AURA` n'est pas l'événement d'une unité qu'on regarde : le client
+--- l'émet pour **tout ce qui porte une aura**, donc pour les dix-neuf autres
+--- membres d'un raid, leurs familiers et chaque mob du pull. Aucun de ceux-là
+--- n'a la moindre texture dans cet élément — il ne couvre que les cadres de
+--- buffs et de débuffs du joueur, les pools de la cible et du focus, et la
+--- plaque personnelle (voir `NESTED.auras` dans `UI/Shade.lua`).
+---
+--- Sans ce filtre, chaque aura qui bat quelque part dans le raid arme le
+--- regroupement, et le parcours complet de l'élément tourne à cinq passages par
+--- seconde du début à la fin du combat — pour reteindre les mêmes textures. Le
+--- filtre est la première ligne du handler, avant tout calcul (règle 7).
+local AURA_UNITS = {
+    player = true,
+    target = true,
+    focus  = true,
+}
+
+---@param unit string
+local function auraChanged(_, unit)
+    if not AURA_UNITS[unit] then return end
+    refreshAuras()
+end
+
+--- La barre de nom du **joueur**, et elle seule : c'est là que vivent les auras
+--- posées sous le personnage. Les autres plaques n'ont rien qui nous concerne,
+--- et une pull en monte une par mob.
+---@param unit string
+local function plateAdded(_, unit)
+    if not U.IsTrue(UnitIsUnit(unit, "player")) then return end
+    refreshAuras()
+end
+
 --- S'accroche à la reconstruction des auras d'un cadre d'unité.
 ---
 --- C'est le seul moyen d'être à l'heure. Les auras de la cible sortent d'un pool
@@ -234,10 +268,13 @@ BUI:RegisterModule(MODULE, {
         darkTooltip         = true,
     },
 
-    -- Pas d'intitulé de section au-dessus de l'interrupteur : la page s'appelle
-    -- déjà « Mode sombre », et le répéter juste en dessous donne une page qui a
-    -- l'air cassée.
+    -- L'en-tête au-dessus de l'interrupteur s'appelle « Général » et non
+    -- « Mode sombre » : la page porte déjà ce nom-là, et le répéter juste en
+    -- dessous donne une page qui a l'air cassée. C'est le même intitulé que sur
+    -- la page de la ressource de classe, pour la même raison — une case seule
+    -- sous rien du tout se lit comme un reste, pas comme un début.
     options = {
+        { type = "header", text = L["General"] },
         {
             type    = "toggle",
             key     = "darkMode",
@@ -299,11 +336,13 @@ BUI:RegisterModule(MODULE, {
         -- recréent sans cesse, les fenêtres chargées à la demande arrivent en
         -- cours de session, et une frontière de zone reconstruit une partie de
         -- l'interface.
-        self:RegisterEvent("UNIT_AURA",             refreshAuras)
+        -- Les deux abonnements filtrent sur l'unité avant toute chose : voir
+        -- `AURA_UNITS`, qui explique pourquoi s'en passer coûtait si cher.
+        self:RegisterEvent("UNIT_AURA",             auraChanged)
         -- Les auras posées sous le personnage apparaissent avec la barre de nom
         -- du joueur, pas avec le joueur : elles arrivent donc par cet
         -- événement-là et par aucun autre.
-        self:RegisterEvent("NAME_PLATE_UNIT_ADDED", refreshAuras)
+        self:RegisterEvent("NAME_PLATE_UNIT_ADDED", plateAdded)
         self:RegisterEvent("ADDON_LOADED",          refreshShade)
         self:RegisterEvent("PLAYER_ENTERING_WORLD", refreshShade)
 

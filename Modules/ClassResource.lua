@@ -42,6 +42,19 @@ local function requires(key)
     end
 end
 
+--- Grise une ligne tant qu'un palier n'est pas posé — et, avant tout, tant que la
+--- rangée elle-même est éteinte. Les deux conditions vont toujours ensemble ici :
+--- séparer une couleur de palier de la rangée qui la porte n'a pas de sens.
+---@param key string
+---@return fun(): boolean
+local function needsStep(key)
+    return function()
+        local mod = BUI.Modules:Get(MODULE)
+        if not (mod and mod:Get("show")) then return true end
+        return (mod:Get(key) or 0) <= 0
+    end
+end
+
 -- =========================================================================
 --  Les sept ressources
 -- =========================================================================
@@ -225,6 +238,38 @@ local function fillColor(mod, source)
         or T.COLOR.RESOURCE_FILL
 end
 
+--- Les trois paliers de couleur, dans l'ordre où la page les présente.
+---
+--- Trois, et pas une liste ouverte : au-delà, on décrit une teinte par point et
+--- ce n'est plus un palier, c'est un dégradé qu'on ne saurait plus lire. Trois
+--- suffisent à dire « ça monte, c'est bien, c'est plein » sur la plus longue des
+--- ressources.
+local STEPS = {
+    { at = "threshold",  color = "thresholdColor",  fallback = "RESOURCE_ALERT"  },
+    { at = "threshold2", color = "thresholdColor2", fallback = "RESOURCE_ALERT2" },
+    { at = "threshold3", color = "thresholdColor3", fallback = "RESOURCE_ALERT3" },
+}
+
+--- Table de travail des paliers passés au widget, ses cases comprises. Leur
+--- nombre ne change jamais : on les remplit à nouveau plutôt que de les refaire.
+local levels = { {}, {}, {} }
+
+--- Les paliers **tels qu'ils sont réglés**, dans l'ordre de la page. Le tri et
+--- l'écart des paliers éteints sont l'affaire du widget : c'est lui qui les lit.
+---@param mod table
+---@return table
+local function paletteSteps(mod)
+    for i = 1, #STEPS do
+        local step = STEPS[i]
+        local slot = levels[i]
+
+        slot.at    = mod:Get(step.at) or 0
+        slot.color = T.ColorFrom(mod:Get(step.color), T.COLOR[step.fallback])
+    end
+
+    return levels
+end
+
 -- =========================================================================
 --  La rangée
 -- =========================================================================
@@ -323,11 +368,13 @@ local function apply(mod)
     if cells <= 0 then cells = T.SIZE.RESOURCE_PREVIEW_CELLS end
 
     bar:SetLayout(cells, mod:Get("cellWidth"), mod:Get("cellHeight"), mod:Get("gap"),
-        mod:Get("perRow") or 0)
-    bar:SetPalette(fillColor(mod, active),
-        T.ColorFrom(mod:Get("thresholdColor"), T.COLOR.RESOURCE_ALERT),
-        mod:Get("threshold") or 0)
+        mod:Get("cellCount") or 0)
+    bar:SetPalette(fillColor(mod, active), paletteSteps(mod))
     bar:SetShowCount(mod:Get("showCount") == true)
+
+    -- La case commande, le curseur dit à partir de quand. Décochée, le seuil ne
+    -- se lit pas — un zéro éteint l'effet côté widget.
+    bar:SetGlow(mod:Get("thresholdGlow") and (mod:Get("glowAt") or 0) or 0)
     bar:SetPreview(mod:Get("preview") == true)
 
     painted = -1
@@ -353,16 +400,31 @@ BUI:RegisterModule(MODULE, {
 
         colorMode      = "power",
         fillColor      = T.ColorTable(T.COLOR.RESOURCE_FILL),
-        threshold      = 0,
-        thresholdColor = T.ColorTable(T.COLOR.RESOURCE_ALERT),
+        -- Trois paliers, tous éteints d'origine : la rangée s'ouvre d'une seule
+        -- teinte, et qui veut une montée l'écrit lui-même. Les couleurs, elles,
+        -- sont posées d'avance — un palier qu'on allume doit se voir tout de
+        -- suite, pas obliger à ouvrir un sélecteur pour exister.
+        threshold       = 0,
+        thresholdColor  = T.ColorTable(T.COLOR.RESOURCE_ALERT),
+        threshold2      = 0,
+        thresholdColor2 = T.ColorTable(T.COLOR.RESOURCE_ALERT2),
+        threshold3      = 0,
+        thresholdColor3 = T.ColorTable(T.COLOR.RESOURCE_ALERT3),
+
+        thresholdGlow  = false,
+        -- Cinq : la longueur de la ressource la plus courante, donc « quand c'est
+        -- plein » pour la plupart des personnages. Le curseur ne part jamais de
+        -- zéro — ce serait une case cochée qui ne fait rien.
+        glowAt         = 5,
 
         cellWidth  = T.SIZE.RESOURCE_CELL_W,
         cellHeight = T.SIZE.RESOURCE_CELL_H,
         gap        = T.SIZE.RESOURCE_GAP,
 
-        -- Zéro : tout d'un tenant. C'est la disposition que le jeu donne à ses
-        -- propres ressources, et celle qu'on attend en arrivant.
-        perRow     = 0,
+        -- Zéro : une case par point, tout d'un tenant. C'est la disposition que
+        -- le jeu donne à ses propres ressources, et celle qu'on attend en
+        -- arrivant.
+        cellCount  = 0,
 
         -- Position de départ, en décalage de centre à centre : sous le
         -- personnage, là où le jeu pose déjà ses propres ressources. Réglage sans
@@ -373,6 +435,8 @@ BUI:RegisterModule(MODULE, {
 
     options = {
         { type = "description", text = L["Class resource notice"] },
+
+        { type = "header", text = L["General"] },
         {
             type    = "toggle",
             key     = "show",
@@ -427,9 +491,9 @@ BUI:RegisterModule(MODULE, {
         },
         {
             type     = "slider",
-            key      = "perRow",
-            text     = L["Resource cells per row"],
-            tooltip  = L["Resource cells per row tip"],
+            key      = "cellCount",
+            text     = L["Resource cell count"],
+            tooltip  = L["Resource cell count tip"],
             min      = 0,
             max      = T.SIZE.RESOURCE_MAX_CELLS,
             step     = 1,
@@ -492,12 +556,77 @@ BUI:RegisterModule(MODULE, {
             text     = L["Resource threshold colour"],
             tooltip  = L["Resource threshold colour tip"],
             indent   = true,
+            disabled = needsStep("threshold"),
+            disabledReason = L["Resource threshold colour needs threshold"],
+        },
+        {
+            type     = "slider",
+            key      = "threshold2",
+            text     = L["Resource threshold 2"],
+            tooltip  = L["Resource threshold 2 tip"],
+            min      = 0,
+            max      = T.SIZE.RESOURCE_MAX_CELLS,
+            step     = 1,
+            -- Grisé tant que le palier du dessus n'est pas posé : un deuxième
+            -- palier sans premier n'est pas un deuxième palier, c'est le premier
+            -- écrit sur la mauvaise ligne.
+            disabled = needsStep("threshold"),
+            disabledReason = L["Resource threshold needs previous"],
+        },
+        {
+            type     = "color",
+            key      = "thresholdColor2",
+            text     = L["Resource threshold colour 2"],
+            tooltip  = L["Resource threshold colour tip"],
+            indent   = true,
+            disabled = needsStep("threshold2"),
+            disabledReason = L["Resource threshold colour needs threshold"],
+        },
+        {
+            type     = "slider",
+            key      = "threshold3",
+            text     = L["Resource threshold 3"],
+            tooltip  = L["Resource threshold 3 tip"],
+            min      = 0,
+            max      = T.SIZE.RESOURCE_MAX_CELLS,
+            step     = 1,
+            disabled = needsStep("threshold2"),
+            disabledReason = L["Resource threshold needs previous"],
+        },
+        {
+            type     = "color",
+            key      = "thresholdColor3",
+            text     = L["Resource threshold colour 3"],
+            tooltip  = L["Resource threshold colour tip"],
+            indent   = true,
+            disabled = needsStep("threshold3"),
+            disabledReason = L["Resource threshold colour needs threshold"],
+        },
+
+        -- L'effet brillant est **au même niveau** que les paliers de couleur, et
+        -- non en dessous de l'un d'eux : il ne suit aucun, il a son propre seuil.
+        -- Deux façons indépendantes de dire « c'est prêt », et rien n'oblige à ce
+        -- qu'elles tombent au même endroit.
+        {
+            type     = "toggle",
+            key      = "thresholdGlow",
+            text     = L["Resource threshold glow"],
+            tooltip  = L["Resource threshold glow tip"],
+            disabled = requires("show"),
+        },
+        {
+            type     = "slider",
+            key      = "glowAt",
+            text     = L["Resource glow threshold"],
+            tooltip  = L["Resource glow threshold tip"],
+            min      = 1,
+            max      = T.SIZE.RESOURCE_MAX_CELLS,
+            step     = 1,
             disabled = function()
                 local mod = BUI.Modules:Get(MODULE)
                 if not (mod and mod:Get("show")) then return true end
-                return (mod:Get("threshold") or 0) <= 0
+                return not mod:Get("thresholdGlow")
             end,
-            disabledReason = L["Resource threshold colour needs threshold"],
         },
     },
 

@@ -31,7 +31,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 12
+local SCHEMA_VERSION   = 15
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -442,6 +442,53 @@ function DB:RunMigrations()
             end
         end
         from = 12
+    end
+
+    -- Palier 13 — la rangée de ressource ne se plie plus sur une seconde ligne :
+    -- au-delà du nombre de cases demandé, elle **repart de zéro** dans les mêmes.
+    -- Le réglage ne dit donc plus « cases par rangée » mais « nombre de cases »,
+    -- et son nom suit.
+    --
+    -- La valeur est reprise telle quelle : cinq voulait dire « cinq de large » et
+    -- veut toujours dire cela. Seul change ce qui arrive à la sixième.
+    if from < 13 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local resource = profile.modules and profile.modules.ClassResource
+            if resource then
+                if resource.perRow ~= nil and resource.cellCount == nil then
+                    resource.cellCount = resource.perRow
+                end
+                resource.perRow = nil
+            end
+        end
+        from = 13
+    end
+
+    -- Palier 14 — le rang d'amélioration n'a plus de teinte à lui : il rejoint le
+    -- niveau d'objet sur une seule ligne, et les deux prennent la couleur de la
+    -- **piste** d'amélioration. Le réglage qui teintait les rangs incomplets n'a
+    -- donc plus d'objet. Un réglage retiré du code n'est plus dans les défauts,
+    -- donc plus rien ne le retire du fichier à la déconnexion : il y resterait
+    -- indéfiniment, sans effet et sans explication (même motif que le palier 3).
+    if from < 14 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local character = profile.modules and profile.modules.Character
+            if character then character.warnPartialUpgrade = nil end
+        end
+        from = 14
+    end
+
+    -- Palier 15 — le noyau du vide n'est plus affiché. C'était le seul endroit du
+    -- module où une **chaîne traduite** décidait d'un affichage : le noyau ne se
+    -- lisant ni dans le lien de l'objet ni dans ses statistiques, il fallait
+    -- chercher son intitulé dans l'infobulle. Le réglage disparaît, et le défaut
+    -- avec lui.
+    if from < 15 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local character = profile.modules and profile.modules.Character
+            if character then character.showVoidCore = nil end
+        end
+        from = 15
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)
