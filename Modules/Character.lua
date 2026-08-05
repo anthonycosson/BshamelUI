@@ -143,12 +143,6 @@ end
 --  Châsses
 -- =========================================================================
 
---- Rang le plus haut qu'une étoile de métier sache dire. Sert d'étoile par défaut
---- quand la pièce est enchantée sans que le rang se lise : la plupart des
---- enchantements n'ont pas de rang du tout, et les montrer sans étoile les ferait
---- passer pour incomplets.
-local MAX_ENCHANT_TIER = 5
-
 --- Nombre de châsses qu'un objet peut porter au maximum.
 ---
 --- Le lien d'objet réserve quatre champs de gemme, et il n'existe pas de
@@ -761,15 +755,18 @@ local function enchantIcon(unit, slotID)
     -- L'intitulé du client tel qu'il l'écrit, débarrassé de ses échappements :
     -- c'est le seul texte qui existe pour un enchantement, faute de lien d'objet
     -- à tendre à une infobulle.
-    local spec = { title = L["Enchant badge"], hint = label }
+    local spec  = { title = L["Enchant badge"], hint = label }
+    local atlas = tier > 0 and T.EnchantTierAtlas(tier) or nil
 
-    local atlas = T.EnchantTierAtlas(tier > 0 and tier or MAX_ENCHANT_TIER)
     if atlas then
         spec.atlas = atlas
     else
-        -- Sans l'étoile, l'icône du métier **saturée** : elle ne dit plus le
-        -- rang, elle dit encore que la pièce est enchantée. C'est la moitié qui
-        -- compte.
+        -- **Rang illisible : l'icône du métier, saturée, et surtout pas l'étoile
+        -- la plus haute.** On posait celle-ci en se disant qu'un enchantement
+        -- sans rang n'est pas incomplet — sauf qu'elle ne dit pas « sans rang »,
+        -- elle dit « rang maximum », ce qui est une affirmation qu'on n'a pas les
+        -- moyens de tenir. L'icône du métier dit exactement ce qu'on sait : la
+        -- pièce est enchantée.
         spec.texture = T.TEXTURE.ENCHANT_NONE
     end
 

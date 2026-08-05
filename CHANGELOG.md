@@ -27,10 +27,16 @@
   la réponse. Une reprise brève couvre le cas où le cadre était déjà ouvert sur
   la bonne pièce, auquel cas rien n'est annoncé.
 
-- **Fiche de personnage — l'étoile d'enchantement distingue les rangs.** Elle
-  montrait l'étoile dorée quelle que soit la qualité de l'enchantement : le rang
-  se cherchait sous un nom d'atlas précis, et le jeu écrit cette étoile tantôt
-  par un atlas, tantôt par un chemin de texture.
+- **Fiche de personnage — l'étoile d'enchantement ne ment plus sur le rang.**
+  Elle montrait l'étoile dorée quelle que soit la qualité de l'enchantement. Deux
+  causes : le rang se cherchait sous un nom d'atlas précis, alors que le jeu
+  écrit cette étoile tantôt par un atlas et tantôt par un chemin de texture ; et
+  faute de rang lisible, on posait l'étoile la plus haute.
+
+  Ce second choix était le pire des deux : une étoile dorée ne dit pas « rang
+  inconnu », elle dit « rang maximum » — une affirmation qu'on n'avait pas les
+  moyens de tenir. Un rang illisible affiche désormais l'icône du métier, qui dit
+  exactement ce qu'on sait : la pièce est enchantée.
 
 ### Modifié
 - **Fiche de personnage** — *Afficher le niveau d'objet* devient *Afficher le
