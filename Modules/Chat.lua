@@ -421,7 +421,17 @@ local function chatText(frame)
     wipe(lines)
     for i = 1, frame:GetNumMessages() do
         local text = frame:GetMessageInfo(i)
-        if type(text) == "string" then
+
+        -- **`type(text) == "string"` ne suffit pas.** Le client rend certaines
+        -- lignes en valeur *secrète* — celles où il protège l'identité de
+        -- quelqu'un —, et une chaîne secrète est bel et bien une chaîne : le test
+        -- de type la laisse passer. C'est l'indexer pour appeler `gsub` qui lève,
+        -- et l'erreur remonte alors hors de la seule ligne fautive : elle
+        -- interrompt la copie entière, qui ne rend plus rien.
+        --
+        -- Une ligne qu'on n'a pas le droit de lire est **sautée**. On perd cette
+        -- ligne-là dans le presse-papier ; on perdait tout jusqu'ici.
+        if type(text) == "string" and not U.IsSecret(text) then
             lines[#lines + 1] = plain(text)
         end
     end
