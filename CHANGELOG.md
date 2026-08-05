@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.18 — 2026-08-06
+
 ### Corrigé
 - **Recherche de groupe — la fenêtre de rôles ne clignote plus.** La validation
   automatique fonctionnait, mais la fenêtre du jeu s'ouvrait quand même le temps
