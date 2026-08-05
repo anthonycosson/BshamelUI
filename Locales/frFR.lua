@@ -341,7 +341,7 @@ BUI:RegisterLocale("frFR", {
     ["Auto dungeon gossip"]            = "Parler aux PNJ à votre place",
     ["Auto dungeon gossip tip"] =
         "Valide les dialogues à votre place pour aller plus vite : Algeth'ar, la Fosse de "
-        .. "Saron, le chaudron de Maisara.",
+        .. "Saron, le chaudron de Maisara, etc.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Recherche de groupe",

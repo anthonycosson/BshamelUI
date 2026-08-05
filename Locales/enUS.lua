@@ -348,7 +348,7 @@ BUI:RegisterLocale("enUS", {
     ["Auto dungeon gossip"]            = "Talk to dungeon NPCs for you",
     ["Auto dungeon gossip tip"] =
         "Clicks through dialogues for you so you keep moving: Algeth'ar, Pit of Saron, the "
-        .. "cauldron in Maisara.",
+        .. "cauldron in Maisara, and so on.",
 
     -- Module GroupFinder
     ["Group finder"]                   = "Group finder",
