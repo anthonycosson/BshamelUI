@@ -214,8 +214,10 @@ function W.WindowBorder(parent)
     local template = T.Template("WINDOW")
     if not template then return W.DialogBorder(parent) end
 
+    -- `T.ClearPanelBackground` n'a rien à faire ici : elle cache **toutes** les
+    -- régions, contour compris, ce qui donne un rectangle noir sans bord. On
+    -- retire nommément ce qui n'est pas le contour.
     local border = CreateFrame("Frame", nil, parent, template)
-    T.ClearPanelBackground(border)
     T.HideWindowChrome(border)
 
     -- Un contour ne prend pas les clics : sous le menu de téléportation, il

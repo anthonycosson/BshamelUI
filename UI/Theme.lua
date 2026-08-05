@@ -2035,13 +2035,23 @@ function T.CaptureTitleBar(frame)
     end
 end
 
---- Sous-cadres qu'un template de fenêtre ajoute autour de son contour, et qui ne
---- sont pas le contour : la bande de titre et le bouton de fermeture.
+--- Ce qu'un template de fenêtre pose **en plus** de son contour : les surfaces
+--- qui le remplissent, et les pièces qui en font une fenêtre.
 ---
---- Des cadres et non des textures, d'où une liste à part : `T.ClearPanelBackground`
---- ne cache que les régions, et un bouton de fermeture n'en est pas une — il
---- resterait cliquable au coin d'un panneau qui ne se ferme pas.
-local WINDOW_CHROME_KEYS = { "TitleContainer", "CloseButton", "TitleText", "PortraitContainer" }
+--- Une liste nommée, et surtout pas « toutes les régions ». Le contour d'un
+--- template du client est fait de textures lui aussi : les cacher toutes cache le
+--- contour avec le reste, et laisse un rectangle noir sans bord — ce qui est
+--- exactement ce qu'on obtenait. On ne cache donc que ce qu'on sait nommer, et un
+--- nom inconnu laisse au pire une surface de trop, jamais un panneau sans
+--- contour.
+---
+--- Les cadres sont dans la même liste que les textures : un bouton de fermeture
+--- n'est pas une région, et resterait cliquable au coin d'un panneau qui ne se
+--- ferme pas.
+local WINDOW_CHROME_KEYS = {
+    "Bg", "Background", "TitleBg", "TopTileStreaks",
+    "TitleContainer", "TitleText", "CloseButton", "PortraitContainer",
+}
 
 --- Retire d'un cadre monté sur un template de fenêtre tout ce qui en fait une
 --- fenêtre, pour ne garder que le contour.
@@ -2050,6 +2060,12 @@ function T.HideWindowChrome(frame)
     for i = 1, #WINDOW_CHROME_KEYS do
         local part = frame[WINDOW_CHROME_KEYS[i]]
         if part and part.Hide then part:Hide() end
+    end
+
+    -- Le centre du découpage neuf porte le fond des templates récents. Les bords
+    -- du même découpage sont le contour : on n'y touche pas.
+    if frame.NineSlice and frame.NineSlice.Center then
+        frame.NineSlice.Center:Hide()
     end
 end
 
