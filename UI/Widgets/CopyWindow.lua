@@ -100,12 +100,31 @@ function W.CopyWindow(globalName, titleText, hintText, submitLabel, onSubmit)
 
     frame:HookScript("OnHide", function() edit:ClearFocus() end)
 
+    --- Amène à hauteur du bas de la vue la fraction `ratio` du texte.
+    ---
+    --- Une fraction et non un numéro de ligne : la zone de saisie ne sait pas
+    --- combien de lignes elle affiche une fois le texte replié, et l'appelant ne
+    --- sait pas non plus à quelle largeur il le sera. Ce qu'ils partagent est une
+    --- proportion, et elle suffit à retomber à quelques lignes près.
+    ---@param ratio? number  0 pour le début, 1 pour la fin
+    local function scrollTo(ratio)
+        if not ratio then return end
+
+        local range = scroll:GetVerticalScrollRange() or 0
+        if range <= 0 then return end   -- tout tient : nulle part où aller
+
+        local view = scroll:GetHeight()
+        scroll:SetVerticalScroll(
+            math.max(0, math.min(range, ratio * (range + view) - view)))
+    end
+
     --- Affiche la fenêtre sur un texte, tout sélectionné et prêt à être copié.
     ---
-    --- Le texte est présenté par son début : c'est le sens de lecture, et la
-    --- sélection porte de toute façon sur l'intégralité.
+    --- Sans `at`, le texte est présenté par son début : c'est le sens de lecture,
+    --- et la sélection porte de toute façon sur l'intégralité.
     ---@param text string
-    function frame:Open(text)
+    ---@param at? number  fraction du texte à amener sous les yeux
+    function frame:Open(text, at)
         self:Show()
 
         edit:SetText(text or "")
@@ -113,6 +132,13 @@ function W.CopyWindow(globalName, titleText, hintText, submitLabel, onSubmit)
         edit:HighlightText()
         scroll:SetVerticalScroll(0)
         edit:SetFocus()
+
+        -- **À la trame suivante.** La hauteur du texte n'est connue qu'après le
+        -- passage de mise en page qui suit `SetText` ; lue tout de suite, elle
+        -- vaut encore celle du contenu précédent, et la fenêtre s'ouvre au
+        -- mauvais endroit une fois sur deux. C'est aussi ce qui laisse
+        -- `SetFocus` reposer la vue sur le curseur avant qu'on la déplace.
+        C_Timer.After(0, function() scrollTo(at) end)
     end
 
     return frame

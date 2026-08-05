@@ -412,14 +412,33 @@ end
 --- une fenêtre de chat porte plusieurs centaines de lignes.
 local lines = {}
 
---- Contenu affiché d'une fenêtre de chat, en texte nu.
+--- Contenu affiché d'une fenêtre de chat, en texte nu, et **où le lecteur en
+--- est** dans ce contenu.
+---
+--- La fenêtre de copie rend tout l'historique, plusieurs centaines de lignes, et
+--- l'ouvrir à son début revient à présenter ce qui s'est dit il y a une heure à
+--- quelqu'un qui vient de lire la dernière ligne. La fraction rendue en second
+--- dit à quelle hauteur se placer : le bas quand le chat n'est pas remonté, ce
+--- qui est le cas courant.
+---
+--- **Approximative, et du bon côté.** `GetScrollOffset` compte des lignes
+--- affichées et `GetNumMessages` des messages : un message replié sur deux
+--- lignes fait donc reculer le repère un peu trop loin. On arrive alors un cran
+--- au-dessus de son point de lecture, avec du contexte devant soi — l'erreur
+--- inverse le ferait chercher plus bas.
 ---@param frame table
----@return string
+---@return string text
+---@return number|nil at  fraction du texte où placer la vue
 local function chatText(frame)
     if not (frame.GetNumMessages and frame.GetMessageInfo) then return "" end
 
+    local count  = frame:GetNumMessages()
+    local offset = frame.GetScrollOffset and frame:GetScrollOffset() or 0
+    local last   = math.max(1, count - offset)
+    local anchor = 0
+
     wipe(lines)
-    for i = 1, frame:GetNumMessages() do
+    for i = 1, count do
         local text = frame:GetMessageInfo(i)
 
         -- **`type(text) == "string"` ne suffit pas.** Le client rend certaines
@@ -434,9 +453,14 @@ local function chatText(frame)
         if type(text) == "string" and not U.IsSecret(text) then
             lines[#lines + 1] = plain(text)
         end
+
+        -- Après l'ajout : le repère désigne une ligne du texte rendu, pas un
+        -- numéro de message. Les lignes sautées ne comptent nulle part.
+        if i == last then anchor = #lines end
     end
 
-    return table.concat(lines, "\n")
+    if #lines == 0 then return "" end
+    return table.concat(lines, "\n"), anchor / #lines
 end
 
 --- Fenêtre de copie, construite au premier clic et jamais détruite.

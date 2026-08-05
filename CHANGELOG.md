@@ -2,6 +2,15 @@
 
 ## Non publié
 
+### Modifié
+- **Chat — la fenêtre de copie s'ouvre là où vous lisez.** Elle présentait
+  l'historique par son début, c'est-à-dire ce qui s'est dit il y a une heure à
+  quelqu'un qui vient de lire la dernière ligne. Elle s'ouvre désormais à hauteur
+  du bas du chat — ou de l'endroit où vous l'avez remonté.
+
+  Le repère est approximatif d'un cran vers le haut, et c'est délibéré : on
+  arrive juste au-dessus de son point de lecture, avec le contexte devant soi.
+
 ## 0.7.17 — 2026-08-05
 
 ### Ajouté
