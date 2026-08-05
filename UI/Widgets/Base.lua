@@ -192,6 +192,38 @@ function W.DialogBorder(parent)
     return frame
 end
 
+--- Le contour de la fenêtre d'options, sans sa barre de titre.
+---
+--- **Le template de fenêtre lui-même**, dépouillé, et non un contour qui lui
+--- ressemble. `DIALOG_BORDER` donne un liseré ouvragé fin ; la fenêtre d'options
+--- porte la pierre du client, plus épaisse et plus sourde, et deux panneaux qui
+--- se veulent de la même famille ne peuvent pas porter deux contours différents.
+--- Monter le vrai template est ce qui garantit qu'ils resteront d'accord même si
+--- `T.Template("WINDOW")` retombe un jour sur un autre candidat.
+---
+--- Ce qu'on lui retire est ce qui fait une *fenêtre* et non un panneau : le fond
+--- central, le fond de barre de titre, le titre et le bouton de fermeture. Le
+--- contour, lui, est symétrique — les quatre côtés sortent de la même pierre, et
+--- la bande de titre n'était qu'une texture posée par-dessus le côté haut.
+---
+--- Sans template disponible, on retombe sur le liseré des dialogues : moins
+--- ressemblant, jamais cassé.
+---@param parent table
+---@return table
+function W.WindowBorder(parent)
+    local template = T.Template("WINDOW")
+    if not template then return W.DialogBorder(parent) end
+
+    local border = CreateFrame("Frame", nil, parent, template)
+    T.ClearPanelBackground(border)
+    T.HideWindowChrome(border)
+
+    -- Un contour ne prend pas les clics : sous le menu de téléportation, il
+    -- avalerait ceux des rangées qu'il encadre.
+    border:EnableMouse(false)
+    return border
+end
+
 --- Habillage d'un panneau flottant : **celui de la fenêtre d'options, moins sa
 --- barre de titre**.
 ---
@@ -215,7 +247,7 @@ function W.PanelChrome(frame)
     T.WindowStone(background)
     frame.background = background
 
-    local border = W.DialogBorder(frame)
+    local border = W.WindowBorder(frame)
     border:SetAllPoints()
     return border
 end

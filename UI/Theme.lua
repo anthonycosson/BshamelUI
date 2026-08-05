@@ -2035,6 +2035,24 @@ function T.CaptureTitleBar(frame)
     end
 end
 
+--- Sous-cadres qu'un template de fenêtre ajoute autour de son contour, et qui ne
+--- sont pas le contour : la bande de titre et le bouton de fermeture.
+---
+--- Des cadres et non des textures, d'où une liste à part : `T.ClearPanelBackground`
+--- ne cache que les régions, et un bouton de fermeture n'en est pas une — il
+--- resterait cliquable au coin d'un panneau qui ne se ferme pas.
+local WINDOW_CHROME_KEYS = { "TitleContainer", "CloseButton", "TitleText", "PortraitContainer" }
+
+--- Retire d'un cadre monté sur un template de fenêtre tout ce qui en fait une
+--- fenêtre, pour ne garder que le contour.
+---@param frame table
+function T.HideWindowChrome(frame)
+    for i = 1, #WINDOW_CHROME_KEYS do
+        local part = frame[WINDOW_CHROME_KEYS[i]]
+        if part and part.Hide then part:Hide() end
+    end
+end
+
 --- Applique cette apparence à une texture. Renvoie `false` si rien n'a été
 --- relevé — l'appelant doit alors se rabattre sur son propre fond.
 ---@param texture table

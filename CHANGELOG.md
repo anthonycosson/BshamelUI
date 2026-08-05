@@ -10,6 +10,10 @@
   contour passe du creux au contour ouvragé des dialogues — celui de la fenêtre
   d'options, sans la bande de titre.
 
+  Le contour est **celui du template de fenêtre du jeu**, dépouillé de sa bande
+  de titre, de son titre et de son bouton de fermeture : la pierre, épaisse et
+  sourde, et non le liseré ouvragé des dialogues qui n'en a que la silhouette.
+
   Les trois panneaux flottants partagent désormais une seule fonction
   d'habillage, ce qui est la seule façon qu'ils restent d'accord.
 
