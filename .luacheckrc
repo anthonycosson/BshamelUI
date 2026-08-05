@@ -235,6 +235,9 @@ read_globals = {
     -- Recherche de groupe
     "C_LFGList", "LFGListApplicationDialog", "CompleteLFGRoleCheck",
     "AcceptGroup", "StaticPopup_Hide", "C_SpellBook",
+    -- Fenêtre de demande de rôles, du nom récent au plus ancien : c'est un test
+    -- de capacité, les deux ne coexistent jamais.
+    "LFGRoleCheckPopup", "LFDRoleCheckPopup",
 
     -- Instances
     "GetInstanceInfo",

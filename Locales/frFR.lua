@@ -362,7 +362,8 @@ BUI:RegisterLocale("frFR", {
         "Retient ce que vous écrivez dans la note de candidature et le remet la fois suivante.",
     ["Auto role check"]                = "Valider les vérifications de rôle",
     ["Auto role check tip"] =
-        "Répond automatiquement à la vérification des rôles, avec ceux que vous aviez déjà choisis.",
+        "Répond automatiquement à la vérification des rôles, avec ceux que vous aviez déjà "
+        .. "choisis. La fenêtre du jeu ne s'affiche pas.",
     -- Module RaidCooldowns
     ["Bloodlust and battle res"]       = "BL & Résurrections",
     ["Battle resurrections"]           = "Résurrections de combat",

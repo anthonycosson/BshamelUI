@@ -98,10 +98,61 @@ end
 --  Confirmations
 -- =========================================================================
 
+--- Vrai tant que la demande de rôles en cours a déjà reçu notre réponse.
+---
+--- Deux chemins y mènent — l'événement et l'ouverture de la fenêtre — et rien ne
+--- dit lequel arrive le premier : le client montre sa fenêtre depuis son propre
+--- abonnement au même événement, et l'ordre entre deux abonnés n'est pas défini.
+--- Ce drapeau est ce qui rend les deux chemins interchangeables : le premier
+--- servi répond, le second n'a plus rien à faire.
+local roleCheckAnswered = false
+
+--- Répond à la demande de rôles si le réglage le veut.
 ---@param mod table
-local function onRoleCheck(mod)
-    if not mod:Get("autoRoleCheck") then return end
-    if CompleteLFGRoleCheck then CompleteLFGRoleCheck(true) end
+---@return boolean answered  vrai si la demande est réglée, par cet appel ou l'autre
+local function answerRoleCheck(mod)
+    if not mod:Get("autoRoleCheck") then return false end
+    if roleCheckAnswered then return true end
+    if not CompleteLFGRoleCheck then return false end
+
+    roleCheckAnswered = true
+    CompleteLFGRoleCheck(true)
+    return true
+end
+
+--- Fenêtres candidates du client pour la demande de rôles, de la plus récente à
+--- la plus ancienne. Test de capacité et non de version (règle 1).
+---@return table|nil
+local function rolePopup()
+    if LFGRoleCheckPopup and LFGRoleCheckPopup.HookScript then return LFGRoleCheckPopup end
+    if LFDRoleCheckPopup and LFDRoleCheckPopup.HookScript then return LFDRoleCheckPopup end
+    return nil
+end
+
+--- Empêche la fenêtre de demande de rôles de s'afficher quand on y répond seul.
+---
+--- **Répondre à l'événement ne suffit pas.** Le client ouvre sa fenêtre depuis
+--- son propre abonnement au même événement : répondre avant lui ne l'empêche pas
+--- d'ouvrir, cela avance seulement le moment où elle se referme. Elle apparaît
+--- donc quand même, le temps d'un battement de cils, et c'est ce battement qu'on
+--- vient supprimer.
+---
+--- Une frame montrée puis cachée **dans le même passage** n'est jamais dessinée :
+--- se poser sur son `OnShow` est ce qui fait disparaître le clignotement au lieu
+--- de le raccourcir.
+---
+--- La réponse est envoyée d'ici aussi, et pas seulement cachée : c'est ce qui
+--- garantit qu'on ne masque jamais une fenêtre à laquelle personne n'a répondu.
+---@param mod table
+local function hookRoleCheck(mod)
+    local popup = rolePopup()
+    if not popup then return end
+
+    U.GuardedScript(popup, "OnShow", function(self)
+        if answerRoleCheck(mod) then self:Hide() end
+    end, function()
+        return mod:IsEnabled() and mod:Get("autoRoleCheck") == true
+    end)
 end
 
 -- =========================================================================
@@ -254,18 +305,33 @@ BUI:RegisterModule(MODULE, {
     },
 
     OnEnable = function(self)
+        -- Le drapeau est remis à plat ici : éteindre le module révoque ses
+        -- abonnements, donc peut-être le `LFG_ROLE_CHECK_HIDE` qui l'aurait
+        -- rendu. Rallumer sur un drapeau resté levé ferait cacher la fenêtre
+        -- suivante sans y avoir répondu, ce qui est exactement ce qu'il faut
+        -- éviter.
+        roleCheckAnswered = false
+
         hookSignupNote(self)
+        hookRoleCheck(self)
 
         -- La fenêtre d'inscription est chargée à la demande : elle peut
         -- n'exister qu'une fois la recherche de groupe ouverte. On retente une
         -- fois la rafale retombée ; `U.GuardedScript` ne pose jamais deux fois
         -- le même script.
-        local settle = U.Debounce(T.TIMING.CHAT_SETTLE, function() hookSignupNote(self) end)
+        local settle = U.Debounce(T.TIMING.CHAT_SETTLE, function()
+            hookSignupNote(self)
+            hookRoleCheck(self)
+        end)
         self:RegisterEvent("ADDON_LOADED",                    settle)
         self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", settle)
         self:RegisterEvent("LFG_LIST_AVAILABILITY_UPDATE",     settle)
 
-        self:RegisterEvent("LFG_ROLE_CHECK_SHOW", function() onRoleCheck(self) end)
+        self:RegisterEvent("LFG_ROLE_CHECK_SHOW", function() answerRoleCheck(self) end)
+
+        -- La demande suivante est une autre demande : le drapeau ne vaut que pour
+        -- celle en cours.
+        self:RegisterEvent("LFG_ROLE_CHECK_HIDE", function() roleCheckAnswered = false end)
 
         self:RegisterEvent("LFG_PROPOSAL_SHOW",         function() watchProposal(self) end)
         self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS", function() watchBattlefield(self) end)

@@ -110,6 +110,7 @@
     "OBJECTIVE_DASH_STYLE_HIDE", "OBJECTIVE_TRACKER_COLOR",
 
     "C_LFGList", "LFGListApplicationDialog", "CompleteLFGRoleCheck",
+    "LFGRoleCheckPopup", "LFDRoleCheckPopup",
     "AcceptGroup", "StaticPopup_Hide",
 
     "GetInstanceInfo"

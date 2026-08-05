@@ -2,6 +2,20 @@
 
 ## Non publié
 
+### Corrigé
+- **Recherche de groupe — la fenêtre de rôles ne clignote plus.** La validation
+  automatique fonctionnait, mais la fenêtre du jeu s'ouvrait quand même le temps
+  d'un battement de cils avant de se refermer.
+
+  Répondre à l'événement ne l'empêchait pas d'ouvrir : le client s'abonne au même
+  événement pour l'afficher, et l'ordre entre deux abonnés n'est pas défini —
+  répondre « avant » lui n'avance que le moment où elle se referme. Elle est
+  désormais supprimée à son ouverture, ce qui la rend jamais dessinée plutôt que
+  brièvement visible.
+
+  La réponse est envoyée des deux côtés, avec un drapeau pour n'en envoyer qu'une :
+  la fenêtre n'est jamais masquée sans que la demande ait reçu une réponse.
+
 ### Modifié
 - **Chat — la fenêtre de copie s'ouvre là où vous lisez.** Elle présentait
   l'historique par son début, c'est-à-dire ce qui s'est dit il y a une heure à

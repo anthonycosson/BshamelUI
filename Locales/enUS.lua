@@ -368,7 +368,8 @@ BUI:RegisterLocale("enUS", {
         "Remembers what you type in the application note and fills it in the next time.",
     ["Auto role check"]                = "Confirm role checks",
     ["Auto role check tip"] =
-        "Answers the role check automatically with the roles you already signed up with.",
+        "Answers the role check automatically with the roles you already signed up with. "
+        .. "The game's popup never appears.",
     -- Module RaidCooldowns
     ["Bloodlust and battle res"]       = "Bloodlust and battle res",
     ["Battle resurrections"]           = "Battle resurrections",

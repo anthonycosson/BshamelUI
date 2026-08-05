@@ -3826,3 +3826,33 @@ manquantes de `.luacheckrc`. La lecture est maintenant bornée au bloc
 **À retenir** — un garde-fou qui ne tourne que dans la CI n'est pas un garde-fou,
 c'est un préavis. Quand un outil ne peut pas tourner en local, la question n'est
 pas « tant pis » mais « qu'est-ce qui, ici, couvre le même terrain ».
+
+---
+
+## Répondre à un événement n'empêche pas le client d'ouvrir sa fenêtre
+
+**Symptôme** — la validation automatique des rôles marche, la fenêtre du client
+part d'elle-même, et pourtant elle *apparaît* : un clignotement au milieu de
+l'écran à chaque inscription.
+
+**Cause** — le client ouvre `LFGRoleCheckPopup` depuis son propre abonnement à
+`LFG_ROLE_CHECK_SHOW`, celui-là même auquel on répond. Répondre plus tôt ne
+l'empêche pas d'ouvrir : cela avance seulement le moment où elle se referme.
+L'ordre entre deux abonnés d'un même événement n'est pas défini, donc il n'y a
+même pas de « plus tôt » sur lequel compter.
+
+**Ce qui marche** — se poser sur le `OnShow` de la fenêtre et la cacher là. Une
+frame montrée puis cachée **dans le même passage** n'est jamais dessinée : le
+clignotement disparaît au lieu d'être raccourci.
+
+Deux précautions vont avec :
+
+* **répondre depuis les deux chemins**, l'événement et le `OnShow`, avec un
+  drapeau qui dit que la demande en cours a déjà sa réponse. Puisque l'ordre est
+  indéfini, le premier servi répond et le second n'a plus rien à faire ;
+* **ne jamais cacher sans avoir répondu**. Une fenêtre masquée à laquelle
+  personne n'a répondu laisse la demande expirer sans que le joueur ait rien vu —
+  le pire des deux mondes.
+
+Le même raisonnement vaut pour toute fenêtre du client qu'on veut supprimer
+plutôt que fermer.
