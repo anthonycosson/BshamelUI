@@ -82,14 +82,15 @@ end
 --     continue de tourner. C'est aujourd'hui le cas le plus fréquent — presque
 --     toutes les scènes de quête — et c'est celui qu'on ne pouvait pas couper.
 --
--- `CancelScene` est en effet **conditionnée à un geste matériel** : appelée
--- depuis un gestionnaire d'événement, elle est refusée. Appelée pendant que le
--- client traite une touche, elle passe. On ne l'appelle donc pas à l'ouverture
--- de la scène : on **arme** une annulation, que la première touche consomme.
+-- On avait cru `CancelScene` **conditionnée à un geste matériel**, et on
+-- n'appelait donc rien à l'ouverture de la scène : on armait une annulation que
+-- la première touche devait consommer. Relevé en jeu, `CanCancelScene()` rend
+-- déjà `true` depuis le gestionnaire de `CINEMATIC_START` — la scène se coupe
+-- donc sur-le-champ, sans rien demander au joueur.
 --
--- Conséquence assumée : une scène en jeu demande une touche, là où un film s'en
--- va tout seul. C'est une touche au lieu de deux — le client en demandait déjà
--- une pour ouvrir sa demande de confirmation, et une autre pour la confirmer.
+-- L'armement reste, **derrière** : si le client refusait l'annulation immédiate
+-- sans le dire, la première touche la reprendrait. Il ne coûte qu'un booléen, et
+-- c'est la différence entre « ça a marché » et « rien ne s'est passé ».
 
 --- Annulation en attente d'une touche. Remise à zéro à la fin de la scène :
 --- une scène passée ne doit pas laisser un piège armé pour la suivante.
@@ -99,14 +100,19 @@ local sceneSkipArmed = false
 local function skipCinematic(mod)
     if not mod:Get("skipCinematics") then return end
 
-    -- Une vraie cinématique s'arrête tout de suite. Les scènes attendent la
-    -- touche, faute de quoi le client refuse.
     if CinematicFrame and CinematicFrame.isRealCinematic and StopCinematic then
         StopCinematic()
         return
     end
 
+    -- Une scène en jeu : on l'annule tout de suite si le client le permet, et on
+    -- arme quand même. Les deux gestes ne se contredisent pas — une scène déjà
+    -- coupée émet `CINEMATIC_STOP`, qui désarme.
     sceneSkipArmed = true
+
+    if CanCancelScene and CanCancelScene() and CancelScene then
+        CancelScene()
+    end
 end
 
 --- Consomme l'annulation armée. Appelée depuis le traitement d'une touche, donc
