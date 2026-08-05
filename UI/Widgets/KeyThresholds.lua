@@ -127,34 +127,53 @@ function W.KeyThresholds(opts)
     -- faire un cadre, et une texture posée sur la barre passerait dessous.
     -- L'ancrage, lui, reste sur la barre — c'est elle qui porte l'échelle du temps.
     --
-    -- Teintés de l'or de l'habillage et non du doré des libellés : un repère
-    -- appartient au cadre, il ne s'y pose pas (voir `T.COLOR.FRAME_GOLD`).
+    -- **Une pilule ambre**, la même que celle qui court sur la rangée de ressource
+    -- de classe : mêmes teintes, même dessin. Deux endroits qui disent « ce palier
+    -- est acquis » n'ont aucune raison de le dire de deux façons.
     --
-    -- **Deux textures par repère, et non une.** Ce qui se lit n'est pas un trait
-    -- plein : c'est une lueur, opaque sur le palier et éteinte sur ses deux bords.
-    -- Un dégradé ne va que dans un sens, donc il en faut deux, dos à dos — la moitié
-    -- gauche s'allume vers la droite, la droite s'éteint vers la droite.
+    -- Trois textures : un **cœur**, un aplat vif mais à bouts carrés, et deux
+    -- **embouts** ronds qui lui donnent sa forme de pilule. Le client n'a pas de
+    -- rectangle à coins arrondis ; on l'obtient en posant les coins soi-même.
     --
-    -- Sans dégradé disponible chez le client, chaque moitié se rabat sur un aplat :
-    -- le repère est alors plus dur, jamais absent.
+    -- **Pas de halo ici**, alors que la rangée de ressource en a un. La différence
+    -- n'est pas de goût : là-bas la lueur *bouge*, et c'est elle qui dit qu'il se
+    -- passe quelque chose. Ici le repère est fixe et permanent — un halo autour
+    -- d'une marque qui ne bouge pas n'ajoute rien à ce qu'elle dit, il l'épaissit.
+    --
+    -- Le sous-calque est `KEY_TIER_LEVEL`, qui est aussi le plus haut que le
+    -- moteur accepte : une pièce de plus devrait s'empiler **en dessous**, jamais
+    -- au-dessus (voir `T.SIZE.KEY_TIER_LEVEL`).
 
-    ---@param opaqueAtMax boolean  l'extrémité pleine est-elle à droite ?
+    ---@param texture string
+    ---@param color ColorMixin
+    ---@param sublevel number
     ---@return table
-    local function newNotchHalf(opaqueAtMax)
-        local half = block:CreateTexture(nil, "OVERLAY", nil, T.SIZE.KEY_TIER_LEVEL)
-        half:SetSize(T.SIZE.KEY_TIER_W / 2, T.SIZE.KEY_TIER_H)
+    local function newPiece(texture, color, sublevel)
+        local piece = block:CreateTexture(nil, "OVERLAY", nil, sublevel)
+        piece:SetTexture(texture)
+        piece:SetVertexColor(color:GetRGB())
+        piece:SetAlpha(T.ALPHA.KEY_TIER)
+        piece:Hide()
+        return piece
+    end
 
-        if not T.ApplyGradient(half, T.COLOR.FRAME_GOLD, T.ALPHA.KEY_TIER,
-                               "HORIZONTAL", opaqueAtMax) then
-            half:SetColorTexture(T.COLOR.FRAME_GOLD:GetRGB())
-        end
+    --- Un embout : le fondu rond, découpé dans sa planche.
+    ---@param color ColorMixin
+    ---@return table
+    local function newCap(color)
+        local cap = newPiece(T.TEXTURE.GLOW_SPARK, color, T.SIZE.KEY_TIER_LEVEL)
 
-        half:Hide()
-        return half
+        local box = T.TEXCOORD.GLOW_SPARK
+        cap:SetTexCoord(box[1], box[2], box[3], box[4])
+        return cap
     end
 
     for i = 1, #TIERS do
-        notches[i] = { newNotchHalf(true), newNotchHalf(false) }
+        notches[i] = {
+            core = newPiece(T.TEXTURE.SOLID, T.COLOR.GLOW_CORE, T.SIZE.KEY_TIER_LEVEL),
+            cap1 = newCap(T.COLOR.GLOW_CORE),
+            cap2 = newCap(T.COLOR.GLOW_CORE),
+        }
     end
 
     -- ---------------------------------------------------------------------
@@ -219,23 +238,45 @@ function W.KeyThresholds(opts)
     --- accordé « sous 60 % du chrono » se lit donc à 40 % de la barre, et le
     --- remplissage le franchit en descendant.
     ---
-    --- Le repère est **cadré en haut** de la barre et haut de dix pixels sur les
-    --- treize du cadre : la marge transparente de l'atlas du remplissage n'est pas
-    --- symétrique, et les trois pixels qu'on laisse sont ceux du bas (voir
-    --- `T.SIZE.KEY_TIER_H`). Ses deux moitiés se rejoignent **sur** le palier, si
-    --- bien que la lueur est centrée dessus et non posée à côté.
+    --- La pilule est **contenue dans la barre**, cadrée en haut comme le
+    --- remplissage, et centrée sur le palier en largeur. Toutes ses mesures se
+    --- déduisent de la hauteur de la barre, relevée ici — c'est la seule qui soit
+    --- sûre, le client ayant retouché la sienne d'une extension à l'autre.
+    ---
+    --- **La hauteur totale se répartit entre le cœur et ses embouts.** Un embout
+    --- est un demi-disque qui déborde du cœur de la moitié de sa largeur : le cœur
+    --- est donc raccourci d'autant, faute de quoi la pilule dépasserait de la
+    --- barre des deux bouts — précisément ce qu'on ne veut pas.
     local function layout()
-        local bar   = block.StatusBar
-        local width = bar:GetWidth() or 0
+        local bar    = block.StatusBar
+        local width  = bar:GetWidth()  or 0
+        local height = bar:GetHeight() or 0
+        if height <= 0 then return end
+
+        local pillH = height * T.SIZE.KEY_TIER_H_RATIO
+        local coreW = math.max(T.SIZE.KEY_TIER_W_MIN, height * T.SIZE.KEY_TIER_W_RATIO)
+        local coreH = math.max(coreW, pillH - coreW)
 
         for i = 1, #TIERS do
-            local x = width * (1 - TIERS[i].fraction)
+            local x    = width * (1 - TIERS[i].fraction)
+            local pill = notches[i]
 
-            notches[i][1]:ClearAllPoints()
-            notches[i][1]:SetPoint("TOPRIGHT", bar, "TOPLEFT", x, 0)
+            -- Le cœur porte tout le reste : le poser suffit à déplacer le repère.
+            -- Il descend d'un demi-embout depuis le haut de la barre, ce demi-là
+            -- étant occupé par la calotte du dessus.
+            pill.core:SetSize(coreW, coreH)
+            pill.core:ClearAllPoints()
+            pill.core:SetPoint("TOP", bar, "TOPLEFT", x, -coreW / 2)
 
-            notches[i][2]:ClearAllPoints()
-            notches[i][2]:SetPoint("TOPLEFT",  bar, "TOPLEFT", x, 0)
+            -- Les embouts sont larges comme le cœur et centrés sur ses deux bouts :
+            -- ils y ajoutent exactement les deux demi-disques qui lui manquent.
+            pill.cap1:SetSize(coreW, coreW)
+            pill.cap1:ClearAllPoints()
+            pill.cap1:SetPoint("CENTER", pill.core, "TOP")
+
+            pill.cap2:SetSize(coreW, coreW)
+            pill.cap2:ClearAllPoints()
+            pill.cap2:SetPoint("CENTER", pill.core, "BOTTOM")
         end
     end
 
@@ -324,8 +365,10 @@ function W.KeyThresholds(opts)
     ---@param visible boolean
     local function setTiersShown(visible)
         for i = 1, #notches do
-            notches[i][1]:SetShown(visible)
-            notches[i][2]:SetShown(visible)
+            local pill = notches[i]
+            pill.core:SetShown(visible)
+            pill.cap1:SetShown(visible)
+            pill.cap2:SetShown(visible)
         end
         if not visible then
             for i = 1, #countdown do

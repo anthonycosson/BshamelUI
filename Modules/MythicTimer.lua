@@ -430,6 +430,17 @@ BUI:RegisterModule(MODULE, {
 
     options = {
         { type = "header", text = L["Display"] },
+
+        -- L'aperçu vient **en premier**, avant ce qu'il sert à montrer : on
+        -- l'allume, puis on règle les trois cases suivantes en voyant ce qu'elles
+        -- font. Rangé en dernier, on découvrait son existence après avoir coché à
+        -- l'aveugle.
+        {
+            type    = "toggle",
+            key     = "previewMode",
+            text    = L["Timer preview"],
+            tooltip = L["Timer preview tip"],
+        },
         {
             type    = "toggle",
             key     = "thresholds",
@@ -447,12 +458,6 @@ BUI:RegisterModule(MODULE, {
             key     = "splits",
             text    = L["Show boss times"],
             tooltip = L["Show boss times tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "previewMode",
-            text    = L["Timer preview"],
-            tooltip = L["Timer preview tip"],
         },
         { type = "description", text = L["Mythic timer notice"] },
     },
