@@ -58,8 +58,10 @@ local function arrange(info)
     local top    = edge and ("TOP" .. edge) or "TOP"
     local bottom = edge and ("BOTTOM" .. edge) or "BOTTOM"
 
-    local lines = info._count + (info._icons > 0 and 1 or 0)
-    info.row:SetHeight(math.max(lines, 1) * T.SIZE.SLOT_LINE_H)
+    local strips = info._icons > 0 and 1 or 0
+    local lines  = info._count + strips
+    info.row:SetHeight(math.max(lines, 1) * T.SIZE.SLOT_LINE_H
+                       + strips * T.SIZE.SLOT_STRIP_GAP)
 
     local previous
     for i = 1, info._count do
@@ -75,10 +77,14 @@ local function arrange(info)
 
     -- La rangée d'icônes ferme la colonne : elle compte pour une ligne de plus,
     -- et s'aligne sur le même bord que les textes.
+    --
+    -- Elle prend un peu d'air au-dessus d'elle, ce que les lignes de texte entre
+    -- elles n'ont pas besoin d'avoir : du texte porte ses propres marges, une
+    -- icône va bord à bord et se colle à la ligne qui la précède.
     local strip = info.strip
     strip:ClearAllPoints()
     if previous then
-        strip:SetPoint(top, previous, bottom, 0, 0)
+        strip:SetPoint(top, previous, bottom, 0, -T.SIZE.SLOT_STRIP_GAP)
     else
         strip:SetPoint(top, info.row, top, 0, 0)
     end

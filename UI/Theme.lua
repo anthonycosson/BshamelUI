@@ -421,6 +421,11 @@ T.SIZE = {
     SLOT_ICON       = 14,
     SLOT_ICON_GAP   = 2,
 
+    -- Air entre la dernière ligne de texte et la rangée d'icônes. Petit : il ne
+    -- sépare pas deux blocs, il rend à l'icône la marge que le texte porte déjà
+    -- en lui et qu'elle n'a pas.
+    SLOT_STRIP_GAP  = 3,
+
     -- Descente du niveau d'objet du personnage sous le haut des deux
     -- emplacements de tête. Aligné sur eux, il touchait le haut de la zone
     -- d'équipement ; un cran plus bas, il se pose sur le modèle sans rien
