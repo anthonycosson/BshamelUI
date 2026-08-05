@@ -429,7 +429,7 @@ T.SIZE = {
     -- Descente d'une colonne accrochée par le haut. Le bord haut d'une case est
     -- un trait, pas une ligne de texte : posée dessus, la première pastille a
     -- l'air de sortir de la case plutôt que de lui répondre.
-    SLOT_TOP_DROP   = 3,
+    SLOT_TOP_DROP   = 6,
 
 
 
