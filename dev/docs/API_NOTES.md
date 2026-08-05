@@ -3773,3 +3773,33 @@ redécouvrir par une erreur.
 
 **À retenir** — un sous-calque n'est pas une valeur qu'on ajuste, c'est un rang
 dans une échelle de seize crans. Les deux bouts lèvent, ils ne saturent pas.
+
+---
+
+## La vérification locale ne voyait ni le code mort ni les noms masqués
+
+**Symptôme** — `lint-local.sh` intégralement vert, la CI rouge dix secondes après
+le tag, sur quatre avertissements `luacheck` : une fonction devenue inutilisée
+(`W211`) et trois variables masquant une portée englobante (`W431`, `W432`).
+
+**Cause** — `luacheck` ne tourne pas en local : il dépend de `luafilesystem`, qui
+se compile, et la machine n'a pas de compilateur C. L'en-tête du script le dit,
+mais la conséquence n'était pas tirée : ces familles-là n'étaient vérifiées
+**nulle part** avant la CI. Le trou ne se voyait qu'au pire moment — un tag posé,
+donc un numéro de version brûlé.
+
+**Ce qu'on fait** — `lua-language-server`, lui, connaît les mêmes défauts ; il les
+classait simplement en *hint*, que le script ne lit pas. On relève leur sévérité
+à `Warning` dans `.luarc.json` (`unused-function`, `unused-local`,
+`redefined-local`). Les deux analyses ne se recouvrent pas entièrement, mais ces
+trois familles-là sont désormais couvertes des deux côtés.
+
+**Un effet de bord à connaître** — la comparaison des globales lisait **tout**
+`.luarc.json` et prenait la moindre chaîne pour un nom déclaré. Le nouveau bloc de
+sévérités y a introduit des `"Warning"`, aussitôt signalés comme globales
+manquantes de `.luacheckrc`. La lecture est maintenant bornée au bloc
+`diagnostics.globals`.
+
+**À retenir** — un garde-fou qui ne tourne que dans la CI n'est pas un garde-fou,
+c'est un préavis. Quand un outil ne peut pas tourner en local, la question n'est
+pas « tant pis » mais « qu'est-ce qui, ici, couvre le même terrain ».

@@ -225,15 +225,15 @@ function W.SlotInfo(button)
         if not (spec and (spec.atlas or spec.texture)) then return end
 
         local index  = self._icons + 1
-        local button = self._buttons[index]
+        local cell = self._buttons[index]
 
-        if not button then
-            button = CreateFrame("Button", nil, strip)
-            button:SetSize(T.SIZE.SLOT_ICON, T.SIZE.SLOT_ICON)
+        if not cell then
+            cell = CreateFrame("Button", nil, strip)
+            cell:SetSize(T.SIZE.SLOT_ICON, T.SIZE.SLOT_ICON)
 
-            local icon = button:CreateTexture(nil, "ARTWORK")
+            local icon = cell:CreateTexture(nil, "ARTWORK")
             icon:SetAllPoints()
-            button.icon = icon
+            cell.icon = icon
 
             -- **L'infobulle de l'objet quand il y en a un, la nôtre sinon.**
             -- Devant une gemme sertie, ce qu'on veut savoir est ce qu'elle
@@ -243,50 +243,50 @@ function W.SlotInfo(button)
             --
             -- Écrite une fois à la construction : ce sont les champs du bouton
             -- qui changent d'un emplacement à l'autre, pas ses scripts.
-            button:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            cell:SetScript("OnEnter", function(hovered)
+                GameTooltip:SetOwner(hovered, "ANCHOR_RIGHT")
 
-                if self._link then
-                    GameTooltip:SetHyperlink(self._link)
+                if hovered._link then
+                    GameTooltip:SetHyperlink(hovered._link)
                 else
-                    if self._title then GameTooltip_SetTitle(GameTooltip, self._title) end
-                    if self._hint then
-                        GameTooltip_AddNormalLine(GameTooltip, self._hint, true)
+                    if hovered._title then GameTooltip_SetTitle(GameTooltip, hovered._title) end
+                    if hovered._hint then
+                        GameTooltip_AddNormalLine(GameTooltip, hovered._hint, true)
                     end
                 end
 
                 GameTooltip:Show()
             end)
 
-            button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            cell:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-            self._buttons[index] = button
+            self._buttons[index] = cell
         end
 
-        button._link  = spec.link
-        button._title = spec.title
-        button._hint  = spec.hint
+        cell._link  = spec.link
+        cell._title = spec.title
+        cell._hint  = spec.hint
 
         if spec.atlas then
-            T.TrySetAtlas(button.icon, spec.atlas)
+            T.TrySetAtlas(cell.icon, spec.atlas)
         else
-            button.icon:SetTexture(spec.texture)
+            cell.icon:SetTexture(spec.texture)
         end
-        button.icon:SetDesaturated(spec.desaturated and true or false)
+        cell.icon:SetDesaturated(spec.desaturated and true or false)
 
         -- Le clic n'est armé que pour l'icône qui en veut un, et **désarmé** pour
         -- les autres : un bouton réemployé d'un emplacement à l'autre garderait
         -- sinon le geste de son occupant précédent.
-        button:SetScript("OnClick", spec.onClick)
+        cell:SetScript("OnClick", spec.onClick)
 
-        button:ClearAllPoints()
+        cell:ClearAllPoints()
         if index == 1 then
-            button:SetPoint("LEFT", strip, "LEFT", 0, 0)
+            cell:SetPoint("LEFT", strip, "LEFT", 0, 0)
         else
-            button:SetPoint("LEFT", self._buttons[index - 1], "RIGHT",
+            cell:SetPoint("LEFT", self._buttons[index - 1], "RIGHT",
                             T.SIZE.SLOT_ICON_GAP, 0)
         end
-        button:Show()
+        cell:Show()
 
         self._icons = index
     end

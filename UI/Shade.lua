@@ -561,10 +561,13 @@ local function collect(element)
     local seen  = {}
     local rules = rulesFor(element)
 
-    local names = FRAMES[element]
-    if names then
-        for i = 1, #names do
-            collectFrom(_G[names[i]], out, seen, rules)
+    -- `roots` et non `names` : le nom seul masquerait le cache de noms de
+    -- débogage, déclaré plus haut dans ce fichier — deux choses différentes qui
+    -- ne se distingueraient plus qu'à la portée.
+    local roots = FRAMES[element]
+    if roots then
+        for i = 1, #roots do
+            collectFrom(_G[roots[i]], out, seen, rules)
         end
     end
 

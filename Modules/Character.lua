@@ -272,17 +272,6 @@ local function enchantInfo(unit, slotID)
     return nil
 end
 
---- Identifiant d'enchantement porté par un lien d'objet, ou `nil`.
---- Le lien s'écrit `item:<objet>:<enchantement>:…`, et le champ est vide — pas
---- absent — quand il n'y a pas d'enchantement.
----@param link string
----@return integer|nil
-local function enchantOf(link)
-    local id = tonumber(link:match("item:%d+:(%d*)"))
-    if id == 0 then return nil end
-    return id
-end
-
 --- Niveau d'objet réel de la pièce équipée.
 ---
 --- Pour le joueur, par l'emplacement et non par le lien : c'est le seul chemin

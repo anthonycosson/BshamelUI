@@ -117,5 +117,11 @@
   ],
   "diagnostics.disable": [
     "lowercase-global"
-  ]
+  ],
+
+  "diagnostics.severity": {
+    "unused-function": "Warning",
+    "unused-local": "Warning",
+    "redefined-local": "Warning"
+  }
 }

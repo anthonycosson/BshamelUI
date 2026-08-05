@@ -98,8 +98,14 @@ echo "== globals déclarés des deux côtés =="
 # Le sens du test compte : ce qui est déclaré ici doit l'être là-bas. L'inverse
 # est permis — `.luacheckrc` peut citer des noms que l'analyse locale connaît
 # déjà d'elle-même.
+#
+# On ne lit que le **bloc des globales**, et non tout le fichier : `.luarc.json`
+# porte d'autres réglages dont les valeurs sont des chaînes — les sévérités de
+# diagnostics, par exemple —, et un « Warning » pris pour une globale ferait
+# échouer la comparaison sans rien avoir à voir avec elle.
 missing=$(comm -23 \
-    <(grep -o '"[A-Za-z_][A-Za-z0-9_]*"' .luarc.json | tr -d '"' | sort -u) \
+    <(sed -n '/"diagnostics.globals": \[/,/^  \]/p' .luarc.json \
+        | grep -o '"[A-Za-z_][A-Za-z0-9_]*"' | tr -d '"' | sort -u) \
     <(sed -n '/^globals = {/,/^}/p; /^read_globals = {/,/^}/p' .luacheckrc \
         | grep -o '"[A-Za-z_][A-Za-z0-9_]*"' | tr -d '"' | sort -u) \
     | grep -vxE 'dev|require')
