@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.7.15 — 2026-08-05
+
 ### Ajouté
 - **Barres d'infos — les icônes d'entraves portent le contour de l'addon.** La
   rangée de contrôles était le seul endroit de l'addon où une icône n'avait pas
