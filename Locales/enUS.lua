@@ -112,8 +112,7 @@ BUI:RegisterLocale("enUS", {
     ["Annoyances"]                     = "Annoyances",
     ["Skip cinematics"]                = "Skip cinematics",
     ["Skip cinematics tip"] =
-        "Movies and cinematics end on their own. An in-game scene ends on your first key press: " ..
-        "the game only lets it be cancelled while a key is being handled.",
+        "Movies, cinematics and in-game scenes all end on their own, without asking anything of you.",
     ["Hide talking heads"]             = "Hide talking heads",
     ["Hide talking heads tip"]         = "Hides the talking head frame that pops up during quests and dungeons.",
     ["Hide Lua errors"]                = "Hide Lua errors",
@@ -190,12 +189,6 @@ BUI:RegisterLocale("enUS", {
     ["Teleport menu tip"] =
         "Adds a button next to the minimap: your hearthstones, and the dungeons of the current "
         .. "season under a submenu. Click a line to use it.",
-    ["Teleport menu notice"] =
-        "The menu only shows what this character actually owns or knows: the hearthstone chosen "
-        .. "above, the stones that have their own cooldown, and every dungeon of the current "
-        .. "season you have a teleport for, hero's path or mythic. It does not open during "
-        .. "combat: the game refuses to hand a spell to an addon while you are fighting, and "
-        .. "nothing in there can be used in combat anyway.",
     ["Teleport in combat"]             = "The teleport menu does not open during combat.",
     ["Hearthstones"]                   = "Hearthstones",
     ["Hearthstone choice"]             = "Hearthstone",

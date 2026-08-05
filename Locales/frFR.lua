@@ -115,8 +115,7 @@ BUI:RegisterLocale("frFR", {
     ["Annoyances"]                     = "Nuisances",
     ["Skip cinematics"]                = "Passer les cinématiques",
     ["Skip cinematics tip"] =
-        "Les vidéos et les cinématiques partent toutes seules. Une scène en jeu s'arrête à votre " ..
-        "première touche : le jeu ne la laisse couper que pendant qu'il traite une touche.",
+        "Vidéos, cinématiques et scènes en jeu s'arrêtent d'elles-mêmes, sans rien vous demander.",
     ["Hide talking heads"]             = "Masquer les têtes parlantes",
     ["Hide talking heads tip"] =
         "Masque le cadre de tête parlante qui apparaît pendant les quêtes et les donjons.",
@@ -276,13 +275,6 @@ BUI:RegisterLocale("frFR", {
     ["Teleport menu tip"] =
         "Ajoute un bouton à côté de la minicarte : vos pierres de foyer, et les donjons de la "
         .. "saison en cours dans un sous-menu. Un clic sur une ligne l'utilise.",
-    ["Teleport menu notice"] =
-        "Le menu ne montre que ce que ce personnage possède ou connaît réellement : la pierre "
-        .. "de foyer choisie ci-dessus, les pierres qui ont leur propre temps de recharge, et "
-        .. "chaque donjon de la saison en cours vers lequel vous avez une téléportation, voie "
-        .. "héroïque ou mythique. Il ne s'ouvre pas en combat : le jeu refuse de confier un "
-        .. "sort à un addon pendant un combat, et de toute façon rien de ce qu'il contient ne "
-        .. "s'utilise en combat.",
     ["Teleport in combat"]             = "Le menu de téléportation ne s'ouvre pas en combat.",
     ["Hearthstones"]                   = "Pierres de foyer",
     ["Hearthstone choice"]             = "Pierre de foyer personnalisée",

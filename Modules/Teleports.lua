@@ -899,7 +899,6 @@ BUI:RegisterModule(MODULE, {
                 if mod then createMacro(mod) end
             end,
         },
-        { type = "description", text = L["Teleport menu notice"] },
     },
 
     OnEnable = function(self)
