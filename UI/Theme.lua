@@ -2053,6 +2053,49 @@ local WINDOW_CHROME_KEYS = {
     "TitleContainer", "TitleText", "CloseButton", "PortraitContainer",
 }
 
+--- Pièces du haut d'un découpage neuf, et celle du bas dont chacune se déduit.
+---
+--- **Croisées pour les coins.** Une demi-rotation retourne aussi la gauche et la
+--- droite : le coin bas-droit devient le coin haut-gauche, et réciproquement.
+--- Les reprendre du même côté donnerait deux coins tournés vers l'extérieur.
+local MIRRORED_TOP = {
+    { piece = "TopLeftCorner",  from = "BottomRightCorner" },
+    { piece = "TopRightCorner", from = "BottomLeftCorner"  },
+    { piece = "TopEdge",        from = "BottomEdge"        },
+}
+
+--- Rend le haut du contour identique à son bas.
+---
+--- Le contour de métal du client n'est **pas symétrique** : ses deux coins hauts
+--- portent le renflement de la barre de titre et l'échancrure du bouton de
+--- fermeture. C'est ce qui reste d'une fenêtre sur un panneau qui n'en est pas
+--- une, et c'est justement ce qu'on ne veut pas.
+---
+--- Le bas de ce même contour est un bord franc. On le recopie donc en haut avec
+--- une demi-rotation, plutôt que d'aller chercher un autre jeu de textures : la
+--- matière reste exactement celle des trois autres côtés, ce qui est tout le
+--- propos.
+---@param frame table
+local function mirrorTopEdge(frame)
+    local slice = frame.NineSlice
+    if not slice then return end
+
+    for i = 1, #MIRRORED_TOP do
+        local piece  = slice[MIRRORED_TOP[i].piece]
+        local source = slice[MIRRORED_TOP[i].from]
+
+        if piece and source and source.GetAtlas and piece.SetRotation then
+            local atlas = source:GetAtlas()
+            if atlas and T.TrySetAtlas(piece, atlas) then
+                -- La hauteur vient du bas, elle aussi : un coin haut est plus
+                -- haut qu'un coin bas, et garder l'ancienne étirerait la texture.
+                piece:SetHeight(source:GetHeight())
+                piece:SetRotation(math.pi)
+            end
+        end
+    end
+end
+
 --- Retire d'un cadre monté sur un template de fenêtre tout ce qui en fait une
 --- fenêtre, pour ne garder que le contour.
 ---@param frame table
@@ -2067,6 +2110,8 @@ function T.HideWindowChrome(frame)
     if frame.NineSlice and frame.NineSlice.Center then
         frame.NineSlice.Center:Hide()
     end
+
+    mirrorTopEdge(frame)
 end
 
 --- Applique cette apparence à une texture. Renvoie `false` si rien n'a été
