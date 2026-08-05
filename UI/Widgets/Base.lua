@@ -194,6 +194,12 @@ local function rebuildTop(border)
     local bottom   = T.BorderPiece(border, T.BORDER.BOTTOM)
     if not (botLeft and botRight and bottom) then return end
 
+    -- **Rien tant que le cadre n'est pas mesuré.** Les dimensions du haut se
+    -- relèvent sur les pièces du bas, et celles-ci valent zéro tant que le cadre
+    -- n'a pas sa taille : construit à la création, le haut naissait plat. On
+    -- attend donc le premier `OnSizeChanged`, qui arrive de toute façon.
+    if bottom:GetHeight() <= 0 then return end
+
     border._topRebuilt = true
 
     for _, names in ipairs({ T.BORDER.TOP_LEFT, T.BORDER.TOP_RIGHT, T.BORDER.TOP }) do
@@ -237,19 +243,26 @@ local function rebuildTop(border)
     -- sous les anciens, plus hauts : le contour laisse alors un trou de chaque
     -- côté, et c'est ce qui donnait l'impression qu'il ne prenait pas toute la
     -- hauteur du cadre.
-    local left = T.BorderPiece(border, T.BORDER.LEFT)
-    if left then
-        left:ClearAllPoints()
-        left:SetPoint("TOPLEFT",    topLeft, "BOTTOMLEFT", 0, 0)
-        left:SetPoint("BOTTOMLEFT", botLeft, "TOPLEFT",    0, 0)
+    --
+    -- **Leur largeur se relève avant de les décrocher, et se repose après.** Un
+    -- bord tenait la sienne de ses deux ancrages horizontaux ; ne lui en laisser
+    -- que du côté de son bord le réduit à rien, et le côté gauche disparaissait.
+    ---@param piece table|nil
+    ---@param corner table
+    ---@param bottomCorner table
+    ---@param edge string  "LEFT" ou "RIGHT"
+    local function stretchSide(piece, corner, bottomCorner, edge)
+        if not piece then return end
+
+        local width = piece:GetWidth()
+        piece:ClearAllPoints()
+        piece:SetPoint("TOP" .. edge,    corner,       "BOTTOM" .. edge, 0, 0)
+        piece:SetPoint("BOTTOM" .. edge, bottomCorner, "TOP" .. edge,    0, 0)
+        if width > 0 then piece:SetWidth(width) end
     end
 
-    local right = T.BorderPiece(border, T.BORDER.RIGHT)
-    if right then
-        right:ClearAllPoints()
-        right:SetPoint("TOPRIGHT",    topRight, "BOTTOMRIGHT", 0, 0)
-        right:SetPoint("BOTTOMRIGHT", botRight, "TOPRIGHT",    0, 0)
-    end
+    stretchSide(T.BorderPiece(border, T.BORDER.LEFT),  topLeft,  botLeft,  "LEFT")
+    stretchSide(T.BorderPiece(border, T.BORDER.RIGHT), topRight, botRight, "RIGHT")
 end
 
 --- Contour d'un panneau : **celui de la fenêtre d'options**, sans sa barre de
