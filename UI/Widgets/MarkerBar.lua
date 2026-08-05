@@ -110,7 +110,6 @@ function W.MarkerBar(opts)
         -- l'intermédiaire de `W.Button`, on la relève donc sur le bouton une fois
         -- construit plutôt que de réécrire ici la formule qui l'a produite.
         height = PANEL_W,
-        chrome = "dialog",
 
         getPos   = opts.getPos,
         setPos   = opts.setPos,

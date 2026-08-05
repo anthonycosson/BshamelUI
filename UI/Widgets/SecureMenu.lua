@@ -316,12 +316,7 @@ function W.SecureMenu(parent, root)
     -- Un sous-menu se dessine au-dessus du menu qui l'ouvre.
     if root then menu:SetFrameLevel(parent:GetFrameLevel() + 10) end
 
-    local background = menu:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints()
-    T.WindowSurface(background)
-
-    local border = W.Inset(menu)
-    border:SetAllPoints()
+    W.PanelChrome(menu)
 
     menu._root = root
 

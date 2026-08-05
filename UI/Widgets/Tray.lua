@@ -218,14 +218,9 @@ function W.Tray(parent, emptyText)
     -- icônes dessous.
     panel:SetFrameStrata(Minimap and Minimap:GetFrameStrata() or "MEDIUM")
 
-    -- Même fond que la fenêtre d'options, bordure du client par-dessus : le
-    -- tiroir est une petite fenêtre, il se lit comme le reste de l'addon.
-    local background = panel:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints()
-    T.WindowSurface(background)
-
-    local border = W.Inset(panel)
-    border:SetAllPoints()
+    -- Même habillage que la fenêtre d'options : le tiroir est une petite
+    -- fenêtre, il se lit comme le reste de l'addon.
+    W.PanelChrome(panel)
 
     -- Un tiroir vide s'ouvre quand même, et le dit. Une fenêtre qui refuse de
     -- s'ouvrir ne se distingue pas d'un bouton cassé — alors qu'« aucune icône

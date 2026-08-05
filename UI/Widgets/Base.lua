@@ -192,6 +192,34 @@ function W.DialogBorder(parent)
     return frame
 end
 
+--- Habillage d'un panneau flottant : **celui de la fenêtre d'options, moins sa
+--- barre de titre**.
+---
+--- Deux pièces qui ne se séparent pas, d'où une seule fonction. Le fond est la
+--- pierre du client teintée (`T.WindowStone`) et non un aplat : c'est ce qui fait
+--- la différence entre le noir profond de la fenêtre d'options et le gris bleuté
+--- que la même couleur donne posée telle quelle. Le contour est celui des
+--- dialogues du jeu, c'est-à-dire exactement celui de la fenêtre d'options —
+--- laquelle n'y ajoute que la bande de titre, encombrante sur un panneau de deux
+--- rangées.
+---
+--- Les prendre séparément est ce qui avait produit trois habillages différents
+--- pour trois panneaux qui se ressemblent : le menu de téléportation et le
+--- tiroir posaient l'aplat, le panneau d'outils la pierre. La cohérence visuelle
+--- doit tomber de la structure du code, pas d'une relecture (CLAUDE.md règle 2).
+---@param frame table
+---@return table border
+function W.PanelChrome(frame)
+    local background = frame:CreateTexture(nil, "BACKGROUND")
+    background:SetAllPoints()
+    T.WindowStone(background)
+    frame.background = background
+
+    local border = W.DialogBorder(frame)
+    border:SetAllPoints()
+    return border
+end
+
 --- Bandeau lumineux fort au centre et éteint sur les deux bords.
 ---
 --- Deux textures et non une : une texture ne porte qu'un dégradé à deux

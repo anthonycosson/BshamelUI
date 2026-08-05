@@ -32,7 +32,7 @@ local W    = BUI.Widgets
 ---@field height number
 ---@field title? string
 ---@field strata? string
----@field chrome? string                  "inset" (défaut), "dialog" ou "none"
+---@field chrome? string                  "panel" (défaut) ou "none"
 ---@field getPos? fun(): number, number   décalage du centre, en pixels d'écran
 ---@field setPos? fun(x: number, y: number)
 ---@field isLocked? fun(): boolean        gèle la position et retire la poignée
@@ -52,28 +52,16 @@ function W.Panel(opts)
     panel:SetClampedToScreen(true)
     panel:Hide()
 
-    -- **Trois habillages, un seul socle.** Un panneau qui affiche un nombre est un
-    -- creux posé sur l'écran ; un panneau dont on clique les pièces porte le
-    -- contour ouvragé des dialogues du client ; et un panneau qui n'est **qu'une
-    -- icône** n'a rien du tout — un cadre autour d'une icône de sort en ferait
-    -- une pièce rapportée là où le jeu n'en met jamais. Aucun des trois n'apporte
-    -- de barre de titre : ces panneaux tiennent en une rangée, et une bande vide
-    -- au-dessus n'aurait fait que les allonger.
+    -- **Deux habillages, un seul socle.** Un panneau qu'on regarde ou dont on
+    -- clique les pièces porte celui de la fenêtre d'options ; un panneau qui
+    -- n'est **qu'une icône** n'a rien du tout — un cadre autour d'une icône de
+    -- sort en ferait une pièce rapportée là où le jeu n'en met jamais.
     --
-    -- Le fond est la **pierre** de la fenêtre d'options, pas un aplat : c'est ce
-    -- qui fait son noir profond, la couleur y multipliant une matière déjà sombre
-    -- au lieu de se poser telle quelle (voir `T.WindowStone`).
-    local chrome = opts.chrome or "inset"
+    -- Aucun des deux n'apporte de barre de titre : ces panneaux tiennent en une
+    -- rangée, et une bande vide au-dessus n'aurait fait que les allonger.
+    local chrome = opts.chrome or "panel"
 
-    if chrome ~= "none" then
-        local background = panel:CreateTexture(nil, "BACKGROUND")
-        background:SetAllPoints()
-        T.WindowStone(background)
-        panel.background = background
-
-        local border = (chrome == "dialog") and W.DialogBorder(panel) or W.Inset(panel)
-        border:SetAllPoints()
-    end
+    if chrome ~= "none" then W.PanelChrome(panel) end
 
     if opts.title then
         local title = panel:CreateFontString(nil, "ARTWORK", T.FONT.SECTION)
