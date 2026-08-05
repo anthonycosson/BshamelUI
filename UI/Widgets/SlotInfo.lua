@@ -58,7 +58,8 @@ local function arrange(info)
     local top    = edge and ("TOP" .. edge) or "TOP"
     local bottom = edge and ("BOTTOM" .. edge) or "BOTTOM"
 
-    info.row:SetHeight(math.max(info._count, 1) * T.SIZE.SLOT_LINE_H)
+    local lines = info._count + (info._icons > 0 and 1 or 0)
+    info.row:SetHeight(math.max(lines, 1) * T.SIZE.SLOT_LINE_H)
 
     local previous
     for i = 1, info._count do
@@ -71,6 +72,17 @@ local function arrange(info)
         end
         previous = badge
     end
+
+    -- La rangée d'icônes ferme la colonne : elle compte pour une ligne de plus,
+    -- et s'aligne sur le même bord que les textes.
+    local strip = info.strip
+    strip:ClearAllPoints()
+    if previous then
+        strip:SetPoint(top, previous, bottom, 0, 0)
+    else
+        strip:SetPoint(top, info.row, top, 0, 0)
+    end
+    strip:SetShown(info._icons > 0)
 end
 
 --- Bandeau attaché à un bouton d'emplacement du client.
@@ -92,9 +104,19 @@ function W.SlotInfo(button)
     local row = CreateFrame("Frame", nil, info)
     row:SetSize(T.SIZE.SLOT_INFO_W, T.SIZE.SLOT_LINE_H)
 
+    -- La rangée d'icônes, posée sous les textes. Un cadre à elle, parce qu'elle
+    -- s'aligne d'un bloc sur le bord de la colonne : ce sont ses icônes qui se
+    -- rangent en son sein, pas chacune contre la colonne.
+    local strip = CreateFrame("Frame", nil, row)
+    strip:SetHeight(T.SIZE.SLOT_ICON)
+    strip:Hide()
+
     info.row      = row
+    info.strip    = strip
     info._badges  = {}
+    info._buttons = {}
     info._count   = 0
+    info._icons   = 0
     info._edge    = "LEFT"
 
     --- Où la colonne se pose par rapport à l'emplacement.
@@ -175,11 +197,122 @@ function W.SlotInfo(button)
         arrange(self)
     end
 
+    -- ---------------------------------------------------------------------
+    --  Rangée d'icônes
+    -- ---------------------------------------------------------------------
+    -- Des **boutons** et non des textures, alors qu'aucune icône n'est cliquable
+    -- par nature : une châsse l'est, et une châsse ne se distingue pas des autres
+    -- à la construction. Un bouton qui ne réagit à rien coûte le même dessin
+    -- qu'une texture ; en faire deux sortes coûterait deux chemins.
+
+    --- Ouvre une nouvelle rangée d'icônes.
+    function info:BeginIcons()
+        self._icons = 0
+    end
+
+    ---@class BUI.SlotIcon
+    ---@field atlas? string
+    ---@field texture? string|number
+    ---@field desaturated? boolean
+    ---@field link? string      lien d'objet ; son infobulle prime sur le reste
+    ---@field title? string
+    ---@field hint? string
+    ---@field onClick? fun(button: table)
+
+    --- Ajoute une icône à la rangée en cours.
+    ---@param spec BUI.SlotIcon
+    function info:AddIcon(spec)
+        if not (spec and (spec.atlas or spec.texture)) then return end
+
+        local index  = self._icons + 1
+        local button = self._buttons[index]
+
+        if not button then
+            button = CreateFrame("Button", nil, strip)
+            button:SetSize(T.SIZE.SLOT_ICON, T.SIZE.SLOT_ICON)
+
+            local icon = button:CreateTexture(nil, "ARTWORK")
+            icon:SetAllPoints()
+            button.icon = icon
+
+            -- **L'infobulle de l'objet quand il y en a un, la nôtre sinon.**
+            -- Devant une gemme sertie, ce qu'on veut savoir est ce qu'elle
+            -- apporte — et cela, le client le dit déjà mieux que nous. Devant une
+            -- châsse vide il n'y a pas d'objet, donc rien à demander au client :
+            -- c'est à nous de dire ce qu'il manque et ce qu'un clic ferait.
+            --
+            -- Écrite une fois à la construction : ce sont les champs du bouton
+            -- qui changent d'un emplacement à l'autre, pas ses scripts.
+            button:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+
+                if self._link then
+                    GameTooltip:SetHyperlink(self._link)
+                else
+                    if self._title then GameTooltip_SetTitle(GameTooltip, self._title) end
+                    if self._hint then
+                        GameTooltip_AddNormalLine(GameTooltip, self._hint, true)
+                    end
+                end
+
+                GameTooltip:Show()
+            end)
+
+            button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+            self._buttons[index] = button
+        end
+
+        button._link  = spec.link
+        button._title = spec.title
+        button._hint  = spec.hint
+
+        if spec.atlas then
+            T.TrySetAtlas(button.icon, spec.atlas)
+        else
+            button.icon:SetTexture(spec.texture)
+        end
+        button.icon:SetDesaturated(spec.desaturated and true or false)
+
+        -- Le clic n'est armé que pour l'icône qui en veut un, et **désarmé** pour
+        -- les autres : un bouton réemployé d'un emplacement à l'autre garderait
+        -- sinon le geste de son occupant précédent.
+        button:SetScript("OnClick", spec.onClick)
+
+        button:ClearAllPoints()
+        if index == 1 then
+            button:SetPoint("LEFT", strip, "LEFT", 0, 0)
+        else
+            button:SetPoint("LEFT", self._buttons[index - 1], "RIGHT",
+                            T.SIZE.SLOT_ICON_GAP, 0)
+        end
+        button:Show()
+
+        self._icons = index
+    end
+
+    --- Ferme la rangée : cache ce qui reste de la précédente, et lui donne sa
+    --- largeur — c'est elle qui permet à la rangée de se caler sur le bord de la
+    --- colonne, à droite comme à gauche.
+    function info:EndIcons()
+        for i = self._icons + 1, #self._buttons do
+            self._buttons[i]:Hide()
+        end
+
+        local count = self._icons
+        strip:SetWidth(math.max(1,
+            count * T.SIZE.SLOT_ICON + math.max(0, count - 1) * T.SIZE.SLOT_ICON_GAP))
+
+        arrange(self)
+    end
+
     --- Vide le bandeau sans rien libérer.
     function info:Clear()
         self:SetLevel(nil)
         self:BeginBadges()
         self:EndBadges()
+        self:BeginIcons()
+        self:EndIcons()
     end
 
     info:Clear()

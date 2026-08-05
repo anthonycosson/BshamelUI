@@ -79,16 +79,8 @@ local ENCHANTABLE = {
     SecondaryHandSlot = true,
 }
 
---- Emplacements qui acceptent un noyau du vide : les armes et les bijoux.
-local VOID_SLOTS = {
-    Trinket0Slot      = true,
-    Trinket1Slot      = true,
-    MainHandSlot      = true,
-    SecondaryHandSlot = true,
-}
-
---- Où poser la colonne de pastilles de chaque emplacement : du côté opposé au
---- modèle, et au-dessus pour les armes, qui n'ont pas de côté libre.
+--- Où poser la colonne de pastilles de chaque emplacement : toujours **du côté
+--- opposé au modèle**, celui qui donne sur le vide.
 ---
 --- Une liste et non une déduction géométrique, après avoir essayé l'inverse.
 --- Comparer l'abscisse d'un bouton à celle de la fiche paraît plus robuste
@@ -109,7 +101,12 @@ local PLACEMENT = {
     FeetSlot     = "LEFT",  Finger0Slot = "LEFT",  Finger1Slot  = "LEFT",
     Trinket0Slot = "LEFT",  Trinket1Slot = "LEFT",
 
-    MainHandSlot = "ABOVE", SecondaryHandSlot = "ABOVE",
+    -- Les deux armes sont côte à côte sous le modèle, et chacune se range **vers
+    -- l'extérieur** : la main droite est celle de gauche à l'écran, sa colonne
+    -- part donc à gauche, et l'inverse pour la main gauche. Elles s'empilaient
+    -- au-dessus, faute de côté libre — sauf qu'un côté libre, elles en ont chacune
+    -- un : celui qui donne sur le vide, pas celui qui donne sur l'autre arme.
+    MainHandSlot = "LEFT", SecondaryHandSlot = "RIGHT",
 }
 
 --- Cet emplacement porte-t-il une arme ?
@@ -135,18 +132,15 @@ local function expectsEnchant(slotName, link)
     return true
 end
 
----@param slotName string
----@param link string
----@return boolean
-local function expectsVoidCore(slotName, link)
-    if not VOID_SLOTS[slotName] then return false end
-    if slotName == "SecondaryHandSlot" then return isWeapon(link) end
-    return true
-end
-
 -- =========================================================================
 --  Châsses
 -- =========================================================================
+
+--- Rang le plus haut qu'une étoile de métier sache dire. Sert d'étoile par défaut
+--- quand la pièce est enchantée sans que le rang se lise : la plupart des
+--- enchantements n'ont pas de rang du tout, et les montrer sans étoile les ferait
+--- passer pour incomplets.
+local MAX_ENCHANT_TIER = 5
 
 --- Nombre de châsses qu'un objet peut porter au maximum.
 ---
@@ -209,58 +203,74 @@ end
 --  Infobulle
 -- =========================================================================
 
---- Retire les échappements de couleur d'une ligne d'infobulle.
+--- Retire d'une ligne d'infobulle ce qui n'est pas du texte : les couleurs, et
+--- les icônes en ligne — l'étoile de rang d'un enchantement en est une, et elle a
+--- déjà été lue au moment où l'on nettoie (voir `enchantInfo`).
 ---@param value string
 ---@return string
 local function plain(value)
     value = value:gsub("|cn.-:(.-)|r", "%1")   -- couleurs nommées, forme récente
     value = value:gsub("|c%x%x%x%x%x%x%x%x", "")
+    value = value:gsub("|A.-|a", "")           -- icône d'atlas en ligne
+    value = value:gsub("|T.-|t", "")           -- texture en ligne
     return (value:gsub("|r", ""))
-end
-
---- La pièce porte-t-elle un noyau du vide ?
----
---- Le noyau ne se lit **ni dans le lien de l'objet, ni dans ses statistiques** :
---- il se manifeste par un effet nommé, que seule l'infobulle publie. On y
---- cherche donc son intitulé, `L["Void core marker"]`, en ignorant la casse et
---- les échappements de couleur.
----
---- C'est le seul endroit du module où une **chaîne traduite décide** d'un
---- affichage, et c'est un défaut assumé faute de mieux : il n'existe aucun
---- identifiant stable exposé côté objet. La conséquence est qu'une locale sans
---- intitulé juste montre l'emplacement en rouge à tort — d'où la clé isolée, à
---- corriger en un seul endroit.
----
---- `C_TooltipInfo` et non une infobulle cachée : il rend des **données**, donc
---- sans créer la moindre frame.
----@param unit string
----@param slotID integer
----@return boolean
-local function hasVoidCore(unit, slotID)
-    if not (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) then return false end
-
-    local data = C_TooltipInfo.GetInventoryItem(unit, slotID)
-    if not data then return false end
-
-    -- Les champs d'une ligne ne sont peuplés qu'après ce passage : sans lui,
-    -- `line.leftText` est absent et la boucle ne trouve jamais rien.
-    if TooltipUtil and TooltipUtil.SurfaceArgs then TooltipUtil.SurfaceArgs(data) end
-
-    local marker = strlower(L["Void core marker"])
-
-    for _, line in ipairs(data.lines or {}) do
-        local text = line.leftText
-        if text and strfind(strlower(plain(text)), marker, 1, true) then
-            return true
-        end
-    end
-
-    return false
 end
 
 -- =========================================================================
 --  Niveau d'objet et amélioration
 -- =========================================================================
+
+--- Type de ligne d'infobulle qui porte un enchantement permanent.
+---
+--- **Un type, pas une couleur ni un texte.** Le client marque cette ligne-là
+--- structurellement : elle porte son `enchantID` et, dans son texte, l'étoile de
+--- rang du métier. On la reconnaît donc sans lire un mot — la reconnaître au vert
+--- marcherait aussi, mais le vert sert également aux bonus d'ensemble.
+---
+--- Le nombre est relevé sur le client faute d'énumération publiée sous un nom
+--- stable ; on tente d'abord celle-ci, et on retombe sur la valeur relevée.
+local ENCHANT_LINE = (Enum and Enum.TooltipDataLineType
+                      and Enum.TooltipDataLineType.ItemEnchantmentPermanent) or 15
+
+--- L'enchantement porté par une pièce : le rang de son étoile de métier, et son
+--- intitulé. `nil` si la pièce n'est pas enchantée.
+---
+--- Le rang se lit dans le **nom de l'atlas** que le client glisse au bout de la
+--- ligne, `Professions-ChatIcon-Quality-Tier3`. Un nom d'atlas ne se traduit pas :
+--- c'est ce qui permet de lire le rang sans dépendre de la langue, là où le nom de
+--- l'enchantement en dépendrait.
+---
+--- L'intitulé, lui, est **le texte du client sans les échappements** — un
+--- enchantement n'a pas de lien d'objet, donc rien à tendre à une infobulle du
+--- client : c'est cette ligne-là ou rien.
+---
+--- Rend un rang de `0` quand la ligne existe sans étoile : la pièce **est**
+--- enchantée, on ne sait simplement pas à quel rang. L'appelant pose alors
+--- l'étoile la plus haute plutôt que rien — c'est le cas des enchantements sans
+--- rang, qui sont les plus nombreux et qui ne sont pas pour autant incomplets.
+---@param unit string
+---@param slotID integer
+---@return integer|nil tier
+---@return string|nil label
+local function enchantInfo(unit, slotID)
+    if not (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) then return nil end
+
+    local data = C_TooltipInfo.GetInventoryItem(unit, slotID)
+    if not data then return nil end
+
+    if TooltipUtil and TooltipUtil.SurfaceArgs then TooltipUtil.SurfaceArgs(data) end
+
+    for _, line in ipairs(data.lines or {}) do
+        if line.type == ENCHANT_LINE then
+            local text = line.leftText
+            if type(text) ~= "string" or U.IsSecret(text) then return 0, nil end
+
+            return tonumber(text:match("Quality%-Tier(%d)")) or 0, plain(text)
+        end
+    end
+
+    return nil
+end
 
 --- Identifiant d'enchantement porté par un lien d'objet, ou `nil`.
 --- Le lien s'écrit `item:<objet>:<enchantement>:…`, et le champ est vide — pas
@@ -305,20 +315,25 @@ local function itemLevel(unit, slotID, link)
     return level
 end
 
---- Rang d'amélioration, sous la forme « 6/8 ».
+--- Rang d'amélioration sous la forme « 6/8 », et la piste qui le porte.
+---
+--- La piste est rendue par son **identifiant**, pas par son intitulé : le client
+--- publie les deux, et seul l'identifiant survit à un changement de langue (voir
+--- `T.TrackColor`).
 ---@param link string
 ---@return string|nil text
 ---@return boolean maxed
+---@return number|nil trackID
 local function upgradeOf(link)
-    if not (C_Item and C_Item.GetItemUpgradeInfo) then return nil, false end
+    if not (C_Item and C_Item.GetItemUpgradeInfo) then return nil, false, nil end
 
     local info = C_Item.GetItemUpgradeInfo(link)
-    if not info then return nil, false end
+    if not info then return nil, false, nil end
 
     local current, max = info.currentLevel, info.maxLevel
-    if not (current and max and max > 0) then return nil, false end
+    if not (current and max and max > 0) then return nil, false, info.trackStringID end
 
-    return current .. "/" .. max, current >= max
+    return current .. "/" .. max, current >= max, info.trackStringID
 end
 
 -- =========================================================================
@@ -606,6 +621,238 @@ local function buildSlots(sheet)
     return #sheet.slots > 0
 end
 
+--- La première ligne de la colonne : le niveau d'objet et le rang d'amélioration,
+--- ensemble.
+---
+--- **Ensemble, et non l'un sur l'icône et l'autre à côté.** Ce sont deux mesures
+--- de la même chose — ce que vaut la pièce — et on les compare l'une par l'autre :
+--- un 289 au rang 6/6 ne se lit pas comme un 289 au rang 1/8, le second ayant
+--- encore de la marge. Séparés, il fallait porter l'œil à deux endroits pour
+--- répondre à une seule question.
+---
+--- **L'ordre s'inverse d'un côté à l'autre.** Le niveau se range toujours contre
+--- l'icône, le rang toujours vers l'extérieur : la colonne de gauche lit donc
+--- « (6/6) 289 » et celle de droite « 289 (6/6) ». C'est ce qui aligne les
+--- niveaux d'objet des deux colonnes contre le modèle, où l'œil les parcourt.
+---
+--- **La couleur est celle de la piste**, pas de la qualité de l'objet. Toutes les
+--- pièces de fin de saison sont épiques : la qualité ne distingue plus rien à ce
+--- stade, là où la piste dit exactement d'où vient la pièce. Faute de piste
+--- connue, on retombe sur la qualité (voir `T.TrackColor`).
+---@param mod table
+---@param slot table
+---@param unit string
+---@param link string
+---@return string|nil text
+---@return number|nil r, number|nil g, number|nil b
+local function levelLine(mod, slot, unit, link)
+    local level = mod:Get("showItemLevel") and itemLevel(unit, slot.id, link) or nil
+    local rank, _, trackID
+
+    if mod:Get("showUpgradeLevel") then
+        rank, _, trackID = upgradeOf(link)
+    end
+
+    if not (level or rank) then return nil end
+
+    local text
+    if level and rank then
+        text = (PLACEMENT[slot.name] == "LEFT")
+               and ("(" .. rank .. ") " .. level)
+               or  (level .. " (" .. rank .. ")")
+    elseif level then
+        text = tostring(level)
+    else
+        text = "(" .. rank .. ")"
+    end
+
+    local r, g, b = T.TrackColor(trackID)
+    if not r then
+        local quality = C_Item and C_Item.GetItemQualityByID
+                        and C_Item.GetItemQualityByID(link)
+        r, g, b = T.ItemQualityColor(quality)
+    end
+
+    return text, r, g, b
+end
+
+--- L'icône d'enchantement d'un emplacement : l'étoile de son rang, ou le
+--- grimoire éteint s'il n'y en a pas.
+---
+--- Le rang inconnu prend l'étoile la plus haute plutôt qu'aucune : la plupart des
+--- enchantements n'ont pas de rang du tout, et les montrer sans étoile les ferait
+--- passer pour incomplets.
+---@param unit string
+---@param slotID integer
+---@return BUI.SlotIcon
+local function enchantIcon(unit, slotID)
+    local tier, label = enchantInfo(unit, slotID)
+
+    if not tier then
+        return {
+            texture     = T.TEXTURE.ENCHANT_NONE,
+            desaturated = true,
+            title       = L["Enchant badge"],
+            hint        = L["No enchant hint"],
+        }
+    end
+
+    -- L'intitulé du client tel qu'il l'écrit, débarrassé de ses échappements :
+    -- c'est le seul texte qui existe pour un enchantement, faute de lien d'objet
+    -- à tendre à une infobulle.
+    local spec = { title = L["Enchant badge"], hint = label }
+
+    local atlas = T.EnchantTierAtlas(tier > 0 and tier or MAX_ENCHANT_TIER)
+    if atlas then
+        spec.atlas = atlas
+    else
+        -- Sans l'étoile, l'icône du métier **saturée** : elle ne dit plus le
+        -- rang, elle dit encore que la pièce est enchantée. C'est la moitié qui
+        -- compte.
+        spec.texture = T.TEXTURE.ENCHANT_NONE
+    end
+
+    return spec
+end
+
+-- =========================================================================
+--  Sertir une gemme depuis la fiche
+-- =========================================================================
+-- Cliquer une châsse ouvre la liste des gemmes du sac, et en choisir une la
+-- sertit. Trois gestes remplacés par deux, sur un chemin qu'on emprunte à chaque
+-- pièce qui change.
+--
+-- **Tout se fait pendant le traitement du clic, et c'est une contrainte du jeu,
+-- pas un choix.** Le sertissage est une action protégée : il n'est permis que
+-- pendant qu'un vrai clic est traité. On enchaîne donc l'ouverture du cadre de
+-- sertissage, la prise de la gemme, sa pose et la validation dans la même
+-- foulée — rien ne peut être différé, ni attendre un événement.
+--
+-- Chaque étape est isolée : si la validation est refusée, la gemme reste sur le
+-- curseur avec le cadre du client ouvert, et le geste s'achève à la main. C'est
+-- une dégradation, pas une panne.
+
+--- La liste de gemmes, construite au premier clic et jamais détruite.
+local picker
+
+--- Sertit une gemme d'un sac dans une châsse d'une pièce équipée.
+---@param slotID integer
+---@param socketIndex integer
+---@param bag integer
+---@param bagSlot integer
+local function socketGem(slotID, socketIndex, bag, bagSlot)
+    -- Le client refuse d'ouvrir son cadre de sertissage en combat, et le refus
+    -- laisserait une gemme sur le curseur.
+    if InCombatLockdown() then return end
+    if not (SocketInventoryItem and ClickSocketButton) then return end
+
+    local pickup = C_Container and C_Container.PickupContainerItem
+    if not pickup then return end
+
+    SocketInventoryItem(slotID)
+    pickup(bag, bagSlot)
+    ClickSocketButton(socketIndex)
+
+    if AcceptSockets then BUI.safecall(AcceptSockets) end
+end
+
+--- Les gemmes des sacs, prêtes à être proposées.
+---
+--- Un objet est une gemme si le **client** le range dans cette classe, pas si son
+--- nom y ressemble : `GetItemInfoInstant` rend la classe sans rien demander au
+--- serveur, et c'est la seule réponse qui vaille pour un objet qu'on n'a jamais
+--- survolé.
+---@param slotID integer
+---@param socketIndex integer
+---@return table entries
+local function bagGems(slotID, socketIndex)
+    local entries = {}
+
+    local container = C_Container
+    if not (container and container.GetContainerNumSlots
+            and container.GetContainerItemLink) then
+        return entries
+    end
+
+    local gemClass = (Enum and Enum.ItemClass and Enum.ItemClass.Gem) or 3
+    local icons    = (C_Item and C_Item.GetItemIconByID) or GetItemIcon
+
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+        for bagSlot = 1, container.GetContainerNumSlots(bag) or 0 do
+            local link = container.GetContainerItemLink(bag, bagSlot)
+
+            if link and C_Item and C_Item.GetItemInfoInstant then
+                local name, _, _, _, _, classID = C_Item.GetItemInfoInstant(link)
+                if classID == gemClass then
+                    entries[#entries + 1] = {
+                        link = link,
+                        name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(link)
+                               or name or link,
+                        icon = icons and icons(link),
+                        onChoose = function()
+                            socketGem(slotID, socketIndex, bag, bagSlot)
+                        end,
+                    }
+                end
+            end
+        end
+    end
+
+    return entries
+end
+
+--- Ouvre la liste des gemmes sur une châsse.
+---@param slotID integer
+---@param socketIndex integer
+---@param anchor table
+local function openGemPicker(slotID, socketIndex, anchor)
+    if not picker then
+        picker = W.ItemPicker()
+        if not picker then return end
+    end
+    picker:Open(bagGems(slotID, socketIndex), anchor)
+end
+
+--- Ajoute une icône par châsse : la gemme sertie, ou la châsse vide.
+---
+--- **Une par châsse, et non un compte.** Trois châsses dont une vide se lisent
+--- d'un coup d'œil quand on voit deux gemmes et un trou ; un « 2/3 » demande de
+--- savoir ce que valent les deux nombres.
+---@param info table
+---@param link string
+---@param unit string
+---@param slotID integer
+local function addGemIcons(info, link, unit, slotID)
+    local total = sockets(link)
+    if total <= 0 then return end
+
+    local readGem = (C_Item and C_Item.GetItemGem) or GetItemGem
+    local icons   = (C_Item and C_Item.GetItemIconByID) or GetItemIcon
+
+    -- Sertir ne se propose que sur **son propre** équipement : on ne touche pas
+    -- à celui qu'on inspecte, et le jeu ne le permettrait pas davantage.
+    local mine = unit == "player"
+
+    for index = 1, total do
+        local gemLink = readGem and select(2, readGem(link, index))
+        local texture = gemLink and icons and icons(gemLink)
+
+        info:AddIcon({
+            texture = texture or T.TEXTURE.EMPTY_SOCKET,
+
+            -- L'infobulle de la gemme quand il y en a une : ce qu'on veut savoir
+            -- devant elle est ce qu'elle apporte, et le client le dit mieux que
+            -- nous. Devant un trou il n'y a rien à demander au client.
+            link  = gemLink,
+            title = not gemLink and L["Empty socket"] or nil,
+            hint  = (not gemLink and mine) and L["Empty socket hint"] or nil,
+
+            onClick = mine and function(button)
+                openGemPicker(slotID, index, button)
+            end or nil,
+        })
+    end
+end
 --- Relit un emplacement et repeint son bandeau.
 ---@param mod table
 ---@param slot table
@@ -619,18 +866,9 @@ local function updateSlot(mod, slot, unit)
         return
     end
 
-    -- ---- niveau d'objet, sur l'icône -------------------------------------
-    if mod:Get("showItemLevel") then
-        local level = itemLevel(unit, slot.id, link)
-        if level then
-            local quality = C_Item and C_Item.GetItemQualityByID and C_Item.GetItemQualityByID(link)
-            info:SetLevel(tostring(level), T.ItemQualityColor(quality))
-        else
-            info:SetLevel(nil)
-        end
-    else
-        info:SetLevel(nil)
-    end
+    -- Le niveau d'objet ne vit plus **sur** l'icône : il ouvre la colonne, collé
+    -- au rang d'amélioration (voir `levelLine`).
+    info:SetLevel(nil)
 
     -- ---- pastilles, à côté de la case ------------------------------------
     -- Une pastille ne se pose que si la question se pose : une pièce sans châsse
@@ -639,29 +877,26 @@ local function updateSlot(mod, slot, unit)
     -- du bruit sur seize lignes.
     info:BeginBadges()
 
-    if mod:Get("showUpgradeLevel") then
-        local text, maxed = upgradeOf(link)
-        if text then
-            info:AddBadge(text, T.UpgradeColor(maxed, mod:Get("warnPartialUpgrade")))
-        end
-    end
-
-    if mod:Get("showEnchants") and expectsEnchant(slot.name, link) then
-        info:AddBadge(L["Enchant badge"], T.StatusColor(enchantOf(link) ~= nil))
-    end
-
-    if mod:Get("showGems") then
-        local total, filled = sockets(link)
-        if total > 0 then
-            info:AddBadge(L["Gem badge"], T.StatusColor(filled >= total))
-        end
-    end
-
-    if mod:Get("showVoidCore") and expectsVoidCore(slot.name, link) then
-        info:AddBadge(L["Void core badge"], T.StatusColor(hasVoidCore(unit, slot.id)))
-    end
+    local text, r, g, b = levelLine(mod, slot, unit, link)
+    if text then info:AddBadge(text, r, g, b) end
 
     info:EndBadges()
+
+    -- ---- rangée d'icônes -------------------------------------------------
+    -- L'enchantement d'abord, les gemmes ensuite, sur une seule rangée. Les mots
+    -- « Enchantement » et « Gemme » ont vécu ici : ils nommaient la question et
+    -- laissaient la couleur y répondre, ce qui obligeait à lire pour savoir de
+    -- quoi on parlait. Une étoile de rang et une gemme se reconnaissent sans être
+    -- lues, et disent en plus **laquelle** — ce qu'un mot ne disait pas.
+    info:BeginIcons()
+
+    if mod:Get("showEnchants") and expectsEnchant(slot.name, link) then
+        info:AddIcon(enchantIcon(unit, slot.id))
+    end
+
+    if mod:Get("showGems") then addGemIcons(info, link, unit, slot.id) end
+
+    info:EndIcons()
 end
 
 --- Vide les seize bandeaux d'une fiche.
@@ -834,13 +1069,6 @@ BUI:RegisterModule(MODULE, {
         showUpgradeLevel = false,
         showEnchants     = false,
         showGems         = false,
-        showVoidCore     = false,
-
-        -- Coché d'avance, contrairement aux cinq réglages ci-dessus : il ne
-        -- décide pas d'un affichage mais de la teinte de l'un d'eux. Allumer le
-        -- rang d'amélioration doit donc distinguer tout de suite ce qui est fini
-        -- de ce qui ne l'est pas — décocher ensuite est le geste rare.
-        warnPartialUpgrade = true,
 
         showBagItemLevel = false,
     },
@@ -860,17 +1088,6 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Show upgrade level tip"],
         },
         {
-            type     = "toggle",
-            key      = "warnPartialUpgrade",
-            text     = L["Warn partial upgrade"],
-            tooltip  = L["Warn partial upgrade tip"],
-            -- Sans rang affiché, il n'y a rien à teindre.
-            disabled = function()
-                local mod = BUI.Modules:Get(MODULE)
-                return not (mod and mod:Get("showUpgradeLevel"))
-            end,
-        },
-        {
             type    = "toggle",
             key     = "showEnchants",
             text    = L["Show enchants"],
@@ -881,12 +1098,6 @@ BUI:RegisterModule(MODULE, {
             key     = "showGems",
             text    = L["Show gems"],
             tooltip = L["Show gems tip"],
-        },
-        {
-            type    = "toggle",
-            key     = "showVoidCore",
-            text    = L["Show void core"],
-            tooltip = L["Show void core tip"],
         },
 
         { type = "header", text = L["Bags and bank"] },
