@@ -18,8 +18,24 @@ local ADDON, ns = ...
 local BUI = {}
 
 BUI.ADDON   = ADDON
-BUI.VERSION = (C_AddOns and C_AddOns.GetAddOnMetadata and C_AddOns.GetAddOnMetadata(ADDON, "Version"))
-              or "dev"
+--- Version affichée.
+---
+--- Le `.toc` porte `@project-version@`, que le packager remplace par le nom du
+--- tag au moment de construire l'archive. Une copie de travail n'étant jamais
+--- packagée, le client rend donc le **jeton tel quel** — une chaîne bien réelle,
+--- si bien que le repli n'avait aucune raison de se déclencher et que le jeton
+--- s'affichait en bas de la fenêtre.
+---
+--- Un jeton non remplacé se reconnaît à son arobase : aucun numéro de version
+--- n'en porte.
+local version = C_AddOns and C_AddOns.GetAddOnMetadata
+                and C_AddOns.GetAddOnMetadata(ADDON, "Version")
+
+if type(version) ~= "string" or version == "" or version:find("@", 1, true) then
+    version = "dev"
+end
+
+BUI.VERSION = version
 BUI.ns      = ns
 
 ns.BUI = BUI
