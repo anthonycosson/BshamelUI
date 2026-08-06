@@ -2,6 +2,11 @@
 
 ## Non publié
 
+### Modifié
+- **Ressource de classe** et **Barres d'action** perdent leur paragraphe
+  d'explication. Ce que fait chaque réglage est dans son infobulle, et ce que
+  fait la page se voit en cochant.
+
 ### Ajouté
 - **Une ligne à la connexion pour dire où sont les options.** Un addon dont tout
   est éteint à l'installation ne se manifeste nulle part : rien ne change à

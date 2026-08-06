@@ -233,11 +233,6 @@ BUI:RegisterLocale("enUS", {
     ["Cast on key down tip"] =
         "Whether an action goes off the moment the key goes down, or when it comes back up. "
         .. "Applies to every action bar, and to clicks as well as keys.",
-    ["Cast on key down notice"] =
-        "The game has its own default here, and other addons write the same setting. That is why "
-        .. "there are three choices and not a checkbox: \"Game default\" leaves the setting alone, "
-        .. "the other two force it either way. Turning this module off gives the game back the "
-        .. "value it had before.",
     ["Game default"]                   = "Game default",
     ["Key down"]                       = "Key down",
     ["Key up"]                         = "Key up",
@@ -840,11 +835,6 @@ BUI:RegisterLocale("enUS", {
 
     -- Ressource de classe (Modules/ClassResource.lua)
     ["Class resource"]                 = "Class resource",
-    ["Class resource notice"] =
-        "One square per point of the resource your specialisation counts: combo points, "
-        .. "holy power, chi, soul shards, arcane charges, essence, runes, or Maelstrom "
-        .. "Weapon stacks. The row picks the right one when you change specialisation, "
-        .. "and stays hidden on a character who has none.",
     ["Show resource bar"]              = "Show the class resource",
     ["Show resource bar tip"] =
         "Adds a row of squares that you place yourself. It replaces nothing: the game "

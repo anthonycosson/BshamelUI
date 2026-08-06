@@ -125,7 +125,6 @@ BUI:RegisterModule(MODULE, {
                 { value = "up",   label = L["Key up"] },
             },
         },
-        { type = "description", text = L["Cast on key down notice"] },
     },
 
     OnEnable = function(self)

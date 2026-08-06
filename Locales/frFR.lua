@@ -167,11 +167,6 @@ BUI:RegisterLocale("frFR", {
     ["Cast on key down tip"] =
         "Si l'action part au moment où la touche s'enfonce, ou quand elle remonte. Vaut pour "
         .. "toutes les barres d'action, et pour les clics comme pour les touches.",
-    ["Cast on key down notice"] =
-        "Le jeu a son propre défaut ici, et d'autres addons écrivent le même réglage. C'est "
-        .. "pourquoi il y a trois choix et non une case à cocher : « Défaut du jeu » ne touche "
-        .. "à rien, les deux autres forcent dans un sens ou dans l'autre. Éteindre ce module "
-        .. "rend au jeu la valeur qu'il avait avant.",
     ["Game default"]                   = "Défaut du jeu",
     ["Key down"]                       = "À l'enfoncement",
     ["Key up"]                         = "Au relâchement",
@@ -861,11 +856,6 @@ BUI:RegisterLocale("frFR", {
 
     -- Ressource de classe (Modules/ClassResource.lua)
     ["Class resource"]                 = "Ressource de classe",
-    ["Class resource notice"] =
-        "Une case par point de la ressource que compte votre spécialisation : points de "
-        .. "combo, puissance sacrée, chi, fragments d'âme, charges des arcanes, essence, "
-        .. "runes ou cumuls d'Arme-tempête. La rangée choisit la bonne quand vous changez "
-        .. "de spécialisation, et reste cachée sur un personnage qui n'en a aucune.",
     ["Show resource bar"]              = "Afficher la ressource de classe",
     ["Show resource bar tip"] =
         "Ajoute une rangée de cases que vous placez vous-même. Elle ne remplace rien : le "

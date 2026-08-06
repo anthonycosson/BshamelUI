@@ -434,7 +434,6 @@ BUI:RegisterModule(MODULE, {
     },
 
     options = {
-        { type = "description", text = L["Class resource notice"] },
 
         { type = "header", text = L["General"] },
         {
