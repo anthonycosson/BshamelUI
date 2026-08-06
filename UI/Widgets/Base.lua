@@ -221,6 +221,26 @@ local function rebuildBorder(border)
         return piece
     end
 
+    --- Décalage de la pièce du client par rapport au bord du cadre.
+    ---
+    --- **Ces textures ne sont pas posées à ras.** Le métal du client déborde du
+    --- cadre qu'il entoure — c'est ce qui lui donne son relief —, et chaque pièce
+    --- porte donc un décalage négatif. Les poser à zéro, comme on le faisait, les
+    --- rentre à l'intérieur : le contour se dessine alors en retrait, et le fond
+    --- du panneau reste visible tout autour de lui.
+    ---@param piece table
+    ---@return number x, number y
+    local function offsetOf(piece)
+        local _, _, _, x, y = piece:GetPoint(1)
+        return x or 0, y or 0
+    end
+
+    local cornerX,  cornerY  = offsetOf(botLeft)
+    local rCornerX, rCornerY = offsetOf(botRight)
+    local _,        bottomY  = offsetOf(bottom)
+    local leftX              = offsetOf(left)
+    local rightX             = offsetOf(right)
+
     -- **Les bords d'abord, les coins ensuite.** À calque égal, l'ordre de dessin
     -- est celui de la création. Or les bords sont plus épais que les coins — 16
     -- de large contre 14, relevé en jeu —, si bien qu'un bord dessiné après
@@ -229,41 +249,43 @@ local function rebuildBorder(border)
     --
     -- Les bords vont de bord à bord du cadre : ce sont les coins qui les
     -- recouvrent à leurs extrémités, comme le fait le client.
+    -- Le décalage vertical change de signe en haut : ce qui débordait vers le bas
+    -- doit déborder vers le haut.
     local bo = newPiece(bottom, false)
     bo:SetHeight(edgeH)
-    bo:SetPoint("BOTTOMLEFT",  border, "BOTTOMLEFT",  0, 0)
-    bo:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, 0)
+    bo:SetPoint("BOTTOMLEFT",  border, "BOTTOMLEFT",  0, bottomY)
+    bo:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, bottomY)
 
     local to = newPiece(bottom, true)
     to:SetHeight(edgeH)
-    to:SetPoint("TOPLEFT",  border, "TOPLEFT",  0, 0)
-    to:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
+    to:SetPoint("TOPLEFT",  border, "TOPLEFT",  0, -bottomY)
+    to:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, -bottomY)
 
     local le = newPiece(left, false)
     le:SetWidth(edgeW)
-    le:SetPoint("TOPLEFT",    border, "TOPLEFT",    0, 0)
-    le:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", 0, 0)
+    le:SetPoint("TOPLEFT",    border, "TOPLEFT",    leftX, 0)
+    le:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", leftX, 0)
 
     local ri = newPiece(right, false)
     ri:SetWidth(right:GetWidth())
-    ri:SetPoint("TOPRIGHT",    border, "TOPRIGHT",    0, 0)
-    ri:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, 0)
+    ri:SetPoint("TOPRIGHT",    border, "TOPRIGHT",    rightX, 0)
+    ri:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", rightX, 0)
 
     local bl = newPiece(botLeft,  false)
     bl:SetSize(cornerW, cornerH)
-    bl:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", 0, 0)
+    bl:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", cornerX, cornerY)
 
     local br = newPiece(botRight, false)
     br:SetSize(rightW, rightH)
-    br:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, 0)
+    br:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", rCornerX, rCornerY)
 
     local tl = newPiece(botLeft,  true)
     tl:SetSize(cornerW, cornerH)
-    tl:SetPoint("TOPLEFT", border, "TOPLEFT", 0, 0)
+    tl:SetPoint("TOPLEFT", border, "TOPLEFT", cornerX, -cornerY)
 
     local tr = newPiece(botRight, true)
     tr:SetSize(rightW, rightH)
-    tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
+    tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", rCornerX, -rCornerY)
 end
 
 --- Masque tout ce que le template pose lui-même : son remplissage et les huit
