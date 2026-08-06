@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.8.4 — 2026-08-06
+
 ### Modifié
 - **Le mode aperçu se scinde en deux, chacun dans sa section.** Un seul
   interrupteur montrait tout ce qui ne se voit qu'en combat : on l'allumait pour
