@@ -23,16 +23,9 @@ local MODULE = "CombatLog"
 
 local CVAR_ADVANCED = "advancedCombatLogging"
 
---- Avons-nous allumé la journalisation nous-mêmes ? On n'éteint que dans ce
---- cas : couper une journalisation lancée à la main serait défaire le geste de
---- quelqu'un d'autre.
-local loggingStarted = false
+--- Valeur de la CVar relevée avant qu'on y touche. `nil` veut dire « on n'a rien
+--- changé », ce qui n'est pas la même chose que « elle était vide ».
 local savedAdvanced
-
---- Avons-nous déjà signalé qu'une journalisation étrangère était en cours ? Les
---- événements de zone arrivent par deux ou trois à l'entrée d'un raid, et la même
---- remarque répétée trois fois se lit comme un bug.
-local toldForeign = false
 
 --- Type de l'instance courante, ou `nil` en extérieur.
 ---@return string|nil
@@ -48,51 +41,43 @@ end
 --- Le fichier de journal est destiné à être déposé sur un site d'analyse : ce
 --- qui compte pour qui l'envoie n'est pas que la journalisation soit lancée,
 --- c'est de le **savoir**. Chaque bascule laisse donc une ligne dans le chat.
+---
+--- **On compare à l'état réel du client**, et non à un souvenir de ce qu'on a
+--- fait. La version précédente ne coupait que ce qu'elle avait elle-même
+--- allumé, pour ne pas défaire un geste manuel — sauf que ce souvenir ne
+--- survit ni à une reconnexion ni à un `/reload` : entré en donjon puis
+--- rechargé, on ressortait avec la journalisation toujours en cours, et rien ne
+--- le disait. Le réglage promet « en donjon, oui ; dehors, non » : il ne peut
+--- pas le tenir en s'interdisant de couper.
 ---@param mod table
 ---@return boolean spoke  a-t-on écrit quelque chose ?
 local function applyLogging(mod)
+    if not LoggingCombat then return false end
+
     -- **Le seuil est la porte de l'instance**, pas le départ de la clé. Une clé
     -- se pose après être entré, et souvent après un premier pack : tout ce qui
     -- précède manquait au fichier. Le type d'instance suffit donc à décider —
     -- « raid » ou « party » —, et il est vrai dès le chargement de la zone.
     local kind = instanceType()
     local want = mod:Get("autoCombatLog") and (kind == "raid" or kind == "party")
+    local on   = LoggingCombat() and true or false
+
+    if want == on then return false end
 
     if want then
-        if loggingStarted then return false end
-
-        -- Déjà allumée à la main : on la laisse telle quelle, et surtout on ne
-        -- s'en déclare pas propriétaire. Sans ce test, `loggingStarted` passait à
-        -- vrai pour une journalisation qu'on n'avait pas lancée — et on la
-        -- coupait en sortant du raid, défaisant le geste de quelqu'un d'autre.
-        --
-        -- On le dit quand même : ne rien afficher laisserait croire que le
-        -- réglage n'a pas pris, alors que le combat s'enregistre bel et bien.
-        if LoggingCombat and LoggingCombat() then
-            if toldForeign then return false end
-            toldForeign = true
-            mod:Print(L["Combat log already on"])
-            return true
-        end
-
         if savedAdvanced == nil then savedAdvanced = U.GetCVar(CVAR_ADVANCED) end
         U.SetCVar(CVAR_ADVANCED, "1")
 
-        if LoggingCombat then LoggingCombat(true) end
-        loggingStarted = true
+        LoggingCombat(true)
         mod:Print(L["Combat log started"])
         return true
     end
 
-    toldForeign = false
-
-    if not loggingStarted then return false end
-    if LoggingCombat then LoggingCombat(false) end
+    LoggingCombat(false)
     if savedAdvanced ~= nil then
         U.SetCVar(CVAR_ADVANCED, savedAdvanced)
         savedAdvanced = nil
     end
-    loggingStarted = false
     mod:Print(L["Combat log stopped"])
     return true
 end
@@ -142,15 +127,14 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("CHALLENGE_MODE_RESET",     zoned)
     end,
 
+    -- Éteindre le module rend la CVar, et coupe la journalisation si elle tourne
+    -- encore : tant qu'il était allumé, c'est lui qui en décidait.
     OnDisable = function()
-        if not loggingStarted then return end
-
-        if LoggingCombat then LoggingCombat(false) end
+        if LoggingCombat and LoggingCombat() then LoggingCombat(false) end
         if savedAdvanced ~= nil then
             U.SetCVar(CVAR_ADVANCED, savedAdvanced)
             savedAdvanced = nil
         end
-        loggingStarted = false
     end,
 
     OnSettingChanged = function(self)
