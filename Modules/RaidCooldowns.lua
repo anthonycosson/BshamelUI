@@ -693,7 +693,6 @@ BUI:RegisterModule(MODULE, {
             tooltip  = L["Hide lust debuff tip"],
             disabled = requires("lustTracker"),
         },
-        { type = "description", text = L["Lust notice"] },
     },
 
     OnEnable = function(self)

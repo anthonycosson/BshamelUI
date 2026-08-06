@@ -391,10 +391,6 @@ BUI:RegisterLocale("enUS", {
     ["Hide lust debuff tip"] =
         "Takes the lockout debuff out of your debuff row, since the icon above already counts it "
         .. "down. Turning this off puts it back.",
-    ["Lust notice"] =
-        "Every class that can give one leaves its own debuff — shaman, mage, hunter pet, evoker — "
-        .. "and the tracker follows them all. The icon is the shaman's, whoever cast it: what it "
-        .. "says is that a bloodlust went out, not which one.",
 
     -- Module RaidPanel
     ["Group tools"]                    = "Group tools",

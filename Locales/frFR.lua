@@ -386,11 +386,6 @@ BUI:RegisterLocale("frFR", {
     ["Hide lust debuff tip"] =
         "Retire le débuff d'interdiction de votre rangée d'affaiblissements, puisque l'icône "
         .. "ci-dessus le décompte déjà. Décocher le remet.",
-    ["Lust notice"] =
-        "Chaque classe qui peut en donner une laisse son propre débuff — chaman, mage, familier "
-        .. "de chasseur, évocateur — et le suivi les reconnaît tous. L'icône est celle du chaman, "
-        .. "quelle que soit la classe qui l'a lancée : ce qu'elle dit est qu'une BL est partie, "
-        .. "pas laquelle.",
 
     -- Module RaidPanel
     ["Group tools"]                    = "Outils de groupe",
