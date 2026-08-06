@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.8.2 — 2026-08-06
+
 ### Modifié
 - **Ressource de classe** et **Barres d'action** perdent leur paragraphe
   d'explication. Ce que fait chaque réglage est dans son infobulle, et ce que
