@@ -227,6 +227,34 @@ local function rebuildBorder(border)
         return piece
     end
 
+    -- **Les bords d'abord, les coins ensuite.** À calque égal, l'ordre de dessin
+    -- est celui de la création. Or les bords sont plus épais que les coins — 16
+    -- de large contre 14, relevé en jeu —, si bien qu'un bord dessiné après
+    -- mange le raccord du coin qu'il touche. C'est l'incohérence qu'on voyait
+    -- aux angles. Les coins par-dessus, le raccord est de nouveau à eux.
+    --
+    -- Les bords vont de bord à bord du cadre : ce sont les coins qui les
+    -- recouvrent à leurs extrémités, comme le fait le client.
+    local bo = newPiece(bottom, false)
+    bo:SetHeight(edgeH)
+    bo:SetPoint("BOTTOMLEFT",  border, "BOTTOMLEFT",  0, 0)
+    bo:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, 0)
+
+    local to = newPiece(bottom, true)
+    to:SetHeight(edgeH)
+    to:SetPoint("TOPLEFT",  border, "TOPLEFT",  0, 0)
+    to:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
+
+    local le = newPiece(left, false)
+    le:SetWidth(edgeW)
+    le:SetPoint("TOPLEFT",    border, "TOPLEFT",    0, 0)
+    le:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", 0, 0)
+
+    local ri = newPiece(right, false)
+    ri:SetWidth(right:GetWidth())
+    ri:SetPoint("TOPRIGHT",    border, "TOPRIGHT",    0, 0)
+    ri:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, 0)
+
     local bl = newPiece(botLeft,  false)
     bl:SetSize(cornerW, cornerH)
     bl:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", 0, 0)
@@ -242,26 +270,6 @@ local function rebuildBorder(border)
     local tr = newPiece(botRight, true)
     tr:SetSize(rightW, rightH)
     tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
-
-    local bo = newPiece(bottom, false)
-    bo:SetHeight(edgeH)
-    bo:SetPoint("BOTTOMLEFT",  bl, "BOTTOMRIGHT", 0, 0)
-    bo:SetPoint("BOTTOMRIGHT", br, "BOTTOMLEFT",  0, 0)
-
-    local to = newPiece(bottom, true)
-    to:SetHeight(edgeH)
-    to:SetPoint("TOPLEFT",  tl, "TOPRIGHT", 0, 0)
-    to:SetPoint("TOPRIGHT", tr, "TOPLEFT",  0, 0)
-
-    local le = newPiece(left, false)
-    le:SetWidth(edgeW)
-    le:SetPoint("TOPLEFT",    tl, "BOTTOMLEFT", 0, 0)
-    le:SetPoint("BOTTOMLEFT", bl, "TOPLEFT",    0, 0)
-
-    local ri = newPiece(right, false)
-    ri:SetWidth(right:GetWidth())
-    ri:SetPoint("TOPRIGHT",    tr, "BOTTOMRIGHT", 0, 0)
-    ri:SetPoint("BOTTOMRIGHT", br, "TOPRIGHT",    0, 0)
 end
 
 --- Contour d'un panneau : **celui de la fenêtre d'options**, sans sa barre de
