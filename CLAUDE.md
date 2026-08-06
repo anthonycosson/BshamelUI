@@ -149,6 +149,7 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
 | Ajouter un événement global | `BUI:RegisterEvent` dans `Core/Init.lua` |
 | Migrer un format de réglage | `DB:RunMigrations` dans `Core/DB.lua` |
 | Piège d'API rencontré | le noter dans `dev/docs/API_NOTES.md` |
+| Un module qui ne tient plus dans un fichier | le couper entre ce qui **décrit** et ce qui **agit**, la page d'abord dans le `.toc` — voir `Modules/NameplatesPage.lua` |
 
 ## Environnement de développement
 

@@ -2,6 +2,19 @@
 
 ## Non publié
 
+### Interne
+- **La page des barres d'infos est séparée de son moteur.** Le fichier d'un seul
+  tenant comptait cent quatre-vingt-quinze variables locales sur les deux cents
+  que le Lua du client autorise : chaque ajout se payait d'une chasse à la
+  variable, et franchir la borne n'aurait pas cassé une ligne — cela aurait
+  empêché le fichier entier de se compiler, et fait disparaître le module du
+  menu.
+
+  La coupure suit la frontière qui existait déjà : ce qui **décrit** d'un côté —
+  sections livrées, noms de CVars, fabriques de contrôles, liste des options —
+  ce qui **agit** de l'autre. Sept entrées passent de l'une à l'autre, et rien de
+  plus. Rien ne change pour le joueur : la page est identique, ligne pour ligne.
+
 ## 0.9.1 — 2026-08-07
 
 ### Corrigé

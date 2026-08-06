@@ -94,6 +94,10 @@ Modules\Character.lua
 Modules\ActionBars.lua
 Modules\UnitFrames.lua
 Modules\ClassResource.lua
+# Les barres d'infos tiennent en deux fichiers : ce que la page déclare, puis le
+# moteur qui agit. La page charge d'abord — le moteur relit ce qu'elle publie, et
+# `RegisterModule` réclame la liste des options au moment où il s'exécute.
+Modules\NameplatesPage.lua
 Modules\Nameplates.lua
 Modules\CooldownManager.lua
 Modules\Windows.lua
