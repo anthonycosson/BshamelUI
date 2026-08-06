@@ -1,77 +1,127 @@
 # Page CurseForge
 
 Texte à coller dans le projet CurseForge. À relire à chaque version qui ajoute
-un module — une page qui décrit des fonctionnalités absentes se paie en
-commentaires.
+ou retire un module — une page qui décrit des fonctionnalités absentes se paie
+en commentaires.
 
-L'anglais est la version de référence : c'est la langue de la modération et de
-la majorité des visiteurs. Le français est fourni pour la section
-« Description » en second, si tu veux la doubler.
+**L'anglais passe en premier dans la description**, et ce n'est pas une
+préférence : c'est la langue de la modération et de la très grande majorité des
+visiteurs. Une fiche qui s'ouvre en français en perd une bonne moitié à la
+première ligne. Le français suit, entier, pour ceux qui le cherchent.
 
 ---
 
 ## Summary (champ court, obligatoire)
 
 ```
-A hand-made, dependency-free quality-of-life suite that looks and feels like the default Blizzard UI.
-```
-
-Variante plus concrète si tu préfères annoncer le contenu réel :
-
-```
-Lightweight quality-of-life addon built on Blizzard's own UI templates. Quest automation, with more modules on the way.
+Fixes the small things that annoy you about Blizzard's UI — and touches nothing until you tick a box.
 ```
 
 ---
 
-## Description (anglais)
+## Description
+
+Coller les deux sections l'une après l'autre, l'anglais d'abord.
 
 ```
-## Bshamel UI
+Bshamel UI doesn't replace your interface — it fixes, one setting at a time, the
+small things that annoy you about Blizzard's, and touches nothing until you tick
+a box.
 
-Bshamel UI is a quality-of-life suite for retail World of Warcraft, built from
-scratch as a single addon with **no dependencies** — no Ace3, no embedded
-libraries, nothing to install alongside it.
+## Why you might keep it
 
-It is designed around one idea: **the game already has a good-looking
-interface**. Rather than replacing it, Bshamel UI builds on Blizzard's own
-frame templates, font objects and colours. The options window looks like it
-ships with the game, and when Blizzard restyles the UI in a patch, this addon
-follows along instead of looking dated.
+- **Nothing is on by default.** Installing it changes exactly nothing. Every
+  setting ships switched off, and the build fails if a single one doesn't — it
+  is checked, not promised.
+- **Turning a module off makes it undetectable.** Every frame it hid comes back,
+  every texture it replaced is restored, every console variable it wrote is put
+  back the way it was.
+- **One folder, no libraries, no dependencies.** Nothing to install alongside,
+  nothing that breaks when another addon updates.
+- **It looks like the game.** Colours, fonts and borders are the client's own —
+  the options window is meant to pass for one of Blizzard's.
 
-### Current features
+## What's inside
 
-**Quest**
-- Auto-accept quests from NPCs, quest items and zone triggers
-- Auto-turn-in completed quests
-- Stops automatically when a quest offers a real choice of rewards — it will
-  never pick one for you
-- Optional filter to leave low-level (grey) quests alone
-- Hold a configurable modifier key to temporarily suspend automation
+**Interface**
+Dark mode for action bars, unit frames, auras, cast bar and tooltip · class
+colours, specialization icons, and larger party or arena frames · nameplates you
+can resize, recolour by NPC type or by threat, and give their own aura rows · a
+class resource bar with colour thresholds and a proc glow · a character sheet
+that finally shows item level, upgrade track, enchant rank and gems on every
+slot.
 
-### Everything else
+**Quality of life**
+Auto-accept and auto-turn-in quests, with a modifier key to suspend it · sell
+junk and repair at every merchant · item level on every bag and bank slot · chat
+history kept across sessions, a copy window, drag-to-resize · a teleport menu
+gathering your hearthstones and every dungeon portal you own · skip cinematics,
+hide talking heads · answer !keys in guild and group chat · move and rescale the
+game's own windows.
 
-- **One window for everything** — `/bui` opens a categorised options panel.
-  Also reachable from the addon compartment next to the minimap, and from the
-  game's own Options menu.
-- **Per-character profiles** — each character picks which profile it uses;
-  settings are shared or separate as you like.
-- **Every module can be switched off** individually, and turning one off leaves
-  no trace: the interface goes back exactly as Blizzard shipped it.
-- **English and French**, with more languages easy to add.
-- **Lightweight** — nothing is built until it is needed. Logging in without
-  opening the options creates no interface frames at all.
+**Mythic+ and raid**
+The +2 and +3 thresholds drawn on the game's own timer, boss split times, deaths
+· battle resurrection charges and bloodlust cooldown as two small trackers ·
+world markers and a pull timer · combat logging that starts at the instance door
+and stops when you leave.
 
-### Roadmap
+## Requirements
 
-More modules are planned across three categories: General, Quality of Life, and
-Mythic+ / Raid. This is an early release; the foundation is done and modules
-will land steadily.
+Retail only, 12.0.7 and above. English and French.
 
-### Feedback
+## Feedback
 
 Bug reports and suggestions are welcome. When reporting a Lua error, please
 include the full error text — BugSack makes this easy.
+
+---
+
+Bshamel UI ne remplace pas votre interface — il répare, réglage par réglage, les
+petites choses qui vous agacent dans celle de Blizzard, et ne touche à rien tant
+que vous ne l'avez pas coché.
+
+## Pourquoi vous pourriez le garder
+
+- **Rien n'est allumé par défaut.** L'installer ne change strictement rien.
+  Chaque réglage est livré éteint, et la construction échoue si un seul ne l'est
+  pas — c'est vérifié, pas promis.
+- **Éteindre un module le rend indétectable.** Chaque cadre masqué revient,
+  chaque texture remplacée est rendue, chaque variable de console écrite
+  retrouve sa valeur.
+- **Un seul dossier, aucune bibliothèque, aucune dépendance.** Rien à installer
+  à côté, rien qui casse quand un autre addon se met à jour.
+- **Il ressemble au jeu.** Couleurs, polices et bordures sont celles du client —
+  la fenêtre d'options est faite pour passer pour une de Blizzard.
+
+## Ce qu'il contient
+
+**Interface**
+Mode sombre pour les barres d'action, les cadres d'unité, les auras, la barre
+d'incantation et l'infobulle · couleurs de classe, icônes de spécialisation et
+agrandissement des cadres de groupe ou d'arène · plaques redimensionnables,
+colorables par type de PNJ ou par menace, avec leurs propres rangées d'auras ·
+une barre de ressource de classe à paliers de couleur et effet brillant · une
+fiche de personnage qui affiche enfin niveau d'objet, piste d'amélioration, rang
+d'enchantement et gemmes sur chaque emplacement.
+
+**Qualité de vie**
+Acceptation et rendu automatiques des quêtes, avec une touche pour suspendre ·
+vente de la camelote et réparation à chaque marchand · niveau d'objet sur chaque
+case de sac et de banque · historique du chat conservé, fenêtre de copie,
+redimensionnement à la souris · un menu de téléportation réunissant vos pierres
+de foyer et tous les portails de donjon que vous possédez · cinématiques
+passées, têtes parlantes masquées · réponse automatique aux !keys · les fenêtres
+du jeu déplaçables et redimensionnables.
+
+**Mythique+ et raid**
+Les paliers +2 et +3 dessinés sur le chrono du jeu, les temps de boss, les morts
+· les charges de résurrection de combat et le temps de recharge de la Furie
+sanguinaire en deux petits suivis · marqueurs de zone et minuteur de pull ·
+journalisation qui démarre à la porte de l'instance et s'arrête en sortant.
+
+## Prérequis
+
+Retail uniquement, 12.0.7 et au-delà. Anglais et français.
 
 ---
 
@@ -81,75 +131,40 @@ endorsed by Blizzard Entertainment, Inc.
 
 ---
 
-## Description (français)
-
-```
-## Bshamel UI
-
-Bshamel UI est une suite de confort pour World of Warcraft retail, écrite de
-zéro en un seul addon, **sans aucune dépendance** — pas d'Ace3, pas de
-bibliothèque embarquée, rien à installer à côté.
-
-Le parti pris est simple : **l'interface du jeu est déjà réussie**. Plutôt que
-de la remplacer, Bshamel UI s'appuie sur les cadres, les polices et les couleurs
-de Blizzard. La fenêtre d'options a l'air de faire partie du jeu, et quand
-Blizzard retouche son interface à un patch, l'addon suit au lieu de vieillir.
-
-### Fonctionnalités actuelles
-
-**Quête**
-- Acceptation automatique des quêtes des PNJ, des objets et des déclencheurs de zone
-- Rendu automatique des quêtes terminées
-- S'arrête net dès qu'une quête propose un vrai choix de récompense : elle ne
-  choisira jamais à votre place
-- Filtre facultatif pour ignorer les quêtes grises
-- Une touche configurable, maintenue, suspend temporairement l'automatisation
-
-### Le reste
-
-- **Une seule fenêtre** — `/bui` ouvre un panneau d'options rangé par
-  catégories. Accessible aussi depuis le compartiment d'addons près de la
-  minicarte et depuis les options du jeu.
-- **Profils par personnage** — chaque personnage choisit son profil ; les
-  réglages sont partagés ou séparés selon vos envies.
-- **Chaque module se désactive** indépendamment, et l'éteindre ne laisse aucune
-  trace : l'interface revient exactement telle que Blizzard l'a livrée.
-- **Français et anglais**, d'autres langues faciles à ajouter.
-- **Léger** — rien n'est construit avant d'être nécessaire. Se connecter sans
-  ouvrir les options ne crée aucune frame d'interface.
-
-### À venir
-
-D'autres modules sont prévus dans trois catégories : Général, Confort (QoL) et
-Mythique+ / Raid. C'est une première version : les fondations sont posées, les
-modules arriveront régulièrement.
-
-### Retours
-
-Les rapports de bug et les suggestions sont bienvenus. Pour une erreur Lua,
-merci de joindre le texte complet — BugSack le rend facile à récupérer.
-
----
-
-Bshamel UI est un addon non officiel. Il n'est ni créé, ni affilié, ni soutenu
-par Blizzard Entertainment, Inc.
-```
-
----
-
 ## Métadonnées du projet
 
 | Champ | Valeur |
 |---|---|
 | Nom | Bshamel UI |
-| Catégories suggérées | *Quests & Leveling*, *Miscellaneous* |
 | Licence | All Rights Reserved (option « Custom License », coller `license.txt`) |
 | Source | l'URL du dépôt GitLab, si tu veux le rendre public |
 | Issues | l'URL des issues GitLab |
 
-## À faire avant de soumettre
+### Catégories
 
-- [ ] Un logo (400×400 minimum). C'est bloquant pour la modération.
-- [ ] Le premier zip, produit par `bash dev/packager/release.sh -d -o -r "$PWD/dev/build"`.
-- [ ] Une capture d'écran de la fenêtre d'options — c'est ce qui décide un
-      visiteur, bien plus que le texte.
+C'est le premier levier de diffusion, avant le texte : un visiteur qui filtre
+par catégorie ne voit jamais un addon qui n'y est pas rangé.
+
+Aujourd'hui : *HUDs*, *Unit Frames*, *Raid Frames*, *Combat*. Elles ne couvrent
+qu'un quart de ce que fait l'addon. À ajouter, chacune correspondant à un module
+réel et non à une intention :
+
+| Catégorie | Ce qui la justifie |
+|---|---|
+| *Miscellaneous* | le fourre-tout des suites de confort — le rayon où l'on cherche ce genre d'addon |
+| *Quests & Leveling* | acceptation et rendu automatiques |
+| *Bags & Inventory* | niveau d'objet sur les cases, vente de la camelote |
+| *Map & Minimap* | bouton de minicarte, tiroir d'addons |
+| *Chat & Communication* | historique, copie, couleurs de canal |
+| *Buffs & Debuffs* | rangées d'auras des plaques, suivi de la Furie sanguinaire |
+| *Auction & Economy* | filtre d'extension à l'hôtel des ventes, réparation automatique |
+
+## À faire à chaque publication
+
+- [ ] Recopier la description si un module a été ajouté ou retiré.
+- [ ] Vérifier que la première capture de la galerie est celle qui vend le
+      mieux — c'est la vignette, et c'est elle qui décide du clic. La fiche de
+      personnage enrichie et le menu de téléportation sont les deux qui se
+      montrent le mieux ; une fenêtre d'options vide n'a jamais convaincu
+      personne.
+- [ ] Une ligne de version dans les notes de publication, reprise du CHANGELOG.
