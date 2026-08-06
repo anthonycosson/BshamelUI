@@ -1463,8 +1463,15 @@ function T.CopyTexture(piece, source, flip)
         -- Les huit valeurs sont les quatre coins, dans l'ordre haut-gauche,
         -- bas-gauche, haut-droit, bas-droit. Un retournement vertical échange
         -- chaque coin avec celui qui est sous lui.
+        -- **Sauf si elle se répète.** Une texture en répétition tire ses
+        -- coordonnées de sa taille : lui en imposer ne la retourne pas, cela
+        -- casse sa répétition. Les bords d'un contour se répètent, les coins non
+        -- — c'est pourquoi seuls les coins se retournent proprement.
+        local tiles = (source.GetHorizTile and source:GetHorizTile())
+                      or (source.GetVertTile and source:GetVertTile())
+
         local ulx, uly, llx, lly, urx, ury, lrx, lry = source:GetTexCoord()
-        if ulx then
+        if ulx and not tiles then
             if flip then
                 piece:SetTexCoord(llx, lly, ulx, uly, lrx, lry, urx, ury)
             else

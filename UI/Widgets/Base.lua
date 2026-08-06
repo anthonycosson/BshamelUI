@@ -252,7 +252,12 @@ local function rebuildBorder(border)
     bo:SetPoint("BOTTOMLEFT",  border, "BOTTOMLEFT",  0, -bleed)
     bo:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, -bleed)
 
-    local to = newPiece(bottom, true)
+    -- **Le bord haut n'est pas retourné.** Une texture qui se répète tire ses
+    -- coordonnées de sa taille, et ignore donc celles qu'on lui impose : le
+    -- retournement était perdu, et la découpe posée par-dessus brouillait la
+    -- répétition. Un bord droit de neuf pixels n'a de toute façon presque pas de
+    -- sens de lecture — les coins, eux, en ont un, et eux ne se répètent pas.
+    local to = newPiece(bottom, false)
     to:SetHeight(edgeH)
     to:SetPoint("TOPLEFT",  border, "TOPLEFT",  0, bleed)
     to:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, bleed)
