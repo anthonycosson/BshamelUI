@@ -2,6 +2,12 @@
 
 ## Non publié
 
+### Ajouté
+- **Une ligne à la connexion pour dire où sont les options.** Un addon dont tout
+  est éteint à l'installation ne se manifeste nulle part : rien ne change à
+  l'écran, et rien n'indique par où l'ouvrir. C'est le seul message que l'addon
+  écrive de lui-même.
+
 ## 0.8.1 — 2026-08-06
 
 ### Modifié

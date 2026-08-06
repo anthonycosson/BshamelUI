@@ -28,6 +28,10 @@ BUI:RegisterLocale("enUS", {
     ["Yes"]                     = "Yes",
     ["Cancel"]                  = "Cancel",
     ["Open Bshamel UI"]         = "Open Bshamel UI",
+    -- Écrit une fois à la connexion. La commande y est en clair : c'est la seule
+    -- chose que le joueur ait besoin de retenir, et l'addon ne se manifeste
+    -- nulle part ailleurs tant qu'il n'a rien coché.
+    ["Login hint"]              = "Type /bui to open the options.",
     ["Cannot open in combat"]   = "The options window cannot be opened during combat.",
     ["Module disabled tooltip"] = "This module is disabled.",
     ["Version"]                 = "Version",

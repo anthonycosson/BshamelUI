@@ -261,6 +261,15 @@ BUI:RegisterEventOnce("PLAYER_LOGIN", function()
     for name, mod in pairs(registry) do
         if mod:Get("enabled") then BUI:EnableModule(name) end
     end
+
+    -- **Une ligne, et la seule que l'addon écrive de lui-même.** Un addon dont
+    -- tout est éteint à l'installation ne se manifeste nulle part : rien ne
+    -- change à l'écran, et le joueur qui vient de le télécharger n'a aucun moyen
+    -- de deviner par où l'ouvrir. Cette ligne est le seul endroit où le dire.
+    --
+    -- Après le démarrage des modules, pour qu'elle arrive après ce qu'ils
+    -- auraient à dire eux-mêmes, et non au milieu.
+    BUI:Print(L["Login hint"])
 end)
 
 BUI:RegisterEvent("PLAYER_REGEN_ENABLED", function()
