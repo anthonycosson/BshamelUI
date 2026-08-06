@@ -61,15 +61,24 @@ end
 ---
 --- Le titre n'est plus tronqué non plus : il ne cédait sa fin que pour laisser
 --- de la place au filet.
+---
+--- `indent` le range **sous** le titre précédent, au même retrait que les
+--- sous-options. C'est ce qui reste pour dire la subordination depuis que les
+--- filets sont partis, et c'est le vocabulaire que la page emploie déjà partout
+--- ailleurs : ce qui dépend de ce qui est au-dessus est décalé.
 ---@param parent table
 ---@param label string
+---@param indent? boolean
 ---@return table
-function W.SectionHeader(parent, label)
+function W.SectionHeader(parent, label, indent)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetHeight(T.SIZE.SECTION_H)
 
+    local left = T.SIZE.LABEL_INDENT
+    if indent then left = left + T.SIZE.LABEL_SUB_INDENT end
+
     local text = frame:CreateFontString(nil, "ARTWORK", T.FONT.SECTION)
-    text:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", T.SIZE.LABEL_INDENT, 2)
+    text:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", left, 2)
     text:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -T.SIZE.LABEL_INDENT, 2)
     text:SetJustifyH("LEFT")
     text:SetWordWrap(false)

@@ -122,6 +122,10 @@ local LIVE = {
 
     colors     = true,
     threat     = true,
+
+    -- Quelles unités adverses portent une plaque, par contexte. N'écrit que des
+    -- CVars du client : rien à valider sur les plaques elles-mêmes.
+    enemies    = true,
     overlap    = true,    -- le chevauchement des plaques entre elles
 
     -- La distance, endormie quand la page s'est resserrée sur la liste voulue.
@@ -136,10 +140,6 @@ local LIVE = {
 --- seul moyen honnête d'annoncer une section qui ne tient pas sa promesse, et il
 --- resservira.
 local AURAS_PAUSED = false
-
-local function aurasPaused()
-    return AURAS_PAUSED
-end
 
 --- Une section a-t-elle besoin des plaques elles-mêmes ?
 ---
@@ -209,6 +209,34 @@ local function isForbidden(frame)
     return not ok or forbidden == true
 end
 
+--- L'unité que porte une plaque, par les deux chemins que le client publie.
+---
+--- `namePlateUnitToken` est celui que tout le monde cite, et **il est vide sur ce
+--- client** : treize plaques à l'écran, treize champs `nil`, une seule plaque
+--- suivie — celle qu'une annonce venait de nous donner. Tout ce que le module
+--- pose plaque par plaque en dépendait : les aperçus n'apparaissaient que sur
+--- une plaque, ne s'effaçaient jamais de celles qu'on ne suivait plus, et leur
+--- animation se figeait dès que la plaque suivie changeait de main.
+---
+--- Le second chemin est le cadre d'unité, que le client remplit toujours — c'est
+--- déjà celui qu'emploie le hook des couleurs de nom, et il n'a jamais manqué.
+---@param plate table|nil
+---@return string|nil
+local function plateUnit(plate)
+    if type(plate) ~= "table" then return nil end
+
+    local unit = plate.namePlateUnitToken
+    if type(unit) == "string" then return unit end
+
+    local frame = plate.UnitFrame
+    if type(frame) ~= "table" or isForbidden(frame) then return nil end
+
+    unit = frame.unit or frame.displayedUnit
+    if type(unit) == "string" then return unit end
+
+    return nil
+end
+
 ---@param plate table|nil
 ---@return table|nil
 local function unitFrameOf(plate)
@@ -228,17 +256,25 @@ end
 --- La plaque personnelle est écartée, comme elle l'est à l'annonce : c'est celle
 --- du joueur, posée à ses pieds, et elle n'a ni cible, ni menace, ni classement
 --- de créature à montrer.
+---
+--- **On ne vide jamais la liste sans savoir la remplir.** Elle tenait la première
+--- ligne de cette fonction, et c'était une bombe à retardement : le jour où le
+--- client refuse de rendre ses plaques — ce qu'il fait, on l'a vu au diagnostic —
+--- on effaçait tout ce que ses annonces nous avaient appris, et plus rien n'était
+--- peint jusqu'au prochain rechargement. Le recensement **complète** désormais ce
+--- qu'on sait au lieu de le remplacer, et ne remplace que lorsqu'il a de quoi.
 local function collectPlates()
-    wipe(plates)
     if not (C_NamePlate and C_NamePlate.GetNamePlates) then return end
 
-    local list = C_NamePlate.GetNamePlates()
-    if type(list) ~= "table" then return end
+    local ok, list = pcall(C_NamePlate.GetNamePlates)
+    if not ok or type(list) ~= "table" then return end
+
+    wipe(plates)
 
     for i = 1, #list do
         local plate = list[i]
-        local unit  = type(plate) == "table" and plate.namePlateUnitToken or nil
-        if type(unit) == "string" and not U.IsTrue(UnitIsUnit(unit, "player")) then
+        local unit  = plateUnit(plate)
+        if unit and not U.IsTrue(UnitIsUnit(unit, "player")) then
             plates[unit] = plate
         end
     end
@@ -847,7 +883,8 @@ local function hookCastPreview(bar)
         if showingCast then return end
 
         local mod = module()
-        if not (mod and LIVE.size and mod:Get("previewMode")) then return end
+        if not (mod and LIVE.size and mod:Get("previewCast")
+                and mod:Get("resizeCast")) then return end
 
         showingCast = true
         pcall(self.Show, self)
@@ -895,7 +932,7 @@ local function applyCastPreview(mod, unitFrame)
 
     hookCastPreview(bar)
 
-    if not mod:Get("previewMode") then
+    if not (mod:Get("previewCast") and mod:Get("resizeCast")) then
         if previewShown[bar] then
             previewShown[bar] = nil
             showingCast = true
@@ -1355,7 +1392,7 @@ local function applyOwnAuras(mod, plate, unit, force)
     -- au jeu n'apparaîtra jamais à cet endroit, et poser son exemple ferait
     -- régler une position contre une plaque qui ne la portera pas — c'est le
     -- même argument que pour une plaque alliée, juste au-dessus.
-    local preview = own and mod:Get("previewMode") and true or false
+    local preview = own and mod:Get("previewCast") and true or false
 
     local rows = auraRows[plate]
     if not rows then
@@ -1460,7 +1497,8 @@ end
 
 ---@param mod table
 local function updateCastTicker(mod)
-    local wanted = LIVE.size and mod:Get("previewMode")
+    local wanted = LIVE.size and mod:Get("previewCast")
+                   and mod:Get("resizeCast")
 
     if wanted and not castTicker then
         castTicker = C_Timer.NewTicker(T.TIMING.PLATE_CAST, tickCastPreview)
@@ -1496,7 +1534,7 @@ end
 --- prise, aucun exemple, rien à rafraîchir (règle 7).
 ---@param mod table
 local function updateAuraTicker(mod)
-    local wanted = mod:Get("previewMode") and anyRowTaken(mod)
+    local wanted = mod:Get("previewCast") and anyRowTaken(mod)
 
     if wanted and not auraTicker then
         auraTicker = C_Timer.NewTicker(T.TIMING.PLATE_AURA_CYCLE, tickAuraPreview)
@@ -2023,13 +2061,157 @@ local NPC_COLOR_KEY = {
     rareElite = "rareEliteColor",
 }
 
---- Sommes-nous en instance ? Relu au chargement de zone, jamais à chaque
---- plaque : la peinture est un chemin chaud, l'appartenance à une instance ne
---- change qu'en passant un portail.
-local playerInInstance = false
+--- Où le joueur se trouve, en trois états : `"world"`, `"pve"`, `"pvp"`.
+---
+--- Relu au chargement de zone, jamais à chaque plaque : la peinture est un
+--- chemin chaud, et l'endroit où l'on est ne change qu'en passant un portail.
+---
+--- Trois et pas deux, parce que ce qu'on veut voir n'est pas le même dans les
+--- trois : en monde ouvert on veut de la lisibilité, en donjon et en raid on
+--- veut les invocations qui tuent, en arène et en champ de bataille on veut
+--- **tout** ce que l'adversaire pose au sol. Le client, lui, ne fait la
+--- différence nulle part.
+local playerContext = "world"
 
 local function refreshInstance()
-    playerInInstance = U.IsTrue(IsInInstance())
+    local inside, kind = IsInInstance()
+    if not U.IsTrue(inside) then
+        playerContext = "world"
+    elseif kind == "arena" or kind == "pvp" then
+        playerContext = "pvp"
+    else
+        -- Donjon, raid, scénario, gouffre : tout le reste est du PvE instancié.
+        -- Un type que ce client nommerait autrement retombe donc ici, ce qui est
+        -- le bon repli — on ne se retrouve jamais sans contexte.
+        playerContext = "pve"
+    end
+end
+
+-- =========================================================================
+--  Quelles unités adverses portent une barre d'infos
+-- =========================================================================
+-- Le client range cela dans une poignée de CVars booléens, un par famille
+-- d'unités. Son menu n'en montre que trois, et surtout : **il n'en montre
+-- qu'un jeu**. Or ce qu'on veut voir en donjon n'est pas ce qu'on veut voir en
+-- ville — les totems d'un chaman adverse comptent en arène et encombrent en
+-- ville, les créatures mineures encombrent partout sauf quand on cherche
+-- justement l'une d'elles.
+--
+-- Le module tient donc **deux jeux de valeurs**, un par contexte, et écrit celui
+-- qui correspond au passage d'un portail. Le client n'a rien pour cela ; c'est
+-- tout ce que cette section ajoute.
+--
+-- ## Les noms sont des candidats, pas une liste
+--
+-- Blizzard a renommé et supprimé plusieurs de ces CVars au fil des extensions.
+-- On les cite tous et **on demande au client lesquels il connaît** : un CVar
+-- absent ne rend aucune ligne, exactement comme pour `blizzToggle`. Une case
+-- morte se coche et ne pilote rien — c'est la leçon payée quatre fois sur cette
+-- page.
+--
+-- ## Ce que la prise implique
+--
+-- Allumée, la section **possède** ces CVars : elle les relève, écrit les siens,
+-- et grise les lignes correspondantes de la moitié Blizzard, qui diraient sinon
+-- le contraire d'elle une fois sur deux. Éteinte, elle rend tout tel quel.
+
+--- `cvar` est le nom candidat, et les trois clés suivantes rangent la valeur
+--- d'un contexte chacune. Ces clés sont des noms de base de données : elles ne
+--- se renomment pas (règle 4) — d'où `inst`, qui nommait le seul contexte
+--- instancié du jour où il n'y en avait que deux, et qui désigne aujourd'hui le
+--- PvE instancié.
+--- **Les deux interrupteurs de tête n'y sont pas**, et c'est délibéré : « toutes
+--- les unités adverses » et « serviteurs » commandent les autres au lieu de
+--- désigner une famille. Les régler par contexte revenait à offrir deux fois la
+--- même décision, une fois en gros et une fois en détail — et la version en gros
+--- gagne toujours, ce qui rend la version en détail menteuse. Ils restent où le
+--- jeu les met, dans la moitié Blizzard.
+--- Les unités mineures ferment la liste : c'est la famille dont on se soucie le
+--- moins, celle qu'on éteint une fois et qu'on ne rouvre jamais.
+local ENEMY_UNITS = {
+    { cvar = "nameplateShowEnemyPets",
+      world = "petsWorld",      inst = "petsInst",      pvp = "petsPvp",
+      text = L["Enemy pets"],           tip = L["Enemy pets example"] },
+    { cvar = "nameplateShowEnemyGuardians",
+      world = "guardiansWorld", inst = "guardiansInst", pvp = "guardiansPvp",
+      text = L["Enemy guardians"],      tip = L["Enemy guardians example"] },
+    { cvar = "nameplateShowEnemyTotems",
+      world = "totemsWorld",    inst = "totemsInst",    pvp = "totemsPvp",
+      text = L["Enemy totems"],         tip = L["Enemy totems example"] },
+    { cvar = "nameplateShowEnemyMinus",
+      world = "minusWorld",     inst = "minusInst",     pvp = "minusPvp",
+      text = L["Enemy minor units"],    tip = L["Enemy minor units example"] },
+}
+
+--- La clé qui range la valeur d'une famille pour un contexte.
+---@param entry table
+---@param context string  "world" | "pve" | "pvp"
+---@return string
+local function enemyKey(entry, context)
+    if context == "pvp" then return entry.pvp end
+    if context == "pve" then return entry.inst end
+    return entry.world
+end
+
+--- Écrit le jeu de valeurs du contexte où l'on se trouve.
+---
+--- Appelée au passage d'un portail comme au clic d'une case : c'est la même
+--- opération, et elle ne coûte que quelques comparaisons de CVars — `takeCVar`
+--- n'écrit que ce qui diffère, ce qui coupe aussi la boucle avec `CVAR_UPDATE`.
+---@param mod table
+local function applyEnemyUnits(mod)
+    if not LIVE.enemies then return end
+    if not mod:Get("enemyUnits") then return end
+    if InCombatLockdown() then return end
+
+    -- **Les deux interrupteurs de tête passent sous notre main, à une valeur
+    -- fixe.** Ils commandent les familles au lieu d'en désigner une : laissés au
+    -- joueur, ils annuleraient nos cases sans qu'on puisse le prévoir — le
+    -- premier en éteignant tout, le second en décidant en bloc de ce qu'on règle
+    -- famille par famille.
+    --
+    -- Ouvert pour le premier, fermé pour le second : le camp adverse s'affiche,
+    -- et rien de ce qu'il invoque ne s'affiche *par ce chemin-là*. Les familles
+    -- ci-dessous en décident, une par une. Les deux sont empruntés comme le
+    -- reste, donc rendus tels quels en décochant.
+    takeCVar("nameplateShowEnemies", 1)
+    takeCVar("nameplateShowEnemyMinions", 0)
+
+    for i = 1, #ENEMY_UNITS do
+        local entry = ENEMY_UNITS[i]
+        if U.GetCVar(entry.cvar) ~= nil then
+            takeCVar(entry.cvar,
+                mod:Get(enemyKey(entry, playerContext)) and 1 or 0)
+        end
+    end
+end
+
+--- Recopie l'état actuel du jeu dans les deux contextes, au moment où la section
+--- prend la main.
+---
+--- **Sans cela, l'allumer effacerait l'écran.** Les cases partent décochées —
+--- aucun réglage de l'addon n'est livré coché (règle 4) — et décoché veut dire
+--- « pas de barre » : le premier clic aurait donc fait disparaître toutes les
+--- plaques adverses d'un coup, sans que rien ne l'annonce.
+---
+--- Recopier n'est pas un défaut déguisé : le défaut livré reste `false`, et ce
+--- qu'on écrit ici n'est pas une valeur à nous, c'est **celle que le joueur
+--- avait déjà**. Allumer la section ne change donc rien à l'écran ; elle se
+--- contente de rendre modifiable, par contexte, ce qui ne l'était pas.
+---@param mod table
+local function seedEnemyUnits(mod)
+    if not LIVE.enemies then return end
+
+    for i = 1, #ENEMY_UNITS do
+        local entry = ENEMY_UNITS[i]
+        local value = U.GetCVar(entry.cvar)
+        if value ~= nil then
+            local on = value == "1"
+            mod:Set(entry.world, on)
+            mod:Set(entry.inst, on)
+            mod:Set(entry.pvp, on)
+        end
+    end
 end
 
 --- Les couleurs par nature s'appliquent-elles ici ? Le réglage de portée dit
@@ -2039,7 +2221,9 @@ end
 ---@return boolean
 local function npcColorsActive(mod)
     if not mod:Get("npcColors") then return false end
-    if mod:Get("npcColorsScope") == "instance" then return playerInInstance end
+    if mod:Get("npcColorsScope") == "instance" then
+        return playerContext ~= "world"
+    end
     return true
 end
 
@@ -2179,49 +2363,35 @@ end
 
 --- Couleur d'un nom, ou `nil` quand il ne faut pas y toucher.
 ---
---- Le blanc pour tout le monde, la couleur de classe pour un joueur : ce sont
---- les deux teintes que le client emploie lui-même. On les repose plutôt que de
---- relire la sienne : une lecture suivie d'une écriture s'empilerait sur
---- elle-même passage après passage.
+--- **Le nom d'un adversaire s'écrit en blanc**, joueur comme PNJ.
 ---
---- **On ne touche plus au nom d'un allié.** Le jeu le colore désormais lui-même
---- à la classe, et il le fait mieux : c'est le seul à pouvoir lire l'identité
---- qu'il protège en instance. La case qui le proposait est partie — elle
---- promettait ce qui arrive déjà.
+--- Il a porté la couleur de sa classe, et le raisonnement se tenait — « on lit
+--- un adversaire pour savoir sur quoi taper, sa classe *est* l'information ».
+--- Deux choses l'ont défait :
 ---
---- Un adversaire, en revanche, on le lit pour savoir sur quoi taper : sa classe
---- *est* l'information, et c'est un choix de l'addon, pas un réglage.
+---   · le nom n'est pas le bon support. La classe est déjà dite par la **barre
+---     de vie**, que « Couleurs de classe sur les joueurs adverses » teinte
+---     précisément pour cela — un nom qui la répète ne dit rien de plus, et
+---     s'écrit par-dessus une barre de la même teinte ;
+---   · le client rend une classe pour beaucoup de PNJ. Un garde humanoïde est
+---     « guerrier » à ses yeux, et la moitié d'une zone se retrouvait peinte aux
+---     couleurs de classe sans que personne l'ait demandé.
 ---
---- `false` veut dire « le client garde la main de bout en bout » — pas
---- « blanc ». On ne rend pas une couleur, on s'abstient d'en poser une.
+--- Le blanc se lit sur n'importe quelle teinte de barre, et c'est le seul nom
+--- qui ne prétend rien.
 ---
---- **Le premier retour est un drapeau, et il le faut.** En instance et en PvP,
---- les trois nombres peuvent être *secrets* : ils traversent l'addon jusqu'à
---- `SetTextColor` sans qu'on ait le droit de les lire, et `if r then` chez
---- l'appelant lèverait. Le drapeau est la seule réponse qu'il puisse regarder.
+--- **On ne touche pas au nom d'un allié.** Le jeu le colore lui-même à la
+--- classe, et il le fait mieux : c'est le seul à pouvoir lire l'identité qu'il
+--- protège en instance. `false` veut dire « le client garde la main de bout en
+--- bout » — pas « blanc ». On ne rend pas une couleur, on s'abstient d'en poser
+--- une.
+---
+--- **Le premier retour est un drapeau**, et il le reste : l'appelant ne teste
+--- jamais les trois nombres, qui peuvent être secrets ailleurs dans ce fichier.
 ---@param unit string
 ---@return boolean paint, number? r, number? g, number? b
 local function nameColor(unit)
     if isFriendlyPlayer(unit) then return false end
-
-    local _, class = UnitClass(unit)
-
-    -- **Identité protégée : donjon, raid, champ de bataille.** La classe est
-    -- une chaîne secrète, qu'on ne peut ni lire ni indexer. On la fait passer au
-    -- client sans la regarder (voir `T.SecretClassColor`).
-    if U.IsSecret(class) then
-        return T.SecretClassColor(class)
-    end
-
-    -- Pas de classe du tout : ce n'est pas un joueur, c'est un PNJ, et le blanc
-    -- est la couleur qu'on leur donne. Il ne se pose plus que sur cette
-    -- réponse-là — jamais sur une réponse qu'on n'a pas eu le droit de lire.
-    if type(class) ~= "string" or class == "" then
-        return true, T.COLOR.WHITE:GetRGB()
-    end
-
-    local color = T.ClassColor(class)
-    if color then return true, color:GetRGB() end
     return true, T.COLOR.WHITE:GetRGB()
 end
 
@@ -2487,7 +2657,8 @@ local function hookMarkerPreview(marker)
         if settingMarker then return end
 
         local mod = module()
-        if not (mod and LIVE.marker and mod:Get("previewMode")) then return end
+        if not (mod and LIVE.marker and mod:Get("previewMarker")
+                and mod:Get("marker")) then return end
 
         settingMarker = true
         pcall(self.Show, self)
@@ -2515,7 +2686,7 @@ local function applyMarkerPreview(mod, unitFrame)
 
     hookMarkerPreview(marker)
 
-    if not mod:Get("previewMode") then
+    if not (mod:Get("previewMarker") and mod:Get("marker")) then
         if markerShown[marker] then
             markerShown[marker] = nil
             settingMarker = true
@@ -2613,7 +2784,7 @@ local function auraRowToggle(key, tooltip)
         key      = key,
         text     = L["Take over this row"],
         tooltip  = tooltip,
-        disabled = AURAS_PAUSED and aurasPaused or requires("ownAuras"),
+        disabled = requires("ownAuras"),
         disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
     }
 end
@@ -2636,8 +2807,7 @@ local function auraSliders(prefix, ownKey)
             max      = max,
             step     = 1,
             indent   = true,
-            disabled = AURAS_PAUSED and aurasPaused
-                       or requires("ownAuras", ownKey),
+            disabled = requires("ownAuras", ownKey),
             disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
         }
     end
@@ -2674,7 +2844,7 @@ local function auraShadeToggle(key, ownKey)
         text     = L["Aura shaded"],
         tooltip  = L["Aura shaded tip"],
         indent   = true,
-        disabled = AURAS_PAUSED and aurasPaused or requires("ownAuras", ownKey),
+        disabled = requires("ownAuras", ownKey),
         disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
     }
 end
@@ -2698,7 +2868,7 @@ local function markerSlider(key, text, tooltip, min, max)
         max      = max,
         step     = 1,
         indent   = true,
-        disabled = AURAS_PAUSED and aurasPaused or requires("marker"),
+        disabled = requires("marker"),
         disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
     }
 end
@@ -2721,15 +2891,12 @@ end
 -- curseurs, et une glissière qui ne fait plus rien passé son milieu est pire
 -- qu'un réglage qu'on emprunte et qu'on rend.
 
----@return boolean
-local function sizeTaken()
-    if InCombatLockdown() then return true end
-    local mod = module()
-    return mod ~= nil and mod:Get("resize") == true
-end
-
 local SIZE_LOCK = {
-    disabled = sizeTaken,
+    disabled = function()
+        if InCombatLockdown() then return true end
+        local mod = module()
+        return mod ~= nil and mod:Get("resize") == true
+    end,
     reason   = function()
         if InCombatLockdown() then return L["Cannot change in combat"] end
         return L["Taken over by the addon"]
@@ -3218,6 +3385,59 @@ local function allyNamesRow()
     return row
 end
 
+--- Une case du client que **notre section des unités adverses peut prendre**.
+---
+--- Identique à `blizzToggle`, au verrou près : elle se grise quand la section
+--- est allumée, avec le motif qui dit où le réglage est passé.
+---@param name string
+---@param text string
+---@param tooltip string
+---@param indent? boolean
+---@return table
+local function enemyToggle(name, text, tooltip, indent)
+    local row = blizzToggle(name, text, tooltip, indent)
+    if not row.type then return row end
+
+    row.disabled = function()
+        if inCombat() then return true end
+        local mod = module()
+        return LIVE.enemies and mod ~= nil and mod:Get("enemyUnits") == true
+    end
+    row.disabledReason = function()
+        if InCombatLockdown() then return L["Cannot change in combat"] end
+        return L["Enemy units taken over"]
+    end
+
+    return row
+end
+
+--- Une case par famille d'unités adverses, pour un contexte.
+---
+--- Les familles que ce client ne connaît pas ne rendent aucune ligne : on
+--- demande, on ne suppose pas (règle 1). La liste est donc plus courte sur un
+--- client qui a retiré des CVars, et plus longue le jour où Blizzard en ajoute.
+---@param context string  "world" | "pve" | "pvp"
+---@return table[]
+local function enemyRows(context)
+    local rows = {}
+
+    for i = 1, #ENEMY_UNITS do
+        local entry = ENEMY_UNITS[i]
+        if U.GetCVar(entry.cvar) ~= nil then
+            rows[#rows + 1] = {
+                type     = "toggle",
+                key      = enemyKey(entry, context),
+                text     = entry.text,
+                tooltip  = entry.tip,
+                indent   = true,
+                disabled = requires("enemyUnits"),
+            }
+        end
+    end
+
+    return rows
+end
+
 --- Les trois lignes de la superposition : l'interrupteur et ses deux glissières.
 ---
 --- Elles sont à nous et non branchées en direct sur le CVar, pour la raison
@@ -3532,7 +3752,8 @@ local SIZE_KEYS  = { resize = true, width = true, height = true,
                      textSize = true,
                      resizeAllyName = true, allyNameSize = true,
                      castTextSize = true,
-                     previewMode = true,
+                     previewCast = true,
+                     previewMarker = true,
                      resizeCast = true, castHeight = true }
 local ALPHA_KEYS = { visibility = true, targetAlpha = true, otherAlpha = true,
                      occludedAlpha = true }
@@ -3557,7 +3778,25 @@ local TAKEN_CVARS = {
     alpha   = { CVAR.OCCLUDED },
     size    = { CVAR.SIZE },
     overlap = { CVAR.OVERLAP_H, CVAR.OVERLAP_V },
+
+    -- Les deux interrupteurs de tête, que la section pose à une valeur fixe, et
+    -- les familles, remplies d'après `ENEMY_UNITS` juste en dessous : la liste
+    -- des noms est écrite une fois, et ce qui la rend au client s'en déduit.
+    enemies = { "nameplateShowEnemies", "nameplateShowEnemyMinions" },
 }
+
+--- Les clés qui commandent les unités adverses : la maîtresse et les deux
+--- contextes de chaque famille. Bâtie d'après la même liste, pour qu'ajouter une
+--- famille n'oblige à toucher qu'un endroit.
+local ENEMY_KEYS = { enemyUnits = true }
+
+for i = 1, #ENEMY_UNITS do
+    local entry = ENEMY_UNITS[i]
+    TAKEN_CVARS.enemies[#TAKEN_CVARS.enemies + 1] = entry.cvar
+    ENEMY_KEYS[entry.world] = true
+    ENEMY_KEYS[entry.inst]  = true
+    ENEMY_KEYS[entry.pvp]   = true
+end
 
 --- Rend les CVars d'un groupe et oublie ce qu'on en savait : le groupe n'est
 --- plus à nous, et le reprendre plus tard le relèvera à nouveau.
@@ -3719,14 +3958,24 @@ local function pageOptions()
         { type = "header", text = L["General"] },
         blizzToggle("nameplateShowAll",
             L["Always show nameplates"], L["Always show nameplates tip"]),
-        blizzToggle("nameplateShowEnemies",
+        -- **Les trois lignes adverses passent sous la section d'en face** dès
+        -- qu'elle est allumée : elle décide de la même chose, contexte par
+        -- contexte. Les laisser actives donnerait deux réponses à une question,
+        -- et la dernière écriture gagnerait.
+        --
+        -- Elles restent visibles et disent la vérité pendant ce temps : la
+        -- première cochée — le camp adverse s'affiche —, la deuxième décochée —
+        -- ce qu'il invoque ne passe plus par elle —, la troisième au reflet de
+        -- la case d'en face. Une ligne grisée qui montrerait autre chose que ce
+        -- que le jeu applique serait pire qu'une ligne absente.
+        enemyToggle("nameplateShowEnemies",
             L["Enemy nameplates"], L["Enemy nameplates tip"]),
         -- Les deux suivantes ne veulent rien dire sans celle du dessus : elles
         -- affinent l'affichage des ennemis, elles ne s'y ajoutent pas. La page le
         -- dit par un retrait et un corps plus petit.
-        blizzToggle("nameplateShowEnemyMinions",
+        enemyToggle("nameplateShowEnemyMinions",
             L["Enemy minions"], L["Enemy minions tip"], true),
-        blizzToggle("nameplateShowEnemyMinus",
+        enemyToggle("nameplateShowEnemyMinus",
             L["Enemy minor units"], L["Enemy minor units tip"], true),
         blizzToggle(pickCVar("nameplateShowFriendlyPlayers", "nameplateShowFriends"),
             L["Friendly player nameplates"], L["Friendly player nameplates tip"]),
@@ -3861,17 +4110,13 @@ local function pageOptions()
         { type = "header", text = L["Bshamel UI options"] },
         { type = "alert",  text = L["Bshamel UI options notice"] },
 
-        -- Le mode aperçu ouvre la colonne : c'est le geste qu'on fait **avant**
-        -- de régler quoi que ce soit, et il sert à plusieurs sections — la barre
-        -- de sorts, son texte, les auras. Rangé dans l'une d'elles, il aurait eu
-        -- l'air de n'appartenir qu'à celle-là.
-        { type = "header", text = L["Preview mode"] },
-        {
-            type    = "toggle",
-            key     = "previewMode",
-            text    = L["Show cast bar"],
-            tooltip = L["Show cast bar tip"],
-        },
+        -- Le mode aperçu général vivait ici, en tête de colonne. Il montrait
+        -- d'un seul clic tout ce qui ne se voit qu'en combat, et c'était son
+        -- défaut : on l'allumait pour régler une barre de sorts et on se
+        -- retrouvait avec un crâne sur chaque plaque. Chaque aperçu est
+        -- désormais **dans la section qu'il illustre**, et n'y montre que ce que
+        -- cette section règle.
+
         { section = "size" },
         { type = "header", text = L["Health bar size"] },
         {
@@ -4086,6 +4331,21 @@ local function pageOptions()
             indent   = true,
             disabled = requires("resizeCast"),
         },
+        -- L'aperçu ferme la section, **en retrait sous l'interrupteur qui lui
+        -- donne un sens**. Une barre de sorts ne se montre qu'en incantation, et
+        -- régler une chose qu'on ne voit pas revient à chercher un adversaire
+        -- qui veuille bien lancer un sort — mais tant que la taille n'est pas à
+        -- nous, ce qu'il montrerait est la barre du client, que les curseurs
+        -- ci-dessus ne pilotent pas. Un aperçu qui ne prévisualise rien se lit
+        -- comme un réglage en panne, et c'est ce qu'il était.
+        {
+            type     = "toggle",
+            key      = "previewCast",
+            text     = L["Preview cast bar"],
+            tooltip  = L["Preview cast bar tip"],
+            indent   = true,
+            disabled = requires("resizeCast"),
+        },
 
         -- Le chevauchement des plaques entre elles : la place que chacune garde
         -- avant que le jeu ne pousse la voisine. Deux réglages du client que son
@@ -4113,7 +4373,7 @@ local function pageOptions()
             key     = "ownAuras",
             text    = L["Own auras"],
             tooltip = L["Own auras tip"],
-            disabled = AURAS_PAUSED and aurasPaused or nil,
+            disabled = nil,
             disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
         },
 
@@ -4134,12 +4394,25 @@ local function pageOptions()
             key     = "marker",
             text    = L["Place raid marker"],
             tooltip = L["Place raid marker tip"],
-            disabled = AURAS_PAUSED and aurasPaused or nil,
             disabledReason = AURAS_PAUSED and L["Auras paused"] or nil,
         },
         markerSlider("markerSize", L["Marker size"], L["Marker size tip"], 8, 64),
         markerSlider("markerX", L["Marker offset X"], L["Marker offset tip"], -60, 60),
         markerSlider("markerY", L["Marker offset Y"], L["Marker offset tip"], -60, 60),
+        -- Le même aperçu que la barre de sorts, au même rang et pour la même
+        -- raison : une marque ne se voit que sur une cible marquée, et on ne
+        -- règle pas un décalage en attendant qu'un chef de groupe pose un crâne.
+        -- Sous l'interrupteur, parce que taille et décalage n'existent que
+        -- lorsque la marque est à nous — sans lui, l'aperçu montrait celle du
+        -- client et les trois curseurs semblaient sans effet.
+        {
+            type     = "toggle",
+            key      = "previewMarker",
+            text     = L["Preview marker"],
+            tooltip  = L["Preview marker tip"],
+            indent   = true,
+            disabled = requires("marker"),
+        },
 
         { section = "colors" },
         { type = "header", text = L["Enemy colors"] },
@@ -4248,6 +4521,28 @@ local function pageOptions()
             disabled = requires("threatColors"),
         },
 
+        -- Les unités adverses ferment la colonne. C'est la section la plus
+        -- haute — deux contextes, une case par famille — et la seule qu'on règle
+        -- une fois puis qu'on oublie : tout ce qui la précède se retouche en
+        -- jouant, elle se décide une bonne fois.
+        --
+        -- Les deux contextes portent un en-tête **en retrait** : ce ne sont pas
+        -- deux catégories de plus, c'est la même liste vue deux fois.
+        { section = "enemies" },
+        { type = "header", text = L["Enemy units section"] },
+        {
+            type    = "toggle",
+            key     = "enemyUnits",
+            text    = L["Tune enemy units"],
+            tooltip = L["Tune enemy units tip"],
+        },
+        { type = "header", text = L["Open world"], indent = true },
+        enemyRows("world"),
+        { type = "header", text = L["PvE instances"], indent = true },
+        enemyRows("pve"),
+        { type = "header", text = L["PvP instances"], indent = true },
+        enemyRows("pvp"),
+
         -- Ces trois-là sont des réglages du client, comme ceux de la moitié
         -- d'au-dessus, mais son menu ne les expose nulle part : il n'y a donc pas
         -- d'autre endroit où aller les chercher, et leur place est de ce côté-ci.
@@ -4303,10 +4598,11 @@ BUI:RegisterModule(MODULE, {
         resizeAllyName = false,
         allyNameSize   = T.SIZE.PLATE_TEXT,
 
-        -- L'aperçu de la barre de sorts. Il ne règle rien : il montre. Il survit
-        -- au `/reload` comme les autres réglages, ce qui est voulu — on recharge
-        -- précisément pour juger — mais il se remarque, et on l'éteint.
-        previewMode = false,
+        -- Les deux aperçus. Ils ne règlent rien : ils montrent. Ils survivent au
+        -- `/reload` comme les autres réglages, ce qui est voulu — on recharge
+        -- précisément pour juger — mais ils se remarquent, et on les éteint.
+        previewCast   = false,
+        previewMarker = false,
 
         -- Le corps de la barre de sorts est le sien : le client écrit plus petit
         -- dessus, et partir de sa valeur rend le curseur sans effet tant qu'on
@@ -4364,6 +4660,25 @@ BUI:RegisterModule(MODULE, {
         targetAlpha      = 100,
         otherAlpha       = 90,
         occludedAlpha    = 50,
+
+        -- Les unités adverses, par contexte. Huit cases décochées, et c'est la
+        -- règle : rien n'est livré coché. Elles ne restent pas décochées pour
+        -- autant — allumer la section recopie dedans l'état actuel du jeu, une
+        -- fois, faute de quoi le premier clic effacerait l'écran (voir
+        -- `seedEnemyUnits`).
+        enemyUnits     = false,
+        minusWorld     = false,
+        minusInst      = false,
+        minusPvp       = false,
+        petsWorld      = false,
+        petsInst       = false,
+        petsPvp        = false,
+        guardiansWorld = false,
+        guardiansInst  = false,
+        guardiansPvp   = false,
+        totemsWorld    = false,
+        totemsInst     = false,
+        totemsPvp      = false,
 
         -- Superposition : la place que chaque plaque garde avant que le jeu ne
         -- pousse la voisine. Plus serré à l'horizontale qu'à la verticale, parce
@@ -4430,7 +4745,7 @@ BUI:RegisterModule(MODULE, {
         -- La plaque est rangée sous le jeton que le client lui a donné
         -- (`nameplate3`), jamais sous « target » : c'est lui qu'il faut chercher
         -- pour savoir si on la suit.
-        local token = type(plate) == "table" and plate.namePlateUnitToken or nil
+        local token = plateUnit(plate)
 
         self:Print("UnitClass:",
             U.IsSecret(class) and L["Refused"] or tostring(class),
@@ -4446,7 +4761,7 @@ BUI:RegisterModule(MODULE, {
 
         self:Print("GetNamePlates:", type(shown) == "table" and #shown or L["Refused"],
             "| plates:", tracked,
-            "| namePlateUnitToken:", tostring(token))
+            "| jeton:", tostring(token))
 
         self:Print("nameColor:", nameColor("target") and L["On"] or L["Off"],
             "| unitFrame.name:", unitFrame.name and L["On"] or L["Off"])
@@ -4498,12 +4813,7 @@ BUI:RegisterModule(MODULE, {
         -- (`nameplate3`), jamais `target` : ce sont deux façons de désigner la
         -- même unité, et rien ne garantit que le client les protège pareil.
         -- Comparer les deux colonnes est la seule façon de le savoir.
-        local token = plate.namePlateUnitToken
-        if type(token) ~= "string" then
-            for unit, known in pairs(plates) do
-                if known == plate then token = unit break end
-            end
-        end
+        local token = plateUnit(plate)
         self:Print(L["Tokens"] .. ": target |", token or L["Refused"])
 
         -- L'unité d'où vient le spécimen se retient avec lui : l'horloge se
@@ -4560,7 +4870,7 @@ BUI:RegisterModule(MODULE, {
                    "| " .. L["Refused"] .. ":", probe.refused)
 
         self:Print("ownAuras:", self:Get("ownAuras") and L["On"] or L["Off"],
-                   "| previewMode:", self:Get("previewMode") and L["On"] or L["Off"])
+                   "| previewCast:", self:Get("previewCast") and L["On"] or L["Off"])
         self:Print("AurasFrame:", unitFrame.AurasFrame and L["On"] or L["Off"],
                    "| BuffFrame:", unitFrame.BuffFrame and L["On"] or L["Off"],
                    "| name:", unitFrame.name and L["On"] or L["Off"])
@@ -4594,12 +4904,13 @@ BUI:RegisterModule(MODULE, {
     OnEnable = function(self)
         -- Les exemples de l'aperçu se préparent d'abord : si la case a survécu à
         -- un `/reload`, la première peinture les montre déjà.
-        if LIVE.auras and self:Get("previewMode") then refreshSampleList() end
+        if LIVE.auras and self:Get("previewCast") then refreshSampleList() end
 
         applySize(self)
         applyOverlap(self)
         applyClientAuras(self)
         applyClientThreat(self)
+        applyEnemyUnits(self)
 
         -- La rangée d'auras a été retirée : ce qu'elle avait pris au jeu se rend
         -- ici, une fois, chez les joueurs qui l'utilisaient.
@@ -4619,6 +4930,7 @@ BUI:RegisterModule(MODULE, {
             applyAlpha(self)
             applyClientAuras(self)
             applyClientThreat(self)
+            applyEnemyUnits(self)
         end))
 
         -- La largeur de boîte est refusée en combat, sans rien dire. Ce qui a été
@@ -4629,6 +4941,7 @@ BUI:RegisterModule(MODULE, {
             applyOverlap(self)
             applyClientAuras(self)
             applyClientThreat(self)
+            applyEnemyUnits(self)
             releaseClientAuras(self)
         end)
 
@@ -4708,7 +5021,7 @@ BUI:RegisterModule(MODULE, {
             local plate = plates[unit]
             if not plate then return end
             if not (LIVE.auras and self:Get("ownAuras")) then return end
-            if self:Get("previewMode") then return end
+            if self:Get("previewCast") then return end
 
             applyOwnAuras(self, plate, unit, true)
         end)
@@ -4737,6 +5050,10 @@ BUI:RegisterModule(MODULE, {
             -- Le client refait ses plaques en chargeant une zone, sans
             -- réannoncer celles qui restent : on repart de ce qui est à l'écran.
             refreshInstance()
+
+            -- On vient peut-être de franchir un portail : l'autre jeu de
+            -- valeurs d'unités adverses est celui qui vaut ici.
+            applyEnemyUnits(self)
             collectPlates()
             -- Les échelles se relisent au montage des plaques : rentrer dans une
             -- instance en reconstruit, et le client les remonte avec ses propres
@@ -4778,8 +5095,8 @@ BUI:RegisterModule(MODULE, {
             -- ailleurs : c'est le seul endroit où la case change. Les durées des
             -- auras d'exemple repartent au même moment — un balayage déjà écoulé
             -- ressemble à une aura expirée.
-            if key == "previewMode" then
-                if self:Get("previewMode") then refreshSampleList() end
+            if key == "previewCast" or key == "previewMarker" then
+                if self:Get("previewCast") then refreshSampleList() end
                 updateCastTicker(self)
                 updateAuraTicker(self)
             end
@@ -4854,7 +5171,7 @@ BUI:RegisterModule(MODULE, {
             applyClientAuras(self)
             -- L'aperçu suit les mêmes cases : une rangée rendue au jeu retire
             -- son exemple, et la minuterie s'arrête s'il n'en reste aucun.
-            if self:Get("previewMode") then refreshSampleList() end
+            if self:Get("previewCast") then refreshSampleList() end
             updateAuraTicker(self)
         end
 
@@ -4862,6 +5179,22 @@ BUI:RegisterModule(MODULE, {
         -- client se grise pendant ce temps : les deux repeignent la même barre
         -- pour dire la même chose.
         if key == "threatColors" then applyClientThreat(self) end
+
+        -- Les unités adverses. La prise recopie d'abord l'état du jeu dans les
+        -- deux contextes — sans quoi le premier clic viderait l'écran — puis
+        -- écrit celui d'ici. La rendre est un `giveBack` comme les autres.
+        if ENEMY_KEYS[key] then
+            if key == "enemyUnits" then
+                if self:Get("enemyUnits") then
+                    seedEnemyUnits(self)
+                else
+                    giveBack(TAKEN_CVARS.enemies)
+                    return
+                end
+            end
+            applyEnemyUnits(self)
+            return
+        end
 
         -- Le marqueur éteint retrouve l'opacité de sa plaque. Son ancrage, lui,
         -- ne se rend pas — c'est le prix assumé de la section, et le recyclage

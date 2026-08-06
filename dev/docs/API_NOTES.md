@@ -3891,3 +3891,34 @@ tiennent les unes aux autres, et on n'en emprunte pas la moitié. Quand un
 template ne fait pas ce qu'on veut, la question est « lequel le fait ? », pas
 « comment démonter celui-ci ? ». Six tentatives et neuf allers-retours avec le
 joueur pour l'établir.
+
+---
+
+## `namePlateUnitToken` est vide sur les plaques de ce client
+
+**Symptôme** — tout ce que le module pose plaque par plaque n'atteint qu'une
+plaque sur treize : un aperçu qui n'apparaît que sur une, une animation qui se
+fige, un réglage qui ne repeint rien, un crâne d'exemple qu'on ne parvient plus
+à retirer.
+
+**Ce qu'on trouve** — `/bui noms`, treize plaques à l'écran :
+
+```
+GetNamePlates: 13 | plates: 1 | namePlateUnitToken: nil
+```
+
+`C_NamePlate.GetNamePlates()` répond, et bien. Ce qui manque est le champ que
+`NamePlateBaseMixin:OnAdded` est censé poser sur chaque plaque, et sur lequel
+tous les recensements s'appuient — y compris le nôtre, qui écartait donc
+silencieusement tout ce qu'il ne savait pas nommer. La seule plaque connue
+venait d'une annonce `NAME_PLATE_UNIT_ADDED`, où le jeton est passé en argument.
+
+**Ce qu'on fait** — l'unité se lit sur le **cadre d'unité** de la plaque,
+`UnitFrame.unit` ou `UnitFrame.displayedUnit`, avec le jeton comme premier choix
+s'il est là. C'est le chemin qu'emploie déjà le hook des couleurs de nom, et il
+n'a jamais manqué une plaque.
+
+**La leçon** — un champ publié par le client se vérifie sur pièces avant qu'on
+bâtisse dessus, surtout quand il est le seul lien entre deux mondes. Une liste
+qui se remplit à moitié ne lève aucune erreur : elle rend simplement la moitié
+des symptômes inexplicables.

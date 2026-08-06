@@ -2,6 +2,47 @@
 
 ## Non publié
 
+### Modifié
+- **Le mode aperçu se scinde en deux, chacun dans sa section.** Un seul
+  interrupteur montrait tout ce qui ne se voit qu'en combat : on l'allumait pour
+  juger une barre de sorts et on récoltait un crâne sur chaque plaque. *Aperçu de
+  la barre de sorts* vit maintenant sous la barre de sorts, *Aperçu de la marque*
+  sous la marque — et chacun est en retrait sous l'interrupteur qui lui donne un
+  sens.
+
+  Ce retrait est le correctif : l'aperçu montrait la barre et la marque **du
+  client** tant que la taille n'était pas à nous, et les curseurs semblaient donc
+  sans effet. Un aperçu ne prévisualise que ce qu'on pilote.
+
+- ***Marqueur de ciblage* devient *Marque de cible*.**
+
+### Ajouté
+- **Quelles unités adverses portent une barre d'infos, séparément dans le monde
+  ouvert, en instance PvE et en instance PvP.** Le jeu range cela dans une poignée de réglages —
+  toutes les unités hostiles, les serviteurs, les unités mineures, et selon les
+  clients les familiers, les gardiens et les totems — mais il n'en tient qu'un
+  seul jeu pour les deux contextes. Or les totems d'un chaman adverse comptent en
+  arène et encombrent en ville.
+
+  L'addon en tient trois, et écrit celui qui convient au passage d'un portail :
+  ce qu'on veut voir n'est pas le même dehors, en donjon et en arène — dehors on
+  cherche la lisibilité, en donjon les invocations qui tuent, en arène tout ce
+  que l'adversaire pose au sol.
+  Chaque case porte un **exemple** en infobulle, parce que « serviteur »,
+  « gardien » et « unité mineure » sont le vocabulaire du moteur, pas celui du
+  joueur : personne ne sait de tête de quel côté tombe une gargouille.
+
+  Allumer la section recopie dedans l'état où le jeu se trouve : rien ne change à
+  l'écran tant qu'on n'y touche pas. Les trois lignes correspondantes de la
+  moitié Blizzard passent alors sous elle — elles décident de la même chose, et
+  deux réponses à une question donnent la dernière écrite. Elles restent visibles
+  et disent le vrai : *Unités ennemies* cochée, *Serviteurs ennemis* décochée
+  puisque ce qu'un adversaire invoque ne passe plus par elle, et *Unités
+  mineures* au reflet de la case d'en face.
+
+  Les familles que le client ne connaît pas ne rendent aucune ligne : on lui
+  demande, on ne suppose pas.
+
 ## 0.8.3 — 2026-08-06
 
 ### Modifié
@@ -123,6 +164,37 @@
   plus, mais restait coché.
 
 ### Corrigé
+- **Le nom d'un adversaire s'écrit en blanc**, joueur comme PNJ. Il portait la
+  couleur de sa classe, et deux choses l'ont défait : le client donne une classe
+  à beaucoup de PNJ — un garde humanoïde est « guerrier » à ses yeux, et la
+  moitié d'une zone se retrouvait peinte sans que personne l'ait demandé — et
+  surtout la classe est déjà dite par la **barre de vie**, que *Couleurs de
+  classe sur les joueurs adverses* teinte pour cela. Un nom qui la répète ne dit
+  rien de plus, et s'écrit par-dessus une barre de la même teinte. Le blanc se
+  lit sur n'importe quelle couleur.
+
+- **Une plaque sur treize était suivie.** Le module identifiait les plaques par
+  `namePlateUnitToken`, le champ que tout le monde cite — et que ce client laisse
+  vide : treize plaques à l'écran, treize champs absents, une seule plaque
+  connue, celle qu'une annonce venait de donner. Tout ce qui se pose plaque par
+  plaque en dépendait, et tous les symptômes en découlaient : les aperçus
+  n'apparaissaient que sur une plaque, ne s'effaçaient jamais de celles qu'on
+  avait cessé de suivre, leur animation se figeait dès que la plaque suivie
+  changeait de main, et changer un réglage ne repeignait qu'elle.
+
+  L'unité se lit maintenant sur le cadre d'unité quand le jeton manque — le
+  chemin que le hook des couleurs de nom emploie depuis toujours, et qui n'a
+  jamais failli.
+
+- **Le recensement des plaques pouvait effacer ce qu'il ne savait pas
+  reconstruire.** Il commençait par vider la liste, puis demandait au client
+  celles qui sont à l'écran — et ce client-là ne répond pas toujours. On perdait
+  alors tout ce que ses annonces nous avaient appris, à chaque repeinture
+  complète, c'est-à-dire à chaque réglage touché : plus rien n'était peint
+  jusqu'au prochain rechargement. C'est ce qui obligeait à recharger pour entrer
+  et sortir des aperçus. La liste ne se remplace désormais que lorsqu'il y a de
+  quoi la remplir.
+
 - **Les lignes d'une page sont posées sur la grille de l'écran.** Une ligne à un
   demi-pixel du bord y est dessinée à cheval sur deux rangées : son texte pâlit
   et ses bords bavent. Comme chacune tombait à un endroit différent de la grille,

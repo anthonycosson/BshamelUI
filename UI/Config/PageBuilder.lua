@@ -7,7 +7,10 @@
 --  fonction les dispose toujours de la même façon.
 --
 --  Descripteurs reconnus :
---      { type = "header",      text = ... }
+--      { type = "header",      text = ..., indent = false }
+--          `indent = true` range l'en-tête sous le précédent, au retrait des
+--          sous-options : une même liste vue sous deux angles, pas deux
+--          catégories de plein droit.
 --      { type = "toggle",      key = ..., text = ..., tooltip = ... }
 --      { type = "slider",      key = ..., text = ..., min = , max = , step = , decimals = }
 --      { type = "dropdown",    key = ..., text = ..., values = { { value=, label= }, ... } }
@@ -79,7 +82,7 @@ local function buildWidget(page, mod, descriptor)
     local get, set = accessors(mod, descriptor)
 
     if kind == "header" then
-        return W.SectionHeader(page, descriptor.text)
+        return W.SectionHeader(page, descriptor.text, descriptor.indent)
 
     elseif kind == "toggle" then
         return W.Toggle(page, {

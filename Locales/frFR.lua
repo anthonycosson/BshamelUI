@@ -516,6 +516,50 @@ BUI:RegisterLocale("frFR", {
     ["Enemy minions tip"]              = "Familiers, gardiens et totems du camp adverse.",
     ["Enemy minor units"]              = "Unités mineures ennemies",
     ["Enemy minor units tip"]          = "Bestioles et autres unités sans presque aucun point de vie.",
+    -- Section « Unités adverses » (moitié Bshamel UI). Chaque infobulle donne un
+    -- **exemple**, parce que « serviteur », « gardien » et « unité mineure » sont
+    -- le vocabulaire du moteur, pas celui du joueur : personne ne sait de tête
+    -- de quel côté tombe une gargouille.
+    ["Enemy units section"]            = "Unités adverses",
+    ["Tune enemy units"]               = "Régler les unités adverses",
+    ["Tune enemy units tip"] =
+        "Décide quelles unités adverses portent une barre d'infos, séparément "
+        .. "dehors, en instance PvE et en instance PvP. Le jeu n'a qu'un seul "
+        .. "jeu de réglages pour les trois ; c'est tout ce que cette section ajoute.\n\n"
+        .. "En l'allumant, les cases ci-dessous prennent l'état où le jeu est en "
+        .. "ce moment : rien ne change à l'écran tant que vous n'y touchez pas. "
+        .. "Les trois lignes correspondantes de la moitié Blizzard se grisent, "
+        .. "puisque c'est ici qu'elles se règlent désormais.",
+    ["Open world"]                     = "Monde ouvert",
+    ["PvE instances"]                   = "Instances PvE",
+    ["PvP instances"]                   = "Instances PvP",
+    ["Enemy minor units example"] =
+        "Les créatures à qui le jeu ne donne presque aucun point de vie. "
+        .. "Exemple : les rats et les poules d'une ville, les insectes d'une "
+        .. "zone, et les petites invocations que certains boss lâchent en nombre.",
+    ["Enemy pets"]                     = "Familiers adverses",
+    ["Enemy pets example"] =
+        "Les familiers de joueurs seulement, à distinguer des invocations "
+        .. "temporaires. Exemple : le chien d'un chasseur, le démon permanent "
+        .. "d'un démoniste, l'élémentaire d'un mage.",
+    ["Enemy guardians"]                = "Gardiens adverses",
+    ["Enemy guardians example"] =
+        "Les invocations qui ne sont pas des familiers : elles agissent seules "
+        .. "et disparaissent. Exemple : la gargouille d'un chevalier de la mort, "
+        .. "les arbres d'un druide, l'élémentaire de feu d'un chaman.",
+    ["Enemy totems"]                   = "Totems adverses",
+    ["Enemy totems example"] =
+        "Les totems posés au sol, à tuer ou à contourner. Exemple : le totem de "
+        .. "tremblement de terre d'un chaman, le totem de guerre, la tourelle "
+        .. "d'un chasseur.",
+    ["Enemy units taken over"] =
+        "Bshamel UI décide de cette ligne, séparément pour chacun des trois "
+        .. "contextes. Les deux premières sont posées une fois pour "
+        .. "toutes — le camp adverse s'affiche, et ce qu'il invoque ne passe "
+        .. "plus par « Serviteurs » —, les familles se cochent à droite. "
+        .. "Décochez « Régler les unités adverses » pour tout récupérer tel que "
+        .. "c'était.",
+
     ["Friendly player nameplates"]     = "Personnages-joueurs alliés",
     ["Friendly player nameplates tip"] = "Barres d'infos sur les joueurs de votre camp.",
     ["Friendly NPC nameplates"]        = "PNJ amicaux",
@@ -573,14 +617,21 @@ BUI:RegisterLocale("frFR", {
     ["Friendly player auras"]          = "Auras des joueurs alliés",
     ["Health bar size"]                = "Barre de vie",
     ["Cast bar size"]                  = "Barre des sorts",
-    ["Preview mode"]                   = "Mode aperçu",
-    ["Show cast bar"]                  = "Montrer ce qui n'apparaît qu'en combat",
-    ["Show cast bar tip"] =
-        "Une barre de sorts ne se montre que pendant une incantation, un "
-        .. "marqueur que sur une unité marquée : ni l'un ni l'autre ne se règle "
-        .. "en l'attendant. Ce mode maintient la vraie barre de sorts affichée et "
-        .. "en cours, et montre le marqueur avec un crâne d'exemple. Pensez à "
+    -- Deux aperçus, un par section. Chacun ne montre que ce que sa section
+    -- règle : l'aperçu général montrait tout, et on l'allumait pour une barre
+    -- de sorts en récoltant un crâne sur chaque plaque.
+    ["Preview cast bar"]               = "Aperçu de la barre de sorts",
+    ["Preview cast bar tip"] =
+        "Une barre de sorts ne se montre que pendant une incantation : elle ne "
+        .. "se règle donc pas en l'attendant. Cet aperçu maintient la vraie "
+        .. "barre affichée et en cours sur chaque plaque — c'est celle que vous "
+        .. "aurez, à sa place et à sa taille, rien n'est imité. Pensez à "
         .. "l'éteindre.",
+    ["Preview marker"]                 = "Aperçu de la marque",
+    ["Preview marker tip"] =
+        "Pose un crâne d'exemple sur chaque plaque, pour régler la taille et "
+        .. "le décalage sans attendre qu'un chef de groupe marque une cible. "
+        .. "Pensez à l'éteindre.",
     ["Sample cast"]                    = "Incantation",
     ["Cast text size"]                 = "Taille du texte des sorts",
     ["Cast text size tip"] =
@@ -740,7 +791,7 @@ BUI:RegisterLocale("frFR", {
     ["Texture vivid"]                  = "Couleur vive",
     ["Texture standard"]               = "Couleur standard",
 
-    ["Raid marker"]                    = "Marqueur de ciblage",
+    ["Raid marker"]                    = "Marque de cible",
     ["Place raid marker"]              = "Placer le marqueur soi-même",
     ["Place raid marker tip"] =
         "Pose l'icône de ciblage sur le coin haut-droit de la barre de vie, à la "

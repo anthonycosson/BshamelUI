@@ -516,6 +516,46 @@ BUI:RegisterLocale("enUS", {
     ["Enemy minions tip"]              = "Pets, guardians and totems on the enemy side.",
     ["Enemy minor units"]              = "Enemy minor units",
     ["Enemy minor units tip"]          = "Critters and other units with almost no health.",
+    -- Section « Unités adverses » (moitié Bshamel UI). Chaque infobulle donne un
+    -- **exemple** : « minion », « guardian » et « minus » sont le vocabulaire du
+    -- moteur, pas celui du joueur.
+    ["Enemy units section"]            = "Enemy units",
+    ["Tune enemy units"]               = "Set which enemies show",
+    ["Tune enemy units tip"] =
+        "Decides which enemy units get a nameplate, separately in the open "
+        .. "world, in PvE instances and in PvP instances. The game has one set "
+        .. "of settings for all three; that is all this section adds.\n\n"
+        .. "Turning it on copies the state the game is in right now into the "
+        .. "boxes below: nothing changes on screen until you touch them. The "
+        .. "three matching lines in the Blizzard half grey out, since this is "
+        .. "where they are set from now on.",
+    ["Open world"]                     = "Open world",
+    ["PvE instances"]                   = "PvE instances",
+    ["PvP instances"]                   = "PvP instances",
+    ["Enemy minor units example"] =
+        "Creatures the game gives almost no health. For example: the rats and "
+        .. "chickens of a city, the insects of a zone, and the small adds some "
+        .. "bosses drop in numbers.",
+    ["Enemy pets"]                     = "Enemy pets",
+    ["Enemy pets example"] =
+        "Players' pets only, as opposed to temporary summons. For example: a "
+        .. "hunter's dog, a warlock's permanent demon, a mage's elemental.",
+    ["Enemy guardians"]                = "Enemy guardians",
+    ["Enemy guardians example"] =
+        "Summons that are not pets: they act on their own and expire. For "
+        .. "example: a death knight's gargoyle, a druid's treants, a shaman's "
+        .. "fire elemental.",
+    ["Enemy totems"]                   = "Enemy totems",
+    ["Enemy totems example"] =
+        "Totems planted on the ground, to kill or to walk around. For example: "
+        .. "a shaman's earthquake totem, a war totem, a hunter's turret.",
+    ["Enemy units taken over"] =
+        "Bshamel UI decides this line, separately for each of the three "
+        .. "contexts. The first two are set once and for all — the enemy side "
+        .. "shows, and what it summons no longer goes through \"Minions\" — and "
+        .. "the families are ticked on the right. Untick \"Set which enemies "
+        .. "show\" to get everything back as it was.",
+
     ["Friendly player nameplates"]     = "Friendly players",
     ["Friendly player nameplates tip"] = "Nameplates on players on your side.",
     ["Friendly NPC nameplates"]        = "Friendly NPCs",
@@ -570,13 +610,17 @@ BUI:RegisterLocale("enUS", {
     ["Friendly player auras"]          = "Friendly player auras",
     ["Health bar size"]                = "Health bar",
     ["Cast bar size"]                  = "Cast bar",
-    ["Preview mode"]                   = "Preview mode",
-    ["Show cast bar"]                  = "Show what only appears in combat",
-    ["Show cast bar tip"] =
-        "A cast bar only shows while something is casting, a raid marker only on "
-        .. "a marked unit — neither can be adjusted by waiting. This keeps the "
-        .. "real cast bar up and filling, and shows the raid marker with a sample "
-        .. "skull. Remember to turn it off.",
+    ["Preview cast bar"]               = "Preview the cast bar",
+    ["Preview cast bar tip"] =
+        "A cast bar only shows while something is casting, so it cannot be "
+        .. "adjusted by waiting. This preview keeps the real bar up and filling "
+        .. "on every nameplate — the one you will get, in its place and at its "
+        .. "size, nothing is imitated. Remember to turn it off.",
+    ["Preview marker"]                 = "Preview the marker",
+    ["Preview marker tip"] =
+        "Puts a sample skull on every nameplate, so the size and offset can be "
+        .. "set without waiting for a lead to mark a target. Remember to turn "
+        .. "it off.",
     ["Sample cast"]                    = "Casting",
     ["Cast text size"]                 = "Cast text size",
     ["Cast text size tip"] =
@@ -722,7 +766,7 @@ BUI:RegisterLocale("enUS", {
     ["Texture vivid"]                  = "Vivid colour",
     ["Texture standard"]               = "Standard colour",
 
-    ["Raid marker"]                    = "Raid marker",
+    ["Raid marker"]                    = "Target marker",
     ["Place raid marker"]              = "Place the marker yourself",
     ["Place raid marker tip"] =
         "Puts the target icon on the top-right corner of the health bar, at the "
