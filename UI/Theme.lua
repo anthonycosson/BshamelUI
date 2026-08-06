@@ -439,7 +439,7 @@ T.SIZE = {
     -- On l'écarte d'autant, sans quoi le fond du panneau déborde du trait et
     -- forme une bande sombre de chaque côté. Se règle à l'œil : c'est la seule
     -- valeur à bouger si le trait ne tombe pas exactement sur le bord du fond.
-    PANEL_BORDER_OUTSET = 4,
+    PANEL_BORDER_OUTSET = 6,
 
 
 
