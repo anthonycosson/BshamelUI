@@ -69,10 +69,27 @@ local function countJunk()
         local slots = C_Container.GetContainerNumSlots(bag) or 0
         for slot = 1, slots do
             local info = C_Container.GetContainerItemInfo(bag, slot)
-            -- `hasNoValue` : un gris que personne n'achète n'est pas de la
-            -- camelote à vendre, c'est de la camelote à détruire.
-            if info and info.quality == POOR and not info.hasNoValue then
-                total = total + 1
+
+            if info then
+                local quality   = info.quality
+                local worthless = info.hasNoValue
+
+                -- **Les deux champs se gardent avant d'être lus.** Le client rend
+                -- certaines valeurs *secrètes*, et un secret ne se compare ni ne
+                -- se teste : `quality == POOR` lève sur un nombre secret,
+                -- `not hasNoValue` sur un booléen secret. L'erreur remonte alors
+                -- hors de la seule case fautive — elle interrompt le décompte
+                -- entier, qui rend zéro, et plus rien ne se vend. Une case qu'on
+                -- n'a pas le droit de lire est simplement sautée.
+                --
+                -- `hasNoValue` : un gris que personne n'achète n'est pas de la
+                -- camelote à vendre, c'est de la camelote à détruire.
+                if type(quality) == "number" and not U.IsSecret(quality)
+                   and not U.IsSecret(worthless)
+                   and quality == POOR and not worthless
+                then
+                    total = total + 1
+                end
             end
         end
     end
