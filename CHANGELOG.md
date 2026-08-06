@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.8.0 — 2026-08-06
+
 ### Modifié
 - **Plus aucun réglage n'est livré coché.** Une installation neuve ne change
   désormais rien au jeu tant qu'on n'a rien demandé — ce qui était la règle, et
