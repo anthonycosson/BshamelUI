@@ -3856,3 +3856,38 @@ Deux précautions vont avec :
 
 Le même raisonnement vaut pour toute fenêtre du client qu'on veut supprimer
 plutôt que fermer.
+
+---
+
+## Le contour d'une fenêtre du client ne se convertit pas en contour de panneau
+
+**Ce qu'on voulait** — le métal que le jeu pose autour de ses menus, sans la
+barre de titre, pour habiller les panneaux flottants de l'addon.
+
+**Ce qui a été tenté**, dans l'ordre, chaque étape corrigeant la précédente et en
+révélant une autre :
+
+1. monter `BasicFrameTemplate` et masquer ce qui n'est pas le contour — il reste
+   toujours une pièce, et `T.ClearPanelBackground` masque la bordure avec le
+   fond puisqu'elle est faite de régions ;
+2. reposer la texture du bas sur les pièces du haut — elles n'ont ni la même
+   hauteur ni la même largeur, le dessin arrive étiré ;
+3. n'appliquer que son découpage neuf à un cadre nu — ce template n'en a pas,
+   ses textures sont posées à même le cadre ;
+4. redessiner les huit pièces à partir de celles du bas — un bord décroché perd
+   la largeur qu'il tenait de ses deux ancrages ;
+5. reprendre les décalages d'ancrage de chaque pièce — un seul côté tombe juste,
+   le droit, parce que c'est le seul que le client ancre au cadre : les autres
+   s'accrochent à leurs voisines, et leur décalage ne parle pas du cadre ;
+6. cesser d'imposer des coordonnées aux bords — une texture en répétition tire
+   les siennes de sa taille, donc le retournement est perdu et la répétition
+   brouillée.
+
+**Ce qui marche** — `DialogBorderTemplate`, symétrique par construction, monté
+tel quel. Il n'a rien à démonter, donc rien à casser.
+
+**À retenir** — la géométrie d'un template du client est un tout : ses pièces se
+tiennent les unes aux autres, et on n'en emprunte pas la moitié. Quand un
+template ne fait pas ce qu'on veut, la question est « lequel le fait ? », pas
+« comment démonter celui-ci ? ». Six tentatives et neuf allers-retours avec le
+joueur pour l'établir.

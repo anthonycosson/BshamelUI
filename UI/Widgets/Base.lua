@@ -173,181 +173,34 @@ function W.Inset(parent)
     return inset
 end
 
---- Redessine intégralement le contour d'un cadre monté sur un template de
---- fenêtre : huit pièces à nous, aucune du template.
+--- Contour d'un panneau : quatre côtés identiques, sans barre de titre ni
+--- échancrure de bouton de fermeture.
 ---
---- **Tout reprendre plutôt que retoucher.** Trois tentatives ont échoué à
---- corriger le haut du contour du client sans toucher au reste, et pour la même
---- raison à chaque fois : ses pièces s'appuient les unes sur les autres. Changer
---- la taille d'un coin déplace le bord qui lui est accroché, décrocher un bord
---- lui fait perdre la largeur qu'il tenait de ses ancrages, et chaque correction
---- en appelle une autre. On ne sait pas ce dont on hérite.
+--- **Son propre template, et non celui des fenêtres démonté.** On a voulu le
+--- métal de la fenêtre d'options, plus épais et plus sourd que ce liseré-ci. Son
+--- contour n'est pas symétrique — ses coins hauts portent le renflement du titre
+--- et le logement de la croix —, et neuf tentatives n'ont pas suffi à en refaire
+--- le haut : masquer ses pièces, retourner leurs textures, les retailler, les
+--- redessiner entièrement. Chacune corrigeait un défaut et en révélait un autre,
+--- parce qu'on héritait à chaque fois d'une géométrie qu'on ne maîtrisait pas.
 ---
---- Les pièces d'origine sont donc **toutes** masquées, et huit textures à nous
---- prennent leur place : quatre coins, quatre bords, chacun copié d'une pièce du
---- client et ancré par nous. Le haut est le bas retourné, les coins hauts sont
---- les coins bas retournés. Plus rien n'est hérité, donc plus rien ne surprend.
----@param border table
-local function rebuildBorder(border)
-    if border._rebuilt then return end
-
-    local P = T.BORDER
-    local botLeft  = T.BorderPiece(border, P.BOTTOM_LEFT)
-    local botRight = T.BorderPiece(border, P.BOTTOM_RIGHT)
-    local bottom   = T.BorderPiece(border, P.BOTTOM)
-    local left     = T.BorderPiece(border, P.LEFT)
-    local right    = T.BorderPiece(border, P.RIGHT)
-
-    if not (botLeft and botRight and bottom and left and right) then return end
-
-    -- **Rien tant que les pièces n'ont pas de dimensions.** On les relève sur
-    -- elles, et elles valent zéro avant la première mise en page : construit trop
-    -- tôt, le contour naîtrait plat.
-    if bottom:GetHeight() <= 0 or left:GetWidth() <= 0 then return end
-
-    border._rebuilt = true
-
-    local cornerW, cornerH = botLeft:GetWidth(), botLeft:GetHeight()
-    local rightW, rightH   = botRight:GetWidth(), botRight:GetHeight()
-    local edgeH, edgeW     = bottom:GetHeight(), left:GetWidth()
-    local layer, sublevel  = bottom:GetDrawLayer()
-
-    ---@param source table
-    ---@param flip boolean
-    ---@return table
-    local function newPiece(source, flip)
-        local piece = border:CreateTexture(nil, layer, nil, sublevel)
-        T.CopyTexture(piece, source, flip)
-        return piece
-    end
-
-    --- Débordement du contour hors du cadre, **une seule valeur pour les quatre
-    --- côtés**.
-    ---
-    --- Le métal du client ne se pose pas à ras : il déborde du cadre qu'il
-    --- entoure, et c'est ce qui lui donne son relief. On a d'abord relevé le
-    --- décalage de chaque pièce pour le reprendre tel quel — un seul côté est
-    --- tombé juste, le droit, et c'est le seul que le client ancre directement au
-    --- cadre. Les trois autres s'accrochent à leurs voisines : leur décalage ne
-    --- parle pas du cadre, et l'appliquer au cadre les déplace n'importe où.
-    ---
-    --- Un contour est symétrique par nature. On relève donc le seul décalage qui
-    --- se lise sans ambiguïté et on l'applique aux quatre côtés, chacun vers son
-    --- dehors.
-    local _, _, _, bleed = right:GetPoint(1)
-    bleed = math.abs(bleed or 0)
-
-    -- **Les bords d'abord, les coins ensuite.** À calque égal, l'ordre de dessin
-    -- est celui de la création. Or les bords sont plus épais que les coins — 16
-    -- de large contre 14, relevé en jeu —, si bien qu'un bord dessiné après
-    -- mange le raccord du coin qu'il touche. C'est l'incohérence qu'on voyait
-    -- aux angles. Les coins par-dessus, le raccord est de nouveau à eux.
-    --
-    -- Les bords vont de bord à bord du cadre : ce sont les coins qui les
-    -- recouvrent à leurs extrémités, comme le fait le client.
-    -- Chaque côté déborde vers son dehors : négatif à gauche et en bas, positif à
-    -- droite et en haut.
-    local bo = newPiece(bottom, false)
-    bo:SetHeight(edgeH)
-    bo:SetPoint("BOTTOMLEFT",  border, "BOTTOMLEFT",  0, -bleed)
-    bo:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, -bleed)
-
-    -- **Le bord haut n'est pas retourné.** Une texture qui se répète tire ses
-    -- coordonnées de sa taille, et ignore donc celles qu'on lui impose : le
-    -- retournement était perdu, et la découpe posée par-dessus brouillait la
-    -- répétition. Un bord droit de neuf pixels n'a de toute façon presque pas de
-    -- sens de lecture — les coins, eux, en ont un, et eux ne se répètent pas.
-    local to = newPiece(bottom, false)
-    to:SetHeight(edgeH)
-    to:SetPoint("TOPLEFT",  border, "TOPLEFT",  0, bleed)
-    to:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, bleed)
-
-    local le = newPiece(left, false)
-    le:SetWidth(edgeW)
-    le:SetPoint("TOPLEFT",    border, "TOPLEFT",    -bleed, 0)
-    le:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", -bleed, 0)
-
-    local ri = newPiece(right, false)
-    ri:SetWidth(right:GetWidth())
-    ri:SetPoint("TOPRIGHT",    border, "TOPRIGHT",    bleed, 0)
-    ri:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", bleed, 0)
-
-    local bl = newPiece(botLeft,  false)
-    bl:SetSize(cornerW, cornerH)
-    bl:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", -bleed, -bleed)
-
-    local br = newPiece(botRight, false)
-    br:SetSize(rightW, rightH)
-    br:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", bleed, -bleed)
-
-    local tl = newPiece(botLeft,  true)
-    tl:SetSize(cornerW, cornerH)
-    tl:SetPoint("TOPLEFT", border, "TOPLEFT", -bleed, bleed)
-
-    local tr = newPiece(botRight, true)
-    tr:SetSize(rightW, rightH)
-    tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", bleed, bleed)
-end
-
---- Masque tout ce que le template pose lui-même : son remplissage et les huit
---- pièces de son contour.
+--- Ce template-ci est symétrique par construction. Il n'a rien à démonter, donc
+--- rien à casser. La matière est moins proche de celle de la fenêtre d'options,
+--- et c'est le prix assumé d'un contour qui se referme des quatre côtés.
 ---
---- **À chaque passage, pas une fois.** Un template du client repose et réaffiche
---- ses pièces quand son cadre change de taille ou réapparaît ; masquer une seule
---- fois laissait revenir le bandeau de titre, par-dessus notre contour, sans que
---- rien ne l'annonce.
----@param border table
-local function hideTemplatePieces(border)
-    T.HidePanelFill(border)
-
-    if not border._rebuilt then return end
-    for _, names in pairs(T.BORDER) do
-        local piece = T.BorderPiece(border, names)
-        if piece then piece:Hide() end
-    end
-end
-
---- Contour d'un panneau : **celui de la fenêtre d'options**, sans sa barre de
---- titre.
----
---- Le métal du client, celui qu'il pose autour de presque tous ses menus, et non
---- un contour qui lui ressemble : un liseré de dialogue a la même silhouette mais
---- ni la même matière ni la même épaisseur, et deux panneaux de la même famille
---- ne peuvent pas porter deux contours différents.
----
---- On monte le template de fenêtre pour ses textures, puis `rebuildBorder`
---- redessine le contour entier à partir d'elles — symétrique, donc sans barre de
---- titre ni logement de croix.
----
---- Repli sur le contour de dialogue si aucun template de fenêtre n'existe : moins
---- ressemblant, jamais cassé.
+--- **On ne lui retire que son fond**, et nommément : celui du panneau suffit, et
+--- deux surfaces empilées éclaircissent la zone au lieu de la délimiter. Cacher
+--- toutes ses régions cacherait la bordure avec, le contour d'un template du
+--- client étant fait de textures lui aussi.
 ---@param parent table
 ---@return table
 function W.PanelBorder(parent)
-    local template = T.Template("WINDOW") or T.Template("PANEL_BORDER")
-    local border = CreateFrame("Frame", nil, parent, template)
+    local border = CreateFrame("Frame", nil, parent, T.Template("PANEL_BORDER"))
+    T.HidePanelFill(border)
 
     -- Un contour ne prend pas les clics : sous le menu de téléportation, il
     -- avalerait ceux des rangées qu'il encadre.
     border:EnableMouse(false)
-
-    local function dress()
-        rebuildBorder(border)
-        hideTemplatePieces(border)
-    end
-
-    dress()
-
-    -- **Trois occasions, parce qu'aucune ne suffit seule.** La reconstruction a
-    -- besoin que les pièces du template soient mesurées, ce qui n'arrive pas à la
-    -- création ; le changement de taille l'apporte, mais un panneau qui naît déjà
-    -- à sa taille définitive n'en émet pas ; et un panneau caché puis réaffiché
-    -- voit son template reposer ses pièces. La trame suivante couvre le cas du
-    -- milieu, celui qui laissait des panneaux entiers sans contour.
-    border:HookScript("OnSizeChanged", dress)
-    border:HookScript("OnShow", dress)
-    C_Timer.After(0, dress)
-
     return border
 end
 
