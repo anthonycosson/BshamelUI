@@ -349,6 +349,19 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
+    -- `/bui noms` : pourquoi le nom du joueur ciblé porte la couleur qu'il
+    -- porte. Même porte d'entrée que ci-dessus, et même motif : ce qui décide
+    -- est invisible depuis le jeu.
+    if arg == "noms" or arg == "names" then
+        local mod = registry["Nameplates"]
+        if mod and mod._active and mod.DiagnoseNames then
+            BUI.safecall(mod.DiagnoseNames, mod)
+        else
+            BUI:Print(L["Aura diagnostic unavailable"])
+        end
+        return
+    end
+
     -- `/bui glow` : ce que le mode sombre a fait au cadre sous le curseur. Le
     -- moteur est hors des modules, comme celui de la minicarte : on l'appelle
     -- donc directement, sans passer par le registre.

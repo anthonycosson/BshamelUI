@@ -2,6 +2,192 @@
 
 ## Non publié
 
+### Modifié
+- **Barres d'infos** affiche désormais *toujours* les réglages du jeu et ceux de
+  Bshamel UI côte à côte. La page ne se replie plus sur une colonne unique quand
+  la fenêtre est étroite : c'est la fenêtre qui s'élargit d'elle-même en entrant
+  dans cette page, et qui rend au joueur sa largeur en la quittant. Un réglage de
+  l'addon se comprend en regardant celui du jeu qu'il double ou qu'il grise —
+  l'un sous l'autre, il n'y a plus rien à comparer.
+
+  La fenêtre retaillée à la main pendant qu'on est sur cette page garde la
+  largeur choisie : le geste du joueur passe avant le nôtre.
+
+- **Les deux notes en tête de cette page tiennent en une ligne**, en rouge et
+  d'un corps au-dessus du reste : ce sont les étiquettes des deux moitiés, et
+  deux titres seuls ne suffisaient pas à distinguer deux colonnes qui se
+  ressemblent ligne pour ligne.
+
+- **La page est réordonnée.** *Barre de vie*, *Barre de sorts* et *Superposition*
+  sont les trois catégories de la moitié Bshamel UI ; *Alliés* n'en est plus une
+  et rentre dans la barre de vie, dont elle règle un cas particulier — elle porte
+  désormais un en-tête subordonné, sans filet.
+
+  Côté jeu, le premier bloc s'appelle enfin **Général** : il commençait sous la
+  note d'ouverture, sans titre, et se lisait comme la suite de celle-ci.
+
+  *Menace* perd sa catégorie et ses trois lignes rejoignent *Couleurs des
+  adversaires*, sous les couleurs de classe. C'est une couleur de barre de vie de
+  plus — décidée par ce que l'adversaire regarde plutôt que par ce qu'il est — et
+  un titre pour trois lignes coûtait une hauteur d'écran.
+
+- **Une ligne commandée par une case est en retrait sous elle.** Vingt lignes de
+  la page l'étaient déjà par intention et pas à l'écran : largeur et hauteur sous
+  *Régler la taille*, les trois opacités sous *Régler l'opacité*, les textures,
+  les couleurs, la superposition. Le retrait et le corps plus petit disent ce que
+  le grisé ne dit qu'après coup — que cette ligne dépend de celle du dessus.
+
+- **Les dernières notes de la page partent** : barres simplifiées, couleurs des
+  adversaires. Ce qu'elles disaient est dans les infobulles. Il ne reste que les
+  deux étiquettes rouges, une par moitié, et elles ont désormais la même longueur
+  — l'une plus longue que l'autre se lisait comme plus grosse.
+
+- **Le sous-titre *Alliés* disparaît**, ses trois réglages restent, en retrait
+  sous *Afficher uniquement le nom des alliés*. Trois lignes ne font pas une
+  section, et leurs intitulés disent déjà de qui il s'agit.
+
+  Les trois se grisent avec lui, couleur de classe comprise : c'est en nom seul
+  que la couleur remplace ce que la barre de vie disait. Elle cesse aussi de
+  peindre — une case grisée dont l'effet resterait posé serait un réglage qu'on
+  ne pourrait plus éteindre.
+
+- **Le corps du texte n'a plus d'interrupteur à lui**, sur la barre de vie comme
+  sur la barre de sorts : il suit celui de sa barre et se règle juste sous sa
+  hauteur. Deux cases pour une seule idée — « je règle cette barre » — coûtaient
+  une ligne à chacune des deux et une hésitation à chaque ouverture de la page.
+  Prendre la taille d'une barre, c'est prendre celle de ce qui s'y écrit.
+
+- **Le filet d'un en-tête de catégorie ne disparaît plus.** Il était tendu entre
+  la droite du titre et le bord de la colonne : un titre long le réduisait à
+  rien, et il s'éteignait — pas sur toutes les catégories en même temps, chacune
+  ayant sa longueur de titre, donc sa largeur de fenêtre à laquelle elle perdait
+  sa marque. On voyait alors une page où certaines catégories avaient le rang
+  qu'elles ont et d'autres non, selon le coin qu'on venait de tirer. Le filet a
+  désormais un plancher que le titre lui cède, quitte à être coupé — ce qui
+  n'arrive qu'à une largeur où il débordait déjà de sa colonne. Toutes les pages
+  de l'addon sont concernées.
+
+- **Le filet d'un en-tête de catégorie se voit.** Il était à trente pour cent
+  d'un doré déjà sombre, sur un fond translucide : autant dire nulle part. À
+  cinquante-cinq, il fait ce pour quoi il est là — dire qu'un titre ouvre une
+  catégorie, et distinguer celle-ci d'un en-tête subordonné, qui n'en a pas.
+  Toutes les pages en profitent.
+
+  La largeur et la hauteur remontent juste sous l'interrupteur qui les commande.
+  *Visibilité* disparaît en tant que catégorie : ses trois opacités ferment la
+  barre de vie, au-dessus des réglages d'alliés.
+
+- **Les opacités par défaut deviennent 100 / 90 / 50** — la cible, les autres, ce
+  qui est derrière un mur. Les anciennes valeurs venaient du client et
+  effaçaient trop.
+
+- **L'infobulle des barres d'infos simplifiées disait le contraire de ce qui se
+  passe.** Elle promettait « affichée sous forme de nom seul », qui est le
+  réglage d'à côté : une plaque simplifiée ne garde pas le nom, elle ne garde
+  *rien* — une barre nue. Les quatre cases partagent cette infobulle, et elle dit
+  maintenant ce que le jeu fait, avec la distinction en toutes lettres.
+
+- **« (pixels) » disparaît de tous les intitulés.** Une taille se règle en
+  regardant l'écran, pas son unité.
+
+### Ajouté
+- **Un interrupteur pour la superposition**, avec ses deux valeurs à nous
+  (0,50 à l'horizontale, 0,80 à la verticale). Les deux glissières écrivaient
+  jusqu'ici en direct dans le réglage du jeu, et **sautaient toutes seules** : le
+  jeu réécrit ces valeurs chaque fois qu'il refait ses plaques. Elles sont
+  désormais empruntées comme la taille et l'opacité — reposées derrière lui,
+  rendues telles quelles en décochant.
+
+- **« Régler la taille » pousse le calibre du jeu à 5 et le verrouille.** La
+  largeur et la hauteur en pixels ont besoin de la plus grande boîte que le jeu
+  sache faire pour disposer de toute leur course ; à un calibre plus petit, la
+  moitié de la course ne faisait rien. Le réglage est rendu tel qu'il était en
+  décochant.
+
+  L'échelle des auras et l'espacement des affaiblissements, eux, **cessent
+  d'être grisés** avec lui : ce sont des mesures d'auras, et nos pixels ne les
+  décident pas.
+
+- **Cocher « Colorier selon la menace » éteint la couleur de menace du jeu** —
+  *Couleur de la barre de vie*, dans son groupe *Affichage de menace* — et grise
+  sa case tant que la nôtre est allumée. Les deux repeignent la même barre pour
+  dire la même chose : ensemble, c'est la dernière qui a peint qui gagnait, et le
+  joueur voyait une couleur qui n'était ni la sienne ni celle du jeu. Le réglage
+  est emprunté, donc rendu en décochant.
+
+- **Cocher « Joueurs alliés — nom seul » décoche « barre simplifiée pour les
+  joueurs alliés »**, et la grise tant qu'il est allumé. Les deux réduisent la
+  même plaque à la même chose ; cochés ensemble, le second ne faisait rien de
+  plus, mais restait coché.
+
+### Corrigé
+- **Les lignes d'une page sont posées sur la grille de l'écran.** Une ligne à un
+  demi-pixel du bord y est dessinée à cheval sur deux rangées : son texte pâlit
+  et ses bords bavent. Comme chacune tombait à un endroit différent de la grille,
+  deux lignes voisines n'avaient pas tout à fait la même netteté.
+
+- **Une plaque déjà à l'écran pouvait n'être jamais suivie.** La liste des
+  plaques est tenue par les annonces du client, et il ne réannonce pas ce qui
+  était déjà là — après un `/reload`, ou en allumant le module devant quelqu'un,
+  sa plaque restait inconnue pour toute la session. Rien n'y était peint, et
+  cocher une case ne changeait rien sur elle : c'est ce qui faisait croire que
+  les couleurs de classe des alliés ne répondaient pas. Le recensement se refait
+  maintenant à chaque repeinture complète.
+
+- **La page d'options ne suivait pas la fenêtre.** Sa largeur est écrite une fois,
+  quand on ouvre la page, et rien ne la reposait ensuite : une fenêtre retaillée
+  laissait la page se disposer pour l'ancienne. C'est ce qui coupait les
+  paragraphes à la mauvaise mesure et ce qui éteignait le filet des en-têtes — un
+  calcul juste, fait pour une fenêtre qui n'existait plus.
+
+  Le premier affichage souffrait du même mal à l'envers : la fenêtre venait
+  d'être élargie, et la zone de contenu n'a sa nouvelle taille qu'à l'image
+  suivante. On déduit désormais cette largeur au lieu de la lire — on sait de
+  combien on a poussé le cadre.
+
+- **Les noms alliés en couleur de classe, bloqués en blanc en instance.** En
+  donjon, en raid et en champ de bataille, le client refuse de dire si une unité
+  est un joueur : la réponse est *secrète*, et l'addon la lisait comme « non ».
+  Chaque allié y passait donc pour un PNJ, peint en blanc avant même qu'on
+  regarde la case. Le camp se décide maintenant sur ce qu'on a le droit
+  d'attaquer, seule question à laquelle le client réponde partout.
+
+### Retiré
+- **« Noms aux couleurs de classe » pour les alliés.** Le jeu le fait désormais
+  de lui-même, et mieux que nous : lui seul lit l'identité qu'il protège en
+  instance. Une case qui promet ce qui arrive déjà est une case qui ment.
+  L'addon ne touche plus du tout au nom d'un allié ; celui d'un adversaire garde
+  la couleur de sa classe, qui n'a jamais été un réglage.
+
+- **Tous les filets.** Il n'y en a plus sous le titre de page, plus à droite des
+  en-têtes de catégorie, plus autour des bandeaux de la navigation.
+
+  Un trait d'un pixel ne tient pas sur un écran dont l'échelle d'interface n'est
+  pas entière : il tombe entre deux rangées de la grille et s'y dessine tantôt
+  net, tantôt étalé sur deux, tantôt pas du tout — et comme chaque ligne d'une
+  page atterrit à une phase différente, deux catégories voisines ne se
+  ressemblaient jamais. Épaisseur arrondie à la grille, position arrondie,
+  lignes arrondies : il restait le défilement, qui décale la page d'une fraction
+  à chaque cran de molette, et rien de ce que nous maîtrisons ne rattrape cela.
+
+  Ce qui hiérarchise est resté, et c'est ce qui hiérarchisait déjà : la casse,
+  la couleur, le corps, le retrait et le blanc avant un titre. Le filet ne
+  faisait que confirmer — mal.
+
+- **La rangée d'entraves de l'addon.** Elle marchait, et c'est ce qu'elle
+  demandait pour marcher qui la condamne : lire les auras d'un adversaire, ce
+  que le client protège le plus, en composant avec des valeurs secrètes, des
+  filtres classés et une durée devenue objet opaque — trois choses qui ont
+  changé deux fois en un an. Une extension suffit à casser la rangée, et une
+  rangée d'entraves cassée en plein combat est pire que pas de rangée.
+
+  Le jeu les affiche lui-même, et cela se règle dans sa moitié de la page. Aux
+  joueurs qui avaient pris la rangée, l'addon rend au jeu la catégorie qu'il lui
+  avait éteinte, à la première connexion et une seule fois.
+
+  Le code reste dans le dépôt, entier et éteint par un booléen, comme les autres
+  sections mises en sommeil.
+
 ## 0.8.2 — 2026-08-06
 
 ### Modifié

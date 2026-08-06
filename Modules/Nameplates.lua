@@ -96,10 +96,21 @@ local LIVE = {
 
     size       = true,
 
-    -- Le marqueur et les auras partagent une section, et le même état : livrés,
-    -- visibles, **en pause** (voir `AURAS_PAUSED`).
     marker     = true,
-    auras      = true,
+
+    -- **La rangée d'auras de l'addon est retirée**, et le code reste ici, entier,
+    -- comme le veut cette table.
+    --
+    -- Elle marchait. Ce qu'elle coûtait est ailleurs : elle lit les auras d'une
+    -- unité adverse, c'est-à-dire ce que le client protège le plus, et elle n'y
+    -- arrive qu'en composant avec des valeurs secrètes, des filtres classés et
+    -- une durée qui est devenue un objet opaque — trois choses qui ont changé
+    -- deux fois en un an. Une extension suffit à la casser, et une rangée
+    -- d'entraves cassée en plein combat est pire que pas de rangée du tout.
+    --
+    -- Le jeu les affiche lui-même, dans sa moitié de la page. C'est ce qu'on
+    -- garde : ce qu'il montre ne dépend d'aucune API que nous appelons.
+    auras      = false,
 
     -- L'opacité, validée puis endormie quand la page s'était resserrée.
     -- Rallumée : le réglage des non-ciblés est redemandé, et la section
@@ -259,6 +270,24 @@ local CVAR = {
     -- notre taille en pixels est allumée, parce que les deux décident de la même
     -- chose (voir « Le calibre du client et nos pixels »).
     SIZE = "nameplateSize",
+
+    -- La superposition : la place que chaque plaque garde avant que le jeu ne
+    -- pousse la voisine. Deux réglages que son menu n'expose pas.
+    --
+    -- Ils étaient branchés en direct sur le CVar, et c'est ce qui les faisait
+    -- **sauter tout seuls** : le client les réécrit en rejouant son calibre de
+    -- plaque, et une glissière qui écrit sans reprendre la main perd à chaque
+    -- fois. Ils passent désormais par un interrupteur, comme la taille et
+    -- l'opacité — on relève, on pose, on repose sur `CVAR_UPDATE`, on rend en
+    -- décochant.
+    OVERLAP_H = "nameplateOverlapH",
+    OVERLAP_V = "nameplateOverlapV",
+
+    -- Le mode « nom seul » pour les alliés. Il n'est pas emprunté — c'est une
+    -- case du client, cochée par le joueur depuis notre page — mais il est nommé
+    -- ici parce que **deux** lignes de la page le lisent, et qu'une graphie
+    -- recopiée est une graphie qui divergera.
+    ALLY_NAMES = "nameplateShowOnlyNameForFriendlyPlayerUnits",
 }
 
 --- nom du CVar -> valeur qu'il portait avant nous, ou `false` s'il n'existait pas
@@ -669,14 +698,21 @@ local function sizeTexts(mod, texts, toggleKey, sizeKey, fallback)
     end
 end
 
+--- Le corps des textes suit **l'interrupteur de sa barre**, et n'a plus le sien.
+---
+--- Il en avait un, et l'argument tenait : on élargit une plaque une fois pour
+--- toutes, on retouche un corps de texte en le lisant de loin. Mais deux cases
+--- pour une seule idée — « je règle cette barre » — coûtaient une ligne à
+--- chacune des deux barres et une hésitation à chaque ouverture de la page.
+--- Prendre la taille d'une barre, c'est prendre celle de ce qui s'y écrit.
 ---@param mod table
 ---@param unitFrame table
 local function applyTextSize(mod, unitFrame)
     if not LIVE.size then return end
 
-    sizeTexts(mod, textsOf(unitFrame), "resizeText", "textSize",
+    sizeTexts(mod, textsOf(unitFrame), "resize", "textSize",
               T.SIZE.PLATE_TEXT)
-    sizeTexts(mod, castTextsOf(unitFrame), "resizeCastText", "castTextSize",
+    sizeTexts(mod, castTextsOf(unitFrame), "resizeCast", "castTextSize",
               T.SIZE.PLATE_CAST_TEXT)
 end
 
@@ -696,11 +732,23 @@ end
 --- nom allié -> corps qu'il portait avant qu'on y touche
 local allyNameSizes = {}
 
+--- Un allié, au sens de cette page : **ce qu'on n'a pas le droit d'attaquer**.
+---
+--- Le test évident — « c'est un joueur, et je ne peux pas l'attaquer » — ne tient
+--- pas sous identité protégée. En donjon, en raid et en champ de bataille, la
+--- réponse à `UnitIsPlayer` est *secrète*, et un secret vaut « non » (voir
+--- `U.IsTrue`, qui refuse de conclure). Chaque allié y passait donc pour autre
+--- chose qu'un joueur, avec deux conséquences visibles : son nom peint en blanc
+--- quoi que dise la case des couleurs de classe, et son corps de texte jamais
+--- réglé. C'est très exactement le « bloqué en blanc » des instances.
+---
+--- Ce qu'on perd en échange est un PNJ amical rangé du même côté que les joueurs
+--- alliés. C'est le bon prix : les deux sont ce qu'on ne tape pas, et c'est ce
+--- que ces réglages-là veulent dire.
 ---@param unit string
 ---@return boolean
 local function isFriendlyPlayer(unit)
-    return U.IsTrue(UnitIsPlayer(unit))
-       and not U.IsTrue(UnitCanAttack("player", unit))
+    return not U.IsTrue(UnitCanAttack("player", unit))
 end
 
 ---@param mod table
@@ -1566,8 +1614,35 @@ local function restorePlateWidth()
     savedPlateSize = nil
 end
 
+-- -------------------------------------------------------------------------
+--  Le calibre du client, poussé à fond
+-- -------------------------------------------------------------------------
+-- Prendre la taille en pixels commence par **mettre le calibre du client au
+-- maximum**, puis par griser sa glissière.
+--
+-- Ce n'est pas une préférence : le calibre décide de la boîte dans laquelle nos
+-- pixels se posent, et une boîte au calibre trois borne ce qu'on peut y écrire.
+-- Au cran cinq, la boîte est la plus grande que le client sache faire, et nos
+-- deux curseurs disposent de toute leur course. Un calibre laissé au joueur
+-- donnait deux réglages qui se contredisent — on règle une largeur au pixel
+-- près, puis un cran de calibre la balaie.
+--
+-- Le CVar est **emprunté** comme les autres : relevé avant la première écriture,
+-- rendu tel quel en décochant (`SIZE_CVARS`).
+--
+-- Ce que le calibre entraînait avec lui — l'échelle des vignettes d'auras et
+-- l'espacement des affaiblissements — reste réglable. Ces deux-là étaient grisés
+-- avec lui parce qu'y toucher fait rejouer la mise en page du client, et que
+-- c'était le geste qui écrasait nos pixels ; ce n'est plus vrai depuis que la
+-- largeur de boîte et la hauteur de barre se reposent sur l'écriture elle-même
+-- (`hookPlateSize`, `hookBarHeight`).
+
 ---@param mod table
 local function applySize(mod)
+    if LIVE.size and mod:Get("resize") then
+        takeCVar(CVAR.SIZE, T.SIZE.PLATE_GAUGE_MAX)
+    end
+
     applyPlateWidth(mod)
 end
 
@@ -1713,6 +1788,26 @@ local function applyAlpha(mod)
     -- à travers un mur.
     local mult = (other > 0) and (occluded / other) or 1
     takeCVar(CVAR.OCCLUDED, U.Clamp(mult, 0, 1))
+end
+
+-- =========================================================================
+--  Superposition
+-- =========================================================================
+-- Deux CVars du client, pris comme tous les autres : relevés avant la première
+-- écriture, reposés quand quelqu'un les réécrit, rendus tels quels en décochant.
+--
+-- C'est ce qui manquait quand ils étaient branchés en direct sur le CVar. Le
+-- pilote du client repose ces deux valeurs en rejouant son calibre de plaque, et
+-- rien ne l'annonce autrement que par `CVAR_UPDATE` — une glissière qui écrit
+-- sans jamais reprendre la main revenait donc d'elle-même à la valeur du jeu.
+
+---@param mod table
+local function applyOverlap(mod)
+    if not LIVE.overlap then return end
+    if not mod:Get("overlap") then return end
+
+    takeCVar(CVAR.OVERLAP_H, mod:Get("overlapH"))
+    takeCVar(CVAR.OVERLAP_V, mod:Get("overlapV"))
 end
 
 --- Cette unité est-elle la cible du joueur ?
@@ -2089,44 +2184,40 @@ end
 --- relire la sienne : une lecture suivie d'une écriture s'empilerait sur
 --- elle-même passage après passage.
 ---
---- **Le nom d'un allié est le seul des deux qui se règle**, et c'est le seul qui
---- ait un choix à offrir : un adversaire, on le lit pour savoir sur quoi taper —
---- sa classe *est* l'information, et la lui retirer ne rendrait service à
---- personne. Un allié, on lit son nom pour le reconnaître, et le vert que le jeu
---- lui donne est une réponse défendable.
+--- **On ne touche plus au nom d'un allié.** Le jeu le colore désormais lui-même
+--- à la classe, et il le fait mieux : c'est le seul à pouvoir lire l'identité
+--- qu'il protège en instance. La case qui le proposait est partie — elle
+--- promettait ce qui arrive déjà.
+---
+--- Un adversaire, en revanche, on le lit pour savoir sur quoi taper : sa classe
+--- *est* l'information, et c'est un choix de l'addon, pas un réglage.
 ---
 --- `false` veut dire « le client garde la main de bout en bout » — pas
---- « blanc ». C'est ce qui rend la case réversible sans qu'on ait à retenir une
---- teinte d'origine : on ne rend pas une couleur, on s'abstient d'en poser une.
+--- « blanc ». On ne rend pas une couleur, on s'abstient d'en poser une.
 ---
 --- **Le premier retour est un drapeau, et il le faut.** En instance et en PvP,
 --- les trois nombres peuvent être *secrets* : ils traversent l'addon jusqu'à
 --- `SetTextColor` sans qu'on ait le droit de les lire, et `if r then` chez
 --- l'appelant lèverait. Le drapeau est la seule réponse qu'il puisse regarder.
----@param mod table
 ---@param unit string
 ---@return boolean paint, number? r, number? g, number? b
-local function nameColor(mod, unit)
-    if not U.IsTrue(UnitIsPlayer(unit)) then
-        return true, T.COLOR.WHITE:GetRGB()
-    end
-
-    if isFriendlyPlayer(unit) and not mod:Get("allyClassColor") then
-        return false
-    end
+local function nameColor(unit)
+    if isFriendlyPlayer(unit) then return false end
 
     local _, class = UnitClass(unit)
 
     -- **Identité protégée : donjon, raid, champ de bataille.** La classe est
     -- une chaîne secrète, qu'on ne peut ni lire ni indexer. On la fait passer au
     -- client sans la regarder (voir `T.SecretClassColor`).
-    --
-    -- C'est ici que le nom d'un allié virait au blanc : le garde voyait le
-    -- secret, sortait, et tombait sur le repli du bas. Le repli n'etait pas
-    -- faux en soi — il l'etait a cet endroit, parce qu'un blanc pose vaut moins
-    -- que la teinte que le client aurait mise.
     if U.IsSecret(class) then
         return T.SecretClassColor(class)
+    end
+
+    -- Pas de classe du tout : ce n'est pas un joueur, c'est un PNJ, et le blanc
+    -- est la couleur qu'on leur donne. Il ne se pose plus que sur cette
+    -- réponse-là — jamais sur une réponse qu'on n'a pas eu le droit de lire.
+    if type(class) ~= "string" or class == "" then
+        return true, T.COLOR.WHITE:GetRGB()
     end
 
     local color = T.ClassColor(class)
@@ -2134,28 +2225,11 @@ local function nameColor(mod, unit)
     return true, T.COLOR.WHITE:GetRGB()
 end
 
---- Redemande au client de peindre le nom de chaque plaque suivie.
----
---- Sert quand la case des couleurs alliées s'éteint : notre teinte est déjà
---- posée, et le client ne repeindra pas de lui-même avant le prochain changement
---- d'état de la plaque — le nom resterait à la couleur de classe qu'on vient
---- justement de refuser. On ne repose donc pas une teinte, on **rappelle sa
---- fonction** : lui seul sait ce qu'il aurait dessiné là, réaction comprise
---- (même raison que `release`).
----
---- Pas de garde de récursion : notre peinture n'appelle jamais cette
---- fonction-ci, et le hook de peinture qu'elle déclenche ne fait qu'écrire une
---- couleur. La boucle ne se referme nulle part.
-local function releaseNames()
-    if type(CompactUnitFrame_UpdateName) ~= "function" then return end
-
-    for _, plate in pairs(plates) do
-        local unitFrame = unitFrameOf(plate)
-        if unitFrame and unitFrame.unit then
-            BUI.safecall(CompactUnitFrame_UpdateName, unitFrame)
-        end
-    end
-end
+-- `releaseNames` vivait ici : elle rappelait la fonction de nom du client sur
+-- chaque plaque suivie, pour lui rendre la main quand la case des couleurs
+-- alliées s'éteignait. La case est partie — le jeu colore ces noms lui-même — et
+-- il ne reste plus une seule teinte de nom qu'on pose puis qu'on retire : celles
+-- des adversaires et des PNJ ne se règlent pas.
 
 --- Sommes-nous en train de poser une couleur de nom ? Même rôle que
 --- `settingFont` pour le corps : le hook ci-dessous guette l'écriture, donc il
@@ -2206,7 +2280,7 @@ local function hookNameColor(fontString, unitFrame)
 
         -- Le drapeau et non la couleur : les trois nombres peuvent être secrets,
         -- et un secret ne se teste pas (voir `nameColor`).
-        local ok, r, g, b = nameColor(mod, unit)
+        local ok, r, g, b = nameColor(unit)
         if not ok then return end
 
         settingNameColor = true
@@ -2637,14 +2711,15 @@ end
 -- curseurs qui se contredisent — on règle une largeur au pixel près, puis un cran
 -- de calibre la balaie.
 --
--- Quand notre réglage est allumé, il **grise** la ligne du client, et rien de
--- plus : on ne touche pas à sa valeur.
+-- Quand notre réglage est allumé, la ligne du client est **poussée au maximum
+-- puis grisée** — voir `applyClientGauge`, qui dit pourquoi c'est le maximum et
+-- non le cran du joueur. Le CVar est emprunté, donc rendu en décochant.
 --
--- On l'avait d'abord forcée à un, en se disant qu'un calibre neutre laissait le
--- champ libre à nos pixels. C'était un réglage écrasé sans qu'on l'ait demandé —
--- et rendu, certes, mais seulement à qui pense à décocher. Griser suffit à
--- écarter la contradiction : le calibre reste celui que le joueur a choisi, il
--- cesse simplement d'être modifiable tant que nous tenons la taille.
+-- On avait d'abord essayé le contraire : ne rien écrire, et se contenter de
+-- griser. Le calibre restait celui du joueur, ce qui semblait plus poli — mais
+-- au cran trois, la boîte est trop petite pour la moitié de la course de nos
+-- curseurs, et une glissière qui ne fait plus rien passé son milieu est pire
+-- qu'un réglage qu'on emprunte et qu'on rend.
 
 ---@return boolean
 local function sizeTaken()
@@ -2653,13 +2728,13 @@ local function sizeTaken()
     return mod ~= nil and mod:Get("resize") == true
 end
 
----@return string
-local function sizeReason()
-    if InCombatLockdown() then return L["Cannot change in combat"] end
-    return L["Taken over by the addon"]
-end
-
-local SIZE_LOCK = { disabled = sizeTaken, reason = sizeReason }
+local SIZE_LOCK = {
+    disabled = sizeTaken,
+    reason   = function()
+        if InCombatLockdown() then return L["Cannot change in combat"] end
+        return L["Taken over by the addon"]
+    end,
+}
 
 --- Les trois champs de bits qui commandent les rangées d'auras du client — un
 --- par famille d'unités — et l'énumération qui nomme leurs catégories.
@@ -2688,7 +2763,7 @@ local CLIENT_AURA_CVARS = {
 --- On relève **le bit**, pas le champ : sa valeur d'avant se demande au client
 --- (`GetCVarBitfield`) au lieu de se déduire du nombre par une arithmétique qui
 --- supposerait son encodage. Rendre, c'est reposer ce qu'il a répondu.
-local savedAuraBits = {}
+local savedBits = {}
 
 --- Pose un bit à la valeur voulue, et seulement s'il ne l'a pas déjà : le client
 --- annonce chaque écriture de CVar, et la veille qui reprend la main est branchée
@@ -2696,7 +2771,7 @@ local savedAuraBits = {}
 ---@param cvar string
 ---@param index number
 ---@param wanted boolean
-local function setAuraBit(cvar, index, wanted)
+local function setCVarBit(cvar, index, wanted)
     if not (C_CVar and C_CVar.GetCVarBitfield and C_CVar.SetCVarBitfield) then return end
 
     local ok, current = pcall(C_CVar.GetCVarBitfield, cvar, index)
@@ -2708,11 +2783,11 @@ end
 --- Éteint une catégorie chez le client, en relevant ce qu'elle valait.
 ---@param cvar string
 ---@param index number
-local function takeAuraBit(cvar, index)
+local function takeCVarBit(cvar, index)
     if not (C_CVar and C_CVar.GetCVarBitfield) then return end
 
-    local saved = savedAuraBits[cvar]
-    if not saved then saved = {} savedAuraBits[cvar] = saved end
+    local saved = savedBits[cvar]
+    if not saved then saved = {} savedBits[cvar] = saved end
 
     if saved[index] == nil then
         local ok, was = pcall(C_CVar.GetCVarBitfield, cvar, index)
@@ -2720,32 +2795,32 @@ local function takeAuraBit(cvar, index)
         saved[index] = was == true
     end
 
-    setAuraBit(cvar, index, false)
+    setCVarBit(cvar, index, false)
 end
 
 --- Rend une catégorie, si elle était à nous. Sinon ne touche à rien : un bit
 --- qu'on n'a jamais pris n'est pas à nous, même s'il est éteint.
 ---@param cvar string
 ---@param index number
-local function giveBackAuraBit(cvar, index)
-    local saved = savedAuraBits[cvar]
+local function giveBackCVarBit(cvar, index)
+    local saved = savedBits[cvar]
     local was = saved and saved[index]
     if was == nil then return end
 
     saved[index] = nil
-    setAuraBit(cvar, index, was)
+    setCVarBit(cvar, index, was)
 end
 
 --- Rend toutes les catégories prises. Appelé à l'extinction du module : une
 --- rangée éteinte doit être indétectable (règle 6).
-local function giveBackAuraBits()
-    for cvar, saved in pairs(savedAuraBits) do
+local function giveBackCVarBits()
+    for cvar, saved in pairs(savedBits) do
         for index, was in pairs(saved) do
-            setAuraBit(cvar, index, was)
+            setCVarBit(cvar, index, was)
         end
         wipe(saved)
     end
-    wipe(savedAuraBits)
+    wipe(savedBits)
 end
 
 --- Une catégorie du client est-elle grisée ? Seulement si c'est la rangée
@@ -2765,12 +2840,6 @@ local function auraBitTaken(member)
     return false
 end
 
----@return string
-local function clientAurasReason()
-    if InCombatLockdown() then return L["Cannot change in combat"] end
-    return L["Auras taken over"]
-end
-
 --- Le verrou d'une catégorie d'auras du client, fabriqué pour elle : c'est ce
 --- qui distingue « l'addon tient les affaiblissements » de « l'addon tient tout ».
 ---@param member string
@@ -2778,7 +2847,10 @@ end
 local function auraLock(member)
     return {
         disabled = function() return auraBitTaken(member) end,
-        reason   = clientAurasReason,
+        reason   = function()
+            if InCombatLockdown() then return L["Cannot change in combat"] end
+            return L["Auras taken over"]
+        end,
     }
 end
 
@@ -2872,6 +2944,42 @@ local SIMPLIFIED_LABELS = {
     FriendlyPlayer = L["Friendly players"],
     FriendlyNpc    = L["Friendly NPCs"],
 }
+
+-- -------------------------------------------------------------------------
+--  Deux réglages du client qui font la même chose
+-- -------------------------------------------------------------------------
+-- « Ne montrer que le nom des joueurs alliés » et « barre simplifiée pour les
+-- joueurs alliés » réduisent la même plaque à la même chose. Cochés tous les
+-- deux, le second ne fait rien de plus — mais il **reste coché**, et le jour où
+-- l'on décoche le premier on ne retrouve pas ce qu'on croyait retrouver.
+--
+-- Allumer le premier décoche donc le second, et le grise tant qu'il est allumé.
+-- Décocher le premier ne le recoche pas : ce serait décider à la place du joueur
+-- d'un réglage qu'il n'avait peut-être jamais mis.
+--
+-- Écrire dans un réglage du client au clic du joueur est exactement ce que fait
+-- le reste de cette moitié de page : c'est sa case à lui, cochée depuis chez
+-- nous. Rien n'est donc emprunté ici, et il n'y a rien à rendre.
+
+--- Le verrou d'une catégorie de barre simplifiée. Seuls les joueurs alliés en
+--- ont un : les trois autres n'ont pas de réglage qui les double.
+---@param member string
+---@return table
+local function simplifiedLock(member)
+    if member ~= "FriendlyPlayer" then
+        return { disabled = inCombat, reason = L["Cannot change in combat"] }
+    end
+
+    return {
+        disabled = function()
+            return inCombat() or U.GetCVar(CVAR.ALLY_NAMES) == "1"
+        end,
+        reason = function()
+            if InCombatLockdown() then return L["Cannot change in combat"] end
+            return L["Simplified taken by names only"]
+        end,
+    }
+end
 
 --- Les six styles de barre d'infos du client, relevés dans son énumération.
 ---
@@ -3068,6 +3176,95 @@ local function blizzSlider(name, text, tooltip, bounds, lock)
     }
 end
 
+--- La case « ne montrer que le nom des joueurs alliés ».
+---
+--- C'est une case du client comme les autres, à ceci près qu'allumée elle
+--- décoche celle qui la double (voir « Deux réglages du client qui font la même
+--- chose »). Le geste est enchaîné à l'écriture, et non posté sur un événement :
+--- c'est le même clic, il doit avoir le même effet à l'écran.
+---@return table
+local function allyNamesRow()
+    local row = blizzToggle(CVAR.ALLY_NAMES,
+        L["Allied names only"], L["Allied names only tip"])
+    if not row.type then return row end
+
+    -- L'index du bit se demande à l'énumération, jamais écrit en dur : une
+    -- catégorie que ce client ne connaît pas rend `nil`, et il n'y a alors rien
+    -- à décocher (règle 1).
+    local set = row.set
+    row.set = function(value)
+        set(value)
+
+        if value and not InCombatLockdown()
+           and C_CVar and C_CVar.SetCVarBitfield then
+            local enum  = Enum.NamePlateSimplifiedType
+            local index = type(enum) == "table" and enum.FriendlyPlayer or nil
+            if type(index) == "number" then
+                pcall(C_CVar.SetCVarBitfield, "nameplateSimplifiedTypes",
+                      index, false)
+            end
+        end
+
+        -- **La page se redemande dans les deux sens, coché comme décoché.** Une
+        -- case branchée sur un réglage du client n'écrit pas dans les nôtres :
+        -- aucun message ne part de lui-même, et rien ne redessine la page. En
+        -- cochant, la case d'en face gardait sa coche alors qu'on venait de la
+        -- retirer ; en décochant, elle restait grisée alors qu'elle était rendue,
+        -- et les deux lignes d'ici restaient actives alors qu'elles ne servaient
+        -- plus à rien. Trois lignes qui mentent, faute d'un rafraîchissement.
+        BUI:SendMessage(BUI.MESSAGES.SETTING_CHANGED, MODULE)
+    end
+
+    return row
+end
+
+--- Les trois lignes de la superposition : l'interrupteur et ses deux glissières.
+---
+--- Elles sont à nous et non branchées en direct sur le CVar, pour la raison
+--- écrite dans la table `CVAR` : le client réécrit ces deux valeurs, et un
+--- réglage qu'on ne reprend jamais revient tout seul au sien.
+---@return table[]
+local function overlapRows()
+    if U.GetCVar(CVAR.OVERLAP_H) == nil or U.GetCVar(CVAR.OVERLAP_V) == nil then
+        return {}
+    end
+
+    local bounds = { min = 0.4, max = 3, step = 0.05, decimals = 2 }
+
+    return {
+        {
+            type    = "toggle",
+            key     = "overlap",
+            text    = L["Tune overlap"],
+            tooltip = L["Tune overlap tip"],
+        },
+        {
+            type     = "slider",
+            key      = "overlapH",
+            text     = L["Horizontal overlap"],
+            tooltip  = L["Overlap tip"],
+            min      = bounds.min,
+            max      = bounds.max,
+            step     = bounds.step,
+            decimals = bounds.decimals,
+            indent   = true,
+            disabled = requires("overlap"),
+        },
+        {
+            type     = "slider",
+            key      = "overlapV",
+            text     = L["Vertical overlap"],
+            tooltip  = L["Overlap tip"],
+            min      = bounds.min,
+            max      = bounds.max,
+            step     = bounds.step,
+            decimals = bounds.decimals,
+            indent   = true,
+            disabled = requires("overlap"),
+        },
+    }
+end
+
 -- =========================================================================
 --  Peinture
 -- =========================================================================
@@ -3101,7 +3298,7 @@ local function tint(mod, unitFrame, unit)
 
     local name = unitFrame.name
     if type(name) == "table" and type(name.SetTextColor) == "function" then
-        local ok, r, g, b = nameColor(mod, unit)
+        local ok, r, g, b = nameColor(unit)
         if ok then
             settingNameColor = true
             pcall(name.SetTextColor, name, r, g, b)
@@ -3168,8 +3365,25 @@ local function paint(mod, plate, unit)
     placeMarker(mod, unitFrame)
 end
 
+--- Repeint **toutes** les plaques à l'écran.
+---
+--- Elle recense avant de peindre, et ce n'est pas une précaution de plus : la
+--- liste des plaques est tenue par les annonces du client, et une annonce
+--- manquée ne se rattrape jamais. Le cas se produit à chaque `/reload` — le
+--- client ne réannonce pas ce qui était déjà là — et à chaque fois qu'on allume
+--- le module devant quelqu'un. La plaque restait alors inconnue **pour toute la
+--- session** : rien n'y était peint, aucun hook n'y était posé, et cocher une
+--- case ne changeait rien sur elle. Un allié campé devant vous depuis le
+--- rechargement suffisait à faire croire que le réglage ne marchait pas.
+---
+--- Le recensement est un appel et une boucle sur ce qui est visible : quelques
+--- dizaines de plaques au plus fort d'une pull, et jamais depuis un chemin
+--- chaud — cette fonction ne tourne qu'aux moments où un réglage, une cible ou
+--- une zone changent.
 ---@param mod table
 local function paintAll(mod)
+    collectPlates()
+
     for unit, plate in pairs(plates) do
         paint(mod, plate, unit)
     end
@@ -3306,6 +3520,7 @@ end
 ---@param mod table
 local function applyAll(mod)
     applySize(mod)
+    applyOverlap(mod)
     applyAlpha(mod)
     paintAll(mod)
 end
@@ -3314,9 +3529,9 @@ end
 --- qui écrivent un CVar. Tout ce qui n'est pas listé ici se contente d'être
 --- repeint, ce qui est le cas de la quasi-totalité de la page.
 local SIZE_KEYS  = { resize = true, width = true, height = true,
-                     resizeText = true, textSize = true,
+                     textSize = true,
                      resizeAllyName = true, allyNameSize = true,
-                     resizeCastText = true, castTextSize = true,
+                     castTextSize = true,
                      previewMode = true,
                      resizeCast = true, castHeight = true }
 local ALPHA_KEYS = { visibility = true, targetAlpha = true, otherAlpha = true,
@@ -3338,7 +3553,11 @@ local TEXTURE_KEYS = { barTexture = true, textureOther = true,
 --- Les CVars que chaque interrupteur rend quand on l'éteint. Déclarés ici plutôt
 --- que construits dans la fonction : une table bâtie à chaque clic est une table
 --- de trop.
-local ALPHA_CVARS = { CVAR.OCCLUDED }
+local TAKEN_CVARS = {
+    alpha   = { CVAR.OCCLUDED },
+    size    = { CVAR.SIZE },
+    overlap = { CVAR.OVERLAP_H, CVAR.OVERLAP_V },
+}
 
 --- Rend les CVars d'un groupe et oublie ce qu'on en savait : le groupe n'est
 --- plus à nous, et le reprendre plus tard le relèvera à nouveau.
@@ -3381,13 +3600,83 @@ local function applyClientAuras(mod)
             -- son énumération : il n'y a rien à prendre et rien à rendre.
             if type(index) == "number" and U.GetCVar(entry.cvar) ~= nil then
                 if taken then
-                    takeAuraBit(entry.cvar, index)
+                    takeCVarBit(entry.cvar, index)
                 else
-                    giveBackAuraBit(entry.cvar, index)
+                    giveBackCVarBit(entry.cvar, index)
                 end
             end
         end
     end
+end
+
+--- Prend au client sa **couleur de menace sur la barre de vie** quand la nôtre
+--- est allumée, et la lui rend en décochant.
+---
+--- Les deux repeignent la même barre pour dire la même chose : cochées ensemble,
+--- l'une écrase l'autre selon qui a peint en dernier, et le joueur voit une
+--- couleur de menace qui n'est ni celle qu'il a choisie ni celle du jeu. C'est le
+--- même emprunt que partout ailleurs ici — on relève le bit, on l'éteint, on le
+--- repose tel quel — et la case du client se grise pendant ce temps, avec son
+--- motif.
+---@param mod table
+local function applyClientThreat(mod)
+    if not LIVE.threat then return end
+    if InCombatLockdown() then return end
+
+    local cvar = "nameplateThreatDisplay"
+    if U.GetCVar(cvar) == nil then return end
+
+    -- L'index se demande à l'énumération : une catégorie que ce client ne
+    -- connaît pas rend `nil`, et il n'y a alors rien à prendre (règle 1).
+    local enum  = Enum.NamePlateThreatDisplay
+    local index = type(enum) == "table" and enum.HealthBarColor or nil
+    if type(index) ~= "number" then return end
+
+    if mod:Get("threatColors") then
+        takeCVarBit(cvar, index)
+    else
+        giveBackCVarBit(cvar, index)
+    end
+end
+
+--- Rend au jeu les catégories d'auras que la rangée de l'addon lui avait prises,
+--- pour les joueurs qui l'utilisaient avant qu'elle ne soit retirée.
+---
+--- L'extinction ordinaire ne peut rien ici : ce qu'on a pris est écrit dans les
+--- **réglages du client**, qui survivent à la session, alors que le relevé de ce
+--- qu'ils valaient avant nous, lui, ne survit pas. Un joueur qui avait pris la
+--- rangée se retrouverait sans contrôles sur ses plaques, sans rien qui le dise
+--- et sans case à décocher pour le réparer.
+---
+--- Nos réglages, eux, survivent : ils disent que la catégorie était à nous. On la
+--- rend **allumée**, qui est ce que le jeu livre — sa valeur d'avant est perdue
+--- avec la session où on l'a prise — puis on éteint la case, pour que le geste
+--- n'ait lieu qu'une fois. Un joueur qui l'avait déjà éteinte chez lui n'a qu'à
+--- la décocher dans la moitié gauche de la page.
+---@param mod table
+local function releaseClientAuras(mod)
+    if LIVE.auras then return end
+    if InCombatLockdown() then return end
+    if not mod:Get("ownAuras") then return end
+
+    for g = 1, #AURA_GROUPS do
+        local group = AURA_GROUPS[g]
+
+        if mod:Get(group.own) then
+            for i = 1, #CLIENT_AURA_CVARS do
+                local entry = CLIENT_AURA_CVARS[i]
+                local index = type(entry.enum) == "table" and entry.enum[group.bit]
+
+                if type(index) == "number" and U.GetCVar(entry.cvar) ~= nil then
+                    setCVarBit(entry.cvar, index, true)
+                end
+            end
+
+            mod:Set(group.own, false)
+        end
+    end
+
+    mod:Set("ownAuras", false)
 end
 
 --- Rend la taille : la hauteur à chaque barre épaissie, la largeur aux plaques.
@@ -3395,134 +3684,39 @@ end
 local function giveBackSize()
     restoreBarHeights()
     restorePlateWidth()
+    giveBack(TAKEN_CVARS.size)
 end
-
--- =========================================================================
---  Déclaration du module
--- =========================================================================
-
-BUI:RegisterModule(MODULE, {
-    title    = L["Nameplates"],
-    category = "Interface",
-    -- La place qu'occupait l'annonce de la « barre d'infos », juste après les
-    -- cadres d'unités : c'est la même chose vue de deux endroits, le cadre de la
-    -- cible et sa plaque.
-    order    = 15,
-
-    defaults = {
-        -- Taille, en pixels. Les valeurs de départ sont celles du client : une
-        -- barre de onze pixels dans une boîte de cent vingt-huit. Allumer
-        -- l'interrupteur sans toucher aux curseurs rend donc les plaques telles
-        -- que le jeu les pose — au détail près de l'échelle horizontale, que le
-        -- joueur a pu régler ailleurs et qu'on remplace en prenant la main.
-        resize = false,
-        width  = T.SIZE.PLATE_W,
-        height = T.SIZE.PLATE_BAR_H,
-
-        -- Le corps des textes a son propre interrupteur, et pas par goût de la
-        -- symétrie : la taille de la plaque et celle de ce qu'on y lit ne se
-        -- règlent pas au même moment. On élargit une plaque une fois pour toutes ;
-        -- on retouche le corps du texte en le lisant de loin, et on veut pouvoir
-        -- l'annuler sans rendre du même geste la taille qu'on avait trouvée.
-        resizeText = false,
-        textSize   = T.PlateConstant("HEALTH_BAR_FONT_HEIGHT", T.SIZE.PLATE_TEXT),
-
-        -- Le nom des joueurs alliés, à part : c'est ce qu'on lit en mode
-        -- « le nom seul », et il se règle sans rendre le reste du texte.
-        resizeAllyName = false,
-        allyNameSize   = T.SIZE.PLATE_TEXT,
-
-        -- Cochée, contrairement au reste de la page. Ce n'est pas une exception
-        -- de confort : c'est ce que l'addon faisait déjà, sans le dire ni offrir
-        -- de l'arrêter. La case ne change donc le comportement de personne — elle
-        -- se contente de le rendre visible et refusable.
-        allyClassColor = false,
-
-        -- Le corps de la barre de sorts est le sien : le client ecrit plus petit
-        -- dessus, et partir de sa valeur rend l'interrupteur sans effet tant
-        -- qu'on n'a pas bouge le curseur.
-        -- L'aperçu de la barre de sorts. Il ne règle rien : il montre. Il survit
-        -- au `/reload` comme les autres réglages, ce qui est voulu — on recharge
-        -- précisément pour juger — mais il se remarque, et on l'éteint.
-        previewMode = false,
-
-        resizeCastText = false,
-        castTextSize   = T.PlateConstant("CAST_BAR_FONT_HEIGHT", T.SIZE.PLATE_CAST_TEXT),
-
-        -- La rangée d'auras de l'addon. Les mesures de départ sont celles du
-        -- client — allumer sans toucher aux curseurs donne des auras de la
-        -- taille qu'on connaît. Les décalages de départ donnent le souffle
-        -- minimal entre une rangée et la barre qu'elle borde.
-        ownAuras    = false,
-
-        -- La rangée est à nous dès que la case maîtresse s'allume. Les deux
-        -- cases restent distinctes : l'une ouvre la section, l'autre dit qui,
-        -- de l'addon ou du jeu, affiche les entraves.
-        ownAuraCc   = false,
-
-        auraCcMax    = T.SIZE.PLATE_AURA_MAX,
-        auraCcSize   = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
-        auraCcGap    = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
-        auraCcX      = 4,
-        auraCcY      = 0,
-        auraCcTimer  = T.SIZE.PLATE_AURA_TIMER,
-
-        -- **Allumé**, contrairement à tout le reste de la page, et ce n'est pas
-        -- une entorse à la règle « tout est éteint par défaut ». Cette case-là
-        -- ne prend rien au client : elle dit à quoi ressemble une vignette **de
-        -- l'addon**, qui n'existe que si le joueur a déjà coché la rangée. Le
-        -- liseré carré qu'elle remplace était le seul endroit de l'addon où une
-        -- icône n'avait pas le contour commun.
-        auraCcShaded = false,
-
-        resizeCast = false,
-        castHeight = T.SIZE.PLATE_CAST_BAR_H,
-
-
-        marker     = false,
-        markerSize = 20,
-        markerX    = 0,
-        markerY    = 0,
-
-        -- La texture des barres. « Couleur vive » des deux côtés : c'est la
-        -- demande — l'aplat façon Details —, et le premier choix de la liste.
-        -- Rien ne s'écrit tant que la case est décochée.
-        barTexture    = false,
-        textureOther  = "vivid",
-        textureTarget = "vivid",
-
-        -- Opacités : celles du client, pour la même raison. L'occultée est le
-        -- produit des deux valeurs qu'il emploie — la moitié pour un non-ciblé,
-        -- puis les deux cinquièmes de celle-là.
-        visibility       = false,
-        targetAlpha      = 100,
-        otherAlpha       = 50,
-        occludedAlpha    = 20,
-
-        npcColors      = false,
-        npcColorsScope = "always",
-        pvpClassColor  = false,
-        bossColor      = T.ColorTable(T.COLOR.PLATE.BOSS),
-        minibossColor  = T.ColorTable(T.COLOR.PLATE.MINIBOSS),
-        casterColor    = T.ColorTable(T.COLOR.PLATE.CASTER),
-        meleeColor     = T.ColorTable(T.COLOR.PLATE.MELEE),
-        rareColor      = T.ColorTable(T.COLOR.PLATE.RARE),
-        rareEliteColor = T.ColorTable(T.COLOR.PLATE.RARE_ELITE),
-
-
-        threatColors     = false,
-        threatShiftColor = T.ColorTable(T.COLOR.PLATE.THREAT_BAD),
-        threatBadColor   = T.ColorTable(T.COLOR.PLATE.THREAT_BAD),
-    },
-
-    options = liveOptions({
+--- La page, telle qu'elle se lit de haut en bas.
+---
+--- **Une fonction, et non le tableau posé à même la déclaration du module.**
+--- La raison est un plafond du compilateur : le Lua du client borne à deux cent
+--- cinquante les registres d'une fonction, et une liste de cent descripteurs en
+--- réclame une cinquantaine à elle seule. Ajoutés aux variables de ce fichier,
+--- qui en compte près de deux cents, on passait la borne — et ce n'est pas la
+--- ligne fautive qui tombait, ni la page : **le fichier entier** refusait de se
+--- compiler (`function or expression too complex`), donc le module, donc son
+--- entrée dans le menu.
+---
+--- Une fonction repart de zéro registre. C'est le seul remède, et la
+--- déclaration du module y gagne : elle tient désormais dans un écran.
+---@return table[]
+local function pageOptions()
+    return liveOptions({
         -- ------------------------------------------------------------------
         --  Ce qui appartient au jeu
         -- ------------------------------------------------------------------
         { section = "blizzard" },
-        { type = "header",      text = L["Blizzard settings"] },
-        { type = "description", text = L["Blizzard settings notice"] },
+        { type = "header", text = L["Blizzard settings"] },
+        -- L'étiquette de la moitié gauche. Rouge, comme celle d'en face : elle
+        -- dit d'où viennent les réglages qui suivent, et c'est ce qu'on lit en
+        -- premier sur cette page. Voir `W.Alert`.
+        { type = "alert",  text = L["Blizzard settings notice"] },
 
+        -- Le premier bloc n'avait pas de titre : il commençait sous la note, et
+        -- se lisait donc comme la suite de celle-ci. « Général » est le nom que
+        -- le jeu donne lui-même à ce groupe — qui montre une barre d'infos, et
+        -- sur quoi.
+        { type = "header", text = L["General"] },
         blizzToggle("nameplateShowAll",
             L["Always show nameplates"], L["Always show nameplates tip"]),
         blizzToggle("nameplateShowEnemies",
@@ -3575,21 +3769,23 @@ BUI:RegisterModule(MODULE, {
         -- coexistent : celui-ci pose le calibre, les nôtres l'ajustent.
         blizzSlider("nameplateSize",
             L["Nameplate size"], L["Nameplate size tip"],
-            { min = 1, max = 5, step = 1 }, SIZE_LOCK),
+            { min = 1, max = T.SIZE.PLATE_GAUGE_MAX, step = 1 }, SIZE_LOCK),
 
         -- En pourcentage, par pas de dix : le client range un multiplicateur, mais
         -- « 1,20 » ne se lit pas comme une taille. Les bornes sont celles où la
         -- vignette reste une vignette — au-delà elle mange la plaque, en deçà elle
         -- n'est plus reconnaissable.
-        -- Sous le même verrou que le calibre : tant que l'addon tient la taille,
-        -- toucher à ces deux-là fait rejouer la mise en page du client — et
-        -- c'est précisément le geste qui écrasait les réglages en pixels.
+        --
+        -- Elles ne portent **plus** le verrou du calibre : ce sont des mesures
+        -- d'auras, pas de barres, et notre taille en pixels ne les décide pas.
+        -- Elles l'ont porté le temps que la largeur de boîte et la hauteur de
+        -- barre apprennent à se reposer seules (`hookPlateSize`, `hookBarHeight`).
         blizzSlider("nameplateAuraScale",
             L["Aura scale"], L["Aura scale tip"],
-            { min = 70, max = 140, step = 10, factor = 100 }, SIZE_LOCK),
+            { min = 70, max = 140, step = 10, factor = 100 }),
         blizzSlider("nameplateDebuffPadding",
             L["Debuff spacing"], L["Debuff spacing tip"],
-            { min = 0, max = 20, step = 1 }, SIZE_LOCK),
+            { min = 0, max = 20, step = 1 }),
 
         { type = "header", text = L["Health bar info"] },
         bitfieldGroup("nameplateInfoDisplay", Enum.NamePlateInfoDisplay,
@@ -3600,8 +3796,30 @@ BUI:RegisterModule(MODULE, {
             CAST_INFO_LABELS, L["Cast bar info tip"]),
 
         { type = "header", text = L["Threat display"] },
+        -- Le verrou est fabriqué ici, à l'endroit qui s'en sert, plutôt que dans
+        -- une variable de plus : ce fichier compte les siennes (voir
+        -- `pageOptions`). Seule la couleur de barre de vie a un double chez nous.
         bitfieldGroup("nameplateThreatDisplay", Enum.NamePlateThreatDisplay,
-            THREAT_LABELS, L["Threat display tip"]),
+            THREAT_LABELS, L["Threat display tip"], function(member)
+                if member ~= "HealthBarColor" then
+                    return { disabled = inCombat,
+                             reason = L["Cannot change in combat"] }
+                end
+
+                return {
+                    disabled = function()
+                        if inCombat() then return true end
+                        local mod = module()
+                        return mod ~= nil and mod:Get("threatColors") == true
+                    end,
+                    reason = function()
+                        if InCombatLockdown() then
+                            return L["Cannot change in combat"]
+                        end
+                        return L["Threat taken over"]
+                    end,
+                }
+            end),
 
         -- Trois rangées d'auras, une par famille d'unités. Le client les range
         -- dans trois CVars distincts et leur donne trois énumérations distinctes,
@@ -3620,21 +3838,28 @@ BUI:RegisterModule(MODULE, {
             AURA_LABELS, L["Auras tip"], auraLock),
 
         { type = "header", text = L["Simplified nameplates"] },
-        { type = "description", text = L["Simplified nameplates notice"] },
+        -- Un verrou fabriqué par catégorie : seuls les joueurs alliés ont un
+        -- réglage qui les double, et une case grisée quand rien ne la tient
+        -- serait aussi menteuse qu'une case active sur un réglage pris.
         bitfieldGroup("nameplateSimplifiedTypes", Enum.NamePlateSimplifiedType,
-            SIMPLIFIED_LABELS, L["Simplified nameplates tip"]),
+            SIMPLIFIED_LABELS, L["Simplified nameplates tip"], simplifiedLock),
 
         -- ------------------------------------------------------------------
         --  Ce que l'addon ajoute
         -- ------------------------------------------------------------------
-        -- Les deux moitiés de la page se lisent côte à côte quand la fenêtre est
-        -- assez large : ce qui appartient au jeu à gauche, ce qu'on ajoute à
-        -- droite. C'est la page la plus longue de l'addon, et la seule où deux
-        -- colonnes changent quelque chose.
+        -- Les deux moitiés de la page se lisent **toujours** côte à côte : ce qui
+        -- appartient au jeu à gauche, ce qu'on ajoute à droite. C'est la seule
+        -- page de l'addon où la coupure est un ordre et non un vœu, et le motif
+        -- n'est pas la hauteur gagnée : un réglage de l'addon se comprend en
+        -- regardant celui du jeu qu'il double ou qu'il grise. L'un sous l'autre,
+        -- il n'y a plus rien à comparer, seulement une longue page à parcourir.
+        --
+        -- La fenêtre s'élargit d'elle-même en entrant ici, et rend au joueur sa
+        -- largeur en sortant (voir `UI/Config/ConfigFrame.lua`).
         { section = "own" },
-        { type = "column" },
-        { type = "header",      text = L["Bshamel UI options"] },
-        { type = "description", text = L["Bshamel UI options notice"] },
+        { type = "column", required = true },
+        { type = "header", text = L["Bshamel UI options"] },
+        { type = "alert",  text = L["Bshamel UI options notice"] },
 
         -- Le mode aperçu ouvre la colonne : c'est le geste qu'on fait **avant**
         -- de régler quoi que ce soit, et il sert à plusieurs sections — la barre
@@ -3654,6 +3879,44 @@ BUI:RegisterModule(MODULE, {
             key     = "resize",
             text    = L["Resize nameplates"],
             tooltip = L["Resize nameplates tip"],
+        },
+        -- Les deux mesures immédiatement sous leur interrupteur : c'est ce qu'on
+        -- vient chercher en le cochant, et rien ne doit s'intercaler entre une
+        -- case et ce qu'elle commande.
+        {
+            type     = "slider",
+            key      = "width",
+            text     = L["Nameplate width"],
+            tooltip  = L["Nameplate width tip"],
+            min      = 60,
+            max      = 400,
+            step     = 2,
+            indent   = true,
+            disabled = requires("resize"),
+        },
+        {
+            type     = "slider",
+            key      = "height",
+            text     = L["Nameplate height"],
+            tooltip  = L["Nameplate height tip"],
+            min      = 4,
+            max      = 40,
+            step     = 1,
+            indent   = true,
+            disabled = requires("resize"),
+        },
+        -- Le corps du texte est la troisième mesure de la barre, sous les deux
+        -- autres et sous le même interrupteur : il n'a plus le sien.
+        {
+            type     = "slider",
+            key      = "textSize",
+            text     = L["Nameplate text size"],
+            tooltip  = L["Nameplate text size tip"],
+            min      = 6,
+            max      = 24,
+            step     = 1,
+            indent   = true,
+            disabled = requires("resize"),
         },
 
         -- La texture du remplissage **dans** la barre de vie, sans en-tête à
@@ -3679,6 +3942,7 @@ BUI:RegisterModule(MODULE, {
             text     = L["Target bar texture"],
             tooltip  = L["Target bar texture tip"],
             values   = BAR_TEXTURE_VALUES,
+            indent   = true,
             disabled = requires("barTexture"),
         },
         {
@@ -3687,63 +3951,79 @@ BUI:RegisterModule(MODULE, {
             text     = L["Others bar texture"],
             tooltip  = L["Others bar texture tip"],
             values   = BAR_TEXTURE_VALUES,
+            indent   = true,
             disabled = requires("barTexture"),
         },
 
         { section = "size" },
-        {
-            type     = "slider",
-            key      = "width",
-            text     = L["Nameplate width"],
-            tooltip  = L["Nameplate width tip"],
-            min      = 60,
-            max      = 400,
-            step     = 2,
-            disabled = requires("resize"),
-        },
-        {
-            type     = "slider",
-            key      = "height",
-            text     = L["Nameplate height"],
-            tooltip  = L["Nameplate height tip"],
-            min      = 4,
-            max      = 40,
-            step     = 1,
-            disabled = requires("resize"),
-        },
+        -- L'opacité ferme la barre de vie. Elle n'a plus de section à elle : trois
+        -- opacités et un interrupteur ne font pas une catégorie, ils font la
+        -- dernière chose qu'on règle sur une barre — après sa taille, sa texture
+        -- et son texte, ce qu'on en voit.
+        { section = "visibility" },
         {
             type    = "toggle",
-            key     = "resizeText",
-            text    = L["Resize nameplate text"],
-            tooltip = L["Resize nameplate text tip"],
+            key     = "visibility",
+            text    = L["Tune visibility"],
+            tooltip = L["Tune visibility tip"],
         },
         {
             type     = "slider",
-            key      = "textSize",
-            text     = L["Nameplate text size"],
-            tooltip  = L["Nameplate text size tip"],
-            min      = 6,
-            max      = 24,
-            step     = 1,
-            disabled = requires("resizeText"),
+            key      = "targetAlpha",
+            text     = L["Target opacity"],
+            tooltip  = L["Target opacity tip"],
+            min      = 10,
+            max      = 100,
+            step     = 5,
+            indent   = true,
+            disabled = requires("visibility"),
         },
+        {
+            type     = "slider",
+            key      = "otherAlpha",
+            text     = L["Others opacity"],
+            tooltip  = L["Others opacity tip"],
+            min      = 10,
+            max      = 100,
+            step     = 5,
+            indent   = true,
+            disabled = requires("visibility"),
+        },
+        {
+            type     = "slider",
+            key      = "occludedAlpha",
+            text     = L["Occluded opacity"],
+            tooltip  = L["Occluded opacity tip"],
+            min      = 5,
+            max      = 100,
+            step     = 5,
+            indent   = true,
+            disabled = requires("visibility"),
+        },
+
         -- Le nom des alliés, en dernières lignes de la barre de vie : c'est elle
         -- que le mode « nom seul » remplace, et c'est là qu'on vient le chercher.
         -- Le client sait le faire lui-même, mais son menu ne le propose nulle
         -- part — d'où la case ici plutôt que dans la section des réglages du jeu.
         --
-        -- Les deux lignes en retrait ne veulent rien dire sans elle : c'est en
-        -- nom seul que le corps du nom compte, puisqu'il ne reste que lui. La
-        -- couleur, elle, vaut pour toute plaque alliée et reste donc au bord.
-        { type = "header", text = L["Allies"] },
-        blizzToggle("nameplateShowOnlyNameForFriendlyPlayerUnits",
-            L["Allied names only"], L["Allied names only tip"]),
+        -- **Sans titre au-dessus.** Trois lignes ne font pas une section, et
+        -- « Alliés » en tête n'aurait dit qu'une chose que les trois intitulés
+        -- disent déjà.
+        --
+        -- Les deux lignes en retrait ne veulent rien dire sans le mode nom seul :
+        -- c'est là que le corps du nom compte, puisqu'il ne reste que lui. Elles
+        -- se grisent donc avec lui, en plus de se griser entre elles. La couleur
+        -- de classe, elle, vaut pour toute plaque alliée et reste au bord.
+        { section = "size" },
+        allyNamesRow(),
         {
-            type    = "toggle",
-            key     = "resizeAllyName",
-            text    = L["Resize ally names"],
-            tooltip = L["Resize ally names tip"],
-            indent  = true,
+            type     = "toggle",
+            key      = "resizeAllyName",
+            text     = L["Resize ally names"],
+            tooltip  = L["Resize ally names tip"],
+            indent   = true,
+            disabled = function() return U.GetCVar(CVAR.ALLY_NAMES) ~= "1" end,
+            disabledReason = L["Needs allied names only"],
         },
         {
             type     = "slider",
@@ -3754,14 +4034,23 @@ BUI:RegisterModule(MODULE, {
             max      = 32,
             step     = 1,
             indent   = true,
-            disabled = requires("resizeAllyName"),
+            disabled = function()
+                local mod = module()
+                return U.GetCVar(CVAR.ALLY_NAMES) ~= "1"
+                    or not (mod and mod:Get("resizeAllyName"))
+            end,
+            -- Le motif n'est donné que pour celui qui ne se devine pas : « la
+            -- case du dessus est décochée » se lit sur la case du dessus.
+            disabledReason = function()
+                if U.GetCVar(CVAR.ALLY_NAMES) ~= "1" then
+                    return L["Needs allied names only"]
+                end
+            end,
         },
-        {
-            type    = "toggle",
-            key     = "allyClassColor",
-            text    = L["Class colored ally names"],
-            tooltip = L["Class colored ally names tip"],
-        },
+        -- « Noms aux couleurs de classe » vivait ici. Le jeu le fait désormais
+        -- de lui-même, et mieux : lui seul lit l'identité qu'il protège en
+        -- instance. Une case qui promet ce qui arrive déjà est une case qui
+        -- ment, quelle que soit sa position.
 
         -- La barre de sorts suit immédiatement la barre de vie : c'est l'autre
         -- barre de la plaque, et elle se règle des mêmes façons.
@@ -3781,14 +4070,11 @@ BUI:RegisterModule(MODULE, {
             min      = 4,
             max      = 40,
             step     = 1,
+            indent   = true,
             disabled = requires("resizeCast"),
         },
-        {
-            type    = "toggle",
-            key     = "resizeCastText",
-            text    = L["Resize cast text"],
-            tooltip = L["Resize cast text tip"],
-        },
+        -- Même règle que sur la barre de vie : le corps du texte suit
+        -- l'interrupteur de sa barre.
         {
             type     = "slider",
             key      = "castTextSize",
@@ -3797,7 +4083,8 @@ BUI:RegisterModule(MODULE, {
             min      = 6,
             max      = 24,
             step     = 1,
-            disabled = requires("resizeCastText"),
+            indent   = true,
+            disabled = requires("resizeCast"),
         },
 
         -- Le chevauchement des plaques entre elles : la place que chacune garde
@@ -3808,54 +4095,7 @@ BUI:RegisterModule(MODULE, {
         -- que prend la boîte qu'on vient de régler.
         { section = "overlap" },
         { type = "header", text = L["Stacking"] },
-        blizzSlider("nameplateOverlapH",
-            L["Horizontal overlap"], L["Overlap tip"],
-            { min = 0.4, max = 3, step = 0.05, decimals = 2 }),
-        blizzSlider("nameplateOverlapV",
-            L["Vertical overlap"], L["Overlap tip"],
-            { min = 0.4, max = 3, step = 0.05, decimals = 2 }),
-
-        -- La visibilité vient après les mesures : elle ne décide pas de la forme
-        -- des barres mais de ce qu'on en voit.
-        { section = "visibility" },
-        { type = "header", text = L["Visibility"] },
-        { type = "description", text = L["Visibility notice"] },
-        {
-            type    = "toggle",
-            key     = "visibility",
-            text    = L["Tune visibility"],
-            tooltip = L["Tune visibility tip"],
-        },
-        {
-            type     = "slider",
-            key      = "targetAlpha",
-            text     = L["Target opacity"],
-            tooltip  = L["Target opacity tip"],
-            min      = 10,
-            max      = 100,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-        {
-            type     = "slider",
-            key      = "otherAlpha",
-            text     = L["Others opacity"],
-            tooltip  = L["Others opacity tip"],
-            min      = 10,
-            max      = 100,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
-        {
-            type     = "slider",
-            key      = "occludedAlpha",
-            text     = L["Occluded opacity"],
-            tooltip  = L["Occluded opacity tip"],
-            min      = 5,
-            max      = 100,
-            step     = 5,
-            disabled = requires("visibility"),
-        },
+        overlapRows(),
 
         -- Les auras et le marqueur sous un seul en-tête : ils se règlent de la
         -- même façon — une taille, deux décalages, un écart — et ils se
@@ -3903,7 +4143,6 @@ BUI:RegisterModule(MODULE, {
 
         { section = "colors" },
         { type = "header", text = L["Enemy colors"] },
-        { type = "description", text = L["Enemy colors notice"] },
         {
             type    = "toggle",
             key     = "npcColors",
@@ -3927,6 +4166,7 @@ BUI:RegisterModule(MODULE, {
             key      = "bossColor",
             text     = L["Boss color"],
             tooltip  = L["Boss color tip"],
+            indent   = true,
             disabled = requires("npcColors"),
         },
         {
@@ -3934,6 +4174,7 @@ BUI:RegisterModule(MODULE, {
             key      = "minibossColor",
             text     = L["Miniboss color"],
             tooltip  = L["Miniboss color tip"],
+            indent   = true,
             disabled = requires("npcColors"),
         },
         {
@@ -3941,6 +4182,7 @@ BUI:RegisterModule(MODULE, {
             key      = "casterColor",
             text     = L["Caster color"],
             tooltip  = L["Caster color tip"],
+            indent   = true,
             disabled = requires("npcColors"),
         },
         {
@@ -3948,6 +4190,7 @@ BUI:RegisterModule(MODULE, {
             key      = "meleeColor",
             text     = L["Melee color"],
             tooltip  = L["Melee color tip"],
+            indent   = true,
             disabled = requires("npcColors"),
         },
         {
@@ -3955,6 +4198,7 @@ BUI:RegisterModule(MODULE, {
             key      = "rareColor",
             text     = L["Rare color"],
             tooltip  = L["Rare color tip"],
+            indent   = true,
             disabled = requires("npcColors"),
         },
         {
@@ -3962,6 +4206,7 @@ BUI:RegisterModule(MODULE, {
             key      = "rareEliteColor",
             text     = L["Rare elite color"],
             tooltip  = L["Rare elite color tip"],
+            indent   = true,
             disabled = requires("npcColors"),
         },
         {
@@ -3971,9 +4216,15 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["PvP class colors tip"],
         },
 
+        -- La menace **dans les couleurs**, sans catégorie à elle : c'est une
+        -- couleur d'adversaire de plus, décidée par ce qu'il regarde plutôt que
+        -- par ce qu'il est. Un titre pour trois lignes coûtait une hauteur
+        -- d'écran et faisait chercher deux fois où se règle la teinte d'une
+        -- barre de vie.
+        --
+        -- Sa marque de section reste : le découpage de `LIVE` ne suit pas les
+        -- en-têtes mais ce qui se valide ensemble.
         { section = "threat" },
-        { type = "header", text = L["Threat"] },
-        { type = "description", text = L["Threat notice"] },
         {
             type    = "toggle",
             key     = "threatColors",
@@ -3985,6 +4236,7 @@ BUI:RegisterModule(MODULE, {
             key      = "threatShiftColor",
             text     = L["Threat shifting"],
             tooltip  = L["Threat shifting tip"],
+            indent   = true,
             disabled = requires("threatColors"),
         },
         {
@@ -3992,6 +4244,7 @@ BUI:RegisterModule(MODULE, {
             key      = "threatBadColor",
             text     = L["Threat wrong"],
             tooltip  = L["Threat wrong tip"],
+            indent   = true,
             disabled = requires("threatColors"),
         },
 
@@ -4013,7 +4266,191 @@ BUI:RegisterModule(MODULE, {
             L["Nameplate distance"], L["Nameplate distance tip"],
             { min = 10, max = 100, step = 5 }),
 
-    }),
+    })
+end
+
+
+-- =========================================================================
+--  Déclaration du module
+-- =========================================================================
+
+BUI:RegisterModule(MODULE, {
+    title    = L["Nameplates"],
+    category = "Interface",
+    -- La place qu'occupait l'annonce de la « barre d'infos », juste après les
+    -- cadres d'unités : c'est la même chose vue de deux endroits, le cadre de la
+    -- cible et sa plaque.
+    order    = 15,
+
+    defaults = {
+        -- Taille, en pixels. Les valeurs de départ sont celles du client : une
+        -- barre de onze pixels dans une boîte de cent vingt-huit. Allumer
+        -- l'interrupteur sans toucher aux curseurs rend donc les plaques telles
+        -- que le jeu les pose — au détail près de l'échelle horizontale, que le
+        -- joueur a pu régler ailleurs et qu'on remplace en prenant la main.
+        resize = false,
+        width  = T.SIZE.PLATE_W,
+        height = T.SIZE.PLATE_BAR_H,
+
+        -- Le corps des textes n'a plus d'interrupteur à lui : il suit celui de sa
+        -- barre (voir `applyTextSize`). Sa valeur de départ reste celle du
+        -- client, de sorte que prendre la taille sans toucher au curseur ne
+        -- change pas ce qui est écrit sur la plaque.
+        textSize   = T.PlateConstant("HEALTH_BAR_FONT_HEIGHT", T.SIZE.PLATE_TEXT),
+
+        -- Le nom des joueurs alliés, à part : c'est ce qu'on lit en mode
+        -- « le nom seul », et il se règle sans rendre le reste du texte.
+        resizeAllyName = false,
+        allyNameSize   = T.SIZE.PLATE_TEXT,
+
+        -- L'aperçu de la barre de sorts. Il ne règle rien : il montre. Il survit
+        -- au `/reload` comme les autres réglages, ce qui est voulu — on recharge
+        -- précisément pour juger — mais il se remarque, et on l'éteint.
+        previewMode = false,
+
+        -- Le corps de la barre de sorts est le sien : le client écrit plus petit
+        -- dessus, et partir de sa valeur rend le curseur sans effet tant qu'on
+        -- ne l'a pas bougé.
+        castTextSize   = T.PlateConstant("CAST_BAR_FONT_HEIGHT", T.SIZE.PLATE_CAST_TEXT),
+
+        -- La rangée d'auras de l'addon. Les mesures de départ sont celles du
+        -- client — allumer sans toucher aux curseurs donne des auras de la
+        -- taille qu'on connaît. Les décalages de départ donnent le souffle
+        -- minimal entre une rangée et la barre qu'elle borde.
+        ownAuras    = false,
+
+        -- La rangée est à nous dès que la case maîtresse s'allume. Les deux
+        -- cases restent distinctes : l'une ouvre la section, l'autre dit qui,
+        -- de l'addon ou du jeu, affiche les entraves.
+        ownAuraCc   = false,
+
+        auraCcMax    = T.SIZE.PLATE_AURA_MAX,
+        auraCcSize   = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
+        auraCcGap    = T.PlateConstant("DEBUFF_PADDING", T.SIZE.PLATE_AURA_GAP),
+        auraCcX      = 4,
+        auraCcY      = 0,
+        auraCcTimer  = T.SIZE.PLATE_AURA_TIMER,
+
+        -- **Allumé**, contrairement à tout le reste de la page, et ce n'est pas
+        -- une entorse à la règle « tout est éteint par défaut ». Cette case-là
+        -- ne prend rien au client : elle dit à quoi ressemble une vignette **de
+        -- l'addon**, qui n'existe que si le joueur a déjà coché la rangée. Le
+        -- liseré carré qu'elle remplace était le seul endroit de l'addon où une
+        -- icône n'avait pas le contour commun.
+        auraCcShaded = false,
+
+        resizeCast = false,
+        castHeight = T.SIZE.PLATE_CAST_BAR_H,
+
+
+        marker     = false,
+        markerSize = 20,
+        markerX    = 0,
+        markerY    = 0,
+
+        -- La texture des barres. « Couleur vive » des deux côtés : c'est la
+        -- demande — l'aplat façon Details —, et le premier choix de la liste.
+        -- Rien ne s'écrit tant que la case est décochée.
+        barTexture    = false,
+        textureOther  = "vivid",
+        textureTarget = "vivid",
+
+        -- Opacités. Les trois valeurs de départ sont **lisibles avant d'être
+        -- fidèles au client** : la cible pleine, les autres à peine estompées, et
+        -- ce qui est derrière un mur à moitié effacé sans disparaître. Le curseur
+        -- s'ouvre là où la plupart des joueurs l'auraient posé, ce qui reste sans
+        -- effet tant que la case au-dessus est décochée.
+        visibility       = false,
+        targetAlpha      = 100,
+        otherAlpha       = 90,
+        occludedAlpha    = 50,
+
+        -- Superposition : la place que chaque plaque garde avant que le jeu ne
+        -- pousse la voisine. Plus serré à l'horizontale qu'à la verticale, parce
+        -- que c'est en colonne qu'un paquet de plaques devient illisible.
+        overlap  = false,
+        overlapH = 0.5,
+        overlapV = 0.8,
+
+        npcColors      = false,
+        npcColorsScope = "always",
+        pvpClassColor  = false,
+        bossColor      = T.ColorTable(T.COLOR.PLATE.BOSS),
+        minibossColor  = T.ColorTable(T.COLOR.PLATE.MINIBOSS),
+        casterColor    = T.ColorTable(T.COLOR.PLATE.CASTER),
+        meleeColor     = T.ColorTable(T.COLOR.PLATE.MELEE),
+        rareColor      = T.ColorTable(T.COLOR.PLATE.RARE),
+        rareEliteColor = T.ColorTable(T.COLOR.PLATE.RARE_ELITE),
+
+
+        threatColors     = false,
+        threatShiftColor = T.ColorTable(T.COLOR.PLATE.THREAT_BAD),
+        threatBadColor   = T.ColorTable(T.COLOR.PLATE.THREAT_BAD),
+    },
+
+    options = pageOptions(),
+
+    --- `/bui noms` : pourquoi le nom d'un joueur porte la couleur qu'il porte.
+    ---
+    --- Trois choses décident, et aucune ne se voit à l'écran : ce que le client
+    --- laisse lire de l'unité, de quel côté on la range, et ce que nos deux
+    --- réglages disent. Quand la couleur « ne change pas », c'est l'une des trois
+    --- qui répond autre chose que ce qu'on croit — et depuis le jeu, les trois
+    --- sont muettes. Elles s'écrivent ici, sur la cible, en une ligne chacune.
+    ---
+    --- Les noms de fonctions sont ceux de l'API : ils ne se traduisent pas.
+    DiagnoseNames = function(self)
+        self:Print(L["Name diagnostic"])
+        self:Print(CVAR.ALLY_NAMES .. ":", tostring(U.GetCVar(CVAR.ALLY_NAMES)))
+
+        if not U.IsTrue(UnitExists("target")) then
+            self:Print(L["Aura diagnostic needs target"])
+            return
+        end
+
+        local plate = C_NamePlate and C_NamePlate.GetNamePlateForUnit
+                      and C_NamePlate.GetNamePlateForUnit("target")
+        local unitFrame = unitFrameOf(plate)
+        if not unitFrame then
+            self:Print(L["No nameplate for target"])
+            return
+        end
+
+        -- Chaque réponse est gardée avant d'être écrite : une valeur secrète ne
+        -- se lit pas plus qu'elle ne se raconte.
+        local player  = UnitIsPlayer("target")
+        local attack  = UnitCanAttack("player", "target")
+        local _, class = UnitClass("target")
+
+        self:Print("UnitIsPlayer:",
+            U.IsSecret(player) and L["Refused"] or tostring(player),
+            "| UnitCanAttack:",
+            U.IsSecret(attack) and L["Refused"] or tostring(attack))
+
+        -- La plaque est rangée sous le jeton que le client lui a donné
+        -- (`nameplate3`), jamais sous « target » : c'est lui qu'il faut chercher
+        -- pour savoir si on la suit.
+        local token = type(plate) == "table" and plate.namePlateUnitToken or nil
+
+        self:Print("UnitClass:",
+            U.IsSecret(class) and L["Refused"] or tostring(class),
+            "| isFriendlyPlayer:", isFriendlyPlayer("target") and L["On"] or L["Off"],
+            "| plates:", (token and plates[token]) and L["On"] or L["Off"])
+
+        -- Combien le client en montre, combien on en suit : c'est là que se voit
+        -- une annonce manquée.
+        local shown = C_NamePlate and C_NamePlate.GetNamePlates
+                      and C_NamePlate.GetNamePlates()
+        local tracked = 0
+        for _ in pairs(plates) do tracked = tracked + 1 end
+
+        self:Print("GetNamePlates:", type(shown) == "table" and #shown or L["Refused"],
+            "| plates:", tracked,
+            "| namePlateUnitToken:", tostring(token))
+
+        self:Print("nameColor:", nameColor("target") and L["On"] or L["Off"],
+            "| unitFrame.name:", unitFrame.name and L["On"] or L["Off"])
+    end,
 
     --- `/bui auras` : l'état de la chaîne des auras et du zoom, écrit dans le
     --- chat. Le symptôme « les curseurs ne font rien » a trop de causes
@@ -4160,7 +4597,13 @@ BUI:RegisterModule(MODULE, {
         if LIVE.auras and self:Get("previewMode") then refreshSampleList() end
 
         applySize(self)
+        applyOverlap(self)
         applyClientAuras(self)
+        applyClientThreat(self)
+
+        -- La rangée d'auras a été retirée : ce qu'elle avait pris au jeu se rend
+        -- ici, une fois, chez les joueurs qui l'utilisaient.
+        releaseClientAuras(self)
 
         -- La boîte des plaques se fait réécrire sans événement — le pilote du
         -- client la repose en rejouant son calibre. On se branche sur
@@ -4172,8 +4615,10 @@ BUI:RegisterModule(MODULE, {
         -- C'est le seul abonnement que prend la seule section de taille.
         self:RegisterEvent("CVAR_UPDATE", U.Throttle(T.TIMING.CVAR_SETTLE, function()
             applySize(self)
+            applyOverlap(self)
             applyAlpha(self)
             applyClientAuras(self)
+            applyClientThreat(self)
         end))
 
         -- La largeur de boîte est refusée en combat, sans rien dire. Ce qui a été
@@ -4181,7 +4626,10 @@ BUI:RegisterModule(MODULE, {
         -- dans `Modules/UnitFrames.lua`.
         self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
             applySize(self)
+            applyOverlap(self)
             applyClientAuras(self)
+            applyClientThreat(self)
+            releaseClientAuras(self)
         end)
 
         -- Tout ce qui suit s'occupe des plaques une par une. Tant qu'aucune
@@ -4312,8 +4760,8 @@ BUI:RegisterModule(MODULE, {
         releaseAll()
         giveBackCVars()
         -- Les catégories d'auras se rendent à part : elles ne sont pas relevées
-        -- comme des CVars entiers mais bit par bit (voir `savedAuraBits`).
-        giveBackAuraBits()
+        -- comme des CVars entiers mais bit par bit (voir `savedBits`).
+        giveBackCVarBits()
         wipe(plates)
     end,
 
@@ -4339,10 +4787,15 @@ BUI:RegisterModule(MODULE, {
             -- Les interrupteurs de la section se rendent séparément : éteindre la
             -- taille ne doit pas ramener le texte à son corps, qui n'a rien
             -- demandé.
+            -- Rendre une barre, c'est rendre son texte : les deux sont sous le
+            -- même interrupteur. Le repassage qui suit repose le corps de
+            -- l'autre famille, si elle est encore prise — `restoreTextSizes`
+            -- rend les deux d'un coup, et c'est très bien tant qu'on lui offre
+            -- tout de suite l'occasion de reprendre ce qui lui revient.
             if key == "resize" and not self:Get("resize") then
                 giveBackSize()
-            elseif key == "resizeText" and not self:Get("resizeText") then
                 restoreTextSizes()
+                paintAll(self)
             elseif key == "resizeAllyName" and not self:Get("resizeAllyName") then
                 restoreAllyNames()
                 -- La taille générale reprend les noms rendus au prochain
@@ -4350,6 +4803,8 @@ BUI:RegisterModule(MODULE, {
                 paintAll(self)
             elseif key == "resizeCast" and not self:Get("resizeCast") then
                 restoreCastSizes()
+                restoreTextSizes()
+                paintAll(self)
             else
                 -- On refait les recensements avant d'appliquer. Toucher à ce
                 -- réglage est précisément le geste de quelqu'un qui vient de
@@ -4374,10 +4829,22 @@ BUI:RegisterModule(MODULE, {
 
         if ALPHA_KEYS[key] then
             if key == "visibility" and not self:Get("visibility") then
-                giveBack(ALPHA_CVARS)
+                giveBack(TAKEN_CVARS.alpha)
             else
                 applyAlpha(self)
             end
+        end
+
+        -- La superposition écrit deux CVars du client : décocher les lui rend,
+        -- bouger un curseur les repose. Trois clés énumérées plutôt qu'une table
+        -- de plus : ce fichier compte ses variables (voir `pageOptions`).
+        if key == "overlap" or key == "overlapH" or key == "overlapV" then
+            if key == "overlap" and not self:Get("overlap") then
+                giveBack(TAKEN_CVARS.overlap)
+            else
+                applyOverlap(self)
+            end
+            return
         end
 
         -- Les cases d'auras commandent aussi celles du client : la rangée prise
@@ -4391,20 +4858,17 @@ BUI:RegisterModule(MODULE, {
             updateAuraTicker(self)
         end
 
+        -- Notre couleur de menace éteint la sienne, et la lui rend. La case du
+        -- client se grise pendant ce temps : les deux repeignent la même barre
+        -- pour dire la même chose.
+        if key == "threatColors" then applyClientThreat(self) end
+
         -- Le marqueur éteint retrouve l'opacité de sa plaque. Son ancrage, lui,
         -- ne se rend pas — c'est le prix assumé de la section, et le recyclage
         -- de la plaque le paie (voir « Rendre un ancrage qu'on n'a pas le droit
         -- de lire »).
         if key == "marker" and not self:Get("marker") then
             restoreMarkerAlpha()
-        end
-
-        -- La couleur de classe refusée : le repassage qui suit s'abstiendra d'en
-        -- poser une, mais celle qui est déjà là resterait jusqu'au prochain
-        -- changement d'état de la plaque. On redemande donc au client de peindre
-        -- **avant** ce repassage, et il garde la main.
-        if key == "allyClassColor" and not self:Get("allyClassColor") then
-            releaseNames()
         end
 
         -- Les rangées d'auras se réancreront au repassage : un réglage vient de

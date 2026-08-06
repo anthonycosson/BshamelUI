@@ -60,8 +60,7 @@ T.SIZE = {
     GUTTER         = 10,    -- écart entre deux panes
     PANEL_PAD      = 6,     -- retrait du contenu à l'intérieur d'un panneau creusé
 
-    PAGE_TITLE_H   = 40,    -- bloc du titre de page : le texte et son filet
-    RULE_H         = 1,     -- épaisseur d'un filet de séparation
+    PAGE_TITLE_H   = 40,    -- bloc du titre de page
 
     -- Rythme vertical d'une page.
     --
@@ -86,6 +85,8 @@ T.SIZE = {
     ROW_GAP        = 2,     -- écart vertical entre deux lignes
     SECTION_GAP    = 10,    -- écart avant un en-tête de section
     SECTION_H      = 22,
+
+
 
     CONTROL_X      = 340,   -- abscisse du contrôle dans une ligne : c'est ce
                             -- nombre, et lui seul, qui aligne les cases à
@@ -193,6 +194,12 @@ T.SIZE = {
     PLATE_W        = 172,
     PLATE_TEXT     = 12,
     PLATE_CAST_TEXT = 10,   -- le client écrit plus petit sur une barre de sorts
+
+    -- Le plus haut cran du calibre de plaque du client. Une valeur à lui, comme
+    -- les quatre ci-dessus, et rangée avec elles pour la même raison : c'est le
+    -- nombre que la glissière annonce **et** celui que l'addon pose quand il
+    -- prend la taille en main. Écrit deux fois, il divergerait une fois.
+    PLATE_GAUGE_MAX = 5,
 
 
     -- Barre de sorts d'une plaque : mêmes repères, même rôle. Le client la fait
@@ -923,6 +930,11 @@ local FONT_CANDIDATES = {
     LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },
     LABEL_SMALL  = { "GameFontHighlight", "GameFontHighlightSmall" },
     HINT         = { "GameFontDisableSmall" },
+
+    -- Note posée en tête d'une moitié de page. D'un cran au-dessus de `HINT` :
+    -- une note qui dit d'où viennent les réglages qu'elle ouvre se lit **avant**
+    -- eux, et le corps d'infobulle de `HINT` la faisait passer après.
+    NOTICE       = { "GameFontDisable", "GameFontDisableSmall" },
     SIDEBAR_CAT  = { "GameFontNormalMedium", "GameFontNormal" },
     SIDEBAR_ITEM = { "GameFontHighlightMedium", "GameFontHighlight" },
 }
@@ -1193,7 +1205,6 @@ T.ALPHA = {
     SIDEBAR_BAND   = 0.85,  -- le même bandeau, quand on a dû se rabattre sur la
                             -- pierre : gris et sombre, il peut être franc sans
                             -- attirer l'œil
-    SIDEBAR_RULE   = 0.25,  -- filets qui bordent ce bandeau
     -- Les deux seuls fonds que porte une entrée de navigation, et jamais
     -- ensemble : opacité **au centre** du dégradé, qui s'estompe sur les deux
     -- bords. Hors survol et hors sélection, une entrée ne porte aucune texture
@@ -1209,8 +1220,6 @@ T.ALPHA = {
                             -- lisible : c'est la ligne sur laquelle on clique
                             -- pour rallumer le module
 
-    RULE           = 0.35,  -- filet sous le titre de page
-    SECTION_RULE   = 0.30,  -- filet d'un en-tête de section
     DIVIDER        = 0.30,  -- séparateur vertical, au plus fort de son dégradé
     THUMB          = 0.70,  -- curseur d'ascenseur
 
@@ -1786,6 +1795,32 @@ function T.PlateConstant(key, fallback)
     local value = constants and constants[key]
     if type(value) == "number" and value > 0 then return value end
     return fallback
+end
+
+--- Ancre une région en arrondissant son décalage à la grille de l'écran.
+---
+--- Une ligne posée à un demi-pixel du bord y est dessinée à cheval sur deux
+--- rangées : son texte pâlit et ses bords bavent, et comme chaque ligne d'une
+--- page tombe à un endroit différent de la grille, deux lignes voisines n'ont
+--- pas tout à fait la même netteté. Arrondir leur ordonnée à la grille remet
+--- tout le monde en phase.
+---
+--- C'est ce qui reste du travail sur les filets : eux sont partis, la grille
+--- vaut toujours pour ce qui s'écrit dessus.
+---@param region table
+---@param point string
+---@param relativeTo table
+---@param relativePoint string
+---@param x number
+---@param y number
+function T.SetPixelPoint(region, point, relativeTo, relativePoint, x, y)
+    if PixelUtil and PixelUtil.SetPoint then
+        local ok = pcall(PixelUtil.SetPoint, region, point, relativeTo,
+                         relativePoint, x, y)
+        if ok then return end
+    end
+
+    region:SetPoint(point, relativeTo, relativePoint, x, y)
 end
 
 --- Corps d'un texte, en pixels, ou `nil` si le client ne le dit pas.

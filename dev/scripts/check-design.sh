@@ -107,6 +107,30 @@ report "Toute clé enUS existe en frFR" "$missing"
 extra=$(comm -13 <(keys_of Locales/enUS.lua) <(keys_of Locales/frFR.lua) || true)
 report "Aucune clé frFR orpheline (absente de enUS)" "$extra"
 
+# -------------------------------------------------------------------------
+# 9. Le compilateur du client
+# -------------------------------------------------------------------------
+# Le jeu embarque **Lua 5.1**, dont les plafonds par fonction sont plus bas que
+# ceux des versions récentes : deux cent cinquante registres, deux cents
+# variables locales. Un fichier qui les dépasse ne se compile pas du tout —
+# `function or expression too complex` —, et ce qui disparaît n'est pas la ligne
+# fautive mais le module entier, son entrée dans le menu comprise.
+#
+# Ce n'est pas une erreur qu'une relecture voit, ni `luacheck`, ni un `luac`
+# récent : seul le compilateur de cette version-là la rend. D'où ce contrôle, et
+# d'où `lua5.1` dans l'image du job `lint`.
+#
+# Le remède, quand il tombe : sortir la grande table du corps du fichier et la
+# rendre depuis une fonction, qui repart de zéro registre (voir `pageOptions`
+# dans `Modules/Nameplates.lua`).
+LUAC=$(command -v luac5.1 || command -v luac-5.1 || command -v luac || true)
+if [[ -n "$LUAC" ]]; then
+    hits=$(lua_files | xargs -n 1 "$LUAC" -p 2>&1 >/dev/null || true)
+    report "Tout compile avec le Lua du client ($($LUAC -v 2>&1 | head -1))" "$hits"
+else
+    echo "· luac introuvable : compilation non vérifiée"
+fi
+
 echo
 if [[ $FAILED -eq 0 ]]; then
     echo "Tous les garde-fous de design sont respectés."

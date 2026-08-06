@@ -18,10 +18,15 @@
 --          celui du client (voir `UI/Widgets/ColorSwatch.lua`).
 --      { type = "button",      text = ..., label = ..., onClick = function() end }
 --      { type = "description", text = ... }
+--      { type = "warning",     text = ... }   -- le même, en orange
+--      { type = "alert",       text = ... }   -- le même, en rouge
 --      { type = "spacer",      height = 10 }
---      { type = "column" }
+--      { type = "column", required = false }
 --          coupure : tout ce qui suit se pose dans une seconde colonne, à
 --          droite — si la page est assez large pour deux (voir `layout`).
+--          `required = true` en fait un **ordre** : les deux colonnes se posent
+--          quelle que soit la largeur, et la page réclame en retour la fenêtre
+--          qu'il lui faut (voir `PB:MinWidth`).
 --
 --  Champs communs facultatifs :
 --      indent   = true                               -- sous-option : la ligne
@@ -130,6 +135,9 @@ local function buildWidget(page, mod, descriptor)
     elseif kind == "warning" then
         return W.Warning(page, descriptor.text)
 
+    elseif kind == "alert" then
+        return W.Alert(page, descriptor.text)
+
     elseif kind == "spacer" then
         local spacer = W.Row(page, nil)
         spacer:SetHeight(descriptor.height or T.SIZE.SECTION_GAP)
@@ -227,13 +235,21 @@ end
 --- deux. Une découpe imposée y gagnerait de la hauteur en tronquant les
 --- intitulés, c'est-à-dire en rendant illisible ce qu'elle voulait rendre plus
 --- visible.
+---
+--- Une coupure **impérative** (`required = true`) échappe à ce repli : elle se
+--- pose toujours. Le repli n'a plus rien à rattraper, parce que la fenêtre
+--- s'élargit d'elle-même à l'ouverture de la page — c'est `Config:SelectModule`
+--- qui s'en charge, à partir de `PB:MinWidth`. La coupure ne vaut alors que pour
+--- une page où lire les deux moitiés côte à côte *est* la fonction de la page,
+--- et non un gain de hauteur.
 local function layout(page)
     local S = T.SIZE
     local entries = page._entries
     local width   = page:GetWidth() or 0
 
     local split    = page._breakAt ~= nil
-                     and width >= S.COLUMN_MIN_W * 2 + S.COLUMN_GAP
+                     and (page._breakForced
+                          or width >= S.COLUMN_MIN_W * 2 + S.COLUMN_GAP)
     local colWidth = split and (width - S.COLUMN_GAP) / 2 or width
 
     -- Relevé **avant** de poser quoi que ce soit : chaque ligne a besoin de la
@@ -265,7 +281,15 @@ local function layout(page)
 
             entry.frame:Show()
             entry.frame:ClearAllPoints()
-            entry.frame:SetPoint("TOPLEFT", page, "TOPLEFT", x, y[col])
+
+            -- Posée sur la grille de l'écran, et pas seulement à la bonne
+            -- ordonnée. Les lignes s'empilent par pas de vingt-six unités
+            -- d'interface, ce qui ne fait pas un nombre entier de pixels : chaque
+            -- ligne tombait donc à un endroit différent de la grille, et un filet
+            -- d'un pixel s'y dessinait tantôt net, tantôt étalé sur deux rangées.
+            -- Deux catégories voisines n'avaient pas la même allure — voir
+            -- `T.SetPixelPoint`.
+            T.SetPixelPoint(entry.frame, "TOPLEFT", page, "TOPLEFT", x, y[col])
             if colWidth > 0 then entry.frame:SetWidth(colWidth) end
 
             entry.frame._controlX = controlX[col]
@@ -381,6 +405,15 @@ function PB:GetPage(parent, mod)
             -- coupures voudraient dire trois colonnes, et à trois colonnes il n'y
             -- a plus de place pour un libellé.
             page._breakAt = #page._entries
+
+            -- Une coupure impérative emporte avec elle la largeur qu'elle exige.
+            -- Elle est retenue ici, une fois, plutôt que recalculée à chaque
+            -- ouverture de page : c'est la même somme que le seuil de `layout`,
+            -- et deux endroits qui la calculent finissent par diverger.
+            if descriptor.required then
+                page._breakForced = true
+                page._minWidth    = T.SIZE.COLUMN_MIN_W * 2 + T.SIZE.COLUMN_GAP
+            end
         else
             local frame = buildWidget(page, mod, descriptor)
             if frame then
@@ -394,6 +427,16 @@ function PB:GetPage(parent, mod)
     pages[mod.name] = page
     page:Hide()
     return page
+end
+
+--- Largeur de contenu qu'une page **exige**, ou `nil` si elle s'accommode de
+--- celle qu'on lui donne. Seule une coupure de colonne impérative en produit
+--- une : c'est la seule promesse qu'une page peut faire et qu'une fenêtre trop
+--- étroite l'empêcherait de tenir.
+---@param page table
+---@return number|nil
+function PB:MinWidth(page)
+    return page._minWidth
 end
 
 --- Cache toutes les pages construites. Appelé avant d'en afficher une.

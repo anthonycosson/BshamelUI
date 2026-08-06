@@ -39,6 +39,7 @@ local pageTitle        --- bloc du titre de page
 local contentScroll    --- zone défilante de droite
 local contentHolder    --- frame de contenu de cette zone
 local currentModule    --- nom du module affiché
+local currentPage      --- page affichée, celle du module ci-dessus
 local scaleMenu        --- menu d'échelle, dans la barre de titre
 
 -- =========================================================================
@@ -76,12 +77,136 @@ local function currentScale()
     return value
 end
 
+-- =========================================================================
+--  La largeur qu'une page réclame
+-- =========================================================================
+-- Une page peut **exiger** ses deux colonnes — celle des barres d'infos les
+-- exige : ses deux moitiés sont les réglages du jeu et les nôtres, et les lire
+-- l'une sous l'autre revient à ne plus pouvoir les comparer, ce qui est tout ce
+-- qu'on lui demande. La coupure ne se replie donc pas sur une colonne unique
+-- (voir `PageBuilder.layout`), et c'est la **fenêtre** qui s'adapte.
+--
+-- La largeur qui manque n'est pas calculée d'après les mesures du thème : on
+-- mesure ce que la zone de contenu offre à cet instant, et on ajoute au cadre ce
+-- qui lui manque. Tout ce qui se tient entre le bord de la fenêtre et cette
+-- zone — la colonne de navigation, le filet, l'ascenseur, l'échelle du contenu —
+-- est ainsi compté sans qu'aucun de ces nombres ait à être écrit ici.
+
+--- Largeur réglée par le joueur, mise de côté le temps d'une page large. `nil`
+--- quand il n'y a rien à rendre.
+local playerWidth
+
+--- Une mesure dont on peut faire quelque chose, ou `nil`.
+---
+--- Trois refus, et le premier est le seul qui compte : **une mesure secrète ne
+--- s'additionne pas**. Un cadre monté depuis un template du client peut en
+--- rendre une, et l'arithmétique lève alors dans notre code — c'est le piège que
+--- cette page a déjà tendu deux fois, à la hauteur de page et à la plage de
+--- défilement.
+---@param value any
+---@return number|nil
+local function measure(value)
+    if type(value) ~= "number" then return nil end
+    if BUI.Util.IsSecret(value) then return nil end
+    if value ~= value then return nil end                 -- NaN
+    return value
+end
+
+--- Ramène la fenêtre dans l'écran après un élargissement.
+---
+--- `SetClampedToScreen` ne joue qu'au **déplacement** : une fenêtre qu'on
+--- élargit franchit le bord droit sans que rien ne la retienne, et ce qui sort
+--- est la moitié droite de la page — la nôtre. On la décale de ce qui dépasse,
+--- jamais au-delà du bord gauche, et seulement quand elle dépasse : une fenêtre
+--- qui tient dans l'écran ne bouge pas d'un pixel.
+local function keepOnScreen()
+    local screen = measure(UIParent:GetWidth())
+    local width  = measure(frame:GetWidth())
+    local left   = measure(frame:GetLeft())
+    local top    = measure(frame:GetTop())
+    if not (screen and width and left and top) then return end
+
+    local overflow = (left + width) - screen
+    if overflow <= 0 then return end
+
+    -- Reposée en coordonnées d'écran : c'est le seul ancrage qui garde la
+    -- fenêtre là où elle est, quel que soit le point que le joueur lui a donné
+    -- en la déplaçant.
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT",
+                   math.max(left - overflow, 0), top)
+end
+
+--- Élargit la fenêtre pour la page qu'on ouvre, ou lui rend la largeur du
+--- joueur en la quittant. **Rend la largeur à laquelle la page doit se
+--- disposer**, ou `nil` si rien n'était mesurable.
+---
+--- Ce retour n'est pas une commodité. Un cadre qui vient de changer de taille ne
+--- la propage pas à ses enfants dans la même image : lire la zone de contenu
+--- juste après avoir élargi la fenêtre rend la largeur **d'avant**, et la page
+--- se dispose alors pour la fenêtre qu'on vient de quitter — paragraphes coupés,
+--- filets éteints, jusqu'à ce qu'un autre geste refasse la mise en page. On
+--- déduit donc la largeur à venir au lieu de la lire : on sait exactement de
+--- combien on a poussé le cadre.
+---
+--- Aucune mesure illisible ne l'arrête à moitié : elle renonce, et la fenêtre
+--- garde la taille qu'elle a. Rien de ce qui affiche la page ne dépend d'elle —
+--- une page à la mauvaise largeur reste une page qu'on lit, une page qui ne
+--- s'affiche pas n'est rien.
+---@param page table|nil
+---@return number|nil
+local function fitPage(page)
+    if not (frame and body and contentScroll and page) then return nil end
+
+    local width     = measure(frame:GetWidth())
+    local available = measure(W.ContentWidth(contentScroll))
+    local scale     = measure(body:GetScale())
+    local screen    = measure(UIParent:GetWidth())
+    if not (width and available and scale and screen) then return nil end
+    if width <= 0 or scale <= 0 or screen <= 0 then return nil end
+
+    local wanted = PB:MinWidth(page)
+    local target
+
+    if not wanted then
+        -- La page ne réclame rien : on rend au joueur ce qu'on lui avait pris.
+        if not playerWidth then return available end
+        target, playerWidth = playerWidth, nil
+    else
+        local missing = wanted - available
+        if missing <= 0 and not playerWidth then return available end
+
+        -- Relevée au premier passage seulement : les suivants se font sur une
+        -- fenêtre que nous avons déjà élargie, et la mesurer alors reviendrait à
+        -- prendre notre largeur pour la sienne.
+        playerWidth = playerWidth or width
+
+        -- Le manque est mesuré dans les unités du corps, qui porte l'échelle du
+        -- contenu ; le cadre, lui, n'a pas d'échelle. La largeur du joueur est un
+        -- plancher : une page large ne rétrécit jamais une fenêtre qu'on lui
+        -- avait donnée plus grande.
+        target = math.min(math.max(width + missing * scale, playerWidth), screen)
+    end
+
+    if math.abs(target - width) < 1 then return available end
+
+    frame:SetWidth(target)
+    keepOnScreen()
+    contentScroll:UpdateContentWidth()
+
+    return available + (target - width) / scale
+end
+
 --- Applique l'échelle courante et remesure ce qui en dépend.
 local function applyScale()
     if not body then return end
 
     body:SetScale(currentScale() / 100)
     if scaleMenu then scaleMenu:Refresh() end
+
+    -- L'échelle change la largeur disponible dans la page : une page qui exige
+    -- deux colonnes peut réclamer plus de fenêtre, ou en rendre.
+    fitPage(currentPage)
 
     -- Les zones défilantes mesurent leur contenu en unités de la frame qui les
     -- porte : celles-ci viennent de changer de taille, il faut les relire. C'est
@@ -191,9 +316,26 @@ local function buildFrame()
     version:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -S.CHROME_SIDE - 18, S.CHROME_BOTTOM - 6)
     version:SetText(BUI.VERSION)
 
-    frame._onResize = function()
+    --- `byPlayer` : le coin a été tiré à la main. La fenêtre qu'on avait mise de
+    --- côté n'a plus lieu d'être rendue — le joueur vient d'en choisir une autre,
+    --- ici, et la lui reprendre en changeant de page serait défaire son geste.
+    --- On ne la réélargit pas non plus dans la foulée : la page garde ses deux
+    --- colonnes, plus serrées, plutôt que de reprendre la largeur qu'il refuse.
+    frame._onResize = function(_, byPlayer)
+        if byPlayer then playerWidth = nil end
+
         sidebarScroll:UpdateContentWidth()
         contentScroll:UpdateContentWidth()
+
+        -- **La page suit la fenêtre.** Sa largeur est écrite, jamais héritée —
+        -- elle est posée une fois quand on ouvre la page —, et rien ne la
+        -- reposait ensuite : une fenêtre retaillée laissait la page se disposer
+        -- pour l'ancienne. Les colonnes gardaient leur largeur, les paragraphes
+        -- se coupaient à la mauvaise mesure, et le filet des en-têtes s'éteignait
+        -- ou revenait selon un calcul fait pour une fenêtre qui n'existait plus.
+        if currentPage then
+            currentPage:SetWidth(W.ContentWidth(contentScroll))
+        end
         if currentModule then PB:RefreshPage(currentModule) end
     end
 
@@ -225,8 +367,20 @@ function Config:SelectModule(moduleName)
 
     PB:HideAll()
     local page = PB:GetPage(contentHolder, mod)
-    page:SetWidth(W.ContentWidth(contentScroll))
+    currentPage = page
+
+    -- **La page est montrée avant d'être ajustée**, et l'ordre est le tout de
+    -- cette fonction : la largeur de la fenêtre est un confort, l'affichage de
+    -- la page est la fonction. Ce qui suit ne doit jamais pouvoir empêcher ce
+    -- qui précède — une page à la mauvaise largeur reste une page qu'on lit.
+    pageTitle:SetTitle(mod.title)
+    BUI.Sidebar:SetSelected(moduleName)
     page:Show()
+
+    -- La fenêtre ensuite, la page se disposant d'après la largeur de la zone de
+    -- contenu : c'est ici que cette largeur est décidée, et `fitPage` la rend —
+    -- la relire ici donnerait celle d'avant son élargissement.
+    page:SetWidth(fitPage(page) or W.ContentWidth(contentScroll))
     page:Refresh()
 
     -- La hauteur du contenu défilant est **écrite**, jamais déduite : déduite,
@@ -234,13 +388,9 @@ function Config:SelectModule(moduleName)
     -- en a de secrets — c'est par là que la plage de défilement s'empoisonnait.
     -- La hauteur de page, elle, est calculée par la mise en page : un nombre
     -- ordinaire, posé par nous.
-    local height = page:GetHeight()
-    if type(height) == "number" and not BUI.Util.IsSecret(height) and height > 0 then
-        contentHolder:SetHeight(height)
-    end
+    local height = measure(page:GetHeight())
+    if height and height > 0 then contentHolder:SetHeight(height) end
 
-    pageTitle:SetTitle(mod.title)
-    BUI.Sidebar:SetSelected(moduleName)
     contentScroll:ResetScroll()
 end
 

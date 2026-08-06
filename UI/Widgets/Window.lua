@@ -63,9 +63,13 @@ function W.Window(globalName, titleText, width, height)
     if frame.SetResizeBounds then
         frame:SetResizeBounds(T.SIZE.WINDOW_MIN_W, T.SIZE.WINDOW_MIN_H)
     end
+    -- Le second argument dit **qui** a redimensionné : le joueur, en tirant le
+    -- coin. La fenêtre est aussi remesurée pour d'autres raisons — une échelle
+    -- de contenu, une page qui réclame de la place — et ce qui se règle à la
+    -- main ne se traite pas comme ce qui se règle tout seul.
     W.ResizeGrip(frame, {
         onStop = function()
-            if frame._onResize then frame._onResize(frame) end
+            if frame._onResize then frame._onResize(frame, true) end
         end,
     })
 

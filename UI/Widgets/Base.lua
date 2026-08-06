@@ -506,20 +506,20 @@ function W.VerticalDivider(parent)
     return bar
 end
 
---- Filet de séparation horizontal.
---- Une texture et non une frame : un trait n'a ni enfant ni script. L'appelant
---- lui donne ses deux extrémités par ancrage, l'épaisseur vient du thème.
----@param parent table
----@param color ColorMixin
----@param alpha number
----@return table
-function W.Rule(parent, color, alpha)
-    local line = parent:CreateTexture(nil, "ARTWORK")
-    line:SetHeight(T.SIZE.RULE_H)
-    line:SetColorTexture(color:GetRGB())
-    line:SetAlpha(alpha)
-    return line
-end
+-- `W.Rule` vivait ici : un filet d'un pixel, tendu entre deux ancrages, qui
+-- soulignait le titre de page, fermait les en-têtes de catégorie et bordait les
+-- bandeaux de la navigation.
+--
+-- **Il n'y en a plus, et il n'en reviendra pas sous cette forme.** Un trait d'un
+-- pixel ne tient pas sur un écran dont l'échelle d'interface n'est pas entière :
+-- il tombe entre deux rangées de la grille et se dessine tantôt net, tantôt
+-- étalé sur deux, tantôt pas du tout. On a arrondi son épaisseur à la grille,
+-- puis sa position, puis celle des lignes qui le portent — restait le
+-- défilement, qui décale la page d'une fraction à chaque cran de molette, et
+-- rien de ce qu'on maîtrise ne rattrape cela.
+--
+-- Ce qui hiérarchisait vraiment est resté : la casse, la couleur, le corps, le
+-- retrait, et le blanc avant un titre.
 
 -- =========================================================================
 --  État actif / inactif

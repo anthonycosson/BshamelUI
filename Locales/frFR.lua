@@ -496,15 +496,15 @@ BUI:RegisterLocale("frFR", {
 
     ["Blizzard settings"]              = "Paramètres Blizzard",
     ["Blizzard settings notice"] =
-        "Les réglages de barres d'infos du jeu, rassemblés ici pour n'avoir qu'un "
-        .. "seul endroit où aller. Ils ne sont pas recopiés : en changer un ici le "
-        .. "change aussi dans le menu du jeu, et réciproquement. Éteindre ce module "
-        .. "les laisse exactement dans l'état où vous les avez mis.",
+        "Recopie exacte des paramètres Blizzard, pour ne pas avoir à faire des "
+        .. "allers-retours dans les menus.",
     ["Bshamel UI options"]             = "Options Bshamel UI",
+    -- Les deux notes rouges sont un **couple** : même corps, même couleur, et
+    -- une longueur voisine. L'une plus longue que l'autre se lit comme plus
+    -- grosse, alors que rien ne les distingue.
     ["Bshamel UI options notice"] =
-        "Ce que le menu du jeu ne propose pas : les réglages que l'addon ajoute, "
-        .. "et les quelques-uns du jeu qu'il ne montre nulle part. Chaque "
-        .. "interrupteur rend ce qu'il avait pris quand on l'éteint.",
+        "Réglages en plus que le jeu ne propose pas, et qui grisent d'eux-mêmes "
+        .. "les paramètres Blizzard dont ils prennent la main.",
     ["Cannot change in combat"]        = "Le jeu refuse ce changement pendant le combat.",
 
     ["Always show nameplates"]         = "Toujours afficher les barres d'infos",
@@ -576,19 +576,13 @@ BUI:RegisterLocale("frFR", {
     ["Preview mode"]                   = "Mode aperçu",
     ["Show cast bar"]                  = "Montrer ce qui n'apparaît qu'en combat",
     ["Show cast bar tip"] =
-        "Une barre de sorts ne se montre que pendant une incantation, une aura "
-        .. "que lorsqu'un sort la pose, un marqueur que sur une unité marquée : "
-        .. "rien de tout cela ne se règle en l'attendant. Ce mode maintient la "
-        .. "vraie barre de sorts affichée et en cours, ajoute des auras "
-        .. "d'exemple **dans les rangées que vous avez prises** — celles qui "
-        .. "restent au jeu n'en reçoivent pas, elles n'apparaîtront jamais là — "
-        .. "et montre le marqueur avec un crâne d'exemple. Pensez à l'éteindre.",
+        "Une barre de sorts ne se montre que pendant une incantation, un "
+        .. "marqueur que sur une unité marquée : ni l'un ni l'autre ne se règle "
+        .. "en l'attendant. Ce mode maintient la vraie barre de sorts affichée et "
+        .. "en cours, et montre le marqueur avec un crâne d'exemple. Pensez à "
+        .. "l'éteindre.",
     ["Sample cast"]                    = "Incantation",
-    ["Resize cast text"]               = "Régler la taille du texte des sorts",
-    ["Resize cast text tip"] =
-        "Porte sur ce que la barre de sorts écrit : le nom du sort, et sa cible "
-        .. "quand le jeu l'affiche.",
-    ["Cast text size"]                 = "Taille du texte des sorts (pixels)",
+    ["Cast text size"]                 = "Taille du texte des sorts",
     ["Cast text size tip"] =
         "Distincte du texte ci-dessus, parce que le jeu lui-même écrit plus petit "
         .. "sur une barre de sorts que sur une barre de vie.",
@@ -599,6 +593,11 @@ BUI:RegisterLocale("frFR", {
         "Bshamel UI affiche cette catégorie. Décochez « Prendre cette rangée » "
         .. "dans la rangée qui la remplace pour la récupérer — elle est éteinte, "
         .. "pas perdue.",
+
+    ["Threat taken over"] =
+        "Bshamel UI colore déjà la barre selon la menace. Décochez « Colorier "
+        .. "selon la menace », à droite, pour rendre la main au jeu.",
+    ["Name diagnostic"]                = "Diagnostic des noms :",
 
     ["Auras and marker"]               = "Auras et marqueur",
     ["Auras paused"]                   = "En pause, le temps de régler la taille et les décalages.",
@@ -635,10 +634,10 @@ BUI:RegisterLocale("frFR", {
         .. "l'addon — la bordure de sort du jeu, aux coins en biseau, teintée "
         .. "pour dire ce qu'est l'aura. Décochée, elle garde le liseré carré "
         .. "d'un pixel, de la même couleur.",
-    ["Own aura size"]                  = "Taille des icônes (pixels)",
+    ["Own aura size"]                  = "Taille des icônes",
     ["Own aura size tip"]              = "Côté d'une icône d'aura de cette rangée.",
-    ["Aura offset X"]                  = "Décalage X (pixels)",
-    ["Aura offset Y"]                  = "Décalage Y (pixels)",
+    ["Aura offset X"]                  = "Décalage X",
+    ["Aura offset Y"]                  = "Décalage Y",
     ["Aura offset tip"]                = "Écarte cette rangée de son ancrage sur la plaque.",
     ["Aura max"]                       = "Icônes au plus",
     ["Aura max tip"] =
@@ -646,7 +645,7 @@ BUI:RegisterLocale("frFR", {
         .. "l'ordre où le jeu répond, et rien ne la trie — ce qui trierait est "
         .. "caché sur un adversaire. Un plafond bas est donc le moyen de garder "
         .. "la rangée lisible plutôt que complète.",
-    ["Aura gap"]                       = "Espacement (pixels)",
+    ["Aura gap"]                       = "Espacement",
     ["Aura gap tip"]                   = "Écart entre deux icônes de cette rangée.",
     ["Aura timer size"]                = "Corps du décompte",
     ["Aura timer size tip"] =
@@ -660,8 +659,23 @@ BUI:RegisterLocale("frFR", {
     ["Loss of control"]                = "Perte de contrôle",
     ["Nameplate size"]                 = "Taille des barres de nom",
     ["Nameplate size tip"] =
-        "Le réglage de taille du jeu, en cinq crans. À distinguer de la largeur "
-        .. "et de la hauteur en pixels plus bas, qui affinent ce que celui-ci pose.",
+        "Le réglage de taille du jeu, en cinq crans. « Régler la taille », à "
+        .. "droite, le pousse à 5 et le verrouille : la largeur et la hauteur en "
+        .. "pixels ont besoin de la plus grande boîte que le jeu sache faire pour "
+        .. "disposer de toute leur course. L'éteindre rend ce réglage tel qu'il "
+        .. "était.",
+    ["Tune overlap"]                   = "Régler la superposition",
+    ["Tune overlap tip"] =
+        "La place que chaque barre d'infos garde avant que le jeu ne pousse la "
+        .. "voisine. Le jeu réécrit ces deux valeurs de lui-même chaque fois "
+        .. "qu'il refait ses plaques — d'où l'interrupteur : tant qu'il est "
+        .. "allumé, l'addon repose les vôtres derrière lui.",
+    ["Needs allied names only"] =
+        "Ne vaut qu'en mode « nom seul » : c'est là qu'il ne reste que le nom à "
+        .. "lire. Cochez la case du dessus.",
+    ["Simplified taken by names only"] =
+        "« Joueurs alliés — nom seul » fait déjà cela. La case a été décochée "
+        .. "quand vous l'avez allumé ; décochez-le pour la retrouver.",
     ["Debuff spacing"]                 = "Espacement des affaiblissements",
     ["Debuff spacing tip"] =
         "Écart vertical seulement, entre la rangée d'affaiblissements et ce qui "
@@ -669,10 +683,14 @@ BUI:RegisterLocale("frFR", {
         .. "dernière.",
 
     ["Simplified nameplates"]          = "Barres d'infos simplifiées",
-    ["Simplified nameplates notice"] =
-        "Une barre d'infos simplifiée se réduit à un nom : ni barre, ni icônes. "
-        .. "Choisissez quelles unités en reçoivent une.",
-    ["Simplified nameplates tip"]      = "Affichée sous forme de nom seul.",
+    -- Une seule infobulle pour les quatre cases : elles font la même chose sur
+    -- quatre familles d'unités. Elle disait « affichée sous forme de nom seul »,
+    -- ce qui est le réglage d'à côté — celui-ci ne laisse pas le nom, il ne
+    -- laisse *rien*.
+    ["Simplified nameplates tip"] =
+        "Réduit la barre d'infos de ces unités à une barre nue : ni nom, ni "
+        .. "chiffres, ni icônes. À ne pas confondre avec le mode « nom seul » "
+        .. "des joueurs alliés, qui garde le nom et retire la barre.",
     ["Minions"]                        = "Serviteurs",
     ["Minor units"]                    = "Unités mineures",
     ["Friendly players"]               = "Joueurs alliés",
@@ -688,7 +706,7 @@ BUI:RegisterLocale("frFR", {
     ["Resize cast bar tip"] =
         "Même traitement que la barre de vie, sur son propre interrupteur : "
         .. "l'éteindre rend la barre de sorts sans toucher au reste.",
-    ["Cast bar height"]                = "Hauteur de la barre de sorts (pixels)",
+    ["Cast bar height"]                = "Hauteur de la barre de sorts",
     ["Cast bar height tip"] =
         "Épaisseur de la barre de sorts. Le jeu la fait plus fine que la barre de vie.",
 
@@ -696,20 +714,16 @@ BUI:RegisterLocale("frFR", {
     ["Resize nameplates tip"] =
         "Fixe la taille des barres d'infos en pixels tant que c'est allumé, et "
         .. "les rend au jeu quand on l'éteint.",
-    ["Nameplate width"]                = "Largeur (pixels)",
+    ["Nameplate width"]                = "Largeur",
     ["Nameplate width tip"] =
         "Largeur de la plaque. La barre de vie s'étire pour la remplir. Le jeu "
         .. "utilise 128.",
-    ["Resize nameplate text"]          = "Régler la taille du texte",
-    ["Resize nameplate text tip"] =
-        "Une seule taille pour tout le texte d'une barre d'infos. En l'éteignant, "
-        .. "chacun retrouve le corps que le jeu lui donnait.",
-    ["Nameplate text size"]            = "Taille du texte (pixels)",
+    ["Nameplate text size"]            = "Taille du texte",
     ["Nameplate text size tip"] =
         "Le nom, le niveau, les points de vie, leur pourcentage et le sort en "
         .. "cours, d'un seul coup. La police et son contour ne sont pas touchés — "
         .. "seul le corps change.",
-    ["Nameplate height"]               = "Hauteur de la barre (pixels)",
+    ["Nameplate height"]               = "Hauteur de la barre",
     ["Nameplate height tip"] =
         "Épaisseur de la barre de vie. Le jeu utilise 11. Le nom et les icônes "
         .. "gardent leur taille — ils ne font pas partie de la barre.",
@@ -739,11 +753,6 @@ BUI:RegisterLocale("frFR", {
         "Écart au coin haut-droit de la barre de vie. À zéro, l'icône est centrée "
         .. "sur ce coin.",
 
-    ["Visibility"]                     = "Visibilité",
-    ["Visibility notice"] =
-        "Trois états, et une barre de nom est toujours dans exactement l'un des "
-        .. "trois : c'est votre cible, c'en est une autre, ou elle est derrière "
-        .. "quelque chose. Chaque état a sa propre opacité.",
     ["Tune visibility"]                = "Régler l'opacité",
     ["Tune visibility tip"] =
         "Décide de la visibilité de chaque barre de nom tant que c'est allumé, "
@@ -758,11 +767,6 @@ BUI:RegisterLocale("frFR", {
         .. "mur ou un pilier.",
 
     ["Enemy colors"]                   = "Couleurs des adversaires",
-    ["Enemy colors notice"] =
-        "C'est l'unité qui décide, pas la zone : un PNJ ennemi prend les couleurs "
-        .. "par nature ci-dessous, un joueur adverse prend celle de sa classe si "
-        .. "vous le demandez. Une créature ordinaire est laissée telle quelle — "
-        .. "seuls les rangs que le jeu déclare sont repeints.",
     ["PvP class colors"]               = "Couleurs de classe sur les joueurs adverses",
     ["PvP class colors tip"] =
         "La barre de vie d'un joueur adverse prend la couleur de sa classe, où "
@@ -794,11 +798,6 @@ BUI:RegisterLocale("frFR", {
     ["Rare elite color tip"]           = "Dragon argenté avec le liseré d'élite.",
 
 
-    ["Threat"]                         = "Menace",
-    ["Threat notice"] =
-        "Quand l'aggro est là où elle doit être, ce sont les couleurs par nature "
-        .. "ci-dessus qui colorent la barre — pas de couleur « tout va bien ». "
-        .. "La menace n'a que deux alertes, lues selon votre rôle.",
     ["Color by threat"]                = "Colorier selon la menace",
     ["Color by threat tip"] =
         "Passe la barre à la couleur d'alerte dès que l'aggro bouge vers la "
@@ -822,13 +821,6 @@ BUI:RegisterLocale("frFR", {
         .. "uniquement : le jeu verrouille les plaques alliées en donjon et en "
         .. "raid.",
     ["Ally name size"]                 = "Taille du nom allié (12 par défaut)",
-    ["Allies"]                         = "Alliés",
-    ["Class colored ally names"]       = "Noms aux couleurs de classe",
-    ["Class colored ally names tip"] =
-        "Les noms des joueurs alliés prennent la couleur de leur classe, y compris quand "
-        .. "leur plaque est réduite à son nom. Décochée, le jeu les colore comme il "
-        .. "l'entend — en vert, le plus souvent. Le nom d'un adversaire garde toujours la "
-        .. "couleur de sa classe : là, c'est la classe qui est l'information.",
     ["Aura scale"]                     = "Taille des auras",
     ["Aura scale tip"] =
         "Taille des icônes d'aura, en pourcentage de celle du jeu.",

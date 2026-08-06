@@ -51,6 +51,9 @@ read_globals = {
     "DISABLED_FONT_COLOR", "WHITE_FONT_COLOR", "RED_FONT_COLOR", "GREEN_FONT_COLOR",
     "ORANGE_FONT_COLOR",
     "SettingsPanel", "Settings", "Menu", "NineSliceUtil",
+    -- Arrondi à la grille de l'écran : c'est lui qui garantit qu'un filet d'un
+    -- pixel en fasse un (voir `T.SetPixelHeight`).
+    "PixelUtil",
 
     -- Espaces de noms
     "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",

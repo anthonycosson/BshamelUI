@@ -497,15 +497,15 @@ BUI:RegisterLocale("enUS", {
 
     ["Blizzard settings"]              = "Blizzard settings",
     ["Blizzard settings notice"] =
-        "The game's own nameplate settings, gathered here so there is only one "
-        .. "place to go. They are not copied: changing one here changes it in the "
-        .. "game menu too, and the other way round. Turning this module off leaves "
-        .. "them exactly as you left them.",
+        "An exact copy of the Blizzard settings, so you never have to go back and "
+        .. "forth between menus.",
     ["Bshamel UI options"]             = "Bshamel UI options",
+    -- Les deux notes rouges sont un **couple** : même corps, même couleur, et
+    -- une longueur voisine. L'une plus longue que l'autre se lit comme plus
+    -- grosse, alors que rien ne les distingue.
     ["Bshamel UI options notice"] =
-        "What the game menu does not offer: settings the addon adds, and the "
-        .. "handful of its own it never shows you. Each switch hands back what it "
-        .. "took when you turn it off.",
+        "Extra settings the game does not offer, greying out on their own the "
+        .. "Blizzard settings they take over.",
     ["Cannot change in combat"]        = "The game refuses this change during combat.",
 
     ["Always show nameplates"]         = "Always show nameplates",
@@ -573,18 +573,12 @@ BUI:RegisterLocale("enUS", {
     ["Preview mode"]                   = "Preview mode",
     ["Show cast bar"]                  = "Show what only appears in combat",
     ["Show cast bar tip"] =
-        "A cast bar only shows while something is casting, an aura only once a "
-        .. "spell puts it there, a raid marker only on a marked unit — none of "
-        .. "them can be adjusted by waiting. This keeps the real cast bar up and "
-        .. "filling, adds sample auras **to the rows you have taken over** — the "
-        .. "ones left to the game get none, they will never appear there — and "
-        .. "shows the raid marker with a sample skull. Remember to turn it off.",
+        "A cast bar only shows while something is casting, a raid marker only on "
+        .. "a marked unit — neither can be adjusted by waiting. This keeps the "
+        .. "real cast bar up and filling, and shows the raid marker with a sample "
+        .. "skull. Remember to turn it off.",
     ["Sample cast"]                    = "Casting",
-    ["Resize cast text"]               = "Set the cast text size",
-    ["Resize cast text tip"] =
-        "Applies to whatever the cast bar writes: the spell name, and its target "
-        .. "when the game shows it.",
-    ["Cast text size"]                 = "Cast text size (pixels)",
+    ["Cast text size"]                 = "Cast text size",
     ["Cast text size tip"] =
         "Separate from the text above, because the game itself writes smaller on a "
         .. "cast bar than on a health bar.",
@@ -594,6 +588,11 @@ BUI:RegisterLocale("enUS", {
         "Bshamel UI is showing this category. Untick \"Take over this row\" in "
         .. "the row that replaces it to get this back — it is switched off, not "
         .. "lost.",
+
+    ["Threat taken over"] =
+        "Bshamel UI already colours the bar by threat. Untick \"Colour by "
+        .. "threat\" on the right to hand this back to the game.",
+    ["Name diagnostic"]                = "Name diagnostic:",
 
     ["Auras and marker"]               = "Auras and marker",
     ["Auras paused"]                   = "Paused while size and offsets get fixed.",
@@ -626,10 +625,10 @@ BUI:RegisterLocale("enUS", {
         "Ticked, an icon of this row wears the addon's usual border — the game's "
         .. "own bevelled spell frame, tinted to say what the aura is. Unticked, "
         .. "it keeps the one-pixel square outline in the same colour.",
-    ["Own aura size"]                  = "Icon size (pixels)",
+    ["Own aura size"]                  = "Icon size",
     ["Own aura size tip"]              = "Side of an aura icon in this row.",
-    ["Aura offset X"]                  = "Offset X (pixels)",
-    ["Aura offset Y"]                  = "Offset Y (pixels)",
+    ["Aura offset X"]                  = "Offset X",
+    ["Aura offset Y"]                  = "Offset Y",
     ["Aura offset tip"]                = "Nudges this row from its anchor on the nameplate.",
     ["Aura max"]                       = "Most icons",
     ["Aura max tip"] =
@@ -637,7 +636,7 @@ BUI:RegisterLocale("enUS", {
         .. "game answers, and nothing sorts it — what would sort it is hidden "
         .. "on an enemy. A low ceiling is therefore the way to keep the row "
         .. "readable rather than complete.",
-    ["Aura gap"]                       = "Spacing (pixels)",
+    ["Aura gap"]                       = "Spacing",
     ["Aura gap tip"]                   = "Gap between two icons of this row.",
     ["Aura timer size"]                = "Timer size",
     ["Aura timer size tip"] =
@@ -651,18 +650,32 @@ BUI:RegisterLocale("enUS", {
     ["Loss of control"]                = "Loss of control",
     ["Nameplate size"]                 = "Nameplate size",
     ["Nameplate size tip"] =
-        "The game's own size setting, in five steps. Separate from the width and "
-        .. "height in pixels further down, which fine-tune what this sets.",
+        "The game's own size setting, in five steps. \"Set the size\" on the "
+        .. "right pushes it to 5 and locks it there: the width and height in "
+        .. "pixels need the largest box the game makes to have their full range. "
+        .. "Turning that off gives this back as it was.",
+    ["Tune overlap"]                   = "Set the overlap",
+    ["Tune overlap tip"] =
+        "How much room each nameplate keeps before the game pushes its "
+        .. "neighbour aside. The game rewrites these two values by itself "
+        .. "whenever it redoes its nameplates, which is why they sit behind a "
+        .. "switch: while it is on, the addon puts your values back each time.",
+    ["Needs allied names only"] =
+        "Only means something in names-only mode, where the name is all there is "
+        .. "left to read. Tick the box above.",
+    ["Simplified taken by names only"] =
+        "\"Allied players — names only\" already does this. It was unticked when "
+        .. "you turned that on; untick that one to get this back.",
     ["Debuff spacing"]                 = "Debuff spacing",
     ["Debuff spacing tip"] =
         "Vertical gap only, between the row of debuffs and what sits above it. "
         .. "Applies to all three rows, not just the last one.",
 
     ["Simplified nameplates"]          = "Simplified nameplates",
-    ["Simplified nameplates notice"] =
-        "A simplified nameplate is reduced to a name — no bar, no icons. Pick which "
-        .. "units get one.",
-    ["Simplified nameplates tip"]      = "Shown as a name only.",
+    ["Simplified nameplates tip"] =
+        "Reduces these units' nameplate to a plain bar: no name, no numbers, no "
+        .. "icons. Not to be confused with allied players' names-only mode, "
+        .. "which keeps the name and removes the bar.",
     ["Minions"]                        = "Minions",
     ["Minor units"]                    = "Minor units",
     ["Friendly players"]               = "Friendly players",
@@ -677,26 +690,22 @@ BUI:RegisterLocale("enUS", {
     ["Resize cast bar tip"] =
         "Same treatment as the health bar, on its own switch: turning it off gives "
         .. "the cast bar back without touching the rest.",
-    ["Cast bar height"]                = "Cast bar height (pixels)",
+    ["Cast bar height"]                = "Cast bar height",
     ["Cast bar height tip"]            = "Thickness of the cast bar. The game makes it thinner than the health bar.",
 
     ["Resize nameplates"]              = "Set the size",
     ["Resize nameplates tip"] =
         "Sets the size of every nameplate in pixels while this is on, and hands "
         .. "them back to the game when you turn it off.",
-    ["Nameplate width"]                = "Width (pixels)",
+    ["Nameplate width"]                = "Width",
     ["Nameplate width tip"] =
         "Width of the plate. The health bar stretches to fill it. 128 is what "
         .. "the game uses.",
-    ["Resize nameplate text"]          = "Set the text size",
-    ["Resize nameplate text tip"] =
-        "One size for every piece of text on a nameplate. Turn it off and each "
-        .. "one goes back to the size the game gave it.",
-    ["Nameplate text size"]            = "Text size (pixels)",
+    ["Nameplate text size"]            = "Text size",
     ["Nameplate text size tip"] =
         "Name, level, health, health percentage and the spell being cast, all at "
         .. "once. The font and its outline are left alone — only the size changes.",
-    ["Nameplate height"]               = "Health bar height (pixels)",
+    ["Nameplate height"]               = "Health bar height",
     ["Nameplate height tip"] =
         "Thickness of the health bar. 11 is what the game uses. The name and the "
         .. "icons keep their size — they are not part of the bar.",
@@ -726,11 +735,6 @@ BUI:RegisterLocale("enUS", {
         "Distance from the top-right corner of the health bar. At zero the icon "
         .. "sits centred on that corner.",
 
-    ["Visibility"]                     = "Visibility",
-    ["Visibility notice"] =
-        "Three states, and a nameplate is always in exactly one of them: it is "
-        .. "your target, it is another one, or it is behind something. Each "
-        .. "state has its own opacity.",
     ["Tune visibility"]                = "Set the opacity",
     ["Tune visibility tip"] =
         "Sets how visible each nameplate is while this is on, and hands the "
@@ -744,10 +748,6 @@ BUI:RegisterLocale("enUS", {
         "How visible a plate is when its owner is behind a wall or a pillar.",
 
     ["Enemy colors"]                   = "Enemy colours",
-    ["Enemy colors notice"] =
-        "The unit decides, not the zone: NPC enemies take the kind colours below, "
-        .. "enemy players take their class colour if you ask for it. Ordinary "
-        .. "creatures are left alone — only ranks the game states are recoloured.",
     ["PvP class colors"]               = "Class colours on enemy players",
     ["PvP class colors tip"] =
         "An enemy player's health bar takes the colour of their class, wherever "
@@ -779,11 +779,6 @@ BUI:RegisterLocale("enUS", {
     ["Rare elite color tip"]           = "Silver dragon with the elite border.",
 
 
-    ["Threat"]                         = "Threat",
-    ["Threat notice"] =
-        "When aggro is where it belongs, the kind colours above colour the bar — "
-        .. "there is no all-is-well colour. Threat has two alerts only, read by "
-        .. "your role.",
     ["Color by threat"]                = "Colour by threat",
     ["Color by threat tip"] =
         "Turns the bar to the alert colour the moment aggro moves toward the "
@@ -804,13 +799,6 @@ BUI:RegisterLocale("enUS", {
         "Friendly players' names take the size below. Outside instances only: "
         .. "the game locks friendly nameplates in dungeons and raids.",
     ["Ally name size"]                 = "Allied name size (12 by default)",
-    ["Allies"]                         = "Allies",
-    ["Class colored ally names"]       = "Class-coloured names",
-    ["Class colored ally names tip"] =
-        "Allied players' names take their class colour, including when their nameplate is "
-        .. "down to its name alone. Unchecked, the game colours them the way it wants — "
-        .. "green, most of the time. An enemy's name always takes their class colour: "
-        .. "there, the class is the point.",
     ["Aura scale"]                     = "Aura size",
     ["Aura scale tip"]                 = "Size of the aura icons, as a percentage of the game's own.",
 

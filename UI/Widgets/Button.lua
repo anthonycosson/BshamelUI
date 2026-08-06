@@ -113,15 +113,10 @@ function W.SidebarItem(parent, label, indented)
 
         button.Band = band
 
-        -- Filets blancs et non dorés : plus rien de doré ne doit subsister sur
-        -- un en-tête, sinon le surlignage revient par les bords.
-        local top = W.Rule(button, T.COLOR.LABEL, T.ALPHA.SIDEBAR_RULE)
-        top:SetPoint("TOPLEFT")
-        top:SetPoint("TOPRIGHT")
-
-        local bottom = W.Rule(button, T.COLOR.LABEL, T.ALPHA.SIDEBAR_RULE)
-        bottom:SetPoint("BOTTOMLEFT")
-        bottom:SetPoint("BOTTOMRIGHT")
+        -- Les deux filets qui bordaient le bandeau sont partis avec tous les
+        -- autres (voir `W.Rule`, supprimée). Le bandeau se distingue par sa
+        -- texture et par son écart de teinte avec la colonne : c'est déjà ce
+        -- qui le faisait, les filets ne faisaient que le souligner.
 
         -- Blanc, comme le titre de page et comme l'entrée sélectionnée : le
         -- blanc marque ce qui se lit, le doré ce qui range.

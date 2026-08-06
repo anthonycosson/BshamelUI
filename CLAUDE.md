@@ -127,7 +127,11 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
 ## 10. Vérification avant de dire « c'est fait »
 
 1. `luacheck .` passe.
-2. `bash dev/scripts/check-design.sh` passe.
+2. `bash dev/scripts/check-design.sh` passe — **avec `luac5.1`**. Le jeu embarque
+   Lua 5.1 : deux cent cinquante registres et deux cents variables locales par
+   fonction. Passer une de ces bornes ne casse pas une ligne, ça empêche le
+   fichier entier de se compiler, et le module disparaît du menu. Un `luac`
+   récent ne le voit pas ; le script dit quelle version il a employée.
 3. `/reload` en jeu, aucune erreur dans BugSack.
 4. Le réglage survit à un `/reload` (vérifiable dans
    `_retail_/WTF/Account/<compte>/SavedVariables/BshamelUI.lua`).
