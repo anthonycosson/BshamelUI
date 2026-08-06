@@ -435,6 +435,12 @@ T.SIZE = {
     -- contre les bords ; sans cet écart, le contour touche le texte.
     PANEL_CHROME_BLEED = 3,
 
+    -- Marge transparente que le template de contour laisse autour de son trait.
+    -- On l'écarte d'autant, sans quoi le fond du panneau déborde du trait et
+    -- forme une bande sombre de chaque côté. Se règle à l'œil : c'est la seule
+    -- valeur à bouger si le trait ne tombe pas exactement sur le bord du fond.
+    PANEL_BORDER_OUTSET = 4,
+
 
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit

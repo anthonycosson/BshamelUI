@@ -231,9 +231,16 @@ function W.PanelChrome(frame)
     T.WindowStone(background)
     frame.background = background
 
+    -- **Le contour va plus loin que le fond.** Son template dessine son trait à
+    -- l'intérieur de son cadre, avec une marge transparente autour : posé sur les
+    -- mêmes bords que le fond, il laisse une bande de pierre le déborder de
+    -- chaque côté. On l'écarte de cette marge, et le trait retombe sur le bord du
+    -- fond plutôt qu'en retrait.
+    local outset = bleed + T.SIZE.PANEL_BORDER_OUTSET
+
     local border = W.PanelBorder(frame)
-    border:SetPoint("TOPLEFT",     frame, "TOPLEFT",     -bleed,  bleed)
-    border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT",  bleed, -bleed)
+    border:SetPoint("TOPLEFT",     frame, "TOPLEFT",     -outset,  outset)
+    border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT",  outset, -outset)
     return border
 end
 
