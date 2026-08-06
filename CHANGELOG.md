@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.9.1 — 2026-08-07
+
 ### Corrigé
 - **Désactiver le module Fiche de personnage retirait tout sauf une chose** : le
   niveau d'objet du personnage, en tête de fiche, restait affiché. Son effacement
