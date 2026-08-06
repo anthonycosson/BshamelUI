@@ -13,8 +13,6 @@ BUI:RegisterLocale("frFR", {
     ["Interface"]               = true,
     ["Quality of life"]         = "Qualité de vie",
     ["Tools"]                   = "Outils",
-    ["Search..."]               = "Rechercher...",
-    ["Reset this page"]         = "Réinitialiser cette page",
     ["Content scale"]           = "Vue compacte",
     ["Content scale tip"] =
         "Rapetisse tout ce qui est dans la fenêtre sans toucher à la fenêtre "
@@ -23,12 +21,10 @@ BUI:RegisterLocale("frFR", {
     ["Scale percent"]           = "%d %%",
     ["Slider value tip"] =
         "Clic droit pour saisir une valeur exacte. Entrée valide, Échap annule.",
-    ["Reset page confirm"]      = "Remettre tous les réglages de cette page à leur valeur par défaut ?",
     ["Yes"]                     = "Oui",
     ["Cancel"]                  = "Annuler",
     ["Open Bshamel UI"]         = "Ouvrir Bshamel UI",
     ["Login hint"]              = "Tapez /bui pour ouvrir les options.",
-    ["Cannot open in combat"]   = "La fenêtre d'options ne peut pas être ouverte en combat.",
     ["Module disabled tooltip"] = "Ce module est désactivé.",
     ["Version"]                 = true,
     ["Blocked action watch"]    = "Veille des actions bloquées :",
@@ -161,7 +157,6 @@ BUI:RegisterLocale("frFR", {
     ["Show item level in bags tip"] =
         "Inscrit le niveau d'objet sur chaque pièce d'équipement dans les sacs, la banque et la banque de bataillon.",
     ["Enchant badge"]                  = "Enchantement",
-    ["Gem badge"]                      = "Gemme",
     ["No enchant hint"]                = "Cet emplacement peut être enchanté et ne l'est pas.",
     ["Empty socket"]                   = "Châsse vide",
 
@@ -646,69 +641,13 @@ BUI:RegisterLocale("frFR", {
     ["Taken over by the addon"] =
         "Bshamel UI règle la taille en pixels. Éteignez-le pour récupérer ce "
         .. "réglage.",
-    ["Auras taken over"] =
-        "Bshamel UI affiche cette catégorie. Décochez « Prendre cette rangée » "
-        .. "dans la rangée qui la remplace pour la récupérer — elle est éteinte, "
-        .. "pas perdue.",
 
     ["Threat taken over"] =
         "Bshamel UI colore déjà la barre selon la menace. Décochez « Colorier "
         .. "selon la menace », à droite, pour rendre la main au jeu.",
     ["Name diagnostic"]                = "Diagnostic des noms :",
 
-    ["Auras and marker"]               = "Auras et marqueur",
     ["Auras paused"]                   = "En pause, le temps de régler la taille et les décalages.",
-    ["Auras paused notice"] =
-        "En pause : les rangées et le marqueur ne suivent pas encore leurs "
-        .. "curseurs assez fidèlement. Rien dans cette section n'agit pour le "
-        .. "moment.",
-    ["Auras notice"] =
-        "L'addon affiche une seule rangée à lui : les contrôles. La prendre "
-        .. "éteint les contrôles du jeu — deux rangées sur une plaque, ce sont "
-        .. "deux fois les mêmes icônes — et grise cette case-là dans la moitié "
-        .. "gauche de cette page. Tout le reste lui appartient et n'est pas "
-        .. "touché : il affiche désormais les améliorations et les "
-        .. "affaiblissements mieux que l'addon ne le pouvait, et il lit ce "
-        .. "qu'il refuse de laisser lire à un addon.",
-    ["Own auras"]                      = "Régler les auras",
-    ["Own auras tip"] =
-        "Ouvre la section. Rien ne change tant que la rangée n'est pas prise "
-        .. "ci-dessous. Ce que le mode aperçu montre est exactement cette "
-        .. "rangée : même code, même place, même taille. Chaque image est un "
-        .. "asset du jeu.",
-    ["Take over this row"]             = "Prendre cette rangée",
-    ["Take over crowd control tip"] =
-        "Cochée, l'addon affiche cette rangée et le jeu cesse de montrer les "
-        .. "contrôles sur les plaques adverses. Décochée, le jeu garde ses "
-        .. "propres icônes de contrôles, là où il les met.",
-    ["Crowd control auras"]            = "Contrôles — de tous les joueurs",
-    ["Crowd control auras notice"] =
-        "À droite de la barre de vie. Un mob mouton est mouton, peu importe qui "
-        .. "l'a lancé.",
-    ["Aura shaded"]                    = "Contour de l'addon sur les icônes",
-    ["Aura shaded tip"] =
-        "Cochée, une icône de cette rangée porte le contour habituel de "
-        .. "l'addon — la bordure de sort du jeu, aux coins en biseau, teintée "
-        .. "pour dire ce qu'est l'aura. Décochée, elle garde le liseré carré "
-        .. "d'un pixel, de la même couleur.",
-    ["Own aura size"]                  = "Taille des icônes",
-    ["Own aura size tip"]              = "Côté d'une icône d'aura de cette rangée.",
-    ["Aura offset X"]                  = "Décalage X",
-    ["Aura offset Y"]                  = "Décalage Y",
-    ["Aura offset tip"]                = "Écarte cette rangée de son ancrage sur la plaque.",
-    ["Aura max"]                       = "Icônes au plus",
-    ["Aura max tip"] =
-        "Combien d'icônes cette rangée affiche au maximum. Elle se remplit dans "
-        .. "l'ordre où le jeu répond, et rien ne la trie — ce qui trierait est "
-        .. "caché sur un adversaire. Un plafond bas est donc le moyen de garder "
-        .. "la rangée lisible plutôt que complète.",
-    ["Aura gap"]                       = "Espacement",
-    ["Aura gap tip"]                   = "Écart entre deux icônes de cette rangée.",
-    ["Aura timer size"]                = "Corps du décompte",
-    ["Aura timer size tip"] =
-        "Taille du temps restant écrit sur les icônes de cette rangée. Chaque "
-        .. "rangée a le sien : une entrave se lit à la seconde près, un "
-        .. "affaiblissement qu'on entretient se lit du coin de l'œil.",
     ["Auras tip"]                      = "Les auras que le jeu affiche au-dessus de ces barres d'infos.",
     ["Buffs"]                          = "Améliorations",
     ["Debuffs"]                        = "Affaiblissements",

@@ -1067,7 +1067,7 @@ local CC_SPELLS = {
 --- jamais touchées, et c'est voulu.
 local AURA_GROUPS = {
     { key = "cc", kind = "CC", own = "ownAuraCc", bit = "CrowdControl",
-      point = "BOTTOM", relative = "TOP",
+      point = "LEFT", relative = "RIGHT",
       size = "auraCcSize", x = "auraCcX", y = "auraCcY", gap = "auraCcGap",
       timer = "auraCcTimer", max = "auraCcMax", shaded = "auraCcShaded" },
 }
@@ -1350,9 +1350,10 @@ end
 
 --- Ancre la rangée d'une plaque **sur la plaque**, si le cachet a changé
 --- depuis la dernière fois.
+---@param mod table
 ---@param plate table
 ---@param rows table
-local function anchorRows(plate, rows)
+local function anchorRows(mod, plate, rows)
     if rows._stamp == auraStamp then return end
     rows._stamp = auraStamp
 
@@ -1362,7 +1363,7 @@ local function anchorRows(plate, rows)
         if row then
             pcall(row.ClearAllPoints, row)
             pcall(row.SetPoint, row, group.point, plate, group.relative,
-                  0, T.SIZE.PLATE_PREVIEW_LIFT)
+                  mod:Get(group.x), mod:Get(group.y))
         end
     end
 end
@@ -1419,7 +1420,7 @@ local function applyOwnAuras(mod, plate, unit, force)
         return
     end
 
-    anchorRows(plate, rows)
+    anchorRows(mod, plate, rows)
 
     if preview then
         -- **Les mesures sont celles du client, jamais les nôtres.** C'est tout
@@ -1441,7 +1442,7 @@ local function applyOwnAuras(mod, plate, unit, force)
             local row = rows[group.key]
             if row then
                 local list = sampleLists[group.key]
-                list.max = T.SIZE.PLATE_AURA_SAMPLE
+                list.max = mod:Get(group.max)
                 -- Sans le contour de l'addon : ce qu'on imite est la vignette du
                 -- jeu, pas la nôtre.
                 W.AuraRowSet(row, list, side, gap, T.SIZE.PLATE_AURA_TIMER, false)

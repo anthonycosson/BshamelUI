@@ -2,6 +2,18 @@
 
 ## Non publié
 
+### Corrigé
+- **Désactiver le module Fiche de personnage retirait tout sauf une chose** : le
+  niveau d'objet du personnage, en tête de fiche, restait affiché. Son effacement
+  existait depuis le début — il n'était branché nulle part.
+
+### Interne
+- **Grand ménage d'avant 1.0.** Vingt-huit textes de traduction sans lecteur
+  (les lignes de la rangée d'entraves retirée, et des restes plus anciens), cinq
+  mesures de thème mortes, et le code en sommeil de la rangée d'auras remis en
+  cohérence avec ses propres réglages — l'aperçu qui l'avait emprunté y avait
+  laissé son ancrage.
+
 ## 0.9.0 — 2026-08-06
 
 ### Ajouté

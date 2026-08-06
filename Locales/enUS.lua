@@ -12,8 +12,6 @@ BUI:RegisterLocale("enUS", {
     ["Interface"]               = "Interface",
     ["Quality of life"]         = "Quality of life",
     ["Tools"]                   = "Tools",
-    ["Search..."]               = "Search...",
-    ["Reset this page"]         = "Reset this page",
     ["Content scale"]           = "Compact view",
     ["Content scale tip"] =
         "Shrinks everything inside the window without changing the window itself, "
@@ -24,7 +22,6 @@ BUI:RegisterLocale("enUS", {
     -- l'interface, pas un réglage.
     ["Slider value tip"] =
         "Right-click to type an exact value. Enter confirms, Escape cancels.",
-    ["Reset page confirm"]      = "Reset every setting on this page to its default value?",
     ["Yes"]                     = "Yes",
     ["Cancel"]                  = "Cancel",
     ["Open Bshamel UI"]         = "Open Bshamel UI",
@@ -32,7 +29,6 @@ BUI:RegisterLocale("enUS", {
     -- chose que le joueur ait besoin de retenir, et l'addon ne se manifeste
     -- nulle part ailleurs tant qu'il n'a rien coché.
     ["Login hint"]              = "Type /bui to open the options.",
-    ["Cannot open in combat"]   = "The options window cannot be opened during combat.",
     ["Module disabled tooltip"] = "This module is disabled.",
     ["Version"]                 = "Version",
     ["Blocked action watch"]    = "Blocked action watch:",
@@ -164,7 +160,6 @@ BUI:RegisterLocale("enUS", {
     -- des **infobulles**, pas des pastilles : l'icône dit déjà de quoi il s'agit,
     -- le texte n'est là que pour qui s'arrête dessus.
     ["Enchant badge"]                  = "Enchant",
-    ["Gem badge"]                      = "Gem",
     ["No enchant hint"]                = "This slot can take an enchant and has none.",
     ["Empty socket"]                   = "Empty socket",
 
@@ -633,65 +628,13 @@ BUI:RegisterLocale("enUS", {
         .. "cast bar than on a health bar.",
     ["Taken over by the addon"] =
         "Bshamel UI is setting the size in pixels. Turn that off to get this back.",
-    ["Auras taken over"] =
-        "Bshamel UI is showing this category. Untick \"Take over this row\" in "
-        .. "the row that replaces it to get this back — it is switched off, not "
-        .. "lost.",
 
     ["Threat taken over"] =
         "Bshamel UI already colours the bar by threat. Untick \"Colour by "
         .. "threat\" on the right to hand this back to the game.",
     ["Name diagnostic"]                = "Name diagnostic:",
 
-    ["Auras and marker"]               = "Auras and marker",
     ["Auras paused"]                   = "Paused while size and offsets get fixed.",
-    ["Auras paused notice"] =
-        "Paused: the rows and the marker do not follow their sliders faithfully "
-        .. "enough yet. Nothing in this section does anything for now.",
-    ["Auras notice"] =
-        "The addon shows one row of its own: crowd control. Taking it over "
-        .. "switches the game's crowd control off — two rows on one nameplate "
-        .. "means the same icons twice — and greys that one box on the left-hand "
-        .. "side of this page. Everything else stays the game's, untouched: it "
-        .. "now shows buffs and debuffs better than the addon could, and it "
-        .. "reads what it will not let an addon read.",
-    ["Own auras"]                      = "Adjust the auras",
-    ["Own auras tip"] =
-        "Opens the section. Nothing changes until you take the row over below. "
-        .. "What preview mode shows is that exact row: same code, same place, "
-        .. "same size. Every image is the game's own.",
-    ["Take over this row"]             = "Take over this row",
-    ["Take over crowd control tip"] =
-        "Ticked, the addon shows this row and the game stops showing crowd "
-        .. "control on enemy nameplates. Unticked, the game keeps its own crowd "
-        .. "control icons, wherever it puts them.",
-    ["Crowd control auras"]            = "Crowd control — everyone's",
-    ["Crowd control auras notice"] =
-        "To the right of the health bar. A sheeped mob is sheeped no matter who "
-        .. "cast it.",
-    ["Aura shaded"]                    = "Addon border on the icons",
-    ["Aura shaded tip"] =
-        "Ticked, an icon of this row wears the addon's usual border — the game's "
-        .. "own bevelled spell frame, tinted to say what the aura is. Unticked, "
-        .. "it keeps the one-pixel square outline in the same colour.",
-    ["Own aura size"]                  = "Icon size",
-    ["Own aura size tip"]              = "Side of an aura icon in this row.",
-    ["Aura offset X"]                  = "Offset X",
-    ["Aura offset Y"]                  = "Offset Y",
-    ["Aura offset tip"]                = "Nudges this row from its anchor on the nameplate.",
-    ["Aura max"]                       = "Most icons",
-    ["Aura max tip"] =
-        "How many icons this row shows at most. The row fills in the order the "
-        .. "game answers, and nothing sorts it — what would sort it is hidden "
-        .. "on an enemy. A low ceiling is therefore the way to keep the row "
-        .. "readable rather than complete.",
-    ["Aura gap"]                       = "Spacing",
-    ["Aura gap tip"]                   = "Gap between two icons of this row.",
-    ["Aura timer size"]                = "Timer size",
-    ["Aura timer size tip"] =
-        "Size of the time left written on this row's icons. Each row has its "
-        .. "own: a crowd control is read to the second, a debuff you keep up is "
-        .. "read out of the corner of your eye.",
     ["Auras tip"]                      = "Which auras the game shows above these nameplates.",
     ["Buffs"]                          = "Buffs",
     ["Debuffs"]                        = "Debuffs",

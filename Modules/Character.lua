@@ -1276,6 +1276,11 @@ BUI:RegisterModule(MODULE, {
     OnDisable = function()
         setShown(false)
         W.ClearItemLevelTags()
+        -- Le niveau d'objet du personnage, en tête de fiche. Il a sa propre
+        -- fabrique et son propre effacement : `setShown` ne couvre que les
+        -- bandeaux des emplacements, et l'oublier ici laissait un nombre posé
+        -- sur la fiche d'un module éteint (règle 6).
+        W.ClearSheetItemLevels()
         stopBankWatch()
     end,
 

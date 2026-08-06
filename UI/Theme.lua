@@ -195,16 +195,6 @@ T.SIZE = {
     PLATE_TEXT     = 12,
     PLATE_CAST_TEXT = 10,   -- le client écrit plus petit sur une barre de sorts
 
-    -- Combien de vignettes l'aperçu d'auras montre. Trois : assez pour voir un
-    -- espacement, pas assez pour cacher la plaque qui les porte.
-    PLATE_AURA_SAMPLE = 3,
-
-    -- De combien la rangée d'exemple se pose au-dessus de la plaque. Le client
-    -- met les siennes là ; ce nombre est le souffle qui les sépare du haut de la
-    -- boîte, et il n'a pas à être réglable — c'est un aperçu, pas une mise en
-    -- page.
-    PLATE_PREVIEW_LIFT = 6,
-
     -- Le plus haut cran du calibre de plaque du client. Une valeur à lui, comme
     -- les quatre ci-dessus, et rangée avec elles pour la même raison : c'est le
     -- nombre que la glissière annonce **et** celui que l'addon pose quand il
@@ -354,8 +344,6 @@ T.SIZE = {
     MENU_GAP       = 6,     -- écart entre le menu et le bouton qui l'ouvre
     MENU_ARROW     = 12,    -- flèche d'une ligne qui ouvre un sous-menu
 
-    COUNTDOWN_PAD  = 4,     -- retrait du décompte dans la fenêtre qu'il coiffe
-
     -- Corps du décompte. Aucun objet de police du client ne l'a : il est posé au
     -- milieu d'une icône de rôle et doit se lire d'un coup d'œil, sans qu'on
     -- cherche où il est. C'est la seule police que l'addon fabrique (voir plus
@@ -488,8 +476,6 @@ T.SIZE = {
     -- `PANEL_PAD` est déjà pris par le retrait d'un panneau creusé de la fenêtre
     -- d'options : ces trois-là portent donc leur propre préfixe.
     TOOL_PAD       = 8,
-    TOOL_GAP       = 4,     -- écart entre deux lignes d'un panneau
-    TOOL_TITLE_H   = 18,
 
     -- Suivi des résurrections de combat. La taille est un réglage : l'icône vit
     -- au milieu de l'écran d'un combat de raid, et ce qu'il faut voir d'un coup
