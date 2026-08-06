@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.9.0 — 2026-08-06
+
 ### Ajouté
 - **Le grimoire s'assombrit** avec le reste, et **lui seul** : la page des sorts,
   pas les onglets, pas les talents, pas la fenêtre qui les porte.
