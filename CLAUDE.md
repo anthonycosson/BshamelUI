@@ -57,6 +57,17 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
 - Toute nouvelle option exige, dans le **même commit** : une entrée dans
   `defaults`, un descripteur dans `options`, et une clé dans `Locales/enUS.lua`
   **et** `Locales/frFR.lua`.
+- **Aucun défaut ne vaut `true`.** Installer Bshamel UI ne change rien au jeu
+  tant que le joueur n'a rien coché : c'est la promesse de l'addon, et elle ne
+  souffre aucune exception.
+
+  Une case commandée par un interrupteur éteint n'en est pas une : elle est
+  invisible, pas absente, et le jour où l'interrupteur s'allume elle a décidé à
+  la place du joueur. Le prix est connu et assumé — un interrupteur maître qui
+  ne fait rien seul, parce que sa liste est vide. C'est au libellé de le dire,
+  pas au défaut de le rattraper.
+
+  `dev/scripts/check-design.sh` le vérifie sur tous les blocs `defaults`.
 - Les défauts ne sont jamais écrits sur le disque (`Core/DB.lua` les retire à la
   déconnexion). Changer un défaut change donc le comportement de tous les
   joueurs qui n'ont pas touché à l'option — c'est voulu.

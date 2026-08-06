@@ -84,7 +84,19 @@ hits=$(lua_files \
 report "Aucun global non préfixé" "$hits"
 
 # -------------------------------------------------------------------------
-# 7. Parité des clés de locale
+# 7. Réglages livrés cochés
+# -------------------------------------------------------------------------
+# Aucun défaut ne vaut `true` : installer l'addon ne doit rien changer au jeu.
+# Une case commandée par un interrupteur éteint ne fait pas exception — elle est
+# invisible, pas absente, et le jour où l'interrupteur s'allume elle décide à la
+# place du joueur.
+hits=$(awk '/^    defaults = \{/ { inside = 1 }
+            inside && /=[[:space:]]*true,/ { print FILENAME ":" FNR ":" $0 }
+            inside && /^    \},/ { inside = 0 }' Modules/*.lua || true)
+report "Aucun réglage livré coché (tout défaut à false)" "$hits"
+
+# -------------------------------------------------------------------------
+# 8. Parité des clés de locale
 # -------------------------------------------------------------------------
 keys_of() {
     grep -oE '^\s*\["[^"]+"\]' "$1" 2>/dev/null | grep -oE '"[^"]+"' | sort -u
