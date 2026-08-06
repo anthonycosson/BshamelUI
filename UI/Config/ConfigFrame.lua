@@ -251,6 +251,12 @@ end
 function Config:Show()
     if not frame then buildFrame() end
 
+    -- Le rappel de connexion a fait son office : la fenêtre est ouverte, et par
+    -- quelque chemin que ce soit — la commande, le bouton de minicarte, le
+    -- compartiment d'addons, les options du jeu. C'est ce qui vaut à cette
+    -- marque d'être posée ici et non dans chacun d'eux.
+    BUI.DB:MarkSeen(BUI.DB.HINT_LOGIN)
+
     frame:Show()
     BUI.Sidebar:RefreshStates()
 

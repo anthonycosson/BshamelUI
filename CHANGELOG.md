@@ -8,6 +8,11 @@
   l'écran, et rien n'indique par où l'ouvrir. C'est le seul message que l'addon
   écrive de lui-même.
 
+  Elle se tait dès que la fenêtre a été ouverte une fois, par n'importe quel
+  chemin. Un rappel qui revient pendant six mois n'informe plus, il agace — et
+  une case à cocher pour éteindre une ligne coûterait plus d'attention qu'elle
+  n'en ferait gagner.
+
 ## 0.8.1 — 2026-08-06
 
 ### Modifié

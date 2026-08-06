@@ -267,9 +267,17 @@ BUI:RegisterEventOnce("PLAYER_LOGIN", function()
     -- change à l'écran, et le joueur qui vient de le télécharger n'a aucun moyen
     -- de deviner par où l'ouvrir. Cette ligne est le seul endroit où le dire.
     --
+    -- **Elle se tait dès que la fenêtre a été ouverte une fois.** Un rappel qui
+    -- revient à chaque connexion pendant six mois n'informe plus personne, il
+    -- agace — et il n'y a rien à rappeler à qui sait déjà. Pas de case à cocher
+    -- pour autant : un réglage pour éteindre un message d'une ligne coûterait
+    -- plus d'attention qu'il n'en fait gagner.
+    --
     -- Après le démarrage des modules, pour qu'elle arrive après ce qu'ils
     -- auraient à dire eux-mêmes, et non au milieu.
-    BUI:Print(L["Login hint"])
+    if not BUI.DB:Seen(BUI.DB.HINT_LOGIN) then
+        BUI:Print(L["Login hint"])
+    end
 end)
 
 BUI:RegisterEvent("PLAYER_REGEN_ENABLED", function()
