@@ -2,6 +2,11 @@
 
 ## Non publié
 
+### Modifié
+- **Barres d'infos** s'appelle désormais *Barres d'infos (En développement)*. La
+  mention est dans le nom de la page et non dans un avertissement sous elle :
+  c'est avant d'y entrer qu'elle sert.
+
 ## 0.8.0 — 2026-08-06
 
 ### Modifié

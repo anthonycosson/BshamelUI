@@ -494,7 +494,9 @@ BUI:RegisterLocale("frFR", {
     -- français donne lui-même à ces plaques. Une page se cherche sous le nom que
     -- le joueur a sous les yeux dans les options du jeu, pas sous la traduction
     -- littérale de son nom anglais.
-    ["Nameplates"]                     = "Barres d'infos",
+    -- La mention « en développement » est dans le nom de la page et non dans un
+    -- avertissement sous elle : c'est avant d'y entrer qu'elle sert, pas après.
+    ["Nameplates"]                     = "Barres d'infos (En développement)",
 
     ["Blizzard settings"]              = "Paramètres Blizzard",
     ["Blizzard settings notice"] =

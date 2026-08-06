@@ -494,7 +494,7 @@ BUI:RegisterLocale("enUS", {
     ["Window layout reset"]            = "Every window is back in its default place.",
 
     -- Module Nameplates
-    ["Nameplates"]                     = "Nameplates",
+    ["Nameplates"]                     = "Nameplates (In development)",
 
     ["Blizzard settings"]              = "Blizzard settings",
     ["Blizzard settings notice"] =
