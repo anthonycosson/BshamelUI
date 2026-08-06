@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 0.8.3 — 2026-08-06
+
 ### Modifié
 - **Barres d'infos** affiche désormais *toujours* les réglages du jeu et ceux de
   Bshamel UI côte à côte. La page ne se replie plus sur une colonne unique quand
