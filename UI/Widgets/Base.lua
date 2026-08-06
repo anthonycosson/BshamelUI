@@ -200,10 +200,9 @@ local function rebuildBorder(border)
 
     if not (botLeft and botRight and bottom and left and right) then return end
 
-    -- **Rien tant que le cadre n'est pas mesuré.** Les dimensions se relèvent sur
-    -- les pièces du client, et elles valent zéro tant qu'il n'a pas sa taille :
-    -- construit à la création, le contour naissait plat. Le premier
-    -- `OnSizeChanged` arrive de toute façon.
+    -- **Rien tant que les pièces n'ont pas de dimensions.** On les relève sur
+    -- elles, et elles valent zéro avant la première mise en page : construit trop
+    -- tôt, le contour naîtrait plat.
     if bottom:GetHeight() <= 0 or left:GetWidth() <= 0 then return end
 
     border._rebuilt = true
@@ -212,11 +211,6 @@ local function rebuildBorder(border)
     local rightW, rightH   = botRight:GetWidth(), botRight:GetHeight()
     local edgeH, edgeW     = bottom:GetHeight(), left:GetWidth()
     local layer, sublevel  = bottom:GetDrawLayer()
-
-    for _, names in pairs(P) do
-        local piece = T.BorderPiece(border, names)
-        if piece then piece:Hide() end
-    end
 
     ---@param source table
     ---@param flip boolean
@@ -272,6 +266,24 @@ local function rebuildBorder(border)
     tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, 0)
 end
 
+--- Masque tout ce que le template pose lui-même : son remplissage et les huit
+--- pièces de son contour.
+---
+--- **À chaque passage, pas une fois.** Un template du client repose et réaffiche
+--- ses pièces quand son cadre change de taille ou réapparaît ; masquer une seule
+--- fois laissait revenir le bandeau de titre, par-dessus notre contour, sans que
+--- rien ne l'annonce.
+---@param border table
+local function hideTemplatePieces(border)
+    T.HidePanelFill(border)
+
+    if not border._rebuilt then return end
+    for _, names in pairs(T.BORDER) do
+        local piece = T.BorderPiece(border, names)
+        if piece then piece:Hide() end
+    end
+end
+
 --- Contour d'un panneau : **celui de la fenêtre d'options**, sans sa barre de
 --- titre.
 ---
@@ -296,16 +308,22 @@ function W.PanelBorder(parent)
     -- avalerait ceux des rangées qu'il encadre.
     border:EnableMouse(false)
 
-    T.HidePanelFill(border)
+    local function dress()
+        rebuildBorder(border)
+        hideTemplatePieces(border)
+    end
 
-    -- Un template repose ses propres pièces quand le cadre grandit : le fond
-    -- réapparaîtrait au premier panneau qui se dimensionne. Le contour, lui, est
-    -- à nous et tient par ses ancrages — il n'est redessiné qu'une fois, à la
-    -- première mesure.
-    border:HookScript("OnSizeChanged", function(self)
-        T.HidePanelFill(self)
-        rebuildBorder(self)
-    end)
+    dress()
+
+    -- **Trois occasions, parce qu'aucune ne suffit seule.** La reconstruction a
+    -- besoin que les pièces du template soient mesurées, ce qui n'arrive pas à la
+    -- création ; le changement de taille l'apporte, mais un panneau qui naît déjà
+    -- à sa taille définitive n'en émet pas ; et un panneau caché puis réaffiché
+    -- voit son template reposer ses pièces. La trame suivante couvre le cas du
+    -- milieu, celui qui laissait des panneaux entiers sans contour.
+    border:HookScript("OnSizeChanged", dress)
+    border:HookScript("OnShow", dress)
+    C_Timer.After(0, dress)
 
     return border
 end
