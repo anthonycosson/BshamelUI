@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.0 — 2026-08-07
+
 ### Interne
 - **La page des barres d'infos est séparée de son moteur.** Le fichier d'un seul
   tenant comptait cent quatre-vingt-quinze variables locales sur les deux cents
