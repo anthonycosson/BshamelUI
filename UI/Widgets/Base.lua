@@ -221,25 +221,21 @@ local function rebuildBorder(border)
         return piece
     end
 
-    --- Décalage de la pièce du client par rapport au bord du cadre.
+    --- Débordement du contour hors du cadre, **une seule valeur pour les quatre
+    --- côtés**.
     ---
-    --- **Ces textures ne sont pas posées à ras.** Le métal du client déborde du
-    --- cadre qu'il entoure — c'est ce qui lui donne son relief —, et chaque pièce
-    --- porte donc un décalage négatif. Les poser à zéro, comme on le faisait, les
-    --- rentre à l'intérieur : le contour se dessine alors en retrait, et le fond
-    --- du panneau reste visible tout autour de lui.
-    ---@param piece table
-    ---@return number x, number y
-    local function offsetOf(piece)
-        local _, _, _, x, y = piece:GetPoint(1)
-        return x or 0, y or 0
-    end
-
-    local cornerX,  cornerY  = offsetOf(botLeft)
-    local rCornerX, rCornerY = offsetOf(botRight)
-    local _,        bottomY  = offsetOf(bottom)
-    local leftX              = offsetOf(left)
-    local rightX             = offsetOf(right)
+    --- Le métal du client ne se pose pas à ras : il déborde du cadre qu'il
+    --- entoure, et c'est ce qui lui donne son relief. On a d'abord relevé le
+    --- décalage de chaque pièce pour le reprendre tel quel — un seul côté est
+    --- tombé juste, le droit, et c'est le seul que le client ancre directement au
+    --- cadre. Les trois autres s'accrochent à leurs voisines : leur décalage ne
+    --- parle pas du cadre, et l'appliquer au cadre les déplace n'importe où.
+    ---
+    --- Un contour est symétrique par nature. On relève donc le seul décalage qui
+    --- se lise sans ambiguïté et on l'applique aux quatre côtés, chacun vers son
+    --- dehors.
+    local _, _, _, bleed = right:GetPoint(1)
+    bleed = math.abs(bleed or 0)
 
     -- **Les bords d'abord, les coins ensuite.** À calque égal, l'ordre de dessin
     -- est celui de la création. Or les bords sont plus épais que les coins — 16
@@ -249,43 +245,43 @@ local function rebuildBorder(border)
     --
     -- Les bords vont de bord à bord du cadre : ce sont les coins qui les
     -- recouvrent à leurs extrémités, comme le fait le client.
-    -- Le décalage vertical change de signe en haut : ce qui débordait vers le bas
-    -- doit déborder vers le haut.
+    -- Chaque côté déborde vers son dehors : négatif à gauche et en bas, positif à
+    -- droite et en haut.
     local bo = newPiece(bottom, false)
     bo:SetHeight(edgeH)
-    bo:SetPoint("BOTTOMLEFT",  border, "BOTTOMLEFT",  0, bottomY)
-    bo:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, bottomY)
+    bo:SetPoint("BOTTOMLEFT",  border, "BOTTOMLEFT",  0, -bleed)
+    bo:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", 0, -bleed)
 
     local to = newPiece(bottom, true)
     to:SetHeight(edgeH)
-    to:SetPoint("TOPLEFT",  border, "TOPLEFT",  0, -bottomY)
-    to:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, -bottomY)
+    to:SetPoint("TOPLEFT",  border, "TOPLEFT",  0, bleed)
+    to:SetPoint("TOPRIGHT", border, "TOPRIGHT", 0, bleed)
 
     local le = newPiece(left, false)
     le:SetWidth(edgeW)
-    le:SetPoint("TOPLEFT",    border, "TOPLEFT",    leftX, 0)
-    le:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", leftX, 0)
+    le:SetPoint("TOPLEFT",    border, "TOPLEFT",    -bleed, 0)
+    le:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", -bleed, 0)
 
     local ri = newPiece(right, false)
     ri:SetWidth(right:GetWidth())
-    ri:SetPoint("TOPRIGHT",    border, "TOPRIGHT",    rightX, 0)
-    ri:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", rightX, 0)
+    ri:SetPoint("TOPRIGHT",    border, "TOPRIGHT",    bleed, 0)
+    ri:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", bleed, 0)
 
     local bl = newPiece(botLeft,  false)
     bl:SetSize(cornerW, cornerH)
-    bl:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", cornerX, cornerY)
+    bl:SetPoint("BOTTOMLEFT", border, "BOTTOMLEFT", -bleed, -bleed)
 
     local br = newPiece(botRight, false)
     br:SetSize(rightW, rightH)
-    br:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", rCornerX, rCornerY)
+    br:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", bleed, -bleed)
 
     local tl = newPiece(botLeft,  true)
     tl:SetSize(cornerW, cornerH)
-    tl:SetPoint("TOPLEFT", border, "TOPLEFT", cornerX, -cornerY)
+    tl:SetPoint("TOPLEFT", border, "TOPLEFT", -bleed, bleed)
 
     local tr = newPiece(botRight, true)
     tr:SetSize(rightW, rightH)
-    tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", rCornerX, -rCornerY)
+    tr:SetPoint("TOPRIGHT", border, "TOPRIGHT", bleed, bleed)
 end
 
 --- Masque tout ce que le template pose lui-même : son remplissage et les huit
@@ -365,13 +361,21 @@ end
 ---@param frame table
 ---@return table border
 function W.PanelChrome(frame)
+    -- **L'habillage déborde du panneau, il ne l'épouse pas.** Le contenu est
+    -- posé contre les bords du panneau ; un contour posé sur ces mêmes bords lui
+    -- touche donc le texte. On l'écarte de quelques pixels, et le fond suit :
+    -- séparés, ils laisseraient un anneau transparent entre eux.
+    local bleed = T.SIZE.PANEL_CHROME_BLEED
+
     local background = frame:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints()
+    background:SetPoint("TOPLEFT",     frame, "TOPLEFT",     -bleed,  bleed)
+    background:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT",  bleed, -bleed)
     T.WindowStone(background)
     frame.background = background
 
     local border = W.PanelBorder(frame)
-    border:SetAllPoints()
+    border:SetPoint("TOPLEFT",     frame, "TOPLEFT",     -bleed,  bleed)
+    border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT",  bleed, -bleed)
     return border
 end
 

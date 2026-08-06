@@ -431,6 +431,10 @@ T.SIZE = {
     -- l'air de sortir de la case plutôt que de lui répondre.
     SLOT_TOP_DROP   = 6,
 
+    -- De combien l'habillage d'un panneau déborde de lui. Le contenu est posé
+    -- contre les bords ; sans cet écart, le contour touche le texte.
+    PANEL_CHROME_BLEED = 3,
+
 
 
     -- Retrait de l'étiquette posée sur un objet rangé, depuis le coin bas-droit
