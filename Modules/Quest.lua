@@ -162,7 +162,7 @@ BUI:RegisterModule(MODULE, {
     defaults = {
         autoAccept     = false,
         autoTurnIn     = false,
-        skipTrivial    = true,
+        skipTrivial    = false,
         bypassModifier = "SHIFT",
     },
 

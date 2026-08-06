@@ -254,18 +254,26 @@ BUI:RegisterModule(MODULE, {
     secure   = true,
 
     defaults = {
-        -- Le mode sombre est éteint, mais la liste de ce qu'il assombrit est
-        -- cochée d'avance : l'allumer doit produire un effet visible tout de
-        -- suite, décocher ensuite ce qu'on veut garder clair est le geste rare.
+        -- **Tout est éteint, la liste comprise.** Elle était cochée d'avance
+        -- pour qu'allumer le mode sombre produise un effet tout de suite ; la
+        -- règle de l'addon est plus forte que cette commodité : rien ne change
+        -- tant que rien n'est coché, et un réglage à `true` livré au joueur est
+        -- un réglage qu'il n'a pas demandé, quand bien même une case au-dessus
+        -- le retient.
+        --
+        -- Conséquence assumée : cocher *Activer le mode sombre* ne fait plus
+        -- rien seul. C'est la liste qui décide de ce qui s'assombrit, et il faut
+        -- désormais y désigner au moins une chose.
+        --
         -- Il n'y a pas de dosage — c'est la liste qui se règle, pas la
         -- profondeur du noir (voir `T.SHADE_FACTOR`).
         darkMode            = false,
-        darkUnitFrames      = true,
-        darkActionBars      = true,
-        darkCastBar         = true,
-        darkAuras           = true,
-        darkCooldownManager = true,
-        darkTooltip         = true,
+        darkUnitFrames      = false,
+        darkActionBars      = false,
+        darkCastBar         = false,
+        darkAuras           = false,
+        darkCooldownManager = false,
+        darkTooltip         = false,
     },
 
     -- L'en-tête au-dessus de l'interrupteur s'appelle « Général » et non

@@ -3,6 +3,23 @@
 ## Non publié
 
 ### Modifié
+- **Plus aucun réglage n'est livré coché.** Une installation neuve ne change
+  désormais rien au jeu tant qu'on n'a rien demandé — ce qui était la règle, et
+  ce que sept réglages ne respectaient pas.
+
+  Un seul se voyait : *Noms alliés aux couleurs de classe*, sur les plaques,
+  n'avait aucune case maîtresse au-dessus de lui et colorait donc les noms dès
+  l'installation. Les six autres attendaient derrière un interrupteur éteint —
+  la liste du mode sombre, l'ignorance des quêtes grises, les rangées d'auras —
+  et ne se voyaient pas, mais un réglage coché qu'on n'a pas demandé reste un
+  réglage coché qu'on n'a pas demandé.
+
+  **Ce qui change pour qui l'utilisait déjà** : le mode sombre n'assombrit plus
+  rien tant qu'on n'a pas désigné au moins une chose dans sa liste, et la reprise
+  des auras de plaque demande de cocher au moins une rangée. Les réglages que
+  vous aviez touchés vous-même sont conservés — seuls ceux laissés tels quels
+  suivent le nouveau défaut.
+
 - **Le menu de téléportation et le tiroir d'addons prennent l'habillage de la
   fenêtre d'options.** Ils posaient un aplat de la couleur des fenêtres, qui
   donne un gris bleuté là où la fenêtre d'options est presque noire : la même

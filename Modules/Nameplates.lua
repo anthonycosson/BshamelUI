@@ -3436,7 +3436,7 @@ BUI:RegisterModule(MODULE, {
         -- de confort : c'est ce que l'addon faisait déjà, sans le dire ni offrir
         -- de l'arrêter. La case ne change donc le comportement de personne — elle
         -- se contente de le rendre visible et refusable.
-        allyClassColor = true,
+        allyClassColor = false,
 
         -- Le corps de la barre de sorts est le sien : le client ecrit plus petit
         -- dessus, et partir de sa valeur rend l'interrupteur sans effet tant
@@ -3458,7 +3458,7 @@ BUI:RegisterModule(MODULE, {
         -- La rangée est à nous dès que la case maîtresse s'allume. Les deux
         -- cases restent distinctes : l'une ouvre la section, l'autre dit qui,
         -- de l'addon ou du jeu, affiche les entraves.
-        ownAuraCc   = true,
+        ownAuraCc   = false,
 
         auraCcMax    = T.SIZE.PLATE_AURA_MAX,
         auraCcSize   = T.PlateConstant("AURA_ITEM_HEIGHT", T.SIZE.PLATE_AURA),
@@ -3473,7 +3473,7 @@ BUI:RegisterModule(MODULE, {
         -- l'addon**, qui n'existe que si le joueur a déjà coché la rangée. Le
         -- liseré carré qu'elle remplace était le seul endroit de l'addon où une
         -- icône n'avait pas le contour commun.
-        auraCcShaded = true,
+        auraCcShaded = false,
 
         resizeCast = false,
         castHeight = T.SIZE.PLATE_CAST_BAR_H,
