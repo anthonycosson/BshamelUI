@@ -2,6 +2,28 @@
 
 ## Non publié
 
+### Modifié
+- **Le bouton de l'addon est affiché sur la minicarte dès l'installation.**
+  C'est la seule case cochée d'origine de tout l'addon, et elle le restera. La
+  promesse est intacte : installer Bshamel UI ne change toujours rien au jeu — ce
+  bouton ne remplace, ne cache ni ne déplace quoi que ce soit. Il dit que l'addon
+  est là, et par où l'ouvrir. Livré éteint, il ne restait aucune porte visible à
+  qui ne connaît pas `/bui`.
+
+  Les joueurs qui n'avaient jamais touché ce réglage verront donc le bouton
+  apparaître. Ceux qui l'avaient explicitement décoché gardent leur choix.
+
+### Ajouté
+- **Un avertissement, en rouge, sous « Regrouper les boutons d'addons ».** Cocher
+  ce réglage reprend un geste déjà appris : le clic gauche sur le bouton de
+  minicarte ouvre désormais la liste des addons, et les options passent au clic
+  droit. Sans l'avoir lu, on croit avoir cassé l'accès à sa fenêtre d'options.
+
+### Corrigé
+- **L'infobulle du bouton de minicarte annonçait la liste des addons au clic
+  gauche**, alors qu'elle n'apparaît qu'une fois les boutons regroupés — ce qui
+  n'est pas le cas à l'installation. Elle dit maintenant les deux.
+
 ## 1.0.0 — 2026-08-07
 
 ### Interne

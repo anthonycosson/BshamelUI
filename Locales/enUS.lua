@@ -171,13 +171,21 @@ BUI:RegisterLocale("enUS", {
     -- Infobulle du bouton lui-même, en jeu : trois gestes, une ligne chacun.
     -- Ce n'est pas une phrase, c'est une antisèche — elle se lit d'un coup d'œil
     -- ou elle ne sert à rien.
+    -- Le clic gauche dit deux choses parce qu'il en fait deux, selon que les
+    -- boutons d'addons soient regroupés ou non. L'annoncer d'un seul des deux
+    -- côtés mentirait à la moitié des joueurs — et, le tiroir étant éteint à
+    -- l'installation, à tous ceux qui viennent d'installer l'addon.
     ["Minimap button tip"] =
-        "Left click: addon list\n"
+        "Left click: options — the addon list, once they are grouped\n"
         .. "Right click: options\n"
         .. "Drag: move around the minimap",
 
     ["Addon buttons empty"]            = "No addon icon to show.",
     ["Group addon buttons"]            = "Group the addon buttons",
+    -- Avertissement rouge sous la case, pas une infobulle : voir `General.lua`.
+    ["Group addon buttons warning"] =
+        "Left-clicking the minimap button then opens the addon list: Bshamel UI's "
+        .. "options move to the right click.",
     -- Trois phrases au plus, et la première dit le geste : c'est la seule chose
     -- qu'il faut savoir pour retrouver ses boutons une fois qu'ils ont disparu
     -- du pourtour de la carte.

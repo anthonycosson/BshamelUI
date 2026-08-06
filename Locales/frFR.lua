@@ -254,12 +254,15 @@ BUI:RegisterLocale("frFR", {
     ["Buttons"]                        = "Boutons",
     ["Minimap button"]                 = "Afficher le bouton BshamelUI sur la minicarte",
     ["Minimap button tip"] =
-        "Clic gauche : liste d'addons\n"
+        "Clic gauche : options — la liste d'addons, une fois qu'ils sont regroupés\n"
         .. "Clic droit : options\n"
         .. "Glisser : déplacer autour de la minicarte",
 
     ["Addon buttons empty"]            = "Aucune icône d'addon à afficher.",
     ["Group addon buttons"]            = "Regrouper les boutons d'addons",
+    ["Group addon buttons warning"] =
+        "Le clic gauche sur le bouton de minicarte ouvre alors la liste des addons : "
+        .. "les options de Bshamel UI passent au clic droit.",
     ["Group addon buttons tip"] =
         "Range les boutons de minicarte des autres addons dans un tiroir. Clic gauche sur le "
         .. "bouton BshamelUI pour les retrouver. Éteindre le réglage remet chaque bouton "

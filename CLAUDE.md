@@ -67,7 +67,19 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   ne fait rien seul, parce que sa liste est vide. C'est au libellé de le dire,
   pas au défaut de le rattraper.
 
-  `dev/scripts/check-design.sh` le vérifie sur tous les blocs `defaults`.
+  **Une exception existe, et une seule** : le bouton de minicarte
+  (`Modules/General.lua`), marqué `@default-on`. La règle protège une promesse
+  précise — installer l'addon ne change rien **au jeu**. Ce bouton ne change rien
+  au jeu : il ne remplace, ne cache ni ne déplace quoi que ce soit, il dit que
+  l'addon est là et par où l'ouvrir. Livré éteint, il ne restait aucune porte
+  visible, et un addon sans porte n'est pas discret, il est absent.
+
+  La marque se pose donc sur ce qui **montre** l'addon, jamais sur ce qui
+  **agit** à la place du joueur. Toute nouvelle ligne `@default-on` demande le
+  même examen, écrit au-dessus d'elle.
+
+  `dev/scripts/check-design.sh` le vérifie sur tous les blocs `defaults`, et
+  refuse tout défaut vrai qui ne porte pas la marque.
 - Les défauts ne sont jamais écrits sur le disque (`Core/DB.lua` les retire à la
   déconnexion). Changer un défaut change donc le comportement de tous les
   joueurs qui n'ont pas touché à l'option — c'est voulu.

@@ -195,7 +195,19 @@ BUI:RegisterModule(MODULE, {
     secure   = true,
 
     defaults = {
-        button = false,
+        -- **La seule case cochée à l'installation de tout l'addon**, et la seule
+        -- exception à la règle 4 de `CLAUDE.md` — elle porte donc la marque
+        -- `@default-on`, que `check-design.sh` réclame pour laisser passer un
+        -- défaut vrai.
+        --
+        -- La règle protège une promesse précise : installer Bshamel UI ne change
+        -- rien **au jeu**. Ce bouton ne change rien au jeu — il ne remplace, ne
+        -- cache ni ne déplace quoi que ce soit. Il dit que l'addon est là, et par
+        -- où l'ouvrir. Livré éteint, il ne restait aucune porte visible : le
+        -- joueur qui ne connaît pas `/bui` a un addon installé et rien à quoi le
+        -- rattacher, ce qui n'est pas de la discrétion mais de la disparition.
+        button = true, -- @default-on
+
         -- Angle sur le pourtour de la minicarte, en degrés. Réglage sans
         -- contrôle : il se change en déplaçant le bouton, pas dans cette fenêtre.
         angle  = 200,
@@ -237,6 +249,12 @@ BUI:RegisterModule(MODULE, {
             -- une case qu'on peut cocher sans effet se lit comme une panne.
             disabled = requires("button"),
         },
+        -- En rouge, et sous la case plutôt que dans son infobulle : ce réglage
+        -- **reprend un geste déjà appris**. Le clic gauche ouvrait les options,
+        -- il ouvre désormais le tiroir. Qui coche sans l'avoir lu croit avoir
+        -- cassé l'accès à sa fenêtre d'options — une infobulle, qu'on ne lit
+        -- qu'en survolant, ne suffit pas pour un avertissement de ce genre.
+        { type = "alert", text = L["Group addon buttons warning"] },
 
         { type = "header", text = L["Camera"] },
         {
