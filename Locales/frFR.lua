@@ -80,6 +80,11 @@ BUI:RegisterLocale("frFR", {
     ["Tooltip"]                        = "Infobulle",
     ["Dark tooltip tip"] =
         "La bordure de l'infobulle. Son fond reste tel que le jeu l'a réglé.",
+    ["Spellbook"]                      = "Grimoire",
+    ["Dark spellbook tip"] =
+        "La fenêtre de sorts et de talents : son habillage, ses onglets et ses "
+        .. "encadrés. Les icônes de sorts gardent leur contour, qui dit de quelle "
+        .. "nature ils sont.",
     ["Cooldown manager"]               = "Gestionnaire de temps de recharge",
     ["Dark cooldown manager tip"]      = "Les barres du gestionnaire de temps de recharge et leurs icônes.",
     -- Module General (suite)
@@ -224,6 +229,7 @@ BUI:RegisterLocale("frFR", {
         "Le jeu réserve une place par amélioration suivie et la laisse vide quand l'amélioration "
         .. "tombe : celles qui restent affichées demeurent écartées. Ce réglage les retasse "
         .. "ensemble, au milieu de la rangée.",
+
 
     -- Module Chat
     ["Chat"]                           = true,
@@ -492,7 +498,7 @@ BUI:RegisterLocale("frFR", {
     -- littérale de son nom anglais.
     -- La mention « en développement » est dans le nom de la page et non dans un
     -- avertissement sous elle : c'est avant d'y entrer qu'elle sert, pas après.
-    ["Nameplates"]                     = "Barres d'infos (En développement)",
+    ["Nameplates"]                     = "Barres d'infos",
 
     ["Blizzard settings"]              = "Paramètres Blizzard",
     ["Blizzard settings notice"] =
@@ -761,6 +767,13 @@ BUI:RegisterLocale("frFR", {
     ["Cast bar height tip"] =
         "Épaisseur de la barre de sorts. Le jeu la fait plus fine que la barre de vie.",
 
+    ["Flat target size"]               = "Ne pas grossir la cible",
+    ["Flat target size tip"] =
+        "Le jeu grossit la barre d'infos de votre cible pour la distinguer "
+        .. "des autres. Cochée, elle garde la taille de ses voisines — et "
+        .. "c'est ce qui rend la vôtre exacte : ce grossissement passe "
+        .. "par-dessus tout le reste, y compris une taille réglée au pixel "
+        .. "près. Le réglage du jeu est rendu tel qu'il était en décochant.",
     ["Resize nameplates"]              = "Régler la taille",
     ["Resize nameplates tip"] =
         "Fixe la taille des barres d'infos en pixels tant que c'est allumé, et "

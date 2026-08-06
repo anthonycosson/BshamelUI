@@ -2,6 +2,50 @@
 
 ## Non publié
 
+### Ajouté
+- **Le grimoire s'assombrit** avec le reste, et **lui seul** : la page des sorts,
+  pas les onglets, pas les talents, pas la fenêtre qui les porte.
+
+  Il est traité comme un **parchemin** et non comme un habillage, ce qui est
+  nouveau dans le moteur. Un habillage doré est désaturé avant d'être assombri,
+  sans quoi il reste doré ; un parchemin désaturé devient une page grise. Celui-ci
+  garde donc sa couleur, fonce à moins de la moitié de sa clarté, et il est
+  **poussé vers le brun** — le beige du client est presque neutre, et foncé seul
+  il donnerait un brun timide. Deux nombres décident, et ils se lisent
+  séparément : la profondeur et l'inclinaison.
+
+  Ce qu'il porte passe au blanc — le client écrit le nom de ses sorts en brun
+  foncé pour une page claire, et une page sombre les effacerait. C'est la seule
+  entorse du mode sombre à sa règle de ne jamais repeindre ce qui se lit ; les
+  couleurs d'origine sont relevées et reposées comme celles des textures.
+
+  Le blanc **se repose chaque fois que le client réécrit la couleur** : il
+  repeint le nom d'un sort à chacune de ses mises en page — au survol, en
+  filtrant, en changeant de page — et il le fait après nous. Aucun de ces moments
+  ne se devine ; on se branche donc sur l'écriture elle-même, comme partout
+  ailleurs dans l'addon.
+
+  Encore fallait-il **voir** ces lignes : elles ne descendent pas des enfants
+  d'une fenêtre, elles sortent d'un pool que deux vues mettent en page. Le
+  parcours ne les avait jamais rencontrées, ce qui explique un fond de page qui
+  fonçait pendant que tout ce qu'il portait restait clair.
+
+  La teinte se repose **à l'ouverture du livre et à chaque changement de page**.
+  Sans cela elle n'atteignait que le fond : tout ce que la page porte — les noms,
+  les petits fonds clairs derrière chaque ligne — n'est bâti qu'au moment où le
+  livre s'ouvre, donc après notre passage.
+
+  Les icônes de sorts gardent leur contour, qui dit de quelle nature ils sont.
+
+- **Ne pas grossir la cible**, dans la taille de la barre de vie. Le jeu agrandit
+  la barre d'infos de votre cible par-dessus tout le reste, taille en pixels
+  comprise : cette case le lui interdit, et rend son réglage tel quel en
+  décochant.
+
+### Modifié
+- ***Marque de cible* passe avant *Superposition*.**
+- ***Barres d'infos* n'est plus « en développement ».**
+
 ## 0.8.4 — 2026-08-06
 
 ### Modifié

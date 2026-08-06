@@ -195,6 +195,16 @@ T.SIZE = {
     PLATE_TEXT     = 12,
     PLATE_CAST_TEXT = 10,   -- le client écrit plus petit sur une barre de sorts
 
+    -- Combien de vignettes l'aperçu d'auras montre. Trois : assez pour voir un
+    -- espacement, pas assez pour cacher la plaque qui les porte.
+    PLATE_AURA_SAMPLE = 3,
+
+    -- De combien la rangée d'exemple se pose au-dessus de la plaque. Le client
+    -- met les siennes là ; ce nombre est le souffle qui les sépare du haut de la
+    -- boîte, et il n'a pas à être réglable — c'est un aperçu, pas une mise en
+    -- page.
+    PLATE_PREVIEW_LIFT = 6,
+
     -- Le plus haut cran du calibre de plaque du client. Une valeur à lui, comme
     -- les quatre ci-dessus, et rangée avec elles pour la même raison : c'est le
     -- nombre que la glissière annonce **et** celui que l'addon pose quand il
@@ -1012,6 +1022,7 @@ T.COLOR = {
     LABEL    = HIGHLIGHT_FONT_COLOR,                     -- blanc
     DISABLED = DISABLED_FONT_COLOR,                      -- gris
     WHITE    = WHITE_FONT_COLOR,
+
     RED      = RED_FONT_COLOR,
     GREEN    = GREEN_FONT_COLOR,
 
@@ -1351,6 +1362,25 @@ end
 --- Pas zéro : à zéro l'habillage devient une silhouette noire dont on ne
 --- distingue plus les reliefs, ce qui n'est pas « sombre » mais « effacé ».
 T.SHADE_FACTOR = 0.05
+
+--- La teinte d'un **parchemin** : à peine plus de la moitié de sa clarté.
+---
+--- Elle ne se compare pas à la précédente, parce qu'elle ne fait pas la même
+--- chose. Un habillage doré est désaturé avant d'être assombri — sans quoi il
+--- reste doré, sombre et jaune. Un parchemin, lui, **garde sa couleur** (voir
+--- `KEEP_COLOR` dans `UI/Shade.lua`) : désaturé il vire au gris, gardé il fonce
+--- en restant brun, ce qui est l'effet qu'on lui demande.
+---
+--- Un brun peut donc descendre bien plus bas qu'un doré désaturé sans devenir
+--- une silhouette. Ce qu'il porte est écrit en blanc par-dessus (`WHITE_TEXT`),
+--- sans quoi il faudrait s'arrêter beaucoup plus haut.
+---
+--- **La moitié**, et ce n'est pas un chiffre de goût : c'est la valeur que la
+--- référence du genre emploie par défaut, un multiplicateur neutre à cinquante
+--- pour cent (voir `dev/docs/API_NOTES.md`). On a essayé d'incliner la couleur
+--- vers le brun en plus ; c'était de trop. Le brun ne vient pas d'une teinte
+--- qu'on pose, il vient de ce qu'on **ne désature pas**.
+T.SHADE_FACTOR_PARCHMENT = 0.50
 
 --- Débordement, en pixels, du contour sombre d'une icône de côté `side`.
 ---@param side number  plus petit côté de l'icône, en pixels

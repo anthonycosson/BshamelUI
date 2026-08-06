@@ -57,7 +57,7 @@
 
     "strfind", "ORANGE_FONT_COLOR",
     "C_TooltipInfo", "TooltipUtil", "ItemLocation",
-    "CharacterFrame", "InspectFrame",
+    "CharacterFrame", "InspectFrame", "PlayerSpellsFrame",
     "GetInventorySlotInfo", "GetInventoryItemLink",
     "GetItemStats", "GetItemGem", "GetItemIcon", "GetAverageItemLevel",
     "C_Container", "ContainerFrameCombinedBags", "BankFrame", "GetDetailedItemLevelInfo",

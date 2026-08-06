@@ -82,6 +82,10 @@ BUI:RegisterLocale("enUS", {
     ["Dark auras tip"]                 = "Aura icons, their borders and their timers.",
     ["Tooltip"]                        = "Tooltip",
     ["Dark tooltip tip"]               = "The tooltip border. Its background is left as the game set it.",
+    ["Spellbook"]                      = "Spellbook",
+    ["Dark spellbook tip"] =
+        "The spells and talents window: its artwork, its tabs and its frames. "
+        .. "Spell icons keep their border, which says what kind of spell it is.",
     ["Cooldown manager"]               = "Cooldown manager",
     ["Dark cooldown manager tip"]      = "The cooldown manager bars and their icons.",
     -- Module General (suite)
@@ -288,6 +292,7 @@ BUI:RegisterLocale("enUS", {
         "The game keeps one slot per tracked buff, and leaves it empty when the buff falls off, so "
         .. "the ones still up stay spread apart. This packs them together in the middle of the row.",
 
+
     -- Module Chat
     ["Chat"]                           = "Chat",
     ["History"]                        = "History",
@@ -493,7 +498,7 @@ BUI:RegisterLocale("enUS", {
     ["Window layout reset"]            = "Every window is back in its default place.",
 
     -- Module Nameplates
-    ["Nameplates"]                     = "Nameplates (In development)",
+    ["Nameplates"]                     = "Nameplates",
 
     ["Blizzard settings"]              = "Blizzard settings",
     ["Blizzard settings notice"] =
@@ -737,6 +742,13 @@ BUI:RegisterLocale("enUS", {
     ["Cast bar height"]                = "Cast bar height",
     ["Cast bar height tip"]            = "Thickness of the cast bar. The game makes it thinner than the health bar.",
 
+    ["Flat target size"]               = "Do not enlarge the target",
+    ["Flat target size tip"] =
+        "The game enlarges your target's nameplate to tell it apart. Ticked, "
+        .. "it keeps the size of its neighbours — which is what makes yours "
+        .. "exact: that enlargement goes over everything else, including a "
+        .. "size set to the pixel. The game's setting is given back as it was "
+        .. "when you untick.",
     ["Resize nameplates"]              = "Set the size",
     ["Resize nameplates tip"] =
         "Sets the size of every nameplate in pixels while this is on, and hands "

@@ -53,6 +53,10 @@ end
 
 --- Clé de réglage -> élément du moteur d'assombrissement, dans l'ordre où les
 --- lignes se lisent sur la page.
+---
+--- `factor` est facultatif et vaut la teinte commune. Un élément n'en demande un
+--- à lui que si ce qu'il porte réclame une autre main : voir le grimoire, traité
+--- en parchemin, et `T.SHADE_FACTOR_PARCHMENT`.
 local DARK_ELEMENTS = {
     { key = "darkUnitFrames",      element = "unitFrames" },
     { key = "darkActionBars",      element = "actionBars" },
@@ -60,6 +64,18 @@ local DARK_ELEMENTS = {
     { key = "darkAuras",           element = "auras" },
     { key = "darkCooldownManager", element = "cooldownManager" },
     { key = "darkTooltip",         element = "tooltip" },
+    -- Le grimoire arrive en cours de session : il est chargé à la demande, et
+    -- c'est l'abonnement à `ADDON_LOADED` — déjà là pour les autres fenêtres du
+    -- même genre — qui pose sa teinte le jour où on l'ouvre.
+    --
+    -- **Un parchemin, pas un habillage.** Il garde sa couleur au lieu d'être
+    -- désaturé — sombre et brun plutôt que sombre et gris — et ce qu'il porte
+    -- passe au blanc, le client écrivant le nom de ses sorts en brun foncé
+    -- pour une page claire. Les deux vont ensemble : sans le blanc il
+    -- faudrait s'arrêter à un effleurement, sans la couleur on obtiendrait
+    -- une page grise. Voir `KEEP_COLOR` et `WHITE_TEXT` dans `UI/Shade.lua`.
+    { key = "darkSpellbook",       element = "spellbook",
+      factor = T.SHADE_FACTOR_PARCHMENT },
 }
 
 ---@param mod table
@@ -77,7 +93,8 @@ local function applyDarkMode(mod)
         -- chute, et le symptôme — « seule la barre d'action réagit » — ne
         -- ressemble en rien à sa cause.
         if on and mod:Get(entry.key) then
-            BUI.safecall(shade.Apply, shade, entry.element, T.SHADE_FACTOR)
+            BUI.safecall(shade.Apply, shade, entry.element,
+                         entry.factor or T.SHADE_FACTOR)
         else
             BUI.safecall(shade.Restore, shade, entry.element)
         end
@@ -127,6 +144,16 @@ local refreshShade      = refresher(nil)
 -- textures teintes là où `ApplyTo` y ajoute — à cette fréquence-là, ajouter
 -- ferait grossir la liste sans fin (règle 7).
 local refreshCooldowns  = refresher("cooldownManager")
+
+-- Le grimoire se rafraîchit **tout de suite et à retardement** : le client
+-- bâtit ses lignes après avoir montré la fenêtre, et un seul passage à
+-- l'instant du clic les manquerait toutes (voir `hookSpellbook`).
+local refreshSpellbook  = refresher("spellbook", true)
+
+-- Le même, **groupé seulement**. Il sert la construction d'une page, qui
+-- appelle le client une fois par ligne : dix-huit passages complets pour une
+-- page tournée seraient dix-sept de trop (règle 7).
+local refreshSpellRows  = refresher("spellbook")
 
 --- Les unités dont les auras sont dessinées par l'élément « auras ».
 ---
@@ -240,6 +267,55 @@ local function hookCooldownViewers(mod)
     end
 end
 
+--- Se branche sur l'ouverture et la pagination du grimoire.
+---
+--- **Sans cela, la teinte n'atteignait que le parchemin.** Le fond de page
+--- existe dès que la fenêtre est chargée, et il fonçait donc correctement ; tout
+--- ce qu'elle porte — le nom de chaque sort, le petit fond clair derrière chaque
+--- ligne — n'est bâti qu'au moment où le livre s'ouvre, c'est-à-dire après notre
+--- dernier passage. Le résultat ressemblait à un blanchiment de texte qui ne
+--- marche pas, alors que c'était un passage arrivé trop tôt.
+---
+--- Deux points de branchement, et ils ne se recouvrent pas : l'affichage de la
+--- fenêtre, et le changement de page, qui reconstruit les lignes sans que la
+--- fenêtre bouge. Les deux sont gardés, donc inertes dès que le module s'éteint,
+--- et posés une seule fois quoi qu'il arrive.
+---@param mod table
+local function hookSpellbook(mod)
+    local frame = PlayerSpellsFrame
+    if type(frame) ~= "table" then return end
+
+    local guard = function() return mod:IsEnabled() end
+
+    U.GuardedScript(frame, "OnShow", refreshSpellbook, guard)
+
+    -- La pagination vit sur le cadre du livre, deux niveaux plus bas. Chaque
+    -- accès est gardé : le client peut renommer n'importe lequel, et une clé
+    -- absente vaut « rien à brancher », jamais une erreur.
+    local book  = frame.SpellBookFrame
+    local paged = type(book) == "table" and book.PagedSpellsFrame or nil
+    if type(paged) ~= "table" then return end
+
+    if type(paged.SetPage) == "function" then
+        U.GuardedHook(paged, "SetPage", refreshSpellbook, guard)
+    end
+
+    -- **La fonction que le client appelle pour monter chaque ligne de sort.**
+    -- C'est le seul endroit qui soit à l'heure : une ligne sort d'un pool,
+    -- elle est remplie ici, et sa couleur de texte y est reposée. Tout ce qui
+    -- se branche plus haut — l'affichage de la fenêtre, la pagination —
+    -- arrive avant qu'elle existe ou après qu'il l'a repeinte.
+    --
+    -- Le chemin a été relevé en lisant un addon qui résout le même problème,
+    -- pour savoir *où* se brancher et rien d'autre (règle 8) ; le détail est
+    -- dans `dev/docs/API_NOTES.md`.
+    local data  = paged.elementTemplateData
+    local spell = type(data) == "table" and data.SPELL or nil
+    if type(spell) == "table" and type(spell.initFunc) == "function" then
+        U.GuardedHook(spell, "initFunc", refreshSpellRows, guard)
+    end
+end
+
 -- =========================================================================
 --  Déclaration du module
 -- =========================================================================
@@ -274,6 +350,7 @@ BUI:RegisterModule(MODULE, {
         darkAuras           = false,
         darkCooldownManager = false,
         darkTooltip         = false,
+        darkSpellbook       = false,
     },
 
     -- L'en-tête au-dessus de l'interrupteur s'appelle « Général » et non
@@ -333,12 +410,20 @@ BUI:RegisterModule(MODULE, {
             tooltip  = L["Dark tooltip tip"],
             disabled = requires("darkMode"),
         },
+        {
+            type     = "toggle",
+            key      = "darkSpellbook",
+            text     = L["Spellbook"],
+            tooltip  = L["Dark spellbook tip"],
+            disabled = requires("darkMode"),
+        },
     },
 
     OnEnable = function(self)
         applyDarkMode(self)
         hookAuraUpdates(self)
         hookCooldownViewers(self)
+        hookSpellbook(self)
 
         -- Le mode sombre se repose sur ce qui apparaît après lui : les auras se
         -- recréent sans cesse, les fenêtres chargées à la demande arrivent en
@@ -351,7 +436,12 @@ BUI:RegisterModule(MODULE, {
         -- du joueur, pas avec le joueur : elles arrivent donc par cet
         -- événement-là et par aucun autre.
         self:RegisterEvent("NAME_PLATE_UNIT_ADDED", plateAdded)
-        self:RegisterEvent("ADDON_LOADED",          refreshShade)
+        -- Le grimoire est chargé à la demande : c'est ici qu'il arrive, et
+        -- c'est donc ici qu'on peut enfin se brancher dessus.
+        self:RegisterEvent("ADDON_LOADED", function(...)
+            hookSpellbook(self)
+            refreshShade(...)
+        end)
         self:RegisterEvent("PLAYER_ENTERING_WORLD", refreshShade)
 
         self:RegisterEvent("PLAYER_TARGET_CHANGED", refreshUnitFrames)

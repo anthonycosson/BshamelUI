@@ -3922,3 +3922,42 @@ n'a jamais manqué une plaque.
 bâtisse dessus, surtout quand il est le seul lien entre deux mondes. Une liste
 qui se remplit à moitié ne lève aucune erreur : elle rend simplement la moitié
 des symptômes inexplicables.
+
+
+---
+
+## Les lignes du grimoire ne sont pas des enfants ordinaires
+
+**Symptôme** — le mode sombre fonce le parchemin du grimoire, et rien d'autre :
+les noms de sorts restent noirs, le petit fond clair derrière chaque ligne reste
+clair. Un relevé sous le curseur confirme que `BookBGLeft`, `BookBGRight`,
+`TopBar` et `Bookmark` sont bien teintés — donc le parcours atteint la fenêtre.
+
+**Ce qu'on trouve** — les lignes de sorts ne descendent pas de `GetChildren` :
+elles sortent d'un pool que deux vues mettent en page, et se demandent à celles-ci
+par `GetLayoutChildren` :
+
+```
+PlayerSpellsFrame.SpellBookFrame.PagedSpellsFrame.View1  (et View2)
+    → :GetLayoutChildren() → une ligne par sort
+        .Name       le nom
+        .SubName    « Passif », « Invocation »…
+        .Backplate  le fond clair derrière la ligne
+```
+
+Un parcours récursif classique ne les voit donc jamais, et il n'y a aucune erreur
+pour le dire : on teinte une fenêtre vide.
+
+**Quand y revenir** — le client remplit chaque ligne par
+`PagedSpellsFrame.elementTemplateData.SPELL.initFunc`, et il y repose la couleur
+du texte. C'est le seul moment qui soit à l'heure : l'affichage de la fenêtre
+arrive avant que les lignes existent, la pagination avant qu'elles soient
+remplies. On s'y branche par `hooksecurefunc`, en **groupant** — cette fonction
+est appelée une fois par ligne, donc dix-huit fois pour une page tournée.
+
+**Provenance** — chemins et fonction relevés en lisant *DarkModeSpellBook* de
+keyboardturner, pour savoir **où** se brancher (CLAUDE.md règle 8 : lire pour
+identifier une API, jamais copier). Son réglage par défaut est un multiplicateur
+neutre à 0,5 sur le fond et du blanc plein sur les textes — c'est la valeur que
+`T.SHADE_FACTOR_PARCHMENT` reprend. Notre implémentation est la nôtre : le moteur
+d'assombrissement existait déjà, il lui manquait ces deux adresses.

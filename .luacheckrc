@@ -117,6 +117,9 @@ read_globals = {
     -- voulu (CLAUDE.md règle 1).
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
     "CharacterFrame", "InspectFrame",
+    -- Le grimoire actuel, chargé à la demande : absent tant que le joueur ne
+    -- l'a pas ouvert, ce qui est exactement le test de capacité voulu.
+    "PlayerSpellsFrame",
     -- Cinématiques. Trois choses distinctes s'y cachent et ne s'arrêtent pas
     -- pareil : le film, la vraie cinématique et la **scène en jeu**, dont
     -- l'annulation est conditionnée à un geste matériel (voir

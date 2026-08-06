@@ -130,6 +130,20 @@ local FRAMES = {
 
     tooltip = { "GameTooltip", "ItemRefTooltip" },
 
+    -- Le grimoire, et **lui seul**. Le nom global d'avant la refonte, pour les
+    -- clients qui l'ont encore ; la fenêtre actuelle passe par `NESTED`, qui va
+    -- chercher la page des sorts sans prendre la fenêtre qui la porte — ni ses
+    -- onglets, ni la partie talents, ni la barre de spécialisation.
+    --
+    -- **Chargé à la demande** : le cadre n'existe pas tant que le joueur ne l'a
+    -- pas ouvert une fois, et la teinte se pose donc au rafraîchissement que
+    -- `ADDON_LOADED` déclenche — c'est pour cela que le module écoute cet
+    -- événement.
+    --
+    -- Les icônes de sorts gardent leur contour : il dit la nature du sort, et
+    -- c'est ce que `ICON_BORDERS` protège.
+    spellbook = { "SpellBookFrame" },
+
     -- Gestionnaire de temps de recharge. Quatre visionneuses, dont certaines
     -- n'existent que si le joueur les a activées : on cite les quatre et on
     -- prend celles qui répondent présent.
@@ -221,9 +235,82 @@ local KEEP_BACKGROUND = {
     tooltip = true,
 }
 
+--- Éléments qui **gardent leur couleur**.
+---
+--- Le moteur désature avant d'assombrir, et c'est le bon choix presque
+--- partout : l'habillage du client est doré, et un doré simplement foncé
+--- reste doré — sombre et jaune, ce qui n'est pas ce qu'on cherche.
+---
+--- Le parchemin du grimoire est l'exception. Désaturé, il devient une page
+--- grise ; gardé, il fonce en restant brun, ce qui est exactement l'effet
+--- qu'on veut de lui.
+local KEEP_COLOR = {
+    spellbook = true,
+}
+
+-- Une **teinte colorée** a vécu ici, pour pousser le parchemin vers le brun en
+-- même temps qu'on l'assombrissait. Elle est partie deux fois, et la seconde
+-- est la bonne : le brun ne vient pas d'une inclinaison, il vient de ce qu'on
+-- **ne désature pas**. Un multiplicateur neutre sur un beige rend un brun ;
+-- l'incliner en plus vire au marron.
+
+--- Éléments dont les textes passent au blanc.
+---
+--- **C'est la seule entorse du moteur à sa propre règle**, et elle se paie
+--- comptant : une couleur de texte dit souvent quelque chose, et la remplacer
+--- efface ce qu'elle disait. Ici elle ne dit rien — le client écrit le nom de
+--- ses sorts en brun foncé parce que le parchemin est clair, et une page
+--- assombrie les rend illisibles.
+---
+--- Les couleurs d'origine sont relevées une par une et reposées à
+--- l'extinction, comme celles des textures.
+local WHITE_TEXT = {
+    spellbook = true,
+}
+
 --- Cadres qui ne portent pas de nom global et qu'il faut aller chercher sur leur
 --- porteur.
 local NESTED = {
+    -- **La page des sorts, et rien autour.** La fenêtre actuelle porte trois
+    -- choses : la spécialisation, les talents et le grimoire. Prendre la fenêtre
+    -- entière assombrissait les trois, plus ses onglets et son cadre — beaucoup
+    -- trop pour une case qui dit « grimoire ».
+    --
+    -- Aucune de ces pièces n'a de nom global : elles se demandent à la fenêtre,
+    -- et chaque accès est gardé — le client peut renommer ou déplacer n'importe
+    -- laquelle, et une clé absente ne rend rien plutôt que de lever.
+    spellbook = function(collect)
+        local frame = PlayerSpellsFrame
+        if type(frame) ~= "table" then return end
+
+        local book = frame.SpellBookFrame
+        if type(book) ~= "table" then return end
+        collect(book)
+
+        -- **Les lignes de sorts ne sont pas des enfants ordinaires.** Le
+        -- parcours descend par `GetChildren`, et elles n'y sont pas : elles
+        -- sortent d'un pool que deux vues mettent en page, et se demandent
+        -- par `GetLayoutChildren`. C'est ce qui faisait que le fond du livre
+        -- fonçait pendant que les noms de sorts restaient noirs — on ne les
+        -- avait jamais vus.
+        --
+        -- Chaque maillon est gardé : deux vues aujourd'hui, une autre
+        -- demain, et une clé absente ne rend rien plutôt que de lever.
+        local paged = book.PagedSpellsFrame
+        if type(paged) ~= "table" then return end
+
+        for _, key in ipairs({ "View1", "View2" }) do
+            local view = paged[key]
+            if type(view) == "table"
+               and type(view.GetLayoutChildren) == "function" then
+                local ok, rows = pcall(view.GetLayoutChildren, view)
+                if ok and type(rows) == "table" then
+                    for i = 1, #rows do collect(rows[i]) end
+                end
+            end
+        end
+    end,
+
     -- Les auras de la cible et du focus sortent d'un **pool** porté par leur
     -- cadre d'unité : elles n'ont ni nom global, ni place fixe. On énumère donc
     -- celles qui sont actives à l'instant du passage, et `UNIT_AURA` nous
@@ -523,8 +610,13 @@ local function collectFrom(frame, out, seen, rules)
     end
 
     for _, region in ipairs(askAll(frame, "GetRegions")) do
-        if type(region) == "table" and ask(region, "GetObjectType") == "Texture" then
-            take(region)
+        if type(region) == "table" then
+            local kind = ask(region, "GetObjectType")
+            if kind == "Texture" then
+                take(region)
+            elseif kind == "FontString" and rules.whiteText then
+                out.text[#out.text + 1] = region
+            end
         end
     end
 
@@ -551,13 +643,14 @@ local function rulesFor(element)
         keepBackground = KEEP_BACKGROUND[element] == true,
         borderSignals  = BORDER_SIGNALS[element] == true,
         flatButtons    = FLAT_BUTTONS[element] == true,
+        whiteText      = WHITE_TEXT[element] == true,
     }
 end
 
 ---@param element string
 ---@return table  { art = {}, icon = {} }
 local function collect(element)
-    local out   = { art = {}, icon = {} }
+    local out   = { art = {}, icon = {}, text = {} }
     local seen  = {}
     local rules = rulesFor(element)
 
@@ -615,7 +708,9 @@ local function shade(texture, origin, factor, desaturate)
     if desaturate and texture.SetDesaturated then
         texture:SetDesaturated(true)
     end
-    texture:SetVertexColor(origin.r * factor, origin.g * factor, origin.b * factor, origin.a)
+
+    texture:SetVertexColor(origin.r * factor, origin.g * factor,
+                           origin.b * factor, origin.a)
 end
 
 --- Teinte une liste de textures.
@@ -640,6 +735,97 @@ end
 local function unshade(texture, origin)
     if texture.SetDesaturated then texture:SetDesaturated(origin.desaturated) end
     texture:SetVertexColor(origin.r, origin.g, origin.b, origin.a)
+end
+
+-- -------------------------------------------------------------------------
+--  Les textes qu'on blanchit
+-- -------------------------------------------------------------------------
+-- Voir `WHITE_TEXT`, qui dit pourquoi c'est une exception et à quel prix.
+-- La mécanique est celle des textures, en plus simple : on relève une fois,
+-- on écrit, on repose. `false` marque un relevé impossible — le client peut
+-- rendre une couleur secrète — et évite d'y revenir à chaque passage.
+
+--- texte -> couleur d'origine, ou `false`
+local originalTexts = {}
+
+--- Sommes-nous en train de blanchir ? Le hook ci-dessous guette l'écriture,
+--- donc il rappellerait la nôtre.
+local whitening = false
+
+--- Repose notre blanc **chaque fois que le client réécrit la couleur**.
+---
+--- C'est ce qui manquait, et le symptôme ressemblait à un blanchiment qui ne
+--- prend pas : le client repeint le nom de chaque sort à chacune de ses mises
+--- en page — au survol, au changement de page, quand la recherche filtre — et
+--- il le fait après nous. On ne peut pas deviner ces moments, et il n'y a pas
+--- d'événement pour eux.
+---
+--- Se brancher sur l'**écriture** ne demande d'en connaître aucun : quel que
+--- soit le chemin, il finit ici. C'est le parti pris de tout l'addon (voir
+--- `hookNameColor` dans les barres d'infos), et il vaut ici pour la même
+--- raison : on ne court pas après le client, on se met là où il écrit.
+---@param text table
+---@param element string
+local function hookText(text, element)
+    U.GuardedHook(text, "SetTextColor", function(self)
+        if whitening then return end
+        if not originalTexts[self] then return end
+
+        whitening = true
+        pcall(self.SetTextColor, self, T.COLOR.WHITE:GetRGB())
+        whitening = false
+    end, function()
+        return active[element] ~= nil
+    end)
+end
+
+---@param text table
+---@param element string
+local function whiten(text, element)
+    local origin = originalTexts[text]
+
+    if origin == nil then
+        local ok, r, g, b, a = pcall(text.GetTextColor, text)
+        if not ok or secret(r) or type(r) ~= "number" then
+            originalTexts[text] = false
+            return
+        end
+        origin = { r = r, g = g or 1, b = b or 1, a = a or 1 }
+        originalTexts[text] = origin
+    end
+
+    if not origin then return end
+
+    -- Le hook se pose avant l'écriture, et une seule fois par texte : posé
+    -- après, il manquerait la remise en couleur qui suit immédiatement.
+    hookText(text, element)
+
+    whitening = true
+    pcall(text.SetTextColor, text, T.COLOR.WHITE:GetRGB())
+    whitening = false
+end
+
+---@param texts table
+---@param element string
+local function whitenAll(texts, element)
+    for i = 1, #texts do
+        pcall(whiten, texts[i], element)
+    end
+end
+
+---@param texts table
+local function unwhiten(texts)
+    -- Sous le drapeau : sans lui, notre propre hook reposerait le blanc dans
+    -- le souffle où on rend la couleur d'origine.
+    whitening = true
+    for i = 1, #texts do
+        local text   = texts[i]
+        local origin = originalTexts[text]
+        if origin then
+            pcall(text.SetTextColor, text, origin.r, origin.g, origin.b, origin.a)
+        end
+    end
+    whitening = false
 end
 
 ---@param textures table
@@ -726,6 +912,7 @@ local function restore(element)
 
     unpaint(lists.art)
     hideBorders(lists.icon)
+    if lists.text then unwhiten(lists.text) end
     painted[element] = nil
 end
 
@@ -774,7 +961,8 @@ function S:Apply(element, factor)
     releaseMissing(painted[element], lists)
     painted[element] = lists
 
-    paint(lists.art, factor, true)
+    paint(lists.art, factor, not KEEP_COLOR[element])
+    if WHITE_TEXT[element] then whitenAll(lists.text, element) end
 
     -- À intensité nulle il n'y a rien à assombrir : rhabiller un contour à
     -- pleine clarté le remplacerait par un ornement que personne n'a demandé.
@@ -797,10 +985,11 @@ function S:ApplyTo(element, frame)
     local factor = active[element]
     if not factor then return end
 
-    local out = { art = {}, icon = {} }
+    local out = { art = {}, icon = {}, text = {} }
     collectFrom(frame, out, {}, rulesFor(element))
 
-    paint(out.art, factor, true)
+    paint(out.art, factor, not KEEP_COLOR[element])
+    if WHITE_TEXT[element] then whitenAll(out.text, element) end
     if ICON_BORDERS[element] and factor < 1 then
         drawBorders(out.icon, factor)
     end
@@ -813,6 +1002,9 @@ function S:ApplyTo(element, frame)
 
     for i = 1, #out.art do lists.art[#lists.art + 1] = out.art[i] end
     for i = 1, #out.icon do lists.icon[#lists.icon + 1] = out.icon[i] end
+    if lists.text then
+        for i = 1, #out.text do lists.text[#lists.text + 1] = out.text[i] end
+    end
 end
 
 --- Intensité en vigueur sur un élément, ou `nil` s'il n'est pas assombri.
