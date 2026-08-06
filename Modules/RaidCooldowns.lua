@@ -613,6 +613,23 @@ BUI:RegisterModule(MODULE, {
             text    = L["Battle res tracker"],
             tooltip = L["Battle res tracker tip"],
         },
+        -- L'aperçu puis le verrou, avant les réglages d'apparence : ce sont les
+        -- deux gestes qu'on fait pour **poser** le suivi, et on ne règle sa
+        -- taille qu'une fois qu'il est en place et qu'on le voit.
+        {
+            type     = "toggle",
+            key      = "battleResPreview",
+            text     = L["Battle res preview"],
+            tooltip  = L["Battle res preview tip"],
+            disabled = requires("battleResTracker"),
+        },
+        {
+            type     = "toggle",
+            key      = "lockBattleRes",
+            text     = L["Lock battle res"],
+            tooltip  = L["Lock battle res tip"],
+            disabled = requires("battleResTracker"),
+        },
         {
             type     = "slider",
             key      = "battleResSize",
@@ -630,20 +647,6 @@ BUI:RegisterModule(MODULE, {
             tooltip  = L["Battle res shaded tip"],
             disabled = requires("battleResTracker"),
         },
-        {
-            type     = "toggle",
-            key      = "lockBattleRes",
-            text     = L["Lock battle res"],
-            tooltip  = L["Lock battle res tip"],
-            disabled = requires("battleResTracker"),
-        },
-        {
-            type     = "toggle",
-            key      = "battleResPreview",
-            text     = L["Battle res preview"],
-            tooltip  = L["Battle res preview tip"],
-            disabled = requires("battleResTracker"),
-        },
 
         { type = "header", text = L["Bloodlust"] },
         {
@@ -651,6 +654,20 @@ BUI:RegisterModule(MODULE, {
             key     = "lustTracker",
             text    = L["Lust tracker"],
             tooltip = L["Lust tracker tip"],
+        },
+        {
+            type     = "toggle",
+            key      = "lustPreview",
+            text     = L["Lust preview"],
+            tooltip  = L["Lust preview tip"],
+            disabled = requires("lustTracker"),
+        },
+        {
+            type     = "toggle",
+            key      = "lockLust",
+            text     = L["Lock lust"],
+            tooltip  = L["Lock lust tip"],
+            disabled = requires("lustTracker"),
         },
         {
             type     = "slider",
@@ -667,20 +684,6 @@ BUI:RegisterModule(MODULE, {
             key      = "lustShaded",
             text     = L["Lust shaded"],
             tooltip  = L["Lust shaded tip"],
-            disabled = requires("lustTracker"),
-        },
-        {
-            type     = "toggle",
-            key      = "lockLust",
-            text     = L["Lock lust"],
-            tooltip  = L["Lock lust tip"],
-            disabled = requires("lustTracker"),
-        },
-        {
-            type     = "toggle",
-            key      = "lustPreview",
-            text     = L["Lust preview"],
-            tooltip  = L["Lust preview tip"],
             disabled = requires("lustTracker"),
         },
         {

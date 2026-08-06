@@ -212,7 +212,7 @@ BUI:RegisterModule(MODULE, {
         markerScale    = 1,
         lockMarkers    = false,
         markersOnHover = false,
-        pullTimer      = 8,
+        pullTimer      = 10,
 
         -- Éteint, comme **tout** le reste de l'addon. Il a été allumé par défaut
         -- un temps, au motif que ce panneau fait double emploi avec le nôtre —
@@ -256,7 +256,6 @@ BUI:RegisterModule(MODULE, {
             step     = 1,
             disabled = requires("worldMarkers"),
         },
-        { type = "description", text = L["Group tools notice"] },
 
         { type = "header", text = L["Blizzard panel"] },
         {
@@ -265,7 +264,6 @@ BUI:RegisterModule(MODULE, {
             text    = L["Hide raid manager"],
             tooltip = L["Hide raid manager tip"],
         },
-        { type = "description", text = L["Raid manager notice"] },
     },
 
     OnEnable = function(self)

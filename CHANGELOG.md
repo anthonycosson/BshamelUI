@@ -10,14 +10,27 @@
   contour passe du creux au contour ouvragé des dialogues — celui de la fenêtre
   d'options, sans la bande de titre.
 
-  Le contour est **celui du template de fenêtre du jeu**, dépouillé de sa bande
-  de titre, de son titre et de son bouton de fermeture : la pierre, épaisse et
-  sourde, et non le liseré ouvragé des dialogues qui n'en a que la silhouette.
-
   Les trois panneaux flottants partagent désormais une seule fonction
   d'habillage, ce qui est la seule façon qu'ils restent d'accord.
 
+- **Panneau de contrôle** — le décompte du pull passe de huit à dix secondes, et
+  les deux paragraphes de bas de section disparaissent.
+
+- **BL & Résurrections** — l'aperçu et le verrou passent devant les réglages
+  d'apparence. Ce sont les deux gestes qui **posent** le suivi ; on n'en règle la
+  taille qu'une fois qu'il est en place et qu'on le voit.
+
 ### Corrigé
+- **Journalisation — elle s'arrête vraiment en sortant.** Le module ne coupait
+  que ce qu'il avait lui-même allumé, pour ne pas défaire un démarrage manuel.
+  Sauf que ce souvenir ne survit ni à une reconnexion ni à un `/reload` : entré
+  en donjon puis rechargé, on ressortait avec la journalisation toujours en
+  cours, et rien ne le disait.
+
+  Il compare désormais l'état réel du client à ce que le réglage demande, et
+  écrit une ligne à chaque bascule. Le réglage promet « en instance, oui ;
+  dehors, non » — il ne pouvait pas le tenir en s'interdisant de couper.
+
 - **Passer les cinématiques ne faisait rien.** Les deux fenêtres de lecture
   vivent dans des modules du jeu chargés à la demande : à l'allumage du module
   elles n'existent pas encore, et l'accroche aux touches, tentée une seule fois,

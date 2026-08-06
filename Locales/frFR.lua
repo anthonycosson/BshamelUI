@@ -421,19 +421,12 @@ BUI:RegisterLocale("frFR", {
     ["Pull announce"]                  = "Pull dans %d secondes.",
     ["Pull timer"]                     = "Durée du pull",
     ["Pull timer tip"]                 = "Nombre de secondes décomptées par le bouton de pull.",
-    ["Group tools notice"] =
-        "Le panneau n'apparaît pas, ne disparaît pas et ne se redimensionne pas en combat : le jeu "
-        .. "refuse de montrer, de cacher ou de retailler un bouton de marqueur pendant qu'on se "
-        .. "bat. Il suit de nouveau le réglage dès la fin du combat.",
     ["Need lead"]                      = "Il faut être chef ou promu pour ça.",
 
     ["Raid manager"]                   = "Panneau de contrôle",
     ["Hide raid manager"]              = "Masquer le panneau de contrôle du jeu",
     ["Hide raid manager tip"] =
         "Masque l'onglet que le jeu colle contre le bord gauche de l'écran en raid.",
-    ["Raid manager notice"] =
-        "Le panneau est un cadre protégé : il n'est ni rangé ni rendu pendant un combat. Il suit "
-        .. "de nouveau le réglage dès la fin du combat.",
 
     -- Module CombatLog
     ["Logging"]                        = "Journalisation",
@@ -449,9 +442,6 @@ BUI:RegisterLocale("frFR", {
         "Journalisation lancée, journalisation détaillée activée. Le fichier est "
         .. "Logs\\WoWCombatLog.txt.",
     ["Combat log stopped"]             = "Journalisation des combats arrêtée.",
-    ["Combat log already on"] =
-        "La journalisation était déjà en cours : elle n'est pas touchée, et ne sera pas coupée en "
-        .. "sortant.",
     -- Module MythicTimer
     ["Mythic+ timer"]                  = "Chrono mythique+",
     ["Display"]                        = "Affichage",

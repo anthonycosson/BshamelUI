@@ -425,19 +425,12 @@ BUI:RegisterLocale("enUS", {
     ["Pull announce"]                  = "Pulling in %d seconds.",
     ["Pull timer"]                     = "Pull countdown",
     ["Pull timer tip"]                 = "How many seconds the pull button counts down.",
-    ["Group tools notice"] =
-        "The panel does not appear, disappear or resize during combat: the game refuses to show, "
-        .. "hide or resize a world marker button while you are fighting. It follows the setting "
-        .. "again as soon as the fight ends.",
     ["Need lead"]                      = "You need lead or assist for that.",
 
     ["Raid manager"]                   = "Raid control panel",
     ["Hide raid manager"]              = "Hide the raid control panel",
     ["Hide raid manager tip"] =
         "Hides the tab the game puts against the left edge of the screen in a raid.",
-    ["Raid manager notice"] =
-        "The panel is a protected frame: it is not put away or brought back during combat. It "
-        .. "follows the setting again as soon as the fight ends.",
 
     -- Module CombatLog
     ["Logging"]                        = "Logging",
@@ -452,8 +445,6 @@ BUI:RegisterLocale("enUS", {
     ["Combat log started"] =
         "Combat logging started, advanced logging on. The file is Logs\\WoWCombatLog.txt.",
     ["Combat log stopped"]             = "Combat logging stopped.",
-    ["Combat log already on"] =
-        "Combat logging was already running: left alone, and it will not be stopped on the way out.",
 
     -- Module MythicTimer
     ["Mythic+ timer"]                  = "Mythic+ timer",
