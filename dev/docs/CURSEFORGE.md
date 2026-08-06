@@ -69,10 +69,17 @@ and stops when you leave.
 
 Retail only, 12.0.7 and above. English and French.
 
-## Feedback
+## Reporting a bug
 
-Bug reports and suggestions are welcome. When reporting a Lua error, please
-include the full error text — BugSack makes this easy.
+Three things make a report usable, and without them it takes three exchanges to
+get anywhere:
+
+- your addon version — type /bui version in game;
+- what you were doing when it happened;
+- the full Lua error text, if there is one — BugSack copies it in one click.
+
+Post it in the Issues tab rather than in the comments: comments can't hold a
+screenshot, and they scroll away.
 
 ---
 
@@ -122,6 +129,18 @@ journalisation qui démarre à la porte de l'instance et s'arrête en sortant.
 ## Prérequis
 
 Retail uniquement, 12.0.7 et au-delà. Anglais et français.
+
+## Signaler un bug
+
+Trois choses rendent un rapport exploitable, et sans elles il faut trois
+échanges pour en arriver là :
+
+- votre version de l'addon — tapez /bui version en jeu ;
+- ce que vous étiez en train de faire ;
+- le texte complet de l'erreur Lua s'il y en a une — BugSack le copie en un clic.
+
+Passez par l'onglet Issues plutôt que par les commentaires : un commentaire ne
+peut pas porter de capture d'écran, et il descend au fil des jours.
 
 ---
 
