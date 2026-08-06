@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.1 — 2026-08-07
+
 ### Modifié
 - **Le bouton de l'addon est affiché sur la minicarte dès l'installation.**
   C'est la seule case cochée d'origine de tout l'addon, et elle le restera. La
