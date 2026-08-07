@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.3 — 2026-08-07
+
 ### Ajouté
 - **Une catégorie « Inutile mais indispensable », et sa page « Emotes ».** Deux
   cases : répondre `/non` à un bisou, répondre `/non` à une accolade. Décochées
