@@ -1721,6 +1721,26 @@ function T.ResourceTextSize(cellHeight)
     return size
 end
 
+--- Le passage lui-même, celui qu'on tente sous `pcall`.
+---
+--- **`type` et non `if not color`.** La valeur que le client rend ici est
+--- *dérivée d'un secret*, et un secret ne se teste pas plus qu'il ne se lit :
+--- `if not color` lève, le `pcall` avale, et la fonction annonce un refus là où
+--- le passage aboutissait très bien. `type()` est le seul examen permis — il
+--- rend la forme sans regarder la valeur, y compris sur un secret (voir
+--- « Une valeur secrète interrompt tout un passage » dans `API_NOTES.md`).
+---
+--- Sortie de `T.SecretClassColor`, où elle était une fermeture : `pcall` prend
+--- des arguments, et une fermeture bâtie à chaque appel est une allocation de
+--- trop sur un chemin qui tourne à chaque battement de vie (règle 7).
+---@param class any  jeton de classe, éventuellement secret
+---@return boolean found, number? r, number? g, number? b
+local function passClassColor(class)
+    local color = C_ClassColor.GetClassColor(class)
+    if type(color) ~= "table" then return false end
+    return true, color:GetRGB()
+end
+
 --- Couleur d'une classe **qu'on n'a pas le droit de lire**.
 ---
 --- En instance et en PvP, le client protège l'identité des unités : `UnitClass`
@@ -1748,11 +1768,11 @@ function T.SecretClassColor(class)
     -- `found` est **notre** booléen, pas celui du client : c'est le seul de la
     -- chaîne qu'on ait le droit de tester. Un `r == nil` ne conviendrait pas —
     -- comparer un secret lève au même titre que le lire.
-    local ok, found, r, g, b = pcall(function()
-        local color = C_ClassColor.GetClassColor(class)
-        if not color then return false end
-        return true, color:GetRGB()
-    end)
+    --
+    -- Le passage est une fonction de fichier et non une fermeture bâtie ici :
+    -- `pcall` prend des arguments, et cette fonction-ci est appelée à chaque
+    -- battement de vie de chaque plaque alliée (règle 7).
+    local ok, found, r, g, b = pcall(passClassColor, class)
 
     if not ok or not found then return false end
     return true, r, g, b
