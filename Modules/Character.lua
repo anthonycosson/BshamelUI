@@ -1170,6 +1170,91 @@ BUI:RegisterModule(MODULE, {
         },
     },
 
+    --- `/bui fiche` : pourquoi l'icône d'enchantement porte l'image qu'elle porte.
+    ---
+    --- L'étoile de rang n'est pas une icône qu'on choisit : on la **récupère**
+    --- dans la ligne d'infobulle du client, sous la forme `|A:nom:h:l|a`, et la
+    --- chaîne est le seul endroit où elle existe (voir `enchantInfo`). Quatre
+    --- choses peuvent manquer entre l'infobulle et l'écran, aucune ne lève, et
+    --- les quatre donnent le même symptôme — le grimoire du métier à la place de
+    --- l'étoile.
+    ---
+    --- Elles s'écrivent ici dans l'ordre où elles se posent, sur l'unité de la
+    --- fenêtre ouverte : la fiche d'inspection si elle est là, la sienne sinon.
+    ---
+    --- Les noms de fonctions et de champs sont ceux de l'API : ils ne se
+    --- traduisent pas.
+    DiagnoseSheet = function(self)
+        self:Print(L["Sheet diagnostic"])
+
+        -- L'unité de la fenêtre ouverte : celle d'inspection si elle est là, la
+        -- sienne sinon. Cherchée par son préfixe et non par son rang dans la
+        -- table — `SHEETS` se lit de haut en bas, elle ne se numérote pas.
+        local unit = "player"
+        for i = 1, #SHEETS do
+            local sheet = SHEETS[i]
+            local frame = sheet.prefix == "Inspect" and sheet.Frame()
+            if frame and frame:IsShown() then unit = sheet.Unit() or unit end
+        end
+        self:Print("unit:", unit,
+            "| C_TooltipInfo.GetInventoryItem:",
+            (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) and L["On"] or L["Off"],
+            "| ItemEnchantmentPermanent:", tostring(ENCHANT_LINE))
+
+        -- Le premier emplacement enchantable qui porte quelque chose : un seul
+        -- suffit à répondre, et seize lignes de chat n'apprendraient rien de
+        -- plus. On le nomme, pour que la réponse se rapporte à une pièce.
+        for i = 1, #SLOT_NAMES do
+            local name   = SLOT_NAMES[i]
+            local slotID = GetInventorySlotInfo and GetInventorySlotInfo(name)
+            local link   = slotID and GetInventoryItemLink(unit, slotID)
+
+            if link and expectsEnchant(name, link) then
+                local data = C_TooltipInfo and C_TooltipInfo.GetInventoryItem
+                             and C_TooltipInfo.GetInventoryItem(unit, slotID)
+                if data and TooltipUtil and TooltipUtil.SurfaceArgs then
+                    TooltipUtil.SurfaceArgs(data)
+                end
+
+                -- Tous les types de ligne rendus, dans l'ordre, et le texte
+                -- **brut** de celle qu'on guette. Le relevé dit si la ligne
+                -- d'enchantement est simplement absente ou si elle arrive sous
+                -- un autre numéro que le nôtre — deux causes qu'aucun autre
+                -- affichage ne distingue.
+                local types, raw = {}, nil
+                for _, line in ipairs(data and data.lines or {}) do
+                    types[#types + 1] = tostring(line.type)
+                    if line.type == ENCHANT_LINE then raw = line.leftText end
+                end
+
+                self:Print(name, "| data:", data and L["On"] or L["Off"],
+                    "| lines:", table.concat(types, ","))
+
+                local _, atlas = enchantInfo(unit, slotID)
+                self:Print("enchant line:", raw ~= nil and L["On"] or L["Off"],
+                    "| atlas:", tostring(atlas),
+                    "| GetAtlasInfo:",
+                    (atlas and C_Texture and C_Texture.GetAtlasInfo
+                     and C_Texture.GetAtlasInfo(atlas)) and L["On"] or L["Off"])
+
+                -- Le texte **brut**, barres verticales doublées : le chat rend
+                -- `||` comme une seule barre littérale, et c'est le seul moyen
+                -- de **voir** l'échappement `|A:…|a` au lieu de le laisser se
+                -- dessiner en icône. L'intitulé nettoyé ne conviendrait pas —
+                -- `plain` retire précisément l'étoile qu'on vient chercher.
+                --
+                -- Le garde de secret avant toute manipulation : une chaîne
+                -- secrète ne s'indexe pas plus qu'elle ne se raconte.
+                self:Print("leftText:",
+                    U.IsSecret(raw) and L["Refused"]
+                    or (type(raw) == "string" and (raw:gsub("|", "||")) or tostring(raw)))
+                return
+            end
+        end
+
+        self:Print(L["No enchantable slot"])
+    end,
+
     OnEnable = function(self)
         local guard = function() return self:IsEnabled() end
 

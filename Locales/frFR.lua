@@ -649,6 +649,9 @@ BUI:RegisterLocale("frFR", {
         "Bshamel UI colore déjà la barre selon la menace. Décochez « Colorier "
         .. "selon la menace », à droite, pour rendre la main au jeu.",
     ["Name diagnostic"]                = "Diagnostic des noms :",
+    ["Sheet diagnostic"]               = "Diagnostic de la fiche :",
+    ["Sheet diagnostic unavailable"]   = "Le module Fiche de personnage ne tourne pas.",
+    ["No enchantable slot"]            = "Aucun emplacement enchantable ne porte d'objet.",
 
     ["Auras paused"]                   = "En pause, le temps de régler la taille et les décalages.",
     ["Auras tip"]                      = "Les auras que le jeu affiche au-dessus de ces barres d'infos.",
@@ -947,4 +950,43 @@ BUI:RegisterLocale("frFR", {
         "Nombre de points à partir duquel les cases brillent.",
     ["Resource threshold colour needs threshold"] =
         "Choisissez d'abord un palier.",
+
+    -- =====================================================================
+    --  Inutile mais indispensable — Emotes
+    -- =====================================================================
+    ["Useless but essential"]          = "Inutile mais indispensable",
+    ["Emotes"]                         = "Emotes",
+    ["Answer by yourself"]             = "Répondre tout seul",
+    ["Say no to kiss"]                 = "Répondre /non à un baiser",
+    ["Say no to kiss tip"] =
+        "Quelqu'un vous envoie un baiser, vous déclinez — et c'est à lui que la "
+        .. "réponse s'adresse. À chaque fois, quelle que soit la langue dans "
+        .. "laquelle il joue.",
+    ["Say no to hug"]                  = "Répondre /non à un câlin",
+    ["Say no to hug tip"] =
+        "Quelqu'un vous serre dans ses bras, vous déclinez — et c'est à lui que "
+        .. "la réponse s'adresse. À chaque fois, quelle que soit la langue dans "
+        .. "laquelle il joue.",
+
+    -- **Ce ne sont pas des libellés, ce sont les formules qu'on reconnaît.**
+    -- Voir le commentaire de `enUS.lua` : le client rédige la phrase dans sa
+    -- langue, aucune API ne la publie, elle se traduit donc ici. Le fragment est
+    -- cherché tel quel, sans casse, au milieu de la phrase entière.
+    --
+    -- Les deux sont des **relevés en jeu**, pas des traductions : le client
+    -- écrit « Joséebovin vous envoie un baiser » et « Joséebovin vous serre dans
+    -- ses bras. Gros câlin ! ». La première version d'ici disait « vous
+    -- embrasse » et ne reconnaissait rien.
+    --
+    -- Le câlin est reconnu sur « dans ses bras », c'est-à-dire sur le complément
+    -- et non sur le verbe. Le verbe est la partie qui bouge — accord, tournure
+    -- réécrite d'une extension à l'autre — et il ne suffit pas à distinguer :
+    -- « vous serre la main » est la poignée de main, un tout autre emote. Le
+    -- complément, lui, ne désigne que le câlin.
+    ["Kiss received"]                  = "vous envoie un baiser",
+    ["Hug received"]                   = "dans ses bras",
+
+    ["Emote watch"]                    = "Veille des emotes :",
+    ["Emote seen"]                     = "emote :",
+    ["Emote module unavailable"]       = "Le module Emotes ne tourne pas.",
 })

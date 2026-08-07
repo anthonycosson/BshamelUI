@@ -113,7 +113,9 @@
     "LFGRoleCheckPopup", "LFDRoleCheckPopup",
     "AcceptGroup", "StaticPopup_Hide",
 
-    "GetInstanceInfo"
+    "GetInstanceInfo",
+
+    "C_ChatInfo", "DoEmote"
   ],
   "diagnostics.disable": [
     "lowercase-global"

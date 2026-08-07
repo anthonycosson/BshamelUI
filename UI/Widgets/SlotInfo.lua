@@ -37,15 +37,22 @@ local W    = BUI.Widgets
 
 --- Empile les pastilles, une par ligne, alignées sur le bord qui touche la case.
 ---
---- Posée sur un côté, la colonne est **centrée sur l'emplacement** : c'est la
---- hauteur du conteneur qui s'ajuste au nombre de pastilles, et comme il est
---- ancré par son milieu, la colonne grandit des deux côtés à la fois. Empiler
---- vers le bas à partir d'un haut fixe ferait descendre le bloc sur la case
---- suivante dès qu'il y a trois lignes.
+--- **La colonne s'empile toujours en s'éloignant de la case, jamais vers elle.**
+--- C'est la règle unique dont tout le reste découle : la première ligne — le
+--- niveau d'objet — se pose contre l'emplacement et n'en bouge plus, et ce sont
+--- les icônes qui s'écartent selon qu'il y en a zéro ou quatre.
 ---
---- Posée au-dessus, elle est ancrée par le **bas** et grandit donc uniquement
---- vers le haut, ce qui est la même idée : quel que soit le nombre de pastilles,
---- aucune ne vient jamais recouvrir l'icône.
+--- Sur un côté, s'éloigner veut dire **descendre** : la colonne part du haut de
+--- la case, le niveau d'objet en tête. C'est ce qui fait que seize niveaux
+--- d'objet se lisent d'un seul coup d'œil au lieu de danser d'un demi-cran par
+--- gemme.
+---
+--- Au-dessus, s'éloigner veut dire **monter**, et la colonne s'inverse donc de
+--- bout en bout : le niveau d'objet contre la case, les icônes par-dessus. Elle
+--- ne s'inversait pas, et les deux armes en payaient le prix — la main droite,
+--- enchantée et sertie, écrivait son niveau deux crans plus haut que la main
+--- gauche portant un bouclier. Deux nombres qu'on lit ensemble, jamais sur la
+--- même ligne.
 ---
 --- Chaque pastille porte une hauteur imposée plutôt que celle de son texte : des
 --- lignes régulières se lisent en colonne, des lignes qui suivent la police
@@ -58,6 +65,15 @@ local function arrange(info)
     local top    = edge and ("TOP" .. edge) or "TOP"
     local bottom = edge and ("BOTTOM" .. edge) or "BOTTOM"
 
+    -- `head` est le bord par lequel la colonne s'accroche — celui qui touche la
+    -- case —, `tail` celui par lequel la ligne suivante s'y attache. Les deux
+    -- s'échangent quand on empile vers le haut, et c'est **tout** ce que le sens
+    -- change : la boucle qui suit ne sait pas dans quel sens elle travaille.
+    local up   = info._upward
+    local head = up and bottom or top
+    local tail = up and top or bottom
+    local gap  = up and T.SIZE.SLOT_STRIP_GAP or -T.SIZE.SLOT_STRIP_GAP
+
     local strips = info._icons > 0 and 1 or 0
     local lines  = info._count + strips
     info.row:SetHeight(math.max(lines, 1) * T.SIZE.SLOT_LINE_H
@@ -68,9 +84,9 @@ local function arrange(info)
         local badge = info._badges[i]
         badge:ClearAllPoints()
         if previous then
-            badge:SetPoint(top, previous, bottom, 0, 0)
+            badge:SetPoint(head, previous, tail, 0, 0)
         else
-            badge:SetPoint(top, info.row, top, 0, 0)
+            badge:SetPoint(head, info.row, head, 0, 0)
         end
         previous = badge
     end
@@ -78,15 +94,15 @@ local function arrange(info)
     -- La rangée d'icônes ferme la colonne : elle compte pour une ligne de plus,
     -- et s'aligne sur le même bord que les textes.
     --
-    -- Elle prend un peu d'air au-dessus d'elle, ce que les lignes de texte entre
-    -- elles n'ont pas besoin d'avoir : du texte porte ses propres marges, une
-    -- icône va bord à bord et se colle à la ligne qui la précède.
+    -- Elle prend un peu d'air entre elle et la ligne de texte, ce que les lignes
+    -- de texte entre elles n'ont pas besoin d'avoir : du texte porte ses propres
+    -- marges, une icône va bord à bord et se collerait à sa voisine.
     local strip = info.strip
     strip:ClearAllPoints()
     if previous then
-        strip:SetPoint(top, previous, bottom, 0, -T.SIZE.SLOT_STRIP_GAP)
+        strip:SetPoint(head, previous, tail, 0, gap)
     else
-        strip:SetPoint(top, info.row, top, 0, 0)
+        strip:SetPoint(head, info.row, head, 0, 0)
     end
     strip:SetShown(info._icons > 0)
 end
@@ -124,6 +140,7 @@ function W.SlotInfo(button)
     info._count   = 0
     info._icons   = 0
     info._edge    = "LEFT"
+    info._upward  = false
 
     --- Où la colonne se pose par rapport à l'emplacement.
     ---
@@ -142,10 +159,17 @@ function W.SlotInfo(button)
     --- bordent le modèle, les cases sont serrées et une colonne qui ne grandit
     --- que vers le bas déborde sur la suivante. Les armes, elles, ont le vide
     --- sous elles.
+    ---
+    --- `"ABOVE"` **ignore `top` et empile toujours vers le haut** : c'est la même
+    --- promesse, tenue par l'autre bout. Une colonne posée au-dessus d'une case
+    --- ne peut s'accrocher que par son bas — s'accrocher par le haut la ferait
+    --- redescendre sur l'icône dès la deuxième ligne — et la ligne fixe est donc
+    --- celle du bas (voir `arrange`).
     ---@param where string  "LEFT", "RIGHT" ou "ABOVE"
     ---@param top? boolean  accrocher par le haut plutôt que centrer
     function info:SetPlacement(where, top)
         row:ClearAllPoints()
+        self._upward = where == "ABOVE"
 
         if where == "ABOVE" then
             self._edge = nil

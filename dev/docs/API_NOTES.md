@@ -4055,3 +4055,93 @@ murs qu'il nous oppose, précisément parce que c'est lui qui les tient : nos
 droits s'arrêtent où les siens commencent, mais ses réglages sont à nous. La
 peinture manuelle reste le recours quand aucun CVar n'existe — c'est le cas du
 classement des PNJ par nature — jamais le premier choix.
+
+---
+
+## Un emote reçu n'a pas d'identifiant — mais sa phrase est déjà dans notre langue
+
+**Ce qu'on cherchait** — répondre automatiquement à un `/kiss` qu'on nous
+adresse, « quelle que soit la langue dans laquelle l'emote est fait ».
+
+**Ce que le client donne** — `CHAT_MSG_TEXT_EMOTE` porte dix-huit arguments et
+**aucun identifiant d'emote** : ni jeton, ni numéro. Le premier est la phrase
+déjà rédigée, telle qu'elle s'affiche dans le chat, et c'est tout ce qu'on a.
+
+**Ce qui sauve la mise** — la phrase est rédigée par le client **destinataire**,
+dans sa langue. Le serveur n'envoie qu'un numéro d'emote et une cible
+(`SMSG_TEXT_EMOTE`) ; chaque client va chercher la formule dans ses propres
+données (`EmotesText` / `EmotesTextData`). **La langue de l'émetteur ne voyage
+donc jamais.** L'exigence « quelle que soit la langue de l'autre » est tenue sans
+rien écrire — c'est notre propre locale, et elle seule, qu'il faut reconnaître.
+
+**Ce que le client ne donne pas** — les textes d'emote **ne sont pas dans
+`GlobalStrings`**. Vérifié sur les deux locales du dépôt de tekkub : `EMOTE59_CMD1`
+vaut `"/kiss"` en anglais et `"/embrasser"` en français, mais aucune entrée ne
+contient « kisses » ni « embrasse » au sens d'une phrase d'emote. Elles vivent
+dans les données du client, hors de portée du Lua.
+
+Corollaire : `EMOTE<n>_CMD<m>` donne les **commandes** localisées, jamais les
+**messages**. Les deux se ressemblent assez pour qu'on croie tenir la solution.
+
+**Ce qu'on fait** — la formule reconnue est une **clé de locale**, comme toute
+chaîne qui dépend de la langue. Fragment court (`"vous embrasse"`), cherché tel
+quel et sans casse au milieu de la phrase : il survit au nom du joueur, au genre
+du personnage et à la ponctuation. Une locale non fournie retombe sur l'anglais,
+ne reconnaît rien, et le module se tait — la bonne dégradation, un emote parti de
+travers se voyant par tout le monde.
+
+**Deux pièges qui ne se voient qu'en jouant :**
+
+- **le client nous renvoie nos propres emotes**, et en français « Vous embrassez
+  Bob » contient « vous embrasse ». Sans garde, embrasser quelqu'un déclenchait
+  un `/non` adressé à soi-même. Le garde se pose sur le **GUID** (argument 12),
+  pas sur le nom : un nom porte parfois son royaume, un GUID jamais ;
+- **le frein anti-spam qu'on avait écrit n'avait pas lieu d'être.** Une réponse
+  toutes les trois secondes, au motif que le serveur ferait taire qui produit une
+  rafale d'emotes. La limite était supposée, pas observée — rien n'indique que
+  les emotes soient comptés. Elle est retirée : à supposer qu'une telle limite
+  existe, c'est le serveur qui l'applique, il n'a besoin de personne pour cela.
+  Ce que le frein coûtait, lui, se voyait — une réponse sur dix face à quelqu'un
+  qui martèle sa touche, ce qui se lit comme un réglage qui décroche.
+
+  La leçon n'est pas propre aux emotes : **une protection contre un risque
+  supposé est du comportement en moins pour un bénéfice qu'on n'a pas mesuré.**
+  Le doute se lève en jouant, pas en ajoutant un garde-fou.
+
+**Pour jouer un emote, `DoEmote` et non `C_ChatInfo.PerformEmote`** — le plus
+ancien des deux, et c'est délibéré : le récent ne prend que le jeton, donc
+l'emote part sur notre cible du moment, c'est-à-dire sur n'importe qui sauf la
+bonne personne. `DoEmote(token, cible)` prend une cible.
+
+**Et cette cible est un nom, pas un jeton d'unité.** La documentation annonce un
+`UnitToken` ; c'est pourtant un nom que le client se passe à lui-même quand on
+tape `/non Joséebovin` — son analyseur appelle `DoEmote(jeton, reste_de_la_ligne)`.
+Il le faut : celui qui nous fait un emote n'est presque jamais notre cible, donc
+aucun jeton d'unité ne le désigne. Le nom de l'annonce part tel quel, royaume
+compris.
+
+Les jetons (`"NO"`, `"KISS"`) ne sont **pas** traduits — c'est le seul bout de la
+chaîne qui vaille dans toutes les langues sans être écrit deux fois.
+
+**Les formules relevées en jeu, et ce qu'elles apprennent** — la première version
+pariait sur « vous embrasse » pour un `/kiss`. Le client écrit en réalité :
+
+```
+Joséebovin vous envoie un baiser
+Joséebovin vous serre dans ses bras. Gros câlin !
+```
+
+Deux leçons, et la seconde vaut au-delà des emotes :
+
+- **une formule est un relevé, jamais une déduction.** « Embrasser » est la
+  traduction de *to kiss* et n'est pas ce que le client écrit. Le seul moyen de
+  savoir est de lire ce qu'il produit — d'où `/bui emote`, qui écrit le texte
+  brut de chaque emote reçu ;
+- **on se cale sur le complément, pas sur le verbe.** Le câlin est reconnu à
+  « dans ses bras ». Le verbe est la partie qui bouge — accord, tournure réécrite
+  d'une extension à l'autre — et il ne suffit pas à distinguer : « vous serre la
+  main » est la poignée de main, un tout autre emote. Le complément, lui, ne
+  désigne que le câlin.
+
+D'où plusieurs formules par emote, séparées par `;` dans la clé de locale : une
+formule de trop ne coûte rien, une formule manquante rend le module muet.

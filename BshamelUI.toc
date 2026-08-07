@@ -113,6 +113,9 @@ Modules\MythicTimer.lua
 Modules\RaidPanel.lua
 Modules\CombatLog.lua
 Modules\Annoyances.lua
+# Seul module de la catégorie « Inutile mais indispensable », et il ferme donc la
+# liste comme sa catégorie ferme la barre latérale.
+Modules\Emotes.lua
 
 # `Modules/Upcoming.lua` a disparu : un module annoncé n'est plus une déclaration
 # sans code, c'est son propre fichier avec `preview = true` en tête. Le core

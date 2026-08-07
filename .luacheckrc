@@ -247,4 +247,8 @@ read_globals = {
 
     -- Instances
     "GetInstanceInfo",
+
+    -- Emotes. Les deux chemins pour en jouer un, du plus récent au plus ancien :
+    -- c'est un test de capacité, on prend celui que le client publie.
+    "C_ChatInfo", "DoEmote",
 }

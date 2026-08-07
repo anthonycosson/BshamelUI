@@ -42,6 +42,12 @@ BUI.CATEGORIES = {
     -- La clé reste `MythicRaid` : elle ne sert qu'à regrouper, et la renommer
     -- toucherait cinq modules pour changer un intitulé.
     { key = "MythicRaid", label = "Tools" },
+
+    -- En dernier, et c'est sa place : on ne descend pas jusqu'ici en cherchant
+    -- un réglage, on y descend en ayant fini de chercher. Ce qui s'y range ne
+    -- rend rien plus lisible ni plus rapide — c'est le seul endroit de l'addon
+    -- où l'utilité n'est pas le critère, et l'intitulé l'annonce franchement.
+    { key = "Fun",        label = "Useless but essential" },
 }
 
 --- name -> définition
@@ -358,6 +364,35 @@ SlashCmdList["BSHAMELUI"] = function(msg)
             BUI.safecall(mod.DiagnoseNames, mod)
         else
             BUI:Print(L["Aura diagnostic unavailable"])
+        end
+        return
+    end
+
+    -- `/bui emote` : écrit le texte brut de chaque emote reçu. Ce que le module
+    -- des emotes reconnaît est une **phrase**, tirée des fichiers de locale
+    -- faute d'API qui la publie — et une phrase mal orthographiée ne lève pas,
+    -- elle rend le module muet. C'est le seul moyen de lire ce que le client
+    -- écrit vraiment.
+    if arg == "emote" or arg == "emotes" then
+        local mod = registry["Emotes"]
+        if mod and mod._active and mod.ToggleWatch then
+            BUI:Print(L["Emote watch"], mod:ToggleWatch() and L["On"] or L["Off"])
+        else
+            BUI:Print(L["Emote module unavailable"])
+        end
+        return
+    end
+
+    -- `/bui fiche` : pourquoi l'icône d'enchantement d'un emplacement porte
+    -- l'image qu'elle porte. L'étoile de rang n'est pas choisie, elle est
+    -- récupérée dans une chaîne d'infobulle — et quatre choses peuvent manquer
+    -- en chemin sans que rien ne lève.
+    if arg == "fiche" or arg == "sheet" then
+        local mod = registry["Character"]
+        if mod and mod._active and mod.DiagnoseSheet then
+            BUI.safecall(mod.DiagnoseSheet, mod)
+        else
+            BUI:Print(L["Sheet diagnostic unavailable"])
         end
         return
     end

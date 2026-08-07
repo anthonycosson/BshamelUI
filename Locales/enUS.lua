@@ -641,6 +641,9 @@ BUI:RegisterLocale("enUS", {
         "Bshamel UI already colours the bar by threat. Untick \"Colour by "
         .. "threat\" on the right to hand this back to the game.",
     ["Name diagnostic"]                = "Name diagnostic:",
+    ["Sheet diagnostic"]               = "Character sheet diagnostic:",
+    ["Sheet diagnostic unavailable"]   = "The Character sheet module is not running.",
+    ["No enchantable slot"]            = "No enchantable slot carries an item.",
 
     ["Auras paused"]                   = "Paused while size and offsets get fixed.",
     ["Auras tip"]                      = "Which auras the game shows above these nameplates.",
@@ -919,4 +922,41 @@ BUI:RegisterLocale("enUS", {
         "How many points before the squares start to shine.",
     ["Resource threshold colour needs threshold"] =
         "Set a colour change point first.",
+
+    -- =====================================================================
+    --  Inutile mais indispensable — Emotes
+    -- =====================================================================
+    ["Useless but essential"]          = "Useless but essential",
+    ["Emotes"]                         = "Emotes",
+    ["Answer by yourself"]             = "Answer on your own",
+    ["Say no to kiss"]                 = "Answer /no to a kiss",
+    ["Say no to kiss tip"] =
+        "Someone blows you a kiss, you decline — and the answer goes back to "
+        .. "them. Every time, whatever language they play in.",
+    ["Say no to hug"]                  = "Answer /no to a hug",
+    ["Say no to hug tip"] =
+        "Someone hugs you, you decline — and the answer goes back to them. "
+        .. "Every time, whatever language they play in.",
+
+    -- **Ce ne sont pas des libellés, ce sont les formules qu'on reconnaît.**
+    -- Le client rédige lui-même la phrase d'un emote, dans sa langue, et aucune
+    -- API ne la publie : elle se traduit donc ici, comme tout ce qui dépend de
+    -- la langue. Le fragment est cherché tel quel, sans casse, au milieu de la
+    -- phrase entière.
+    --
+    -- **Plusieurs formules par emote, séparées par `;`.** Le français a coûté un
+    -- aller-retour en jeu pour une phrase qu'on croyait connaître ; ces deux
+    -- lignes-ci n'ont pas été relevées sur un client anglais, et portent donc
+    -- les deux tournures possibles plutôt qu'un pari. Une formule de trop ne
+    -- coûte rien, une formule manquante rend le module muet.
+    --
+    -- Une locale qui ne les traduit pas retombe sur ces deux-ci. Si aucune ne
+    -- correspond, le module se tait — c'est voulu : un emote parti de travers se
+    -- voit par tout le monde.
+    ["Kiss received"]                  = "blows you a kiss;kisses you",
+    ["Hug received"]                   = "hugs you;in their arms",
+
+    ["Emote watch"]                    = "Emote watch:",
+    ["Emote seen"]                     = "emote:",
+    ["Emote module unavailable"]       = "The Emotes module is not running.",
 })

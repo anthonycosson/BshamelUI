@@ -2,6 +2,31 @@
 
 ## Non publié
 
+### Ajouté
+- **Une catégorie « Inutile mais indispensable », et sa page « Emotes ».** Deux
+  cases : répondre `/non` à un bisou, répondre `/non` à une accolade. Décochées
+  d'origine, comme tout le reste.
+
+  La réponse s'adresse à **celui qui a fait l'emote**, pas au vide ni à votre
+  cible du moment, et elle part **à chaque fois** — y compris face à quelqu'un
+  qui martèle sa touche. Elle marche quelle que soit la langue dans laquelle il
+  joue : sa langue ne vous parvient jamais, c'est votre client qui rédige la
+  phrase.
+
+### Corrigé
+- **Les deux armes n'écrivaient pas leur niveau d'objet à la même hauteur.** Une
+  main droite enchantée et sertie poussait son nombre deux crans plus haut que
+  la main gauche portant un bouclier — deux pièces qu'on lit ensemble, jamais
+  sur la même ligne. La colonne posée au-dessus d'une case s'empile désormais
+  vers le haut : le niveau d'objet reste collé à l'arme, et ce sont les icônes
+  qui s'écartent.
+
+### Interne
+- **`/bui fiche`** écrit d'où vient l'icône d'enchantement d'un emplacement.
+  L'étoile de rang n'est pas choisie par l'addon, elle est récupérée dans une
+  chaîne d'infobulle du client : quatre choses peuvent manquer en chemin, aucune
+  ne lève, et les quatre donnent le même symptôme.
+
 ## 1.0.2 — 2026-08-07
 
 ### Ajouté
