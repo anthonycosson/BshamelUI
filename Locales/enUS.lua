@@ -754,11 +754,25 @@ BUI:RegisterLocale("enUS", {
     ["Occluded opacity tip"] =
         "How visible a plate is when its owner is behind a wall or a pillar.",
 
-    ["Enemy colors"]                   = "Enemy colours",
+    ["Nameplate colors"]               = "Nameplate colours",
     ["PvP class colors"]               = "Class colours on enemy players",
     ["PvP class colors tip"] =
         "An enemy player's health bar takes the colour of their class, wherever "
-        .. "you meet them.",
+        .. "you meet them — arena and battleground included. The game does the "
+        .. "painting: this is its own setting, surfaced here. Allied players "
+        .. "have their own tickbox just below.",
+    ["Ally class colors"]              = "Class colours on allied players",
+    ["Ally class colors tip"] =
+        "An allied player's health bar takes the colour of their class. The "
+        .. "game does the painting: this is its own setting, surfaced here. In "
+        .. "dungeons and raids it reduces allied nameplates to the name alone — "
+        .. "the names tickbox speaks there.",
+    ["Ally name class colors"]         = "Class colours on allied names",
+    ["Ally name class colors tip"] =
+        "An allied player's name takes the colour of their class instead of "
+        .. "white — everywhere, dungeons and raids included, and including in "
+        .. "\"names only\" mode, where the name is all that is left. The game "
+        .. "does the painting: this is its own setting, surfaced here.",
     ["Color enemies by kind"]          = "Colour enemies by kind",
     ["Color enemies by kind tip"] =
         "Rarity first, then what the creature does: a rare that casts stays "
@@ -814,6 +828,10 @@ BUI:RegisterLocale("enUS", {
     ["Aura diagnostic"]                = "Nameplate diagnostic — target's plate",
     ["Aura diagnostic needs target"]   = "Target something first: the diagnostic reads the target's nameplate.",
     ["No nameplate for target"]        = "The target has no nameplate on screen.",
+    ["Nameplate forbidden"] =
+        "The game marks this nameplate as forbidden: it is protecting the "
+        .. "unit's identity, and nothing the addon puts on that plate would "
+        .. "take. Colours, sizes and markers are the game's here.",
     ["Refused"]                        = "refused",
     ["Secret"]                         = "secret",
     ["Control"]                        = "control",

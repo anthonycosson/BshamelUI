@@ -3961,3 +3961,97 @@ identifier une API, jamais copier). Son réglage par défaut est un multiplicate
 neutre à 0,5 sur le fond et du blanc plein sur les textes — c'est la valeur que
 `T.SHADE_FACTOR_PARCHMENT` reprend. Notre implémentation est la nôtre : le moteur
 d'assombrissement existait déjà, il lui manquait ces deux adresses.
+
+---
+
+## En instance, le client ne rend aucune plaque alliée — il n'en cache pas l'identité, il ne les donne pas
+
+**Symptôme** — la couleur de classe sur le nom des alliés marche en extérieur et
+ne fait **rien** en donjon. Aucune erreur, aucune trace dans BugSack : le nom
+reste blanc, exactement comme si la case n'était pas cochée.
+
+**Les trois causes qu'on a soupçonnées, et pourquoi elles étaient toutes fausses**
+— chacune était plausible, et toutes supposaient qu'on tenait la plaque :
+
+1. le passage de la classe refusé (`C_ClassColor.GetClassColor` sur un jeton
+   secret) ;
+2. l'écriture refusée (`SetTextColor` sur des nombres secrets) ;
+3. le cadre déclaré interdit (`IsForbidden`), qu'on écarte à l'entrée.
+
+**Ce qu'on trouve** — `/bui noms`, dans un donjon, l'écran couvert de noms
+alliés :
+
+```
+nameplateShowOnlyNameForFriendlyPlayerUnits: 1
+GetNamePlates: 0 | plates: 0
+```
+
+Zéro. Pas une plaque protégée, pas un cadre interdit qu'on aurait à écarter :
+**le client n'en rend aucune**. `C_NamePlate.GetNamePlates()` et
+`C_NamePlate.GetNamePlateForUnit()` répondent vide au code non sécurisé, et
+`NAME_PLATE_UNIT_ADDED` ne parle pas de ces unités. Le nom que le joueur voit à
+l'écran est dessiné par le client sur un cadre qu'il ne publie pas.
+
+Aucun des trois soupçons n'était donc en cause, et aucun ne pouvait l'être : les
+trois décrivent ce qu'on ferait d'une plaque qu'on ne reçoit pas.
+
+**La leçon, et elle vaut au-delà d'ici** — *avant* de se demander ce que le
+client laisse **lire** d'une unité, se demander s'il donne la **frame**. Ce sont
+deux murs distincts, à deux hauteurs différentes, et le second est très au-dessus
+du premier. Le mécanisme des valeurs secrètes est bavard — il lève, il nomme, il
+apparaît dans BugSack — et c'est ce qui le rend attirant comme explication. Une
+liste vide ne dit rien du tout, et c'est justement pour cela qu'on la lit en
+dernier.
+
+**Ce que le diagnostic a coûté** — `/bui noms` finissait par son recensement, et
+les deux sorties anticipées l'emportaient avec elles. « La cible n'a pas de
+plaque » sans les deux nombres qui l'expliquent : trois allers-retours en jeu
+pour une ligne qui était déjà écrite, mais placée après la porte de sortie. **Un
+diagnostic dit l'état d'ensemble avant de dire l'état du cas**, toujours — le cas
+manque précisément quand on en a besoin.
+
+**Ce qu'on fait** — pour tout ce qui demande la frame, rien : la limite est celle
+du client, elle vaut pour tout addon, et les infobulles de la taille et du corps
+du nom allié la disent (« hors instance uniquement »). Pour les **couleurs de
+classe**, en revanche, il existe une porte que ce mur ne ferme pas : trois CVars
+que le client relit lui-même — voir la note suivante. La couleur du nom allié
+est donc passée par là, et son infobulle ne porte plus la restriction.
+
+---
+
+## Les couleurs de classe des plaques sont trois CVars — le client peint là où l'addon n'entre pas
+
+**Symptôme** — nos couleurs de classe, peintes à la main, marchent en extérieur
+et s'arrêtent net en instance. Deux murs distincts les arrêtaient : l'identité
+secrète des joueurs (arène, champ de bataille, donjon), et les plaques alliées
+que le client ne rend pas du tout (voir la note précédente).
+
+**Ce qu'on trouve** — relevé dans BetterBlizzPlates (règle 8 : lire pour
+identifier l'API, jamais copier), qui ne peint rien lui-même pour ce cas : il
+coche des CVars, et c'est le client qui peint.
+
+- `nameplateShowClassColor` — la barre de vie des joueurs **adverses** ;
+- `nameplateShowFriendlyClassColor` — la barre de vie des joueurs **alliés** ;
+- `nameplateUseClassColorForFriendlyPlayerUnitNames` — le **nom** des joueurs
+  alliés. La graphie est de la même famille que
+  `nameplateShowOnlyNameForFriendlyPlayerUnits`, le mode « nom seul ».
+
+Le client se peint lui-même, avec ses pleins droits : l'identité secrète ne le
+concerne pas — c'est *lui* qui la protège — et les plaques qu'il ne nous rend
+pas, il les dessine quand même. Les trois CVars valent donc partout, donjon,
+raid et arène compris, là où notre pinceau ne recevait ni la classe ni la frame.
+
+**Ce qu'on fait** — les trois cases de la page écrivent ces CVars en direct,
+comme le mode « nom seul » : le CVar est le rangement, rien n'est copié en base,
+rien n'est emprunté, rien à rendre à l'extinction. La peinture manuelle est
+retirée (`classRGB`, ses clés `pvpClassColor`/`allyBarClassColor`/
+`allyClassColor`, et le palier 16 efface leurs traces). `T.SecretClassColor`
+reste dans le thème : le mécanisme du passage de secret est correct et documenté,
+il n'a simplement plus de client ici.
+
+**La leçon** — avant de peindre à la place du client, chercher le réglage par
+lequel il accepterait de peindre lui-même. Un CVar qu'il relit traverse tous les
+murs qu'il nous oppose, précisément parce que c'est lui qui les tient : nos
+droits s'arrêtent où les siens commencent, mais ses réglages sont à nous. La
+peinture manuelle reste le recours quand aucun CVar n'existe — c'est le cas du
+classement des PNJ par nature — jamais le premier choix.

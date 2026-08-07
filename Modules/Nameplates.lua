@@ -646,6 +646,26 @@ local function isFriendlyPlayer(unit)
     return not U.IsTrue(UnitCanAttack("player", unit))
 end
 
+--- Est-ce un joueur ? **Un refus de répondre compte comme un oui.**
+---
+--- `U.IsTrue` fait valoir un secret pour « non », et c'est la bonne règle
+--- partout ailleurs. Ici elle conclut de travers : le client ne protège
+--- l'identité que des **joueurs**, jamais celle d'un PNJ — un mob de donjon
+--- répond en clair, c'est ce qui permet à `classify` de le ranger. Le refus de
+--- répondre n'est donc pas une absence d'information, c'en est une : seul un
+--- joueur se fait taire. Vérifié sur pièces au diagnostic : `UnitIsPlayer`
+--- répond `false` en clair sur un mob de donjon, `refusé` sur un allié.
+---
+--- Le garde tient les joueurs — donc aussi toute unité qui se fait taire —
+--- hors du classement par nature : sans lui, une plaque d'arène tombait dans
+--- la branche des PNJ, qui la classait par rareté.
+---@param unit string
+---@return boolean
+local function isPlayerUnit(unit)
+    local answer = UnitIsPlayer(unit)
+    return U.IsSecret(answer) or U.IsTrue(answer)
+end
+
 ---@param mod table
 ---@param unitFrame table
 ---@param unit string
@@ -2115,7 +2135,13 @@ local function rgbOf(color)
     return r, g, b
 end
 
---- Couleur de fond d'une barre de vie.
+-- `classRGB` vivait ici : elle lisait la classe d'une unité, jeton secret
+-- compris, pour que nous peignions nous-mêmes les couleurs de classe. Elle est
+-- partie avec la peinture manuelle : le client tient trois CVars qui peignent
+-- les joueurs — barres et noms — avec des droits que l'addon n'aura jamais, et
+-- c'est par eux que la page passe désormais (voir `CVAR` et `API_NOTES.md`).
+
+--- Couleur de fond d'une barre de vie, ou `nil` quand la sienne est la bonne.
 ---
 --- L'ordre est une hiérarchie d'urgence : la menace prime sur tout, parce
 --- qu'elle dit ce qui est en train de mal tourner ; le classement du PNJ vient
@@ -2123,7 +2149,7 @@ end
 --- marche, parce qu'elle ne dit que l'hostilité, ce qu'on sait déjà.
 ---@param mod table
 ---@param unit string
----@return number r, number g, number b
+---@return number? r, number? g, number? b
 local function healthColor(mod, unit)
     -- La menace ne parle que pour alerter — bascule en cours ou aggro changée
     -- de mains — et l'alerte prime sur tout. Conforme, elle se tait : la nature
@@ -2136,23 +2162,16 @@ local function healthColor(mod, unit)
         end
     end
 
-    -- **C'est l'unité qui décide, pas la zone.** Un adversaire joueur est du
-    -- PvP où qu'on soit, un PNJ est du PvE : chaque famille a son réglage.
-    if LIVE.colors then
-        if U.IsTrue(UnitIsPlayer(unit)) then
-            if mod:Get("pvpClassColor") then
-                local _, class = UnitClass(unit)
-                if not U.IsSecret(class) then
-                    local color = T.ClassColor(class)
-                    if color then return color:GetRGB() end
-                end
-            end
-        elseif npcColorsActive(mod) then
-            local key = NPC_COLOR_KEY[classify(unit) or ""]
-            if key then
-                local r, g, b = rgbOf(mod:Get(key))
-                if r and g and b then return r, g, b end
-            end
+    -- Le classement par nature ne vaut que pour les PNJ, et **un refus de
+    -- répondre compte comme un joueur** (voir `isPlayerUnit`) : c'est ce qui
+    -- tenait les plaques d'arène hors des couleurs de rareté. Les couleurs de
+    -- classe des joueurs, elles, ne passent plus par ici — trois CVars du
+    -- client les peignent, partout, et on ne repeint pas par-dessus lui.
+    if LIVE.colors and not isPlayerUnit(unit) and npcColorsActive(mod) then
+        local key = NPC_COLOR_KEY[classify(unit) or ""]
+        if key then
+            local r, g, b = rgbOf(mod:Get(key))
+            if r and g and b then return r, g, b end
         end
     end
 
@@ -2164,10 +2183,15 @@ local function healthColor(mod, unit)
         if type(r) == "number" and not U.IsSecret(r) then return r, g, b end
     end
 
-    return T.COLOR.WHITE:GetRGB()
+    -- **On s'abstient, on ne blanchit pas.** Le blanc fermait cette fonction, et
+    -- il datait d'un temps où elle devait toujours répondre. Depuis que les
+    -- couleurs de classe sont au client, sa réponse refusée est précisément le
+    -- cas où sa barre porte déjà la bonne teinte — la recouvrir de blanc, c'est
+    -- le repli qui compte plus que le garde (voir `API_NOTES.md`).
+    return nil
 end
 
---- Couleur d'un nom, ou `nil` quand il ne faut pas y toucher.
+--- Couleur d'un nom, ou `false` quand il ne faut pas y toucher.
 ---
 --- **Le nom d'un adversaire s'écrit en blanc**, joueur comme PNJ.
 ---
@@ -2186,11 +2210,12 @@ end
 --- Le blanc se lit sur n'importe quelle teinte de barre, et c'est le seul nom
 --- qui ne prétend rien.
 ---
---- **On ne touche pas au nom d'un allié.** Le jeu le colore lui-même à la
---- classe, et il le fait mieux : c'est le seul à pouvoir lire l'identité qu'il
---- protège en instance. `false` veut dire « le client garde la main de bout en
---- bout » — pas « blanc ». On ne rend pas une couleur, on s'abstient d'en poser
---- une.
+--- **On ne touche pas au nom d'un allié.** Sa couleur appartient au client :
+--- blanc par défaut, couleur de classe si le joueur a coché la case — qui écrit
+--- `CVAR.ALLY_NAME_CLASS`, un CVar que le client relit lui-même. C'est le seul
+--- chemin qui atteigne les noms qu'on ne reçoit jamais, ceux des instances.
+--- `false` veut dire « le client garde la main de bout en bout » — pas
+--- « blanc ». On ne rend pas une couleur, on s'abstient d'en poser une.
 ---
 --- **Le premier retour est un drapeau**, et il le reste : l'appelant ne teste
 --- jamais les trois nombres, qui peuvent être secrets ailleurs dans ce fichier.
@@ -2200,12 +2225,6 @@ local function nameColor(unit)
     if isFriendlyPlayer(unit) then return false end
     return true, T.COLOR.WHITE:GetRGB()
 end
-
--- `releaseNames` vivait ici : elle rappelait la fonction de nom du client sur
--- chaque plaque suivie, pour lui rendre la main quand la case des couleurs
--- alliées s'éteignait. La case est partie — le jeu colore ces noms lui-même — et
--- il ne reste plus une seule teinte de nom qu'on pose puis qu'on retire : celles
--- des adversaires et des PNJ ne se règlent pas.
 
 --- Sommes-nous en train de poser une couleur de nom ? Même rôle que
 --- `settingFont` pour le corps : le hook ci-dessous guette l'écriture, donc il
@@ -2640,8 +2659,13 @@ end
 local function tint(mod, unitFrame, unit)
     local bar = healthBarOf(unitFrame)
     if bar and type(bar.SetStatusBarColor) == "function" then
+        -- `nil` veut dire « la sienne est la bonne » : on ne pose rien, et la
+        -- couleur que le client vient d'écrire reste. Le test est permis :
+        -- `healthColor` ne rend jamais de nombres secrets.
         local r, g, b = healthColor(mod, unit)
-        pcall(bar.SetStatusBarColor, bar, r, g, b)
+        if r then
+            pcall(bar.SetStatusBarColor, bar, r, g, b)
+        end
     end
 
     local name = unitFrame.name
@@ -3141,7 +3165,12 @@ BUI:RegisterModule(MODULE, {
 
         npcColors      = false,
         npcColorsScope = "always",
-        pvpClassColor  = false,
+
+        -- Les couleurs de classe n'ont **pas de clé** : ce sont trois cases du
+        -- client, cochées depuis notre page, et le CVar est le rangement (voir
+        -- `CVAR`). `pvpClassColor` a existé — une version peinte à la main, qui
+        -- s'arrêtait aux portes des instances ; le palier 16 efface sa trace.
+
         bossColor      = T.ColorTable(T.COLOR.PLATE.BOSS),
         minibossColor  = T.ColorTable(T.COLOR.PLATE.MINIBOSS),
         casterColor    = T.ColorTable(T.COLOR.PLATE.CASTER),
@@ -3160,8 +3189,8 @@ BUI:RegisterModule(MODULE, {
     --- `/bui noms` : pourquoi le nom d'un joueur porte la couleur qu'il porte.
     ---
     --- Trois choses décident, et aucune ne se voit à l'écran : ce que le client
-    --- laisse lire de l'unité, de quel côté on la range, et ce que nos deux
-    --- réglages disent. Quand la couleur « ne change pas », c'est l'une des trois
+    --- laisse lire de l'unité, de quel côté on la range, et ce que la case des
+    --- couleurs alliées dit. Quand la couleur « ne change pas », c'est l'une des trois
     --- qui répond autre chose que ce qu'on croit — et depuis le jeu, les trois
     --- sont muettes. Elles s'écrivent ici, sur la cible, en une ligne chacune.
     ---
@@ -3169,6 +3198,31 @@ BUI:RegisterModule(MODULE, {
     DiagnoseNames = function(self)
         self:Print(L["Name diagnostic"])
         self:Print(CVAR.ALLY_NAMES .. ":", tostring(U.GetCVar(CVAR.ALLY_NAMES)))
+
+        -- Les trois CVars de couleur de classe, tels que le client les tient :
+        -- c'est lui qui peint, et ces trois valeurs sont toute sa consigne. Un
+        -- `nil` dit que ce client ne connaît pas le CVar — la case de la page a
+        -- alors disparu d'elle-même, et c'est la réponse qu'on est venu lire.
+        self:Print(CVAR.CLASS_ENEMY .. ":", tostring(U.GetCVar(CVAR.CLASS_ENEMY)),
+            "| " .. CVAR.CLASS_ALLY .. ":", tostring(U.GetCVar(CVAR.CLASS_ALLY)))
+        self:Print(CVAR.ALLY_NAME_CLASS .. ":",
+            tostring(U.GetCVar(CVAR.ALLY_NAME_CLASS)))
+
+        -- **Le recensement d'abord, et c'est une leçon payée.** Il fermait la
+        -- fonction, donc les deux sorties anticipées l'emportaient avec elles —
+        -- et « la cible n'a pas de plaque » est justement le moment où l'on a le
+        -- plus besoin de savoir combien le client en montre.
+        --
+        -- C'est ce couple de nombres qui distingue les deux murs : zéro plaque
+        -- rendue alors que l'écran en est couvert désigne le client, qui garde
+        -- pour lui les plaques dont il protège l'identité et n'en dit rien.
+        local shown = C_NamePlate and C_NamePlate.GetNamePlates
+                      and C_NamePlate.GetNamePlates()
+        local tracked = 0
+        for _ in pairs(plates) do tracked = tracked + 1 end
+
+        self:Print("GetNamePlates:", type(shown) == "table" and #shown or L["Refused"],
+            "| plates:", tracked)
 
         if not U.IsTrue(UnitExists("target")) then
             self:Print(L["Aura diagnostic needs target"])
@@ -3179,7 +3233,16 @@ BUI:RegisterModule(MODULE, {
                       and C_NamePlate.GetNamePlateForUnit("target")
         local unitFrame = unitFrameOf(plate)
         if not unitFrame then
-            self:Print(L["No nameplate for target"])
+            -- **Deux causes, et elles n'appellent pas le même geste.** Pas de
+            -- plaque du tout — le client n'en montre pas pour cette unité — ou
+            -- une plaque que le client déclare *interdite*, ce qu'il fait là où
+            -- il protège l'identité. Dans le second cas, rien de ce que l'addon
+            -- poserait ne prendrait : ce n'est pas un réglage en panne, c'est
+            -- une porte fermée, et il faut le dire plutôt que de laisser
+            -- chercher.
+            local frame = plate and plate.UnitFrame
+            self:Print(type(frame) == "table" and isForbidden(frame)
+                       and L["Nameplate forbidden"] or L["No nameplate for target"])
             return
         end
 
@@ -3199,22 +3262,20 @@ BUI:RegisterModule(MODULE, {
         -- pour savoir si on la suit.
         local token = plateUnit(plate)
 
+        -- `isPlayerUnit` à côté de `UnitIsPlayer`, et pas à sa place : c'est très
+        -- exactement là que les deux divergent — le refus du client compte pour
+        -- un oui — et c'est cette ligne-là qu'on vient lire quand la couleur de
+        -- classe marche dehors et pas en donjon.
         self:Print("UnitClass:",
             U.IsSecret(class) and L["Refused"] or tostring(class),
+            "| isPlayerUnit:", isPlayerUnit("target") and L["On"] or L["Off"],
             "| isFriendlyPlayer:", isFriendlyPlayer("target") and L["On"] or L["Off"],
             "| plates:", (token and plates[token]) and L["On"] or L["Off"])
 
-        -- Combien le client en montre, combien on en suit : c'est là que se voit
-        -- une annonce manquée.
-        local shown = C_NamePlate and C_NamePlate.GetNamePlates
-                      and C_NamePlate.GetNamePlates()
-        local tracked = 0
-        for _ in pairs(plates) do tracked = tracked + 1 end
+        self:Print("jeton:", tostring(token))
 
-        self:Print("GetNamePlates:", type(shown) == "table" and #shown or L["Refused"],
-            "| plates:", tracked,
-            "| jeton:", tostring(token))
-
+        -- « nameColor éteint » désigne un allié — son nom est au client, CVar
+        -- compris ; « allumé », un adversaire dont on repeint le nom en blanc.
         self:Print("nameColor:", nameColor("target") and L["On"] or L["Off"],
             "| unitFrame.name:", unitFrame.name and L["On"] or L["Off"])
     end,

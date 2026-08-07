@@ -772,11 +772,25 @@ BUI:RegisterLocale("frFR", {
         "À quel point une plaque est visible quand son porteur est derrière un "
         .. "mur ou un pilier.",
 
-    ["Enemy colors"]                   = "Couleurs des adversaires",
+    ["Nameplate colors"]               = "Couleurs des barres d'infos",
     ["PvP class colors"]               = "Couleurs de classe sur les joueurs adverses",
     ["PvP class colors tip"] =
         "La barre de vie d'un joueur adverse prend la couleur de sa classe, où "
-        .. "que vous le croisiez.",
+        .. "que vous le croisiez — arène et champ de bataille compris. C'est le "
+        .. "jeu qui peint : le réglage est le sien, repris ici. Les joueurs "
+        .. "alliés ont leur propre case juste en dessous.",
+    ["Ally class colors"]              = "Couleurs de classe sur les joueurs alliés",
+    ["Ally class colors tip"] =
+        "La barre de vie d'un joueur allié prend la couleur de sa classe. C'est "
+        .. "le jeu qui peint : le réglage est le sien, repris ici. En donjon et "
+        .. "en raid, il réduit les plaques alliées au nom seul — c'est alors la "
+        .. "case des noms qui parle.",
+    ["Ally name class colors"]         = "Couleurs de classe sur les noms alliés",
+    ["Ally name class colors tip"] =
+        "Le nom d'un joueur allié prend la couleur de sa classe au lieu du "
+        .. "blanc — partout, donjon et raid compris, et y compris en mode « le "
+        .. "nom seul », où il ne reste que lui. C'est le jeu qui peint : le "
+        .. "réglage est le sien, repris ici.",
     ["Color enemies by kind"]          = "Colorier les adversaires par nature",
     ["Color enemies by kind tip"] =
         "La rareté d'abord, ce que fait la créature ensuite : un rare qui incante "
@@ -837,6 +851,10 @@ BUI:RegisterLocale("frFR", {
     ["Aura diagnostic needs target"] =
         "Ciblez d'abord quelque chose : le diagnostic lit la plaque de la cible.",
     ["No nameplate for target"]        = "La cible n'a pas de plaque à l'écran.",
+    ["Nameplate forbidden"] =
+        "Le jeu déclare cette plaque interdite : il protège l'identité de "
+        .. "l'unité, et rien de ce que l'addon poserait dessus ne prendrait. "
+        .. "Couleurs, tailles et marqueurs sont les siens ici.",
     ["Refused"]                        = "refusé",
     ["Secret"]                         = "secret",
     ["Control"]                        = "témoin",

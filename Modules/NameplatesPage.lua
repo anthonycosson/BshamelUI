@@ -217,6 +217,20 @@ local CVAR = {
     -- ici parce que **deux** lignes de la page le lisent, et qu'une graphie
     -- recopiée est une graphie qui divergera.
     ALLY_NAMES = "nameplateShowOnlyNameForFriendlyPlayerUnits",
+
+    -- Les couleurs de classe, et c'est **le client qui peint**. On les a
+    -- d'abord posées nous-mêmes, et la version manuelle s'arrêtait au mur des
+    -- instances : identité secrète d'un côté, plaques alliées jamais rendues de
+    -- l'autre. Ces trois CVars n'ont aucun de ces murs — le client se peint
+    -- lui-même, avec des droits que l'addon n'aura jamais.
+    --
+    -- Les noms viennent d'une lecture de BetterBlizzPlates (règle 8 : lire pour
+    -- identifier l'API, jamais copier) ; la trouvaille est consignée dans
+    -- `dev/docs/API_NOTES.md`. Comme le mode « nom seul » : rien d'emprunté,
+    -- rien à rendre — ce sont des cases du client, cochées depuis chez nous.
+    CLASS_ENEMY     = "nameplateShowClassColor",
+    CLASS_ALLY      = "nameplateShowFriendlyClassColor",
+    ALLY_NAME_CLASS = "nameplateUseClassColorForFriendlyPlayerUnitNames",
 }
 
 -- =========================================================================
@@ -1214,14 +1228,19 @@ local function pageOptions()
         -- Le client sait le faire lui-même, mais son menu ne le propose nulle
         -- part — d'où la case ici plutôt que dans la section des réglages du jeu.
         --
-        -- **Sans titre au-dessus.** Trois lignes ne font pas une section, et
-        -- « Alliés » en tête n'aurait dit qu'une chose que les trois intitulés
+        -- **Sans titre au-dessus.** Quatre lignes ne font pas une section, et
+        -- « Alliés » en tête n'aurait dit qu'une chose que les quatre intitulés
         -- disent déjà.
         --
         -- Les deux lignes en retrait ne veulent rien dire sans le mode nom seul :
         -- c'est là que le corps du nom compte, puisqu'il ne reste que lui. Elles
-        -- se grisent donc avec lui, en plus de se griser entre elles. La couleur
-        -- de classe, elle, vaut pour toute plaque alliée et reste au bord.
+        -- se grisent donc avec lui, en plus de se griser entre elles.
+        --
+        -- La couleur de classe ferme le groupe, **en retrait comme les deux
+        -- autres**. Le retrait dit ici « ceci concerne le nom des alliés », pas
+        -- « ceci dépend de la case du dessus » — elle vaut d'ailleurs pour toute
+        -- plaque alliée qui montre un nom, mode « nom seul » ou pas, et c'est
+        -- pourquoi elle ne se grise pas avec les deux autres.
         { section = "size" },
         allyNamesRow(),
         {
@@ -1255,10 +1274,18 @@ local function pageOptions()
                 end
             end,
         },
-        -- « Noms aux couleurs de classe » vivait ici. Le jeu le fait désormais
-        -- de lui-même, et mieux : lui seul lit l'identité qu'il protège en
-        -- instance. Une case qui promet ce qui arrive déjà est une case qui
-        -- ment, quelle que soit sa position.
+        -- « Noms aux couleurs de classe » vivait ici, et elle y revient —
+        -- retirée le jour où l'on avait cru le jeu capable de le faire seul, il
+        -- ne le fait pas de lui-même : il attend qu'on le lui demande, par le
+        -- CVar que cette case coche (voir `CVAR.ALLY_NAME_CLASS`).
+        --
+        -- Elle est bien une couleur, et la section d'en face les rassemble.
+        -- Elle reste pourtant ici, avec les trois autres lignes du nom allié :
+        -- on ne vient pas régler « une couleur », on vient régler **le nom des
+        -- alliés** — et ce qu'on cherche alors, c'est l'endroit où il est déjà
+        -- question de lui.
+        blizzToggle(CVAR.ALLY_NAME_CLASS,
+            L["Ally name class colors"], L["Ally name class colors tip"], true),
 
         -- La barre de sorts suit immédiatement la barre de vie : c'est l'autre
         -- barre de la plaque, et elle se règle des mêmes façons.
@@ -1357,8 +1384,11 @@ local function pageOptions()
         -- (`auraRowToggle`, `auraSliders`…) restent écrites pour le jour où la
         -- rangée reviendrait.
 
+        -- La section ne dit plus « les adversaires » : elle porte désormais les
+        -- couleurs de classe des **deux** camps, et un titre qui n'annonce que
+        -- la moitié de ce qu'il contient fait chercher l'autre moitié ailleurs.
         { section = "colors" },
-        { type = "header", text = L["Enemy colors"] },
+        { type = "header", text = L["Nameplate colors"] },
         {
             type    = "toggle",
             key     = "npcColors",
@@ -1425,12 +1455,20 @@ local function pageOptions()
             indent   = true,
             disabled = requires("npcColors"),
         },
-        {
-            type    = "toggle",
-            key     = "pvpClassColor",
-            text    = L["PvP class colors"],
-            tooltip = L["PvP class colors tip"],
-        },
+        -- Les deux camps, l'un sous l'autre : ce sont **des barres de vie**, et
+        -- c'est ce qui décide de leur place ici. La troisième couleur de classe
+        -- de la page — celle du nom des alliés — est restée avec les autres
+        -- lignes du nom allié, plus haut : on la cherche là où il est question
+        -- du nom, pas là où il est question des barres.
+        --
+        -- Deux cases du client, pas deux réglages à nous (voir `CVAR`) : c'est
+        -- lui qui peint, et c'est ce qui les fait marcher là où notre pinceau
+        -- n'entre pas — donjon, raid, arène. Elles disparaissent d'elles-mêmes
+        -- sur un client qui ne les connaît pas, comme toute ligne `blizzToggle`.
+        blizzToggle(CVAR.CLASS_ENEMY,
+            L["PvP class colors"], L["PvP class colors tip"]),
+        blizzToggle(CVAR.CLASS_ALLY,
+            L["Ally class colors"], L["Ally class colors tip"]),
 
         -- La menace **dans les couleurs**, sans catégorie à elle : c'est une
         -- couleur d'adversaire de plus, décidée par ce qu'il regarde plutôt que

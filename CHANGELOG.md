@@ -2,6 +2,36 @@
 
 ## Non publié
 
+### Ajouté
+- **Deux couleurs de classe de plus sur les barres d'infos** : la barre de vie
+  des joueurs alliés, et leur nom — qui s'écrivait en blanc, y compris en mode
+  « le nom seul ». Deux cases distinctes de celle des adversaires : une barre
+  alliée dit qui soigner, une barre adverse dit sur quoi taper, et personne ne
+  veut forcément les deux.
+
+  Les trois cases cochent des **réglages du jeu** : c'est lui qui peint, et
+  c'est ce qui les fait valoir partout — donjon, raid, arène et champ de
+  bataille compris, là où un addon ne peut pas peindre lui-même. Le nom des
+  alliés en couleur de classe fonctionne ainsi jusqu'en Mythique+, où le jeu
+  réduit les plaques alliées au nom seul.
+
+### Corrigé
+- **« Couleurs de classe sur les joueurs adverses » teignait aussi les joueurs
+  alliés**, et s'arrêtait aux portes des instances. La case peignait à la main :
+  elle regardait « est-ce un joueur » sans regarder le camp — le groupe passait
+  aux couleurs de classe sans l'avoir demandé — et là où le jeu protège
+  l'identité des joueurs, elle ne peignait plus rien. Elle coche désormais le
+  réglage du jeu correspondant, qui fait les deux correctement.
+- **Les plaques d'arène pouvaient tomber dans les couleurs par nature des PNJ.**
+  Le jeu y refuse de dire si l'unité est un joueur ; ce refus était compté pour
+  un « non », et la plaque se classait comme une créature. Un refus compte
+  désormais pour un joueur : seuls les joueurs se font taire.
+
+### Modifié
+- **« Couleurs des adversaires » devient « Couleurs des barres d'infos ».** La
+  section porte désormais les deux camps, et un titre qui n'annonce que la moitié
+  de ce qu'il contient fait chercher l'autre moitié ailleurs.
+
 ## 1.0.1 — 2026-08-07
 
 ### Modifié

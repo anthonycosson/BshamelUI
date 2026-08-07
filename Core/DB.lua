@@ -32,7 +32,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 15
+local SCHEMA_VERSION   = 16
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -490,6 +490,27 @@ function DB:RunMigrations()
             if character then character.showVoidCore = nil end
         end
         from = 15
+    end
+
+    -- Palier 16 — les couleurs de classe des barres d'infos ne sont plus des
+    -- réglages à nous : trois CVars du client font le même travail avec des
+    -- droits que l'addon n'a pas, en instance comprise. Nos clés n'ont donc
+    -- plus d'objet, et un réglage retiré du code resterait indéfiniment dans le
+    -- fichier, sans effet et sans explication (même motif que le palier 3).
+    --
+    -- Rien n'est recopié vers les CVars : la clé n'a été publiée que quelques
+    -- heures, et écrire un réglage du jeu depuis une migration déciderait à la
+    -- place du joueur sur un autre personnage que celui qui l'avait cochée.
+    if from < 16 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local plates = profile.modules and profile.modules.Nameplates
+            if plates then
+                plates.pvpClassColor     = nil
+                plates.allyBarClassColor = nil
+                plates.allyClassColor    = nil
+            end
+        end
+        from = 16
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)
