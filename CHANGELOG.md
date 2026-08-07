@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.2 — 2026-08-07
+
 ### Ajouté
 - **Deux couleurs de classe de plus sur les barres d'infos** : la barre de vie
   des joueurs alliés, et leur nom — qui s'écrivait en blanc, y compris en mode
