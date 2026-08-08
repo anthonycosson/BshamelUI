@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.4 — 2026-08-08
+
 ### Ajouté
 - **Une zone de recherche en tête de la colonne de navigation.** On y tape un
   mot — « réparation », « caméra », « kikimeter » — et la colonne montre les
