@@ -263,16 +263,17 @@ end
 ---
 --- Elle se calcule comme le reste — la place `i` est à `i` fois le pas — donc
 --- il n'y a rien à avoir mémorisé pour la rendre. Si la grille n'est pas
---- lisible, on demande au client de la recalculer : c'est le seul recours qui
---- reste, et à cet instant notre hook est déjà inerte.
+--- lisible, on ne rend **rien** : appeler `RefreshLayout` nous-mêmes ferait
+--- réécrire tout l'état de la visionneuse par de l'exécution teintée — pool
+--- d'emplacements, `layoutIndex`, fiches de recharge — et chaque événement
+--- d'aura que le client traiterait ensuite mourrait sur son premier sort
+--- secret. C'est la règle des barres d'infos : on n'entre pas dans le code de
+--- mise en page du client (voir `dev/docs/API_NOTES.md`). Lui refait la sienne
+--- au prochain changement d'amélioration, sans nous.
 local function restore()
     local viewer = _G[VIEWER]
     if not (viewer and viewer.GetItemFrames and viewer.GetItemContainerFrame) then return end
-
-    if not measure(viewer) then
-        if viewer.RefreshLayout then viewer:RefreshLayout() end
-        return
-    end
+    if not measure(viewer) then return end
 
     packing = true
 

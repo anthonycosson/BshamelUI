@@ -2910,6 +2910,48 @@ règle 6 : le marqueur de ciblage et le recentrage du nom des alliés restent do
 
 ---
 
+## Appeler `RefreshLayout` d'une visionneuse de recharges empoisonne ses événements
+
+**Symptôme** — des erreurs détachées de tout, sans pile lisible, longtemps après
+le geste qui les a semées :
+
+```
+Blizzard_SharedXMLBase/TableUtil.lua:82: attempt to compare local 'item'
+(a secret number value, while execution tainted by 'BshamelUI')
+debugstack() returned secrets.
+```
+
+La ligne 82 est le `item == v` de `tContains`. L'appelant qui lui passe un
+secret est `CooldownViewerItemData.lua`, `UpdateLinkedSpell` :
+`tContains(cooldownInfo.linkedSpellIDs, spellID)`, où `spellID` sort d'une aura
+(`auraInfo.spellId`, secret) ou d'un événement de recharge.
+
+**Cause** — le tassement du suivi des améliorations rendait la grille en
+demandant `viewer:RefreshLayout()` quand il ne savait pas la relever. Même
+maladie que le pilote des barres d'infos (voir plus haut), mais la facture
+arrive **plus tard** : `RefreshLayout` réécrit tout l'état Lua de la visionneuse
+— le pool d'emplacements (`ReleaseAll`/`Acquire`), les `layoutIndex`, les
+champs du conteneur, les fiches `cooldownID`/`cooldownInfo` — et tout cela
+devient teinté. L'appel lui-même **réussit**. C'est chaque événement que le
+client traite ensuite *de son côté* qui, en relisant cet état, s'exécute teinté
+et meurt sur la première comparaison d'un sort secret. Une erreur par
+amélioration qui bouge, jusqu'au `/reload` — rien d'autre ne détache la
+teinture d'un état déjà écrit.
+
+Le déclencheur réel n'était même pas l'option : `restore()` tourne à
+l'extinction du module et sur `OnSettingChanged(nil)` — donc à chaque bascule
+de profil — et son repli partait dès que la grille était illisible, ce qui est
+le cas ordinaire (moins de deux places visibles).
+
+**Ce qu'on fait** — rien, encore une fois. Une grille qu'on ne sait pas relever
+ne se rend pas : le client refait sa mise en page au prochain changement
+d'amélioration — et sur cette visionneuse-là, ça ne tarde jamais. La règle
+reste entière : **on n'entre pas dans le code de mise en page du client**, et
+« il réussit sur le coup » n'est pas une exception — c'est la forme la plus
+chère de l'échec, celle qui signe nos erreurs longtemps après.
+
+---
+
 ## Taille d'une barre d'infos : ni CVar, ni fonction par faction
 
 **Symptôme** — trois tentatives, trois échecs silencieux : `NamePlateVerticalScale`
