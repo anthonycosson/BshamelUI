@@ -9,7 +9,7 @@
 --
 --  La page tient en deux moitiés, qui sont les deux distances d'un même
 --  geste : en haut, les profils **de ce compte** — basculer, créer vierge,
---  dupliquer l'actif, recopier un autre profil dans l'actif ou le supprimer —
+--  dupliquer l'actif, le supprimer, recopier un autre profil dans l'actif —
 --  et en bas, la
 --  **sauvegarde et le partage** — l'export photographie le profil actif en un
 --  code texte (les défauts n'y sont pas, seul voyage ce que le joueur a
@@ -144,17 +144,14 @@ local function copyFromSource()
         end)
 end
 
-local function deleteSelected()
-    if not otherReady() then return end
-
-    local doomed = otherProfile
+--- Supprime le profil **actif**. La base fait alors retomber le personnage sur
+--- le profil par défaut et l'annonce comme un changement de profil — la page
+--- se rafraîchit donc sans qu'on l'appelle.
+local function deleteActive()
+    local doomed = BUI.DB:GetProfileName()
     W.Confirm(BUI:Lf("Delete profile confirm", doomed), function()
         if BUI.DB:DeleteProfile(doomed) then
-            -- Le choix pointait sur un profil qui n'existe plus : on le vide,
-            -- sans quoi le menu continuerait d'afficher un nom fantôme.
-            otherProfile = nil
             BUI:Print(BUI:Lf("Profile deleted", doomed))
-            BUI.PageBuilder:RefreshPage(MODULE)
         end
     end)
 end
@@ -302,6 +299,13 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Duplicate profile tip"],
             onClick = duplicateProfile,
         },
+        {
+            type    = "button",
+            text    = L["Delete profile"],
+            label   = L["Delete"],
+            tooltip = L["Delete profile tip"],
+            onClick = deleteActive,
+        },
 
         { type = "header", text = L["Other profiles"] },
         {
@@ -326,16 +330,6 @@ BUI:RegisterModule(MODULE, {
             tooltip  = L["Copy into active tip"],
             indent   = true,
             onClick  = copyFromSource,
-            disabled = function() return not otherReady() end,
-            disabledReason = L["Pick a profile first"],
-        },
-        {
-            type     = "button",
-            text     = L["Delete profile"],
-            label    = L["Delete"],
-            tooltip  = L["Delete profile tip"],
-            indent   = true,
-            onClick  = deleteSelected,
             disabled = function() return not otherReady() end,
             disabledReason = L["Pick a profile first"],
         },

@@ -18,10 +18,11 @@
   Le haut de la page montre ce que la base savait déjà faire sans jamais le
   proposer : chaque personnage choisit son profil de réglages dans un menu —
   plusieurs personnages peuvent partager le même —, on crée un profil vierge,
-  on duplique le profil actif sous un autre nom, et sur n'importe quel autre
-  profil, deux gestes avec confirmation : le recopier dans le profil actif, ou
-  le supprimer. Le profil actif, lui, ne se supprime pas — un personnage a
-  toujours un profil sous les pieds.
+  on duplique le profil actif sous un autre nom, on le supprime — le personnage
+  retombe alors sur le profil par défaut, recréé vierge au besoin : un
+  personnage a toujours un profil sous les pieds —, et on peut recopier
+  n'importe quel autre profil dans le profil actif. Supprimer et recopier
+  demandent confirmation.
 
   Le bas, « Sauvegarde et partage », exporte et importe. L'export ouvre une
   fenêtre contenant un code texte de tous les réglages du profil courant, déjà
@@ -34,6 +35,15 @@
   récente que l'addon installé est refusé en le disant, plutôt qu'importé de
   travers. Seuls voyagent les réglages réellement changés — jamais les défauts,
   jamais l'historique de chat.
+
+### Corrigé
+- **Le gestionnaire de recharges ne provoque plus d'erreurs « secret » en
+  cascade.** Éteindre le module — ou changer de profil — pouvait demander au
+  client de refaire sa mise en page depuis notre code : tout l'état de la
+  visionneuse en sortait marqué de l'addon, et chaque amélioration qui montait
+  ensuite déclenchait une erreur Lua chez Blizzard (`TableUtil.lua:82`), sans
+  piste lisible. On ne le demande plus : une grille qu'on ne sait pas relever
+  est laissée au client, qui la refait de lui-même au changement suivant.
 
 ## 1.0.3 — 2026-08-07
 

@@ -688,12 +688,20 @@ function DB:CopyProfileTo(name)
     return true
 end
 
+--- Supprime un profil, **y compris l'actif** : le personnage retombe alors sur
+--- le profil par défaut, recréé vierge au besoin — un personnage a toujours un
+--- profil sous les pieds, c'est le repli qui le garantit, pas une interdiction.
 ---@param name string
 ---@return boolean deleted
 function DB:DeleteProfile(name)
-    if name == profileName() then return false end          -- jamais le profil actif
-    if not BshamelUIDB.profiles[name] then return false end
+    if type(name) ~= "string" or not BshamelUIDB.profiles[name] then return false end
     BshamelUIDB.profiles[name] = nil
+
+    if name == profileName() then
+        BshamelUICharDB.profile = DEFAULT_PROFILE
+        applyAllDefaults()
+        BUI:SendMessage(BUI.MESSAGES.PROFILE_CHANGED, profileName())
+    end
     return true
 end
 

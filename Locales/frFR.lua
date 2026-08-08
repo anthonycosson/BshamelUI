@@ -93,19 +93,22 @@ BUI:RegisterLocale("frFR", {
     ["Other profiles"]          = "Les autres profils",
     ["Other profile"]           = "Autre profil",
     ["Other profile tip"] =
-        "Choisissez le profil sur lequel portent les deux actions ci-dessous.",
+        "Choisissez le profil sur lequel porte l'action ci-dessous.",
     ["Copy into active"]        = "Remplacer le profil actif",
     -- Pas la clé `Copy` : elle existe déjà avec un autre sens (« Copie »).
     ["Copy profile"]            = "Copier",
     ["Copy into active tip"] =
         "Remplace tous les réglages du profil actif par une copie du profil choisi "
         .. "au-dessus, après une confirmation.",
-    ["Delete profile"]          = "Supprimer ce profil",
+    ["Delete profile"]          = "Supprimer le profil actif",
     ["Delete"]                  = "Supprimer",
     ["Delete profile tip"] =
-        "Supprime définitivement le profil choisi au-dessus, après une confirmation. Un "
-        .. "personnage qui l'utilisait repartira sur un profil vierge du même nom.",
-    ["Delete profile confirm"]  = "Supprimer définitivement le profil « %s » ?",
+        "Supprime définitivement le profil actif, après une confirmation. Ce personnage "
+        .. "retombe alors sur le profil par défaut ; un autre personnage qui utilisait le "
+        .. "profil supprimé repartira sur un profil vierge du même nom.",
+    ["Delete profile confirm"] =
+        "Supprimer définitivement le profil « %s » ? Ce personnage retombera sur le profil "
+        .. "par défaut.",
     ["Profile deleted"]         = "Profil « %s » supprimé.",
     ["No other profile"]        = "Il n'y a pas encore d'autre profil.",
     ["Pick a profile first"]    = "Choisissez d'abord un profil au-dessus.",

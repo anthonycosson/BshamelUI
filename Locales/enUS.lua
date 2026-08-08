@@ -118,19 +118,21 @@ BUI:RegisterLocale("enUS", {
     ["Other profiles"]          = "Other profiles",
     ["Other profile"]           = "Other profile",
     ["Other profile tip"] =
-        "Pick the profile the two actions below act on.",
+        "Pick the profile the action below acts on.",
     ["Copy into active"]        = "Replace the active profile",
     -- Pas la clé `Copy` : elle existe déjà avec un autre sens (« Copie »).
     ["Copy profile"]            = "Copy",
     ["Copy into active tip"] =
         "Replaces every setting of the active profile with a copy of the profile "
         .. "picked above, after a confirmation.",
-    ["Delete profile"]          = "Delete this profile",
+    ["Delete profile"]          = "Delete the active profile",
     ["Delete"]                  = "Delete",
     ["Delete profile tip"] =
-        "Permanently deletes the profile picked above, after a confirmation. A character "
-        .. "that was using it will start over on a blank profile with the same name.",
-    ["Delete profile confirm"]  = "Permanently delete profile '%s'?",
+        "Permanently deletes the active profile, after a confirmation. This character "
+        .. "then goes back to the default profile; another character that was using the "
+        .. "deleted profile will start over on a blank profile with the same name.",
+    ["Delete profile confirm"] =
+        "Permanently delete profile '%s'? This character will go back to the default profile.",
     ["Profile deleted"]         = "Profile '%s' deleted.",
     ["No other profile"]        = "There is no other profile yet.",
     ["Pick a profile first"]    = "Pick a profile above first.",
