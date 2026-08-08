@@ -22,6 +22,10 @@ BUI:RegisterLocale("enUS", {
     -- l'interface, pas un réglage.
     ["Slider value tip"] =
         "Right-click to type an exact value. Enter confirms, Escape cancels.",
+    -- Recherche d'options (UI/Config/Search.lua)
+    ["Search settings"]         = "Search settings…",
+    ["No results"]              = "No setting matches this search.",
+    ["More results hint"]       = "More settings match: refine the search to see them.",
     ["Yes"]                     = "Yes",
     ["Cancel"]                  = "Cancel",
     ["Open Bshamel UI"]         = "Open Bshamel UI",
@@ -66,6 +70,7 @@ BUI:RegisterLocale("enUS", {
 
     -- Module General
     ["General"]                        = "General",
+
     -- Module DarkMode
     ["Enable dark mode"]               = "Enable dark mode",
     ["What it darkens"]                = "What it darkens",

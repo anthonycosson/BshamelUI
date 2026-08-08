@@ -41,6 +41,7 @@ local contentHolder    --- frame de contenu de cette zone
 local currentModule    --- nom du module affiché
 local currentPage      --- page affichée, celle du module ci-dessus
 local scaleMenu        --- menu d'échelle, dans la barre de titre
+local searchBox        --- zone de recherche, en tête de la colonne
 
 -- =========================================================================
 --  Échelle du contenu
@@ -269,11 +270,26 @@ local function buildFrame()
     sidebarPanel:SetPoint("BOTTOMLEFT", body, "BOTTOMLEFT")
     sidebarPanel:SetWidth(S.SIDEBAR_W + S.PANEL_PAD * 2)
 
+    -- ----- recherche -----
+    -- En tête de la colonne, au-dessus de la liste qu'elle filtre : c'est là
+    -- que les yeux vont chercher quoi ouvrir, c'est donc là qu'on cherche.
+    -- Le retrait gauche loge les textures que le template de saisie du client
+    -- dessine à gauche de sa zone.
+    searchBox = W.SearchBox(body, {
+        placeholder = L["Search settings"],
+        onChanged   = function(text) Config:OnSearchChanged(text) end,
+    })
+    searchBox:SetPoint("TOPLEFT", sidebarPanel, "TOPLEFT",
+        S.PANEL_PAD + S.LABEL_INDENT, -S.PANEL_PAD)
+    searchBox:SetPoint("TOPRIGHT", sidebarPanel, "TOPRIGHT",
+        -S.PANEL_PAD, -S.PANEL_PAD)
+
     -- Colonne sans ascenseur : la liste des modules est courte, une barre y
     -- serait un rappel permanent d'un défilement qui n'a presque jamais lieu.
     -- La molette continue de fonctionner, elle, ce qui suffit si elle déborde.
     local sidebarScroll, sidebarContent = W.ScrollPane(body, true)
-    sidebarScroll:SetPoint("TOPLEFT", sidebarPanel, "TOPLEFT", S.PANEL_PAD, -S.PANEL_PAD)
+    sidebarScroll:SetPoint("TOPLEFT", searchBox, "BOTTOMLEFT",
+        -S.LABEL_INDENT, -S.PANEL_PAD)
     sidebarScroll:SetPoint("BOTTOMLEFT", sidebarPanel, "BOTTOMLEFT", S.PANEL_PAD, S.PANEL_PAD)
     sidebarScroll:SetWidth(S.SIDEBAR_W)
 
@@ -392,6 +408,72 @@ function Config:SelectModule(moduleName)
     if height and height > 0 then contentHolder:SetHeight(height) end
 
     contentScroll:ResetScroll()
+end
+
+-- =========================================================================
+--  Recherche
+-- =========================================================================
+
+--- Réagit à chaque frappe dans la zone de recherche.
+---
+--- En dessous du seuil, la colonne reprend sa liste : effacer sa saisie **est**
+--- le geste qui referme la recherche, il n'y a pas de bouton pour ça.
+---@param text string
+function Config:OnSearchChanged(text)
+    local query = strtrim(text or "")
+
+    if #query < BUI.Search.MIN_CHARS then
+        BUI.Sidebar:ClearResults()
+        return
+    end
+
+    local groups, truncated = BUI.Search:Find(query)
+    BUI.Sidebar:ShowResults(groups, truncated, function(moduleName, descriptor)
+        -- Le clic referme la recherche : la colonne montre alors la liste, avec
+        -- la page atteinte sélectionnée — l'état exact qu'aurait laissé une
+        -- navigation à la main.
+        if searchBox then searchBox:Clear() end
+        Config:SelectOption(moduleName, descriptor)
+    end)
+end
+
+--- Ouvre la page d'un module et amène une de ses lignes sous les yeux.
+---
+--- Le défilement et l'éclairage attendent **l'image suivante** : la page vient
+--- d'être disposée, et les rectangles qu'on mesure ne sont justes qu'après le
+--- passage de mise en page du client — lus tout de suite, ils décrivent la page
+--- d'avant. C'est le même motif que la fenêtre de copie (`CopyWindow:Open`).
+---@param moduleName string
+---@param descriptor table
+function Config:SelectOption(moduleName, descriptor)
+    self:SelectModule(moduleName)
+
+    local row = BUI.PageBuilder:RowFor(moduleName, descriptor)
+    if not row then return end
+
+    C_Timer.After(0, function()
+        if not (currentPage and currentPage:IsShown() and row:IsShown()) then return end
+
+        local pageTop = measure(currentPage:GetTop())
+        local rowTop  = measure(row:GetTop())
+        local range   = measure(contentScroll:GetVerticalScrollRange())
+
+        -- Une mesure illisible n'empêche que le défilement : la ligne est
+        -- éclairée quand même, et elle est peut-être déjà visible.
+        if pageTop and rowTop and range and range > 0 then
+            -- Deux lignes d'air au-dessus : une ligne collée au bord haut se
+            -- cherche autant qu'une ligne hors de vue.
+            local offset = pageTop - rowTop - T.SIZE.ROW_H * 2
+            offset = math.max(0, math.min(range, offset))
+
+            pcall(contentScroll.SetVerticalScroll, contentScroll, offset)
+            if contentScroll.ScrollBar and contentScroll.ScrollBar.SetValue then
+                pcall(contentScroll.ScrollBar.SetValue, contentScroll.ScrollBar, offset)
+            end
+        end
+
+        W.FlashRow(row)
+    end)
 end
 
 -- =========================================================================

@@ -38,6 +38,7 @@ UI\Widgets\Base.lua
 UI\Widgets\Window.lua
 UI\Widgets\Text.lua
 UI\Widgets\Button.lua
+UI\Widgets\SearchBox.lua
 UI\Widgets\Toggle.lua
 UI\Widgets\Slider.lua
 UI\Widgets\ColorSwatch.lua
@@ -84,6 +85,7 @@ UI\MinimapDock.lua
 
 # Fenêtre d'options
 UI\Config\PageBuilder.lua
+UI\Config\Search.lua
 UI\Config\Sidebar.lua
 UI\Config\ConfigFrame.lua
 

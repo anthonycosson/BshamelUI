@@ -243,6 +243,7 @@ T.SIZE = {
     SIDEBAR_CAT_H  = 30,    -- bandeau d'en-tête de catégorie
     SIDEBAR_ITEM_H = 26,    -- entrée de module
     SIDEBAR_INDENT = 18,
+    SIDEBAR_SEARCH_H = 26,  -- zone de recherche, au-dessus de la liste
 
     DIVIDER_W       = 2,    -- séparateur vertical entre navigation et contenu
 
@@ -776,6 +777,11 @@ T.TIMING = {
     -- chaque image ce que l'œil ne suit pas (règle 7).
     SCALE_DRAG    = 0.03,
 
+    -- Durée de la mise en évidence d'une ligne atteinte par la recherche. Assez
+    -- longue pour être trouvée des yeux après le saut de page, assez courte pour
+    -- que la page redevienne ordinaire sans qu'on ait rien à faire.
+    ROW_FLASH     = 1.5,
+
     -- Barre de sorts d'exemple : la cadence de son remplissage, et le temps
     -- qu'elle met à se remplir.
     --
@@ -1213,6 +1219,9 @@ T.ALPHA = {
     -- repos, survolée et sélectionnée, qui est tout ce que ces valeurs servent.
     ROW_HOVER      = 0.20,
     ROW_SELECTED   = 0.36,
+    ROW_FLASH      = 0.45,  -- mise en évidence d'une ligne atteinte par la
+                            -- recherche : plus forte que la sélection, elle doit
+                            -- se voir au milieu d'une page entière
     ITEM_OFF       = 0.55,  -- entrée d'un module éteint. « Éteint » doit rester
                             -- lisible : c'est la ligne sur laquelle on clique
                             -- pour rallumer le module

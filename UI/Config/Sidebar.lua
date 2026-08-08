@@ -19,6 +19,18 @@ BUI.Sidebar = Sidebar
 local items = {}      --- moduleName -> bouton
 local built = false
 
+--- La liste des catégories vit dans son propre conteneur, pour pouvoir céder
+--- la place aux résultats de recherche d'un seul `Hide` — et la reprendre de
+--- même. Les deux vivent côte à côte dans la zone défilante ; un seul des deux
+--- est visible à la fois.
+local content        --- frame de contenu de la zone défilante
+local list           --- conteneur de la liste des catégories
+local listHeight = 0
+local resultsFrame   --- conteneur des résultats de recherche
+local resultHeaders = {}   --- pool d'en-têtes de module (réutilisés, règle 7)
+local resultRows    = {}   --- pool de lignes de résultat
+local resultsHint          --- « aucun résultat » / « affinez la recherche »
+
 --- Intitulé d'une catégorie, suivi d'une mention quand **tous** ses modules sont
 --- en avant-première.
 ---
@@ -52,11 +64,16 @@ end
 
 --- Construit la liste. Appelé une fois, après PLAYER_LOGIN, quand tous les
 --- modules se sont enregistrés.
----@param content table  frame de contenu de la zone défilante de la colonne
+---@param parent table  frame de contenu de la zone défilante de la colonne
 ---@param onSelect fun(moduleName: string)
-function Sidebar:Build(content, onSelect)
+function Sidebar:Build(parent, onSelect)
     if built then return end
     built = true
+
+    content = parent
+    list = W.Container(content)
+    list:SetPoint("TOPLEFT")
+    list:SetPoint("TOPRIGHT")
 
     local y = -T.SIZE.PADDING * 0.5
 
@@ -64,15 +81,15 @@ function Sidebar:Build(content, onSelect)
         local modules = BUI.Modules:GetByCategory(category.key)
 
         if #modules > 0 then
-            local header = W.SidebarItem(content, categoryLabel(category, modules), false)
-            header:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
-            header:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, y)
+            local header = W.SidebarItem(list, categoryLabel(category, modules), false)
+            header:SetPoint("TOPLEFT", list, "TOPLEFT", 0, y)
+            header:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, y)
             y = y - header:GetHeight()
 
             for _, mod in ipairs(modules) do
-                local item = W.SidebarItem(content, moduleLabel(mod), true)
-                item:SetPoint("TOPLEFT", content, "TOPLEFT", 0, y)
-                item:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, y)
+                local item = W.SidebarItem(list, moduleLabel(mod), true)
+                item:SetPoint("TOPLEFT", list, "TOPLEFT", 0, y)
+                item:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, y)
 
                 -- Une annonce ne s'ouvre pas. Elle occupe sa place dans la
                 -- colonne pour dire ce qui vient, et rien de plus : lui donner un
@@ -95,7 +112,149 @@ function Sidebar:Build(content, onSelect)
         end
     end
 
-    content:SetHeight(math.abs(y) + T.SIZE.PADDING)
+    listHeight = math.abs(y) + T.SIZE.PADDING
+    list:SetHeight(listHeight)
+    content:SetHeight(listHeight)
+end
+
+-- =========================================================================
+--  Résultats de recherche
+-- =========================================================================
+-- La liste des résultats emprunte les pièces de la liste ordinaire : un en-tête
+-- de module porte la matière d'un en-tête de catégorie, une ligne de résultat
+-- est une entrée de module. Même vocabulaire, donc rien de nouveau à apprendre
+-- en la lisant.
+--
+-- Les lignes sont **réutilisées** d'une frappe à l'autre (une frame ne se
+-- détruit pas, règle 7) : on en crée au fil du besoin, on cache le surplus.
+
+---@return table
+local function resultsContainer()
+    if resultsFrame then return resultsFrame end
+
+    resultsFrame = W.Container(content)
+    resultsFrame:SetPoint("TOPLEFT")
+    resultsFrame:SetPoint("TOPRIGHT")
+    resultsFrame:Hide()
+
+    resultsHint = resultsFrame:CreateFontString(nil, "ARTWORK", T.FONT.HINT)
+    resultsHint:SetJustifyH("LEFT")
+    resultsHint:SetWordWrap(true)
+
+    return resultsFrame
+end
+
+--- Pose la ligne d'appoint à l'ordonnée courante et rend la place qu'elle
+--- occupe. Elle suit la liste qu'elle commente : sous le dernier résultat, ou
+--- seule en haut quand il n'y en a aucun.
+---@param text string
+---@param y number
+---@return number height
+local function placeHint(text, y)
+    resultsHint:ClearAllPoints()
+    resultsHint:SetPoint("TOPLEFT", resultsFrame, "TOPLEFT", T.SIZE.LABEL_INDENT, y)
+    resultsHint:SetPoint("RIGHT", resultsFrame, "RIGHT", -T.SIZE.LABEL_INDENT, 0)
+    resultsHint:SetText(text)
+    resultsHint:Show()
+    return resultsHint:GetStringHeight() + T.SIZE.PADDING
+end
+
+--- Une pièce du pool demandé, créée si le pool est trop court.
+---@param pool table
+---@param i number
+---@param indented boolean
+---@return table
+local function pooled(pool, i, indented)
+    local piece = pool[i]
+    if not piece then
+        piece = W.SidebarItem(resultsFrame, "", indented)
+        pool[i] = piece
+    end
+    return piece
+end
+
+--- Affiche les résultats d'une recherche à la place de la liste.
+---@param groups table[]   voir `Search:Find`
+---@param truncated boolean
+---@param onPick fun(moduleName: string, descriptor: table)
+function Sidebar:ShowResults(groups, truncated, onPick)
+    if not built then return end
+
+    local frame = resultsContainer()
+    list:Hide()
+    frame:Show()
+
+    local y = -T.SIZE.PADDING * 0.5
+    local headerCount, rowCount = 0, 0
+
+    for g = 1, #groups do
+        local group = groups[g]
+        local mod   = group.module
+
+        headerCount = headerCount + 1
+        local header = pooled(resultHeaders, headerCount, false)
+        header.text:SetText(mod.title)
+        header:ClearAllPoints()
+        header:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, y)
+        header:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, y)
+        header:Show()
+        y = y - header:GetHeight()
+
+        for e = 1, #group.entries do
+            local entry = group.entries[e]
+
+            rowCount = rowCount + 1
+            local row = pooled(resultRows, rowCount, true)
+            row.text:SetText(entry.label)
+            row:SetSelected(false)
+
+            -- L'état du module se lit sur ses résultats comme sur son entrée
+            -- de la liste : un module éteint reste trouvable, en grisé.
+            row:SetAlpha(mod:Get("enabled") and 1 or T.ALPHA.ITEM_OFF)
+
+            -- L'infobulle de la ligne de résultat est celle du réglage
+            -- lui-même : on sait ce qu'on va ouvrir avant de cliquer.
+            W.Tooltip(row, entry.label, entry.descriptor.tooltip)
+
+            row:SetScript("OnClick", function()
+                PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
+                onPick(mod.name, entry.descriptor)
+            end)
+
+            row:ClearAllPoints()
+            row:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, y)
+            row:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, y)
+            row:Show()
+            y = y - row:GetHeight()
+        end
+
+        y = y - T.SIZE.ROW_GAP
+    end
+
+    for i = headerCount + 1, #resultHeaders do resultHeaders[i]:Hide() end
+    for i = rowCount + 1, #resultRows do resultRows[i]:Hide() end
+
+    -- La ligne d'appoint ne dit que ce que la liste ne montre pas d'elle-même :
+    -- qu'il n'y a rien, ou qu'il y a plus que ce qu'elle affiche.
+    if rowCount == 0 then
+        y = y - placeHint(L["No results"], y)
+    elseif truncated then
+        y = y - placeHint(L["More results hint"], y)
+    else
+        resultsHint:Hide()
+    end
+
+    local height = math.abs(y) + T.SIZE.PADDING
+    frame:SetHeight(height)
+    content:SetHeight(height)
+end
+
+--- Rend la place à la liste des catégories.
+function Sidebar:ClearResults()
+    if not built then return end
+    if resultsFrame then resultsFrame:Hide() end
+    list:Show()
+    content:SetHeight(listHeight)
 end
 
 --- Met en évidence l'entrée du module courant.

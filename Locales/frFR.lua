@@ -21,6 +21,10 @@ BUI:RegisterLocale("frFR", {
     ["Scale percent"]           = "%d %%",
     ["Slider value tip"] =
         "Clic droit pour saisir une valeur exacte. Entrée valide, Échap annule.",
+    -- Recherche d'options (UI/Config/Search.lua)
+    ["Search settings"]         = "Rechercher un réglage…",
+    ["No results"]              = "Aucun réglage ne correspond à cette recherche.",
+    ["More results hint"]       = "D'autres réglages correspondent : précisez la recherche pour les voir.",
     ["Yes"]                     = "Oui",
     ["Cancel"]                  = "Annuler",
     ["Open Bshamel UI"]         = "Ouvrir Bshamel UI",
@@ -40,6 +44,7 @@ BUI:RegisterLocale("frFR", {
         "Ce module n'est pas encore écrit. Les réglages ci-dessous montrent ce qu'il proposera.",
     ["Coming soon tooltip"]     = "Pas encore disponible.",
     ["Coming soon suffix"]      = " (Prochainement)",
+
 
     -- Module Quest
     ["Quest"]                   = "Quête",

@@ -442,6 +442,26 @@ function PB:MinWidth(page)
     return page._minWidth
 end
 
+--- Ligne d'une page qui porte ce descripteur, ou `nil`.
+---
+--- La comparaison est une **identité de table** : l'index de recherche et les
+--- pages tiennent tous deux leurs descripteurs de la même table `options` du
+--- module, jamais d'une copie. C'est ce qui permet de retrouver une ligne sans
+--- lui inventer d'identifiant.
+---@param moduleName string
+---@param descriptor table
+---@return table|nil
+function PB:RowFor(moduleName, descriptor)
+    local page = pages[moduleName]
+    if not page then return nil end
+
+    for i = 1, #page._entries do
+        local entry = page._entries[i]
+        if entry.descriptor == descriptor then return entry.frame end
+    end
+    return nil
+end
+
 --- Cache toutes les pages construites. Appelé avant d'en afficher une.
 function PB:HideAll()
     for _, page in pairs(pages) do

@@ -2,6 +2,16 @@
 
 ## Non publié
 
+### Ajouté
+- **Une zone de recherche en tête de la colonne de navigation.** On y tape un
+  mot — « réparation », « caméra », « kikimeter » — et la colonne montre les
+  réglages qui en parlent, groupés par page. La recherche lit les libellés
+  **et les infobulles**, sans tenir compte des accents ni de la casse : on
+  trouve ce qu'on cherche avec les mots qu'on a, pas avec ceux de l'addon.
+  Cliquer un résultat ouvre la page, descend jusqu'à la ligne et l'éclaire une
+  seconde et demie — le temps de la retrouver des yeux. Échap, ou effacer la
+  saisie, rend la colonne telle qu'elle était.
+
 ## 1.0.3 — 2026-08-07
 
 ### Ajouté
