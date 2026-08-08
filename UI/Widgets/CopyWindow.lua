@@ -145,5 +145,18 @@ function W.CopyWindow(globalName, titleText, hintText, submitLabel, onSubmit)
         C_Timer.After(0, function() scrollTo(at) end)
     end
 
+    --- Affiche la fenêtre sur un texte **déjà sélectionné en entier**.
+    ---
+    --- C'est l'inverse assumé de `Open`, et les deux ont raison chacun chez
+    --- soi : dans un historique on vient chercher trois lignes, une sélection
+    --- d'office gênerait ; un code d'export ne s'emporte **que** tout entier,
+    --- et la moindre coupe le rend invalide — le sélectionner d'avance est le
+    --- seul geste qui ne puisse pas se faire à moitié.
+    ---@param text string
+    function frame:OpenSelected(text)
+        self:Open(text)
+        edit:HighlightText()
+    end
+
     return frame
 end

@@ -45,6 +45,78 @@ BUI:RegisterLocale("frFR", {
     ["Coming soon tooltip"]     = "Pas encore disponible.",
     ["Coming soon suffix"]      = " (Prochainement)",
 
+    -- Catégorie « Import / export » et sa page Profiles
+    ["Import / export"]         = true,
+    ["Backup and sharing"]      = "Sauvegarde et partage",
+    ["Export settings"]         = "Exporter les réglages",
+    ["Export"]                  = "Exporter",
+    ["Export settings tip"] =
+        "Ouvre une fenêtre contenant un code texte de tous les réglages du profil courant. "
+        .. "Copiez-le pour en garder une sauvegarde, le passer à un autre compte, ou le partager.",
+    ["Export copy hint"]        = "Le code est sélectionné : Ctrl+C le copie. Échap ferme.",
+    ["Export failed"]           = "Échec de l'export : un réglage n'a pas pu être écrit.",
+    ["Import settings"]         = "Importer des réglages",
+    ["Import"]                  = "Importer",
+    ["Import settings tip"] =
+        "Collez un code exporté depuis Bshamel UI, puis appliquez-le : vous choisissez "
+        .. "alors s'il remplace le profil courant ou s'il part dans un profil tout neuf.",
+    ["Import paste hint"]       = "Ctrl+V colle. Échap ferme.",
+    ["Apply"]                   = "Appliquer",
+    ["Import invalid"]          = "Ce code n'est pas un export Bshamel UI valide.",
+    ["Import newer"] =
+        "Ce code vient d'une version plus récente de Bshamel UI : mettez l'addon à jour, "
+        .. "puis réimportez.",
+    ["Import destination"] =
+        "Où mettre les réglages importés ? Le profil courant serait remplacé ; un nouveau "
+        .. "profil ne touche à rien d'autre.",
+    ["Current profile"]         = "Profil courant",
+    ["New profile"]             = "Nouveau profil",
+    ["Import applied"]          = "Réglages importés.",
+    ["Import applied to new"]   = "Réglages importés dans le nouveau profil « %s ».",
+
+    -- Module Profiles
+    ["Profiles"]                = "Profils",
+    ["Active profile"]          = "Profil actif",
+    ["Active profile tip"] =
+        "Le profil de réglages que ce personnage utilise. Chaque personnage choisit le "
+        .. "sien ; plusieurs personnages peuvent partager le même.",
+    -- Le libellé du bouton de création réutilise la clé `Create` existante.
+    ["Create blank profile"]    = "Créer un profil vierge",
+    ["Create blank profile tip"] =
+        "Crée un profil où chaque réglage revient à sa valeur d'origine, et y fait "
+        .. "basculer ce personnage.",
+    ["Duplicate profile"]       = "Dupliquer le profil actif",
+    ["Duplicate"]               = "Dupliquer",
+    ["Duplicate profile tip"] =
+        "Range une copie du profil actif sous un nouveau nom. Ce personnage reste sur "
+        .. "le profil courant.",
+    ["Other profiles"]          = "Les autres profils",
+    ["Other profile"]           = "Autre profil",
+    ["Other profile tip"] =
+        "Choisissez le profil sur lequel portent les deux actions ci-dessous.",
+    ["Copy into active"]        = "Remplacer le profil actif",
+    -- Pas la clé `Copy` : elle existe déjà avec un autre sens (« Copie »).
+    ["Copy profile"]            = "Copier",
+    ["Copy into active tip"] =
+        "Remplace tous les réglages du profil actif par une copie du profil choisi "
+        .. "au-dessus, après une confirmation.",
+    ["Delete profile"]          = "Supprimer ce profil",
+    ["Delete"]                  = "Supprimer",
+    ["Delete profile tip"] =
+        "Supprime définitivement le profil choisi au-dessus, après une confirmation. Un "
+        .. "personnage qui l'utilisait repartira sur un profil vierge du même nom.",
+    ["Delete profile confirm"]  = "Supprimer définitivement le profil « %s » ?",
+    ["Profile deleted"]         = "Profil « %s » supprimé.",
+    ["No other profile"]        = "Il n'y a pas encore d'autre profil.",
+    ["Pick a profile first"]    = "Choisissez d'abord un profil au-dessus.",
+    ["No profile picked"]       = "(choisir un profil)",
+    ["New profile name"]        = "Nom du nouveau profil :",
+    ["Profile exists"]          = "Un profil porte déjà ce nom.",
+    ["Profile created"]         = "Profil « %s » créé ; ce personnage l'utilise désormais.",
+    ["Profile duplicated"]      = "Profil actif dupliqué sous « %s ».",
+    ["Profile copied"]          = "Réglages copiés depuis le profil « %s ».",
+    ["Copy profile confirm"] =
+        "Remplacer tous les réglages du profil actif (« %s ») par une copie de « %s » ?",
 
     -- Module Quest
     ["Quest"]                   = "Quête",

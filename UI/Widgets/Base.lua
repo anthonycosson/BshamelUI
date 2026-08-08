@@ -684,3 +684,78 @@ function W.Confirm(message, onAccept)
     }
     StaticPopup_Show(KEY)
 end
+
+--- Boîte à trois issues : deux actions nommées, et l'annulation.
+---
+--- Le client range ses boutons ainsi : le premier valide (`OnAccept`), le
+--- troisième est l'action de côté (`OnAlt`), le deuxième annule. C'est son
+--- vocabulaire, on ne le réinvente pas — un dialogue qui répartirait autrement
+--- se lirait de travers à côté des siens.
+---@param message string
+---@param acceptLabel string
+---@param onAccept fun()
+---@param altLabel string
+---@param onAlt fun()
+function W.Choose(message, acceptLabel, onAccept, altLabel, onAlt)
+    local KEY = "BSHAMELUI_CHOOSE"
+    StaticPopupDialogs[KEY] = {
+        text         = message,
+        button1      = acceptLabel,
+        button3      = altLabel,
+        button2      = L["Cancel"],
+        OnAccept     = onAccept,
+        OnAlt        = onAlt,
+        timeout      = 0,
+        whileDead    = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+    StaticPopup_Show(KEY)
+end
+
+--- Boîte de saisie modale : une question, un champ, deux boutons.
+---
+--- Le texte est remis **débarrassé de ses blancs de bord** ; vide, il n'est pas
+--- remis du tout — l'appelant n'a pas à redécider ce qu'est une réponse nulle.
+---
+--- La zone de saisie se cherche par les deux chemins que le client a connus
+--- (méthode récente, membre historique) : test de capacité, règle 1.
+---@param message string
+---@param acceptLabel string
+---@param onAccept fun(text: string)
+function W.Prompt(message, acceptLabel, onAccept)
+    local KEY = "BSHAMELUI_PROMPT"
+
+    local function editBoxOf(dialog)
+        if dialog.GetEditBox then return dialog:GetEditBox() end
+        return dialog.editBox
+    end
+
+    StaticPopupDialogs[KEY] = {
+        text         = message,
+        button1      = acceptLabel,
+        button2      = L["Cancel"],
+        hasEditBox   = true,
+        maxLetters   = 40,
+        OnAccept     = function(dialog)
+            local box  = editBoxOf(dialog)
+            local text = strtrim(box and box:GetText() or "")
+            if text ~= "" then onAccept(text) end
+        end,
+        -- Entrée vaut le bouton de validation : c'est le geste attendu d'un
+        -- champ unique, et le client ne le fait pas tout seul.
+        EditBoxOnEnterPressed = function(box)
+            local dialog = box:GetParent()
+            local button = dialog.GetButton1 and dialog:GetButton1() or dialog.button1
+            if button then button:Click() end
+        end,
+        EditBoxOnEscapePressed = function(box)
+            box:GetParent():Hide()
+        end,
+        timeout      = 0,
+        whileDead    = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+    StaticPopup_Show(KEY)
+end

@@ -696,3 +696,120 @@ function DB:DeleteProfile(name)
     BshamelUIDB.profiles[name] = nil
     return true
 end
+
+-- =========================================================================
+--  Import / export
+-- =========================================================================
+-- Le profil actif, sous la forme qu'il aurait sur le disque : les défauts en
+-- sont retirés, il ne voyage que ce que le joueur a réellement changé. La
+-- version de schéma part avec — c'est elle qui permet d'importer demain un
+-- code exporté aujourd'hui.
+
+--- Photographie exportable du profil actif.
+---@return table  { schema, modules }
+function DB:ExportProfile()
+    local modules = {}
+
+    for moduleName, settings in pairs(profileTable().modules) do
+        local copy = U.DeepCopy(settings)
+        local defaults = defaultsRegistry[moduleName]
+        if defaults then U.StripDefaults(copy, defaults) end
+        if next(copy) then modules[moduleName] = copy end
+    end
+
+    return { schema = BshamelUIDB.schema or SCHEMA_VERSION, modules = modules }
+end
+
+--- Vérifie qu'un export est importable, sans rien écrire. C'est ce qui permet
+--- de refuser un code **avant** d'avoir posé des questions dessus — demander
+--- « quel profil remplacer ? » pour répondre ensuite « le code était invalide »
+--- ferait porter la question sur rien.
+---@param data any  ce que `U.Deserialize` a rendu
+---@return boolean ok
+---@return string|nil reason  `"invalid"` ou `"newer"` quand `ok` est faux
+function DB:ValidateImport(data)
+    if type(data) ~= "table" or type(data.modules) ~= "table" then
+        return false, "invalid"
+    end
+
+    local schema = tonumber(data.schema)
+    if not schema or schema < 1 then return false, "invalid" end
+    if schema > SCHEMA_VERSION then return false, "newer" end
+
+    return true
+end
+
+--- Remplace les réglages d'un profil par ceux d'un export.
+---
+--- Sans `targetName`, le profil actif est remplacé. Avec, un profil **neuf**
+--- est créé sous ce nom et le personnage y bascule — le nom doit être libre :
+--- écraser un profil existant sous couvert d'en créer un serait le mensonge le
+--- plus cher de la page.
+---
+--- Un export **plus vieux** que le code s'importe : le schéma global est ramené
+--- au sien et les migrations rejouent — chaque palier est idempotent
+--- (`RunMigrations`), repasser sur les autres profils ne leur fait donc rien.
+--- Un export **plus récent** se refuse : on ne devine pas des paliers qui ne
+--- sont pas écrits.
+---@param data any            ce que `U.Deserialize` a rendu
+---@param targetName? string  nom d'un profil à créer, à défaut le profil actif
+---@return boolean ok
+---@return string|nil reason  `"invalid"`, `"newer"` ou `"exists"` quand `ok` est faux
+function DB:ImportProfile(data, targetName)
+    local ok, reason = self:ValidateImport(data)
+    if not ok then return false, reason end
+
+    if targetName ~= nil then
+        if type(targetName) ~= "string" or strtrim(targetName) == "" then
+            return false, "invalid"
+        end
+        targetName = strtrim(targetName)
+        if BshamelUIDB.profiles[targetName] then return false, "exists" end
+
+        BshamelUIDB.profiles[targetName] = { modules = {} }
+        BshamelUICharDB.profile = targetName
+    end
+
+    -- On ne garde que ce qui a la forme d'un réglage de module ; le reste d'un
+    -- code trafiqué est laissé à la porte sans faire échouer l'import.
+    local modules = {}
+    for moduleName, settings in pairs(data.modules) do
+        if type(moduleName) == "string" and type(settings) == "table" then
+            modules[moduleName] = U.DeepCopy(settings)
+        end
+    end
+
+    profileTable().modules = modules
+
+    local schema = tonumber(data.schema)
+    if schema < (BshamelUIDB.schema or SCHEMA_VERSION) then
+        BshamelUIDB.schema = schema
+        self:RunMigrations()
+    end
+
+    applyAllDefaults()
+
+    -- Le même message qu'un changement de profil : c'est exactement ce qui
+    -- vient d'arriver aux modules, et le core sait déjà rejouer leur état.
+    BUI:SendMessage(BUI.MESSAGES.PROFILE_CHANGED, profileName())
+    return true
+end
+
+--- Remplace les réglages du profil **actif** par une copie d'un autre profil.
+--- L'inverse de `CopyProfileTo` : là-bas l'actif est la source et la
+--- destination doit être neuve, ici il est la destination et la source doit
+--- exister.
+---@param name string  profil source
+---@return boolean copied
+function DB:CopyProfileFrom(name)
+    if type(name) ~= "string" or name == "" then return false end
+    if name == profileName() then return false end
+
+    local source = BshamelUIDB.profiles[name]
+    if not source then return false end
+
+    profileTable().modules = U.DeepCopy(source.modules or {})
+    applyAllDefaults()
+    BUI:SendMessage(BUI.MESSAGES.PROFILE_CHANGED, profileName())
+    return true
+end

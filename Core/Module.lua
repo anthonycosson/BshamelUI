@@ -43,6 +43,11 @@ BUI.CATEGORIES = {
     -- toucherait cinq modules pour changer un intitulé.
     { key = "MythicRaid", label = "Tools" },
 
+    -- Les réglages **des réglages** : profils, sauvegarde, partage. Rien ici ne
+    -- touche au jeu — la catégorie porte donc le nom du geste, pas d'une page :
+    -- aucune catégorie ne porte le nom d'un de ses modules (voir plus haut).
+    { key = "Sharing",    label = "Import / export" },
+
     -- En dernier, et c'est sa place : on ne descend pas jusqu'ici en cherchant
     -- un réglage, on y descend en ayant fini de chercher. Ce qui s'y range ne
     -- rend rien plus lisible ni plus rapide — c'est le seul endroit de l'addon

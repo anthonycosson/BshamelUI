@@ -195,6 +195,212 @@ function U.Debounce(delay, fn)
 end
 
 -- =========================================================================
+--  Sérialisation
+-- =========================================================================
+-- Le format texte de l'export de configuration. Maison, parce que l'addon n'a
+-- pas de dépendance et n'en prend pas pour quatre fonctions ; et **jamais**
+-- relu par `loadstring` : un code collé par un joueur est une entrée qu'on
+-- analyse, pas un programme qu'on exécute.
+--
+-- Quatre types, qui sont tout ce qu'un réglage sait être :
+--     vrai / faux    T  /  F
+--     nombre         N<valeur>;         (`%.17g` : un double s'y relit exact)
+--     chaîne         S<longueur>:<octets>
+--     table          { clé valeur clé valeur ... }
+--
+-- Tout écart au format rend `nil`, jamais une table à moitié lue : un code
+-- tronqué au collage doit échouer franchement, pas importer un demi-profil.
+
+--- Profondeur de table au-delà de laquelle on refuse, dans les deux sens. Les
+--- réglages tiennent en trois niveaux (module → clé → couleur) ; dix protège
+--- l'analyse d'un code fabriqué pour la faire déborder.
+local MAX_DEPTH = 10
+
+---@param value any
+---@param out string[]
+---@param depth number
+---@return boolean ok
+local function serializeInto(value, out, depth)
+    local kind = type(value)
+
+    if kind == "boolean" then
+        out[#out + 1] = value and "T" or "F"
+        return true
+    end
+
+    if kind == "number" then
+        -- NaN et infinis ne se relisent pas par `tonumber` : on refuse à
+        -- l'écriture plutôt que d'échouer au collage, chez quelqu'un d'autre.
+        if value ~= value or value == math.huge or value == -math.huge then
+            return false
+        end
+        out[#out + 1] = string.format("N%.17g;", value)
+        return true
+    end
+
+    if kind == "string" then
+        out[#out + 1] = "S" .. #value .. ":" .. value
+        return true
+    end
+
+    if kind == "table" then
+        if depth >= MAX_DEPTH then return false end
+        out[#out + 1] = "{"
+        for k, v in pairs(value) do
+            if not serializeInto(k, out, depth + 1) then return false end
+            if not serializeInto(v, out, depth + 1) then return false end
+        end
+        out[#out + 1] = "}"
+        return true
+    end
+
+    -- Fonction, frame, userdata : rien de tout cela n'est un réglage.
+    return false
+end
+
+--- Sérialise une valeur. `nil` si elle contient quelque chose qui ne se
+--- sérialise pas — l'appelant renonce alors en entier.
+---@param value any
+---@return string|nil
+function U.Serialize(value)
+    local out = {}
+    if not serializeInto(value, out, 0) then return nil end
+    return table.concat(out)
+end
+
+--- Lit une valeur à partir de `pos`. Rend la valeur et la position qui suit,
+--- ou pas de position du tout en cas d'écart au format — c'est elle qui dit
+--- l'échec, une valeur lue pouvant légitimement être `false`.
+---@param text string
+---@param pos number
+---@param depth number
+---@return any value, number|nil next
+local function parseValue(text, pos, depth)
+    local c = text:sub(pos, pos)
+
+    if c == "T" then return true, pos + 1 end
+    if c == "F" then return false, pos + 1 end
+
+    if c == "N" then
+        local repr, rest = text:match("^([^;]+);()", pos + 1)
+        local number = repr and tonumber(repr)
+        if not number then return nil, nil end
+        return number, rest
+    end
+
+    if c == "S" then
+        local len, rest = text:match("^(%d+):()", pos + 1)
+        if not len then return nil, nil end
+        local finish = rest + tonumber(len) - 1
+        if finish > #text then return nil, nil end
+        return text:sub(rest, finish), finish + 1
+    end
+
+    if c == "{" then
+        if depth >= MAX_DEPTH then return nil, nil end
+        local result = {}
+        local cursor = pos + 1
+        while true do
+            if cursor > #text then return nil, nil end
+            if text:sub(cursor, cursor) == "}" then return result, cursor + 1 end
+
+            local key, afterKey = parseValue(text, cursor, depth + 1)
+            if not afterKey or key == nil then return nil, nil end
+            local val, afterValue = parseValue(text, afterKey, depth + 1)
+            if not afterValue or val == nil then return nil, nil end
+
+            result[key] = val
+            cursor = afterValue
+        end
+    end
+
+    return nil, nil
+end
+
+--- Relit ce que `U.Serialize` a écrit. `nil` sur tout écart au format, y
+--- compris du texte en trop après la valeur — un code recollé deux fois n'est
+--- pas un code valide.
+---@param text string
+---@return any|nil
+function U.Deserialize(text)
+    if type(text) ~= "string" or text == "" then return nil end
+
+    local value, pos = parseValue(text, 1, 0)
+    if not pos or pos ~= #text + 1 then return nil end
+    return value
+end
+
+-- =========================================================================
+--  Encodage en texte portable
+-- =========================================================================
+-- Base64 classique. Le sérialisé transporte des chaînes arbitraires ; encodé,
+-- le code ne contient plus que des lettres, des chiffres, `+ / =` — rien que le
+-- chat, un site ou une zone de saisie puisse abîmer ou interpréter (`|`).
+
+local B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+local b64Char, b64Code = {}, {}
+for i = 1, 64 do
+    local char = B64:sub(i, i)
+    b64Char[i - 1] = char
+    b64Code[char]  = i - 1
+end
+
+--- Le client embarque une bibliothèque `bit`, mais l'arithmétique suffit ici :
+--- l'encodage ne court que sur un clic de bouton, jamais dans un chemin chaud.
+---@param text string
+---@return string
+function U.Encode(text)
+    local out = {}
+    for i = 1, #text, 3 do
+        local a, b, c = text:byte(i, i + 2)
+        local n = a * 65536 + (b or 0) * 256 + (c or 0)
+
+        out[#out + 1] = b64Char[math.floor(n / 262144) % 64]
+        out[#out + 1] = b64Char[math.floor(n / 4096) % 64]
+        out[#out + 1] = b and b64Char[math.floor(n / 64) % 64] or "="
+        out[#out + 1] = c and b64Char[n % 64] or "="
+    end
+    return table.concat(out)
+end
+
+--- Décode. `nil` sur tout caractère étranger ou toute longueur boiteuse : un
+--- code abîmé doit échouer ici, pas produire un sérialisé faux.
+--- Les blancs sont retirés d'abord — ce qui a transité par un chat ou un site
+--- revient souvent replié en plusieurs lignes.
+---@param text string
+---@return string|nil
+function U.Decode(text)
+    if type(text) ~= "string" then return nil end
+    text = text:gsub("%s+", "")
+    if text == "" or #text % 4 ~= 0 then return nil end
+
+    local out = {}
+    for i = 1, #text, 4 do
+        local q1, q2, q3, q4 = text:sub(i, i), text:sub(i + 1, i + 1),
+                               text:sub(i + 2, i + 2), text:sub(i + 3, i + 3)
+
+        local c1, c2 = b64Code[q1], b64Code[q2]
+        if not (c1 and c2) then return nil end
+
+        -- Le remplissage n'existe qu'en fin de code, et `=` suivi d'autre
+        -- chose que `=` n'existe pas du tout.
+        local pad3, pad4 = q3 == "=", q4 == "="
+        if (pad3 or pad4) and i + 3 ~= #text then return nil end
+        if pad3 and not pad4 then return nil end
+
+        local c3 = pad3 and 0 or b64Code[q3]
+        local c4 = pad4 and 0 or b64Code[q4]
+        if not (c3 and c4) then return nil end
+
+        local n = c1 * 262144 + c2 * 4096 + c3 * 64 + c4
+        out[#out + 1] = string.char(math.floor(n / 65536) % 256)
+        if not pad3 then out[#out + 1] = string.char(math.floor(n / 256) % 256) end
+        if not pad4 then out[#out + 1] = string.char(n % 256) end
+    end
+    return table.concat(out)
+end
+
+-- =========================================================================
 --  Réglages du client
 -- =========================================================================
 

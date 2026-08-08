@@ -71,6 +71,77 @@ BUI:RegisterLocale("enUS", {
     -- Module General
     ["General"]                        = "General",
 
+    -- Catégorie « Import / export » et sa page Profiles
+    ["Import / export"]         = "Import / export",
+    ["Backup and sharing"]      = "Backup and sharing",
+    ["Export settings"]         = "Export settings",
+    ["Export"]                  = "Export",
+    ["Export settings tip"] =
+        "Opens a window holding a text code of every setting of the current profile. "
+        .. "Copy it to keep a backup, move it to another account, or share it.",
+    ["Export copy hint"]        = "The code is selected: Ctrl+C copies it. Escape closes.",
+    ["Export failed"]           = "Export failed: a setting could not be written out.",
+    ["Import settings"]         = "Import settings",
+    ["Import"]                  = "Import",
+    ["Import settings tip"] =
+        "Paste a code exported from Bshamel UI, then apply it: you choose whether it "
+        .. "replaces the current profile or goes into a brand-new one.",
+    ["Import paste hint"]       = "Ctrl+V pastes. Escape closes.",
+    ["Apply"]                   = "Apply",
+    ["Import invalid"]          = "This code is not a valid Bshamel UI export.",
+    ["Import newer"] =
+        "This code comes from a newer version of Bshamel UI: update the addon, then import again.",
+    ["Import destination"] =
+        "Where should the imported settings go? The current profile would be replaced; "
+        .. "a new profile leaves everything else untouched.",
+    ["Current profile"]         = "Current profile",
+    ["New profile"]             = "New profile",
+    ["Import applied"]          = "Settings imported.",
+    ["Import applied to new"]   = "Settings imported into the new profile '%s'.",
+
+    -- Module Profiles
+    ["Profiles"]                = "Profiles",
+    ["Active profile"]          = "Active profile",
+    ["Active profile tip"] =
+        "The settings profile this character uses. Each character picks its own profile; "
+        .. "several characters can share one.",
+    -- Le libellé du bouton de création réutilise la clé `Create` existante.
+    ["Create blank profile"]    = "Create a blank profile",
+    ["Create blank profile tip"] =
+        "Creates a profile where every setting is back to its default, and switches "
+        .. "this character to it.",
+    ["Duplicate profile"]       = "Duplicate the active profile",
+    ["Duplicate"]               = "Duplicate",
+    ["Duplicate profile tip"] =
+        "Saves a copy of the active profile under a new name. This character keeps "
+        .. "using the current one.",
+    ["Other profiles"]          = "Other profiles",
+    ["Other profile"]           = "Other profile",
+    ["Other profile tip"] =
+        "Pick the profile the two actions below act on.",
+    ["Copy into active"]        = "Replace the active profile",
+    -- Pas la clé `Copy` : elle existe déjà avec un autre sens (« Copie »).
+    ["Copy profile"]            = "Copy",
+    ["Copy into active tip"] =
+        "Replaces every setting of the active profile with a copy of the profile "
+        .. "picked above, after a confirmation.",
+    ["Delete profile"]          = "Delete this profile",
+    ["Delete"]                  = "Delete",
+    ["Delete profile tip"] =
+        "Permanently deletes the profile picked above, after a confirmation. A character "
+        .. "that was using it will start over on a blank profile with the same name.",
+    ["Delete profile confirm"]  = "Permanently delete profile '%s'?",
+    ["Profile deleted"]         = "Profile '%s' deleted.",
+    ["No other profile"]        = "There is no other profile yet.",
+    ["Pick a profile first"]    = "Pick a profile above first.",
+    ["No profile picked"]       = "(pick a profile)",
+    ["New profile name"]        = "Name of the new profile:",
+    ["Profile exists"]          = "A profile with that name already exists.",
+    ["Profile created"]         = "Profile '%s' created; this character now uses it.",
+    ["Profile duplicated"]      = "Active profile duplicated as '%s'.",
+    ["Profile copied"]          = "Settings copied from profile '%s'.",
+    ["Copy profile confirm"] =
+        "Replace every setting of the active profile ('%s') with a copy of '%s'?",
     -- Module DarkMode
     ["Enable dark mode"]               = "Enable dark mode",
     ["What it darkens"]                = "What it darkens",

@@ -11,6 +11,29 @@
   Cliquer un résultat ouvre la page, descend jusqu'à la ligne et l'éclaire une
   seconde et demie — le temps de la retrouver des yeux. Échap, ou effacer la
   saisie, rend la colonne telle qu'elle était.
+- **Une catégorie « Import / export », et sa page « Profils ».** Les réglages
+  des réglages ont désormais leur étage dans la colonne, entre « Outils » et
+  « Inutile mais indispensable ».
+
+  Le haut de la page montre ce que la base savait déjà faire sans jamais le
+  proposer : chaque personnage choisit son profil de réglages dans un menu —
+  plusieurs personnages peuvent partager le même —, on crée un profil vierge,
+  on duplique le profil actif sous un autre nom, et sur n'importe quel autre
+  profil, deux gestes avec confirmation : le recopier dans le profil actif, ou
+  le supprimer. Le profil actif, lui, ne se supprime pas — un personnage a
+  toujours un profil sous les pieds.
+
+  Le bas, « Sauvegarde et partage », exporte et importe. L'export ouvre une
+  fenêtre contenant un code texte de tous les réglages du profil courant, déjà
+  sélectionné : Ctrl+C, et on l'emporte — sauvegarde, autre compte, ou
+  camarade. À l'import, on colle le code puis on choisit sa destination :
+  remplacer le profil courant, ou créer un profil neuf qui le reçoit sans rien
+  toucher d'autre. Dans les deux cas chaque module rejoue son état sans
+  `/reload`. Le code embarque la version des réglages : un export d'hier
+  s'importe demain, les migrations le rattrapent ; un export d'une version plus
+  récente que l'addon installé est refusé en le disant, plutôt qu'importé de
+  travers. Seuls voyagent les réglages réellement changés — jamais les défauts,
+  jamais l'historique de chat.
 
 ## 1.0.3 — 2026-08-07
 
