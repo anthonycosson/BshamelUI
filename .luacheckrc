@@ -253,6 +253,13 @@ read_globals = {
     -- Fenêtre de demande de rôles, du nom récent au plus ancien : c'est un test
     -- de capacité, les deux ne coexistent jamais.
     "LFGRoleCheckPopup", "LFDRoleCheckPopup",
+    -- Le panneau de filtres : la fenêtre du client, sa moitié de recherche
+    -- personnalisée, et les intitulés localisés qu'on lui emprunte.
+    "PVEFrame", "LFGListFrame",
+    "LFGListSearchPanel_UpdateResultList", "LFGListSearchPanel_UpdateResults",
+    "LFGListSearchPanel_SetCategory", "LFGListSearchPanel_DoSearch",
+    "PLAYER_DIFFICULTY1", "PLAYER_DIFFICULTY2", "PLAYER_DIFFICULTY6",
+    "PLAYER_DIFFICULTY_MYTHIC_PLUS", "DUNGEONS", "RAIDS",
 
     -- Instances
     "GetInstanceInfo",

@@ -785,9 +785,8 @@ local seenGroups  = {}
 local groupOrder  = {}
 local listEntries = {}
 
----@param mod table
 ---@param ctx string
-local function rebuildListEntries(mod, ctx)
+local function rebuildListEntries(ctx)
     if not panel then return end
 
     wipe(seenGroups)
@@ -917,7 +916,7 @@ local function updatePanel(mod)
 
     panel:ShowPage(ctx, function() return buildDescriptors(ctx) end)
     panel:Show()
-    rebuildListEntries(mod, ctx)
+    rebuildListEntries(ctx)
 end
 
 -- =========================================================================
@@ -945,7 +944,7 @@ local function onResultList(sp)
 
     local ctx = contextOf(currentCategory)
     if ctx and panel and panel:IsShown() then
-        rebuildListEntries(mod, ctx)
+        rebuildListEntries(ctx)
     end
 end
 

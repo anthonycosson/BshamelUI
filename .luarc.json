@@ -114,6 +114,11 @@
     "C_LFGList", "LFGListApplicationDialog", "CompleteLFGRoleCheck",
     "LFGRoleCheckPopup", "LFDRoleCheckPopup",
     "AcceptGroup", "StaticPopup_Hide",
+    "PVEFrame", "LFGListFrame",
+    "LFGListSearchPanel_UpdateResultList", "LFGListSearchPanel_UpdateResults",
+    "LFGListSearchPanel_SetCategory", "LFGListSearchPanel_DoSearch",
+    "PLAYER_DIFFICULTY1", "PLAYER_DIFFICULTY2", "PLAYER_DIFFICULTY6",
+    "PLAYER_DIFFICULTY_MYTHIC_PLUS", "DUNGEONS", "RAIDS",
 
     "GetInstanceInfo",
 

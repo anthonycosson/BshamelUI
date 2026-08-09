@@ -2,8 +2,6 @@
 
 ## Non publié
 
-## 1.0.7 — 2026-08-09
-
 ### Ajouté
 - **Un panneau de filtres sur la recherche de groupe personnalisée.** Une case
   de plus dans la page « Recherche de groupe » : le panneau s'ancre à droite
