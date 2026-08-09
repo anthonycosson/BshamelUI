@@ -94,6 +94,7 @@ UI\Config\ConfigFrame.lua
 # Modules
 Modules\General.lua
 Modules\Profiles.lua
+Modules\GameSettings.lua
 Modules\DarkMode.lua
 Modules\Character.lua
 Modules\ActionBars.lua

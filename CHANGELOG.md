@@ -2,6 +2,16 @@
 
 ## Non publié
 
+### Ajouté
+- **Une page « Réglages du jeu » dans Import / export.** Un personnage neuf
+  n'a plus à tout refaire : sur le personnage déjà réglé, un bouton relève
+  les options du jeu propres au personnage — tout ce qui a été changé dans
+  les réglages de Blizzard, cases des barres d'action comprises — et une
+  case optionnelle tient ce relevé à jour à chaque déconnexion. Sur le
+  nouveau venu, on choisit le personnage source et on applique, après
+  confirmation. Les réglages de compte ne sont pas touchés (ils voyagent
+  déjà tout seuls), et une option disparue depuis le relevé ne s'écrit pas.
+
 ## 1.0.9 — 2026-08-10
 
 ### Ajouté

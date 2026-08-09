@@ -652,6 +652,26 @@ function DB:CharData(moduleName)
     return data[moduleName]
 end
 
+--- Le pendant **au compte** de `CharData` : une donnée que tous les
+--- personnages doivent voir — le relevé des réglages du jeu d'un personnage,
+--- fait précisément pour être lu depuis un autre.
+---
+--- Hors profils, et c'est le point : un profil est un jeu de réglages qui se
+--- bascule, se copie, s'exporte ; ces données-là ne suivent aucun de ces
+--- gestes. Elles survivent donc aux bascules de profil, et l'export d'un
+--- profil ne les embarque pas. Mêmes règles que `CharData` pour le reste :
+--- pas de défauts, pas de message, écriture directe par référence.
+---@param moduleName string
+---@return table
+function DB:AccountData(moduleName)
+    BshamelUIDB = BshamelUIDB or {}
+    BshamelUIDB.moduleData = BshamelUIDB.moduleData or {}
+
+    local data = BshamelUIDB.moduleData
+    if not data[moduleName] then data[moduleName] = {} end
+    return data[moduleName]
+end
+
 -- =========================================================================
 --  Profils
 -- =========================================================================

@@ -121,6 +121,41 @@ BUI:RegisterLocale("frFR", {
     ["Copy profile confirm"] =
         "Remplacer tous les réglages du profil actif (« %s ») par une copie de « %s » ?",
 
+    -- Module GameSettings
+    ["Game settings"]           = "Réglages du jeu",
+    ["Snapshot"]                = "Relevé",
+    ["Record game settings"]    = "Relever les réglages de ce personnage",
+    ["Record"]                  = "Relever",
+    ["Record game settings tip"] =
+        "Photographie les options du jeu propres à ce personnage — tout ce que vous "
+        .. "avez changé dans ses réglages, cases des barres d'action comprises. Le "
+        .. "relevé est visible de tous les personnages : un petit nouveau peut l'importer.",
+    ["Auto snapshot"]           = "Tenir le relevé à jour à la déconnexion",
+    ["Auto snapshot tip"] =
+        "Reprend le relevé de ce personnage à chaque déconnexion, pour que ce qu'on "
+        .. "importe ailleurs ne soit jamais périmé.",
+    ["Snapshot refused"]        = "Le jeu a refusé de lister ses réglages ; rien n'a été relevé.",
+    ["Snapshot taken"] =
+        "Réglages du jeu relevés : %d réglages écartés des défauts du jeu, "
+        .. "plus les cases des barres d'action.",
+    ["Source character"]        = "Personnage source",
+    ["Source character tip"] =
+        "Le personnage dont les réglages seront appliqués par les boutons du dessous. "
+        .. "La date dit quand son relevé a été pris.",
+    ["No snapshot yet"]         = "Aucun autre personnage n'a encore été relevé.",
+    ["No snapshot picked"]      = "(choisir un personnage)",
+    ["Pick a snapshot first"]   = "Choisissez d'abord un personnage au-dessus.",
+    ["Apply snapshot"]          = "Appliquer à ce personnage",
+    ["Apply snapshot tip"] =
+        "Écrit les réglages du jeu relevés sur ce personnage, après confirmation. "
+        .. "Certains ne se voient qu'après un /reload.",
+    ["Apply snapshot confirm"] =
+        "Appliquer à ce personnage les réglages du jeu relevés sur « %s » ?",
+    ["Snapshot applied"]        = "%d réglages du jeu appliqués depuis « %s ». Certains ne se voient qu'après un /reload.",
+    ["Delete snapshot"]         = "Supprimer ce relevé",
+    ["Delete snapshot tip"]     = "Retire de la liste le relevé du personnage choisi.",
+    ["Delete snapshot confirm"] = "Supprimer le relevé de « %s » ?",
+
     -- Module Quest
     ["Quest"]                   = "Quête",
     ["Automation"]              = "Automatisation",

@@ -121,6 +121,8 @@
     "PLAYER_DIFFICULTY_MYTHIC_PLUS", "DUNGEONS", "RAIDS",
 
     "GetInstanceInfo",
+    "SettingsPanel", "GetActionBarToggles", "SetActionBarToggles",
+    "UnitFullName", "GetRealmName",
 
     "C_ChatInfo", "DoEmote"
   ],

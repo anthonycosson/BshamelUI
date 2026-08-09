@@ -144,6 +144,41 @@ BUI:RegisterLocale("enUS", {
     ["Profile copied"]          = "Settings copied from profile '%s'.",
     ["Copy profile confirm"] =
         "Replace every setting of the active profile ('%s') with a copy of '%s'?",
+
+    -- Module GameSettings
+    ["Game settings"]           = "Game settings",
+    ["Snapshot"]                = "Snapshot",
+    ["Record game settings"]    = "Record this character's game settings",
+    ["Record"]                  = "Record",
+    ["Record game settings tip"] =
+        "Photographs the game options stored per character — everything you changed in "
+        .. "the game's own settings, action bar checkboxes included. The snapshot is "
+        .. "visible from every character, so a fresh one can import it.",
+    ["Auto snapshot"]           = "Keep the snapshot fresh on logout",
+    ["Auto snapshot tip"] =
+        "Retakes this character's snapshot every time it logs out, so what you import "
+        .. "elsewhere is never stale.",
+    ["Snapshot refused"]        = "The game refused to list its settings; nothing was recorded.",
+    ["Snapshot taken"] =
+        "Game settings recorded: %d settings differing from the game's defaults, "
+        .. "plus the action bar checkboxes.",
+    ["Source character"]        = "Source character",
+    ["Source character tip"] =
+        "Pick the character whose game settings the buttons below act on. The date says "
+        .. "when its snapshot was taken.",
+    ["No snapshot yet"]         = "No other character has been recorded yet.",
+    ["No snapshot picked"]      = "(pick a character)",
+    ["Pick a snapshot first"]   = "Pick a character above first.",
+    ["Apply snapshot"]          = "Apply to this character",
+    ["Apply snapshot tip"] =
+        "Writes the recorded game settings onto this character, after a confirmation. "
+        .. "Some settings only show after a /reload.",
+    ["Apply snapshot confirm"] =
+        "Apply the game settings recorded on '%s' to this character?",
+    ["Snapshot applied"]        = "%d game settings applied from '%s'. Some only show after a /reload.",
+    ["Delete snapshot"]         = "Delete this snapshot",
+    ["Delete snapshot tip"]     = "Removes the picked character's snapshot from the list.",
+    ["Delete snapshot confirm"] = "Delete the snapshot of '%s'?",
     -- Module DarkMode
     ["Enable dark mode"]               = "Enable dark mode",
     ["What it darkens"]                = "What it darkens",

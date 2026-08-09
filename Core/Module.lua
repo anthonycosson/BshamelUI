@@ -95,6 +95,14 @@ function ModuleMixin:CharData()
     return BUI.DB:CharData(self.name)
 end
 
+--- Le même espace, **au compte** : pour la donnée que tous les personnages
+--- doivent voir (voir `DB:AccountData`, qui explique pourquoi elle vit hors
+--- des profils).
+---@return table
+function ModuleMixin:AccountData()
+    return BUI.DB:AccountData(self.name)
+end
+
 --- Abonnement à un événement du client, révoqué automatiquement à la
 --- désactivation du module.
 ---@param event string

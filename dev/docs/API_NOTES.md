@@ -4333,3 +4333,51 @@ Le panneau de filtres employait douze globales de la recherche de groupe
 les deux fichiers s'accordent, pas qu'ils soient complets. Le tag mort reste
 (motif `v*` protégé, suppression refusée) : on corrige et on publie le numéro
 suivant, c'est le protocole normal.
+
+---
+
+## Énumérer les CVars : la porte console est morte
+
+**Symptôme** — le relevé des réglages du jeu répond « le jeu a refusé de
+lister ses réglages ». `C_Console` vaut `nil` pour un addon sur ce client.
+
+**Cause** — Blizzard a retiré le namespace `C_Console` (et
+`ConsoleGetAllCommands`) de l'environnement des addons. C'est la raison pour
+laquelle les addons d'options embarquent aujourd'hui des listes de CVars
+maintenues à la main — la seule énumération générale a disparu.
+
+**Ce qu'on sait** — `C_CVar.GetCVarInfo(name)` fonctionne toujours, nom par
+nom, et sa signature est vérifiée en jeu (12.x) :
+
+    value, defaultValue, isStoredServerAccount, isStoredServerCharacter,
+    isLockedFromUser, …, … = C_CVar.GetCVarInfo("autoLootDefault")
+    -- « 1 », « 0 », false, true, false, false, false
+
+**Ce qu'on fait** — énumérer par le **registre du panneau Options**
+(`Settings`), qui connaît ses propres réglages et leurs variables : voir
+l'entrée suivante pour les méthodes retenues.
+
+---
+
+## Énumérer les CVars, la porte restée ouverte : le registre du panneau
+
+**Le chemin** (vérifié en jeu, 12.x) — le panneau Options connaît ses propres
+réglages :
+
+    SettingsPanel:GetAllCategories()          -> catégories
+    category:GetSubcategories()               -> sous-catégories
+    SettingsPanel:GetLayout(category)         -> mise en page
+    layout:GetInitializers()                  -> lignes
+    initializer:GetSetting() ou .data.setting -> réglage
+    setting:GetVariable()                     -> nom de variable
+
+Un réglage adossé à une CVar porte **le nom de la CVar** comme variable ;
+`C_CVar.GetCVarInfo(variable)` répond alors, et son quatrième retour dit si
+elle est stockée par personnage. Un réglage « relais » (les cases de barres
+d'action, entre autres) porte une variable `PROXY_…` que `GetCVarInfo` ne
+connaît pas : il s'écarte tout seul, et les barres d'action se relèvent
+nommément par `GetActionBarToggles`/`SetActionBarToggles`.
+
+**Le piège de la sonde** — la ligne de chat tronque à 255 caractères : un
+`/dump` trop long part amputé et lève une erreur de syntaxe qui ressemble à
+un refus de l'API. Les sondes se font courtes, ou par étapes.

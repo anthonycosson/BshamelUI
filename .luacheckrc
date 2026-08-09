@@ -264,6 +264,13 @@ read_globals = {
     -- Instances
     "GetInstanceInfo",
 
+    -- Réglages du jeu : le registre du panneau Options (la seule énumération
+    -- de CVars restée aux addons, `C_Console` a disparu — voir API_NOTES),
+    -- les cases de barres d'action (leur propre paire d'API, pas une CVar),
+    -- et l'identité du personnage.
+    "SettingsPanel", "GetActionBarToggles", "SetActionBarToggles",
+    "UnitFullName", "GetRealmName",
+
     -- Emotes. Les deux chemins pour en jouer un, du plus récent au plus ancien :
     -- c'est un test de capacité, on prend celui que le client publie.
     "C_ChatInfo", "DoEmote",
