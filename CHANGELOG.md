@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.5 — 2026-08-09
+
 ### Corrigé
 - **« Couleurs de classe (PvP) » s'effaçait hors des instances.** La case coche
   bien le réglage du jeu, et le jeu peignait bien la barre — mais le module des
