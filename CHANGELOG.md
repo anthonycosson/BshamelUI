@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.9 — 2026-08-10
+
 ### Ajouté
 - **Le mode sombre atteint les barres d'infos.** Une ligne de plus dans « Ce
   qu'il assombrit » : le cadre autour de chaque plaque — contours de la barre
