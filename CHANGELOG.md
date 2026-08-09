@@ -2,6 +2,16 @@
 
 ## Non publié
 
+### Corrigé
+- **« Couleurs de classe (PvP) » s'effaçait hors des instances.** La case coche
+  bien le réglage du jeu, et le jeu peignait bien la barre — mais le module des
+  barres d'infos repassait derrière lui à chaque battement avec la couleur
+  d'hostilité, un rouge uni, partout où elle est lisible : en extérieur et en
+  champ de bataille. L'arène y échappait, la réponse y étant secrète. Un joueur
+  ne se repeint plus jamais : sa barre appartient au jeu, couleurs de classe
+  comprises — la menace et le classement par nature restent réservés aux PNJ,
+  ce qu'ils étaient déjà.
+
 ## 1.0.4 — 2026-08-08
 
 ### Ajouté

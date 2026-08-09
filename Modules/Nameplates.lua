@@ -2151,6 +2151,16 @@ end
 ---@param unit string
 ---@return number? r, number? g, number? b
 local function healthColor(mod, unit)
+    -- **Un joueur ne se repeint pas, jamais.** Sa barre appartient au client —
+    -- couleurs de classe demandées par les CVars de la page, réaction, gris
+    -- d'une unité morte — et il vient de la poser quand ce hook nous rend la
+    -- main : tout ce qu'on écrirait la recouvrirait. C'est arrivé : le repli en
+    -- bas de fonction posait `UnitSelectionColor` — l'hostilité, un rouge uni,
+    -- pas la classe — et effaçait la couleur de classe partout où la réponse
+    -- est lisible, c'est-à-dire hors instance. Un refus de répondre compte pour
+    -- un joueur (`isPlayerUnit`) : l'arène est couverte par construction.
+    if isPlayerUnit(unit) then return nil end
+
     -- La menace ne parle que pour alerter — bascule en cours ou aggro changée
     -- de mains — et l'alerte prime sur tout. Conforme, elle se tait : la nature
     -- du PNJ colore la barre.
@@ -2162,12 +2172,10 @@ local function healthColor(mod, unit)
         end
     end
 
-    -- Le classement par nature ne vaut que pour les PNJ, et **un refus de
-    -- répondre compte comme un joueur** (voir `isPlayerUnit`) : c'est ce qui
-    -- tenait les plaques d'arène hors des couleurs de rareté. Les couleurs de
-    -- classe des joueurs, elles, ne passent plus par ici — trois CVars du
-    -- client les peignent, partout, et on ne repeint pas par-dessus lui.
-    if LIVE.colors and not isPlayerUnit(unit) and npcColorsActive(mod) then
+    -- Le classement par nature ne vaut que pour les PNJ — les joueurs sont
+    -- sortis dès la première ligne, refus de répondre compris, ce qui tenait
+    -- déjà les plaques d'arène hors des couleurs de rareté.
+    if LIVE.colors and npcColorsActive(mod) then
         local key = NPC_COLOR_KEY[classify(unit) or ""]
         if key then
             local r, g, b = rgbOf(mod:Get(key))
@@ -2175,9 +2183,11 @@ local function healthColor(mod, unit)
         end
     end
 
-    -- La couleur du client, demandée au client : c'est exactement celle qu'il
-    -- poserait, réaction comprise, et elle suit ses propres réglages de couleurs
-    -- de classe sans qu'on ait à les relire.
+    -- La couleur du client, demandée au client : sur un PNJ, c'est exactement
+    -- celle qu'il poserait, réaction comprise. Un joueur ne descend jamais
+    -- jusqu'ici — `UnitSelectionColor` rend l'**hostilité**, pas la classe, et
+    -- ce repli a effacé des couleurs de classe pour l'avoir cru (voir la garde
+    -- en tête, et la note ancienne d'`API_NOTES.md` qui le disait déjà).
     if type(UnitSelectionColor) == "function" then
         local r, g, b = UnitSelectionColor(unit, true)
         if type(r) == "number" and not U.IsSecret(r) then return r, g, b end
