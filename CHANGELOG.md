@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.10 — 2026-08-10
+
 ### Ajouté
 - **Une page « Réglages du jeu » dans Import / export.** Un personnage neuf
   n'a plus à tout refaire : sur le personnage déjà réglé, un bouton relève
