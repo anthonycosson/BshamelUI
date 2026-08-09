@@ -15,6 +15,14 @@
   une option disparue depuis le relevé ne s'écrit pas.
 
 ### Corrigé
+- **Les cases à bits des barres d'infos se décochaient à la reconnexion.**
+  Les catégories d'auras des PNJ adverses, joueurs adverses et joueurs
+  alliés — et leurs voisines : barres simplifiées, affichage d'infos, barre
+  de sorts, menace — sont des champs de bits cachés que ce client ne
+  persiste pas d'une session à l'autre, comme le « nom seul des alliés »
+  avant elles. Chaque clic est désormais retenu par personnage et rejoué à
+  la connexion : le jeu peut oublier, plus la page. Rien n'est rejoué tant
+  qu'on n'a rien cliqué.
 - **Les longues notes des pages d'options se coupaient aux points de
   suspension.** Les alertes rouges de la page des barres d'infos, entre
   autres, perdaient leur fin : le texte se mesurait avant que sa largeur ne

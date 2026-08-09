@@ -574,11 +574,43 @@ local STYLE_LABELS = {
     Legacy      = L["Style legacy"],
 }
 
---- Un champ de bits se lit et s'écrit par index, pas comme un nombre.
+--- Les champs de bits que la page pilote, remplis par `bitfieldGroup` au fil
+--- de la construction. Le moteur les relit pour **rejouer** les bits
+--- enregistrés : le client oublie ses champs cachés à la reconnexion — les
+--- catégories d'auras des trois familles se décochaient toutes seules, comme
+--- le « nom seul des alliés » avant elles.
+local BITFIELDS = {}
+
+--- Enregistre le choix du joueur sur un bit, **par personnage** — ce sont des
+--- réglages que le client range par personnage, la mémoire suit son rayon.
+--- L'enregistrement se fait par **nom de catégorie**, jamais par index : une
+--- énumération peut se renuméroter, un nom se retrouve (règle 1).
+---@param cvar string
+---@param memberName string
+---@param value boolean
+local function rememberBit(cvar, memberName, value)
+    local mod = module()
+    if not mod then return end
+
+    local data = mod:CharData()
+    data.clientBits = data.clientBits or {}
+
+    local bits = data.clientBits[cvar]
+    if not bits then
+        bits = {}
+        data.clientBits[cvar] = bits
+    end
+    bits[memberName] = value and true or false
+end
+
+--- Un champ de bits se lit et s'écrit par index, pas comme un nombre. Chaque
+--- écriture du joueur est retenue (`rememberBit`) : le moteur la reposera à
+--- chaque connexion, parce que le client, lui, ne s'en souvient pas.
 ---@param cvar string
 ---@param index number
+---@param memberName string
 ---@return fun(): boolean get, fun(value: boolean) set
-local function bitfieldToggle(cvar, index)
+local function bitfieldToggle(cvar, index, memberName)
     return function()
         if not (C_CVar and C_CVar.GetCVarBitfield) then return false end
         local ok, value = pcall(C_CVar.GetCVarBitfield, cvar, index)
@@ -587,6 +619,7 @@ local function bitfieldToggle(cvar, index)
         if InCombatLockdown() then return end
         if not (C_CVar and C_CVar.SetCVarBitfield) then return end
         pcall(C_CVar.SetCVarBitfield, cvar, index, value and true or false)
+        rememberBit(cvar, memberName, value)
     end
 end
 
@@ -664,11 +697,15 @@ local function bitfieldGroup(cvar, enum, labels, tooltip, lock)
     local rows = {}
     if U.GetCVar(cvar) == nil then return rows end
 
+    -- Le champ existe sur ce client : il entre dans la liste que le moteur
+    -- rejoue. Un champ mort n'y entre pas — rien à rejouer sur lui.
+    BITFIELDS[#BITFIELDS + 1] = { cvar = cvar, enum = enum }
+
     local members = enumMembers(enum)
 
     for i = 1, #members do
         local member  = members[i]
-        local get, set = bitfieldToggle(cvar, member.value)
+        local get, set = bitfieldToggle(cvar, member.value, member.name)
 
         -- Le verrou peut être **fabriqué par catégorie** : les rangées d'auras
         -- se prennent une par une, et une case grisée quand rien ne la tient
@@ -1565,6 +1602,7 @@ ns.Plates = {
     PAUSED  = AURAS_PAUSED,
     CVAR    = CVAR,
     UNITS   = ENEMY_UNITS,
+    BITS    = BITFIELDS,
     Key     = enemyKey,
     Options = pageOptions,
 }

@@ -4402,3 +4402,24 @@ libère (`SetHeight(0)`), et l'interligne de `SetSpacing` — que
 `GetStringHeight` ne compte pas toujours — s'ajoute à la main. La même leçon
 vaut pour les frames : les lignes du panneau de filtres de recherche de groupe
 posent leur largeur avant d'appeler `Arrange`, jamais l'inverse.
+
+---
+
+## Le client oublie aussi ses champs de bits cachés
+
+**Symptôme** — les catégories d'auras des plaques (PNJ adverses, joueurs
+adverses, joueurs alliés) se décochent à chaque reconnexion. Vérifié hors
+addon : le client ne persiste pas ces champs d'une session à l'autre.
+
+**Cause** — la même que `nameplateShowOnlyNameForFriendlyPlayerUnits` et
+`nameplateOverlapH/V` : un CVar absent du panneau du client n'est pas
+fiablement réécrit à la connexion. Les champs de bits
+(`nameplate…AuraDisplay`, `nameplateSimplifiedTypes`, `nameplateInfoDisplay`,
+`nameplateCastBarDisplay`, `nameplateThreatDisplay`, `nameplateStackingTypes`)
+sont tous dans ce cas.
+
+**Ce qu'on fait** — chaque clic sur une case à bits de la page s'enregistre
+par personnage (`CharData().clientBits`), **par nom de catégorie** — une
+énumération peut se renuméroter, un nom se retrouve — et le moteur rejoue les
+bits enregistrés à la connexion, sur `CVAR_UPDATE` et à la sortie de combat.
+L'état neutre n'enregistre rien, donc ne rejoue rien.

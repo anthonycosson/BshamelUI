@@ -66,6 +66,7 @@ local P = ns.Plates
 
 local MODULE       = P.MODULE
 local LIVE         = P.LIVE
+local BITS         = P.BITS
 local AURAS_PAUSED = P.PAUSED
 local CVAR         = P.CVAR
 local ENEMY_UNITS  = P.UNITS
@@ -3015,6 +3016,45 @@ end
 -- ce que le jeu montre. Ce qui restait pris chez les joueurs de l'ancienne
 -- version leur est rendu une fois, à la connexion, par `releaseClientAuras`.
 
+-- =========================================================================
+--  Les bits enregistrés, rejoués
+-- =========================================================================
+-- Le client **oublie ses champs de bits cachés** à la reconnexion : les
+-- catégories d'auras des trois familles se décochaient toutes seules — même
+-- maladie que le « nom seul des alliés » avant elles, et il n'y a aucune
+-- raison de croire les autres champs de la page mieux lotis. Chaque clic sur
+-- une case à bits s'enregistre donc par personnage (voir `bitfieldToggle`
+-- dans la page), et se repose ici aux trois moments habituels : connexion,
+-- `CVAR_UPDATE`, sortie de combat.
+--
+-- Rien n'est enregistré tant que le joueur n'a rien cliqué : l'état neutre ne
+-- rejoue rien. Et l'enregistrement porte des **noms de catégories**, résolus
+-- contre l'énumération du client au moment de rejouer — une catégorie qu'il
+-- ne connaît plus se saute (règle 1).
+
+---@param mod table
+local function applyClientBits(mod)
+    if InCombatLockdown() then return end
+
+    local store = mod:CharData().clientBits
+    if type(store) ~= "table" then return end
+
+    for i = 1, #BITS do
+        local field  = BITS[i]
+        local wanted = store[field.cvar]
+
+        if type(wanted) == "table" and type(field.enum) == "table"
+           and U.GetCVar(field.cvar) ~= nil then
+            for name, value in pairs(wanted) do
+                local index = field.enum[name]
+                if type(index) == "number" then
+                    setCVarBit(field.cvar, index, value == true)
+                end
+            end
+        end
+    end
+end
+
 --- Prend au client sa **couleur de menace sur la barre de vie** quand la nôtre
 --- est allumée, et la lui rend en décochant.
 ---
@@ -3482,6 +3522,10 @@ BUI:RegisterModule(MODULE, {
 
         applySize(self)
         applyOverlap(self)
+        -- Les bits d'abord, les prises ensuite : le mode « nom seul » décoche
+        -- la barre simplifiée des alliés et la couleur de menace se prend —
+        -- ces deux gestes doivent avoir le dernier mot sur le rejeu.
+        applyClientBits(self)
         applyAllyNamesOnly(self)
         applyAllyNameClassColor(self)
         applyClientThreat(self)
@@ -3502,6 +3546,7 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("CVAR_UPDATE", U.Throttle(T.TIMING.CVAR_SETTLE, function()
             applySize(self)
             applyOverlap(self)
+            applyClientBits(self)
             applyAllyNamesOnly(self)
             applyAllyNameClassColor(self)
             applyAlpha(self)
@@ -3515,6 +3560,7 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
             applySize(self)
             applyOverlap(self)
+            applyClientBits(self)
             applyAllyNamesOnly(self)
             applyAllyNameClassColor(self)
                 applyClientThreat(self)
