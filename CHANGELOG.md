@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Corrigé
+- **La barre véhicule devenait une plaque noire.** Son habillage n'est pas fait
+  de fins ornements comme les autres barres mais d'un panneau d'art opaque, et
+  la teinte commune l'effaçait : seules les icônes restaient lisibles. La barre
+  suit toujours la case « Barres d'action », avec une main plus douce qui garde
+  ses reliefs.
+
 ## 1.0.5 — 2026-08-09
 
 ### Corrigé

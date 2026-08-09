@@ -60,6 +60,13 @@ end
 local DARK_ELEMENTS = {
     { key = "darkUnitFrames",      element = "unitFrames" },
     { key = "darkActionBars",      element = "actionBars" },
+    -- La barre véhicule suit la même case que les autres barres — c'est une
+    -- barre d'action, le joueur n'a pas deux décisions à prendre — mais pas la
+    -- même main : son panneau d'art opaque devient une plaque noire au facteur
+    -- commun (voir `T.SHADE_FACTOR_VEHICLE`). Deux entrées, une clé : la boucle
+    -- d'application traite chaque ligne pour elle seule, la clé peut se répéter.
+    { key = "darkActionBars",      element = "vehicleBar",
+      factor = T.SHADE_FACTOR_VEHICLE },
     { key = "darkCastBar",         element = "castBar" },
     { key = "darkAuras",           element = "auras" },
     { key = "darkCooldownManager", element = "cooldownManager" },
@@ -136,6 +143,10 @@ local refreshAuras      = refresher("auras")
 local refreshUnitFrames = refresher("unitFrames", true)
 
 local refreshBars       = refresher("actionBars")
+-- La barre véhicule se rhabille à la montée : le client repose ses atlas au
+-- moment où on embarque, et c'est l'événement ci-dessous (`OnEnable`) qui nous
+-- ramène repasser derrière lui.
+local refreshVehicle    = refresher("vehicleBar")
 local refreshShade      = refresher(nil)
 
 -- Groupé, et non traité cadre par cadre comme les auras : `RefreshLayout`
@@ -456,6 +467,9 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("ACTIONBAR_PAGE_CHANGED",  refreshBars)
         self:RegisterEvent("ACTIONBAR_SLOT_CHANGED",  refreshBars)
         self:RegisterEvent("UPDATE_SHAPESHIFT_FORMS", refreshBars)
+        -- Monter dans un véhicule remonte la barre : le client repose ses
+        -- atlas et peut créer des morceaux qu'aucun passage n'a encore vus.
+        self:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR", refreshVehicle)
     end,
 
     OnDisable = function()

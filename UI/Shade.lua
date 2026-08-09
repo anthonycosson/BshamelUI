@@ -96,12 +96,19 @@ end
 --- élément -> noms globaux des cadres du client.
 local FRAMES = {
     actionBars = {
-        "MainMenuBar", "MainMenuBarArtFrame", "OverrideActionBar",
+        "MainMenuBar", "MainMenuBarArtFrame",
         "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight", "MultiBarLeft",
         "MultiBar5", "MultiBar6", "MultiBar7",
         "StanceBar", "PetActionBar", "PossessActionBar",
         "MainMenuBarVehicleLeaveButton",
     },
+
+    -- La barre véhicule, à part des autres barres : même case de réglage, autre
+    -- main. Son habillage n'est pas fait de fins ornements mais d'un panneau
+    -- d'art opaque qui couvre toute la barre — au facteur commun il devient une
+    -- plaque noire où seules les icônes restent lisibles (voir
+    -- `T.SHADE_FACTOR_VEHICLE`, qui dit le dosage et pourquoi).
+    vehicleBar = { "OverrideActionBar" },
 
     castBar = {
         "PlayerCastingBarFrame", "PetCastingBarFrame",
@@ -209,7 +216,7 @@ local BACKGROUND_KEYS = { "Center", "Bg", "Background" }
 --- fenêtre. L'assombrir éteignait le seul repère qui distingue un bijou d'un
 --- sort. Ailleurs — une infobulle, un cadre d'unité — une bordure est bien de
 --- l'habillage, d'où la liste par élément plutôt qu'une règle générale.
-local BORDER_SIGNALS = { actionBars = true }
+local BORDER_SIGNALS = { actionBars = true, vehicleBar = true }
 
 --- Éléments dont on ne descend pas sous les **boutons**.
 ---
@@ -223,7 +230,7 @@ local BORDER_SIGNALS = { actionBars = true }
 --- porte ne l'est pas. Les barres elles-mêmes restent parcourues, elles sont
 --- citées à part dans `FRAMES` — c'est là qu'est l'habillage d'une barre
 --- d'action, jamais sous un bouton.
-local FLAT_BUTTONS = { actionBars = true }
+local FLAT_BUTTONS = { actionBars = true, vehicleBar = true }
 
 --- Éléments dont on assombrit le contour **sans toucher au fond**.
 ---

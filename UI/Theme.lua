@@ -1377,6 +1377,20 @@ T.SHADE_FACTOR = 0.05
 --- qu'on pose, il vient de ce qu'on **ne désature pas**.
 T.SHADE_FACTOR_PARCHMENT = 0.50
 
+--- La teinte de la **barre véhicule** : un tiers de sa clarté.
+---
+--- La teinte commune convient aux barres d'action parce que leur habillage est
+--- fait de fins ornements sur du vide ; les reliefs y survivent à un facteur
+--- très bas. La barre véhicule est l'inverse : un panneau d'art **opaque** qui
+--- couvre toute la barre. Au facteur commun il devient exactement la silhouette
+--- noire que le commentaire de `SHADE_FACTOR` décrit — plus rien ne s'y lit,
+--- sauf les icônes, que le moteur ne teinte jamais.
+---
+--- Un tiers : assez bas pour que la barre suive visiblement le mode sombre,
+--- assez haut pour qu'un panneau plein garde ses reliefs. Elle reste désaturée
+--- comme les autres barres — c'est un habillage doré, pas un parchemin.
+T.SHADE_FACTOR_VEHICLE = 0.35
+
 --- Débordement, en pixels, du contour sombre d'une icône de côté `side`.
 ---@param side number  plus petit côté de l'icône, en pixels
 ---@return number
