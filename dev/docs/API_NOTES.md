@@ -4381,3 +4381,24 @@ nommément par `GetActionBarToggles`/`SetActionBarToggles`.
 **Le piège de la sonde** — la ligne de chat tronque à 255 caractères : un
 `/dump` trop long part amputé et lève une erreur de syntaxe qui ressemble à
 un refus de l'API. Les sondes se font courtes, ou par étapes.
+
+---
+
+## Une largeur d'ancrage se lit trop tard pour mesurer
+
+**Symptôme** — un paragraphe d'options de plus de quelques lignes se coupe aux
+points de suspension : la note des réglages du jeu perdait son étape 3, les
+alertes rouges de la page des barres d'infos leur fin. Les paragraphes courts,
+eux, semblaient corrects — le défaut a tenu longtemps.
+
+**Cause** — un `FontString` tendu entre deux ancres tire sa largeur de son
+**rectangle**, et un rectangle d'ancrage ne se résout qu'au rendu — après la
+mesure. `GetStringHeight` mesurait un texte replié à une largeur d'avant, le
+conteneur prenait cette hauteur trop courte, et le client tronquait.
+
+**Ce qu'on fait** — au moment de mesurer, la largeur s'écrit (`SetWidth`,
+depuis celle du conteneur, déjà posée par la mise en page), la hauteur se
+libère (`SetHeight(0)`), et l'interligne de `SetSpacing` — que
+`GetStringHeight` ne compte pas toujours — s'ajoute à la main. La même leçon
+vaut pour les frames : les lignes du panneau de filtres de recherche de groupe
+posent leur largeur avant d'appeler `Arrange`, jamais l'inverse.

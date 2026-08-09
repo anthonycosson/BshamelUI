@@ -107,16 +107,42 @@ end
 function W.Description(parent, label, font)
     local frame = W.Container(parent)
 
+    -- **Un seul point d'ancrage, la largeur se pose à la main.** Le texte
+    -- était tendu entre les deux bords du conteneur, et sa largeur venait donc
+    -- de ses ancres — or un rectangle d'ancrage ne se résout qu'au rendu,
+    -- après la mesure. `GetStringHeight` mesurait alors un texte replié à une
+    -- largeur d'avant, le conteneur recevait cette hauteur-là, et le client
+    -- tronquait le paragraphe aux points de suspension : les notes de plus de
+    -- quelques lignes perdaient leur fin. Largeur écrite au moment de mesurer,
+    -- hauteur laissée libre — plus rien à résoudre, plus rien à tronquer.
     local text = frame:CreateFontString(nil, "ARTWORK", font or T.FONT.HINT)
     text:SetPoint("TOPLEFT", frame, "TOPLEFT", T.SIZE.LABEL_INDENT, 0)
-    text:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -T.SIZE.LABEL_INDENT, 0)
     text:SetJustifyH("LEFT")
     text:SetWordWrap(true)
     text:SetSpacing(2)
     text:SetText(label or "")
 
     function frame:AutoHeight()
-        self:SetHeight(math.max(text:GetStringHeight() + 4, T.SIZE.SECTION_H))
+        local width = self:GetWidth()
+        if type(width) == "number" and width > T.SIZE.LABEL_INDENT * 2 then
+            text:SetWidth(width - T.SIZE.LABEL_INDENT * 2)
+        end
+
+        -- Hauteur nulle = « mesure-toi » : une hauteur restée d'un passage
+        -- précédent transformerait le paragraphe en boîte qui coupe.
+        text:SetHeight(0)
+
+        -- `GetStringHeight` ne compte pas toujours l'interligne posé par
+        -- `SetSpacing` : on l'ajoute nous-mêmes. Trop compter ne coûte qu'un
+        -- peu d'air sous la note ; trop peu ferait chevaucher la ligne
+        -- suivante.
+        local height = text:GetStringHeight()
+        local ok, lines = pcall(text.GetNumLines, text)
+        if ok and type(lines) == "number" and lines > 1 then
+            height = height + (lines - 1) * 2
+        end
+
+        self:SetHeight(math.max(height + 4, T.SIZE.SECTION_H))
     end
 
     frame:AutoHeight()

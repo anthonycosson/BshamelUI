@@ -14,6 +14,13 @@
   réglages de compte ne sont pas touchés (ils voyagent déjà tout seuls), et
   une option disparue depuis le relevé ne s'écrit pas.
 
+### Corrigé
+- **Les longues notes des pages d'options se coupaient aux points de
+  suspension.** Les alertes rouges de la page des barres d'infos, entre
+  autres, perdaient leur fin : le texte se mesurait avant que sa largeur ne
+  soit résolue, et la hauteur trop courte faisait tronquer le client. Les
+  paragraphes se mesurent désormais à largeur écrite, et s'affichent entiers.
+
 ## 1.0.9 — 2026-08-10
 
 ### Ajouté
