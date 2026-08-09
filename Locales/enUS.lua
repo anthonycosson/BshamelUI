@@ -469,6 +469,40 @@ BUI:RegisterLocale("enUS", {
     ["Auto role check tip"] =
         "Answers the role check automatically with the roles you already signed up with. "
         .. "The game's popup never appears.",
+
+    -- Panneau de filtres de la recherche personnalisée
+    ["Premade filter panel"]           = "Filter panel on the group browser",
+    ["Premade filter panel tip"] =
+        "Docks a filter panel to the right of the premade group browser: difficulty, "
+        .. "role counts, group size, specific instance. With nothing set, it hides nothing.",
+    ["Hide declined groups"]           = "Hide groups that declined you",
+    ["Hide declined groups tip"] =
+        "Hides listings that turned down your application, including those that filled up "
+        .. "before answering. They come back once the game forgets the application. Works "
+        .. "in every tab, even where this panel does not show.",
+    ["Search"]                         = "Search",
+    ["Search tip"]                     = "Runs the current search again, for a fresh list of groups.",
+    ["Reset filters tip"]              = "Clears every filter of the current tab. All groups show again.",
+    ["Difficulty"]                     = "Difficulty",
+    ["Normal"]                         = "Normal",
+    ["Heroic"]                         = "Heroic",
+    ["Mythic"]                         = "Mythic",
+    ["Mythic+"]                        = "Mythic+",
+    ["Roles"]                          = "Roles",
+    ["Tanks"]                          = "Tanks",
+    ["Healers"]                        = "Healers",
+    ["DPS"]                            = "DPS",
+    ["Group size"]                     = "Group size",
+    ["Min max tip"] =
+        "At least the left number, at most the right one. Leave a box empty for no limit.",
+    ["Min"]                            = "Min",
+    ["Max"]                            = "Max",
+    ["Show filter tip"]                = "Untick to hide these groups from the results.",
+    ["Arena bracket"]                  = "Arena bracket",
+    ["2v2"]                            = "2v2",
+    ["3v3"]                            = "3v3",
+    ["Dungeons"]                       = "Dungeons",
+    ["Raids"]                          = "Raids",
     -- Module RaidCooldowns
     ["Bloodlust and battle res"]       = "Bloodlust and battle res",
     ["Battle resurrections"]           = "Battle resurrections",

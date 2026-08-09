@@ -67,6 +67,7 @@ UI\Widgets\ResourceBar.lua
 # chrono du client. Ce fichier ne dépend donc pas de `Panel.lua`, il est rangé
 # ici pour rester à côté des pièces de la même page.
 UI\Widgets\KeyThresholds.lua
+UI\Widgets\GroupFilterPanel.lua
 # La fenêtre de copie assemble une fenêtre et une zone défilante : elle vient
 # après les deux.
 UI\Widgets\CopyWindow.lua

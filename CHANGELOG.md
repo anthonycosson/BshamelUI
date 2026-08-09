@@ -2,6 +2,19 @@
 
 ## Non publié
 
+### Ajouté
+- **Un panneau de filtres sur la recherche de groupe personnalisée.** Une case
+  de plus dans la page « Recherche de groupe » : le panneau s'ancre à droite
+  de la fenêtre du jeu et cache ce qu'on n'a pas demandé. Difficulté à cocher
+  (mythique + disparaît dans l'onglet raid, remplacée par 2v2/3v3 en arène),
+  nombre de tanks, de soigneurs et de DPS entre deux bornes, taille du groupe,
+  et la liste des instances vues dans la recherche du moment. Au pied du
+  panneau : une case pour masquer les groupes qui ont décliné votre
+  candidature — elle vaut dans tous les onglets —, un bouton pour relancer la
+  recherche et un autre pour tout réinitialiser. Sans rien régler, le panneau
+  ne cache rien ; tout décocher — ou éteindre le module — rend la liste telle
+  que le jeu l'avait relevée.
+
 ### Modifié
 - **La rangée de ressource de classe arrondit ses coins.** Chaque case — liseré
   sombre et remplissage — prend le même léger arrondi que l'habillage des

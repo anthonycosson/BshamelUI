@@ -456,6 +456,41 @@ BUI:RegisterLocale("frFR", {
     ["Auto role check tip"] =
         "Répond automatiquement à la vérification des rôles, avec ceux que vous aviez déjà "
         .. "choisis. La fenêtre du jeu ne s'affiche pas.",
+
+    -- Panneau de filtres de la recherche personnalisée
+    ["Premade filter panel"]           = "Panneau de filtres sur la recherche",
+    ["Premade filter panel tip"] =
+        "Ancre un panneau de filtres à droite de la recherche de groupe personnalisée : "
+        .. "difficulté, nombre par rôle, taille du groupe, instance précise. Sans rien "
+        .. "régler, il ne cache rien.",
+    ["Hide declined groups"]           = "Masquer les groupes qui ont refusé",
+    ["Hide declined groups tip"] =
+        "Cache les annonces qui ont décliné votre candidature, y compris celles qui se sont "
+        .. "remplies avant de répondre. Elles reviennent quand le jeu oublie la candidature. "
+        .. "Vaut dans tous les onglets, même là où ce panneau ne s'affiche pas.",
+    ["Search"]                         = "Rechercher",
+    ["Search tip"]                     = "Relance la recherche en cours, pour une liste de groupes à jour.",
+    ["Reset filters tip"]              = "Vide tous les filtres de l'onglet courant. Tous les groupes réapparaissent.",
+    ["Difficulty"]                     = "Difficulté",
+    ["Normal"]                         = "Normal",
+    ["Heroic"]                         = "Héroïque",
+    ["Mythic"]                         = "Mythique",
+    ["Mythic+"]                        = "Mythique+",
+    ["Roles"]                          = "Rôles",
+    ["Tanks"]                          = "Tanks",
+    ["Healers"]                        = "Soigneurs",
+    ["DPS"]                            = true,
+    ["Group size"]                     = "Taille du groupe",
+    ["Min max tip"] =
+        "Au moins le nombre de gauche, au plus celui de droite. Case vide : sans limite.",
+    ["Min"]                            = true,
+    ["Max"]                            = true,
+    ["Show filter tip"]                = "Décochez pour cacher ces groupes des résultats.",
+    ["Arena bracket"]                  = "Type d'arène",
+    ["2v2"]                            = true,
+    ["3v3"]                            = true,
+    ["Dungeons"]                       = "Donjons",
+    ["Raids"]                          = true,
     -- Module RaidCooldowns
     ["Bloodlust and battle res"]       = "BL & Résurrections",
     ["Battle resurrections"]           = "Résurrections de combat",

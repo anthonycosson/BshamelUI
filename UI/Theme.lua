@@ -519,6 +519,25 @@ T.SIZE = {
     MARKER_SCALE_MIN = 0.5,
     MARKER_SCALE_MAX = 2.5,
 
+    -- Panneau de filtres de la recherche de groupe. Il s'ancre au bord droit de
+    -- la fenêtre du client et vit à sa hauteur : sa largeur est la seule
+    -- dimension qui soit à nous, celle qui loge une ligne d'option standard
+    -- (libellé au minimum + contrôle) sans en faire une seconde fenêtre.
+    GF_PANEL_W        = 300,
+    -- Écart entre le bord de la fenêtre du client et le panneau : l'habillage
+    -- du panneau déborde de lui (PANEL_CHROME_BLEED + PANEL_BORDER_OUTSET), il
+    -- faut au moins cette somme pour que les deux contours ne se chevauchent pas.
+    GF_PANEL_OFFSET_X = 12,
+    -- Plafond de lignes construites pour la liste des instances : les frames ne
+    -- se détruisent pas (règle 7), la liste réutilise ses lignes et n'en bâtit
+    -- jamais plus que ça. Une saison compte huit donjons ; dix laisse de l'air.
+    GF_LIST_MAX       = 10,
+    -- La colonne de droite, où vit cette liste : dix lignes empilées sous les
+    -- rôles faisaient descendre le panneau sous la fenêtre du client, alors que
+    -- la place à sa droite ne coûte rien. Plus étroite que la colonne des
+    -- réglages — un nom d'instance et sa case, sans bornes à loger.
+    GF_LIST_COL_W     = 220,
+
     -- Rangée de ressource de classe : points de combo, puissance sacrée, chi,
     -- fragments d'âme, runes, cumuls d'Arme-tempête.
     --

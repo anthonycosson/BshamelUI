@@ -4257,3 +4257,58 @@ son relevé dans `BshamelUIDB`, relu hors du jeu après `/reload` dans
 le trouve quel que soit son parent. Chaque porte de la sonde sous `pcall` : une
 erreur au milieu — et « Masquer les erreurs Lua » la rend invisible — tue sinon
 tout ce qui suit.
+
+---
+
+## La recherche de groupe personnalisée : les points d'accroche
+
+**Contexte** — la page « Recherche de groupe » (`Modules/GroupFinder.lua`) filtre les résultats de la recherche
+personnalisée. Les points d'accroche ont été identifiés en lisant Premade
+Groups Filter (règle 8 : lire pour identifier l'API, jamais copier — GPL v2,
+incompatible avec notre licence). Sa table de sept cents activités maintenue à
+la main à chaque saison n'est **pas** reprise : tout se demande au client.
+
+**Les deux hooks** —
+
+- `LFGListSearchPanel_UpdateResultList(panel)` : le client vient de relever
+  `panel.results` (une liste d'identifiants). Après lui, on copie la liste,
+  on la raccourcit, on pose `panel.totalResults` et on appelle
+  `LFGListSearchPanel_UpdateResults(panel)` pour réafficher ;
+- `LFGListSearchPanel_SetCategory(panel, categoryID, filters, baseFilters)` :
+  l'onglet courant. Catégories du moteur : 2 = donjons, 3 = raids, 4 = arènes.
+
+**Les lectures par résultat** —
+
+- `C_LFGList.GetSearchResultInfo(id)` : `numMembers`, et l'activité —
+  `activityID` hier, `activityIDs` (liste) aujourd'hui : lire les deux formes ;
+- `C_LFGList.GetSearchResultMemberCounts(id)` : `TANK`, `HEALER`, `DAMAGER`,
+  `NOROLE` — le client compte les sans-rôle avec les DPS à l'affichage ;
+- `C_LFGList.GetActivityInfoTable(activityID)` : `categoryID`,
+  `maxNumPlayers`, `groupFinderActivityGroupID`, `fullName`, et les drapeaux
+  `isMythicPlusActivity` / `isMythicActivity` ;
+- `C_LFGList.GetActivityGroupInfo(groupID)` : le nom du groupe d'activités
+  (« Les Ruisselets », « Palais nérub'ar »…), localisé par le client.
+
+**Difficulté sans table de données** — mythique et mythique + sont des
+drapeaux de l'activité. Normal contre héroïque n'a pas de champ connu : on
+cherche `PLAYER_DIFFICULTY2` (le mot « Héroïque » du client, dans sa langue)
+dans `fullName`. Tout le reste est classé normal. À revérifier si un patch
+donne un champ propre — candidat : le filtre avancé du client
+(`C_LFGList.GetAdvancedFilter`), qui distingue les quatre difficultés pour la
+catégorie donjons.
+
+**Tranches d'arène** — pas de champ « 2v2 » : `maxNumPlayers` de l'activité
+vaut 2 ou 3, et c'est la tranche.
+
+**La liste des instances se déduit des résultats** — les
+`groupFinderActivityGroupID` vus dans la recherche courante, nommés par
+`GetActivityGroupInfo`. Toujours la saison en cours, dans la langue du client,
+zéro donnée à maintenir.
+
+**Le statut de notre candidature** — `C_LFGList.GetApplicationInfo(resultID)`
+rend `(id, appStatus, pendingStatus, appDuration)`. Les refus sont `declined`,
+`declined_full` (rempli avant de répondre) et `declined_delisted` ;
+`timedout` n'en est pas un. Le statut vit tant que le client se souvient de la
+candidature — quelques minutes —, puis le groupe redevient un inconnu. Un
+refus qui arrive pendant que la liste est affichée s'annonce par
+`LFG_LIST_APPLICATION_STATUS_UPDATED`, pas par une reconstruction de liste.
