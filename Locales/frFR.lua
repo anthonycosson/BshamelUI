@@ -163,6 +163,37 @@ BUI:RegisterLocale("frFR", {
         .. "nature ils sont.",
     ["Cooldown manager"]               = "Gestionnaire de temps de recharge",
     ["Dark cooldown manager tip"]      = "Les barres du gestionnaire de temps de recharge et leurs icônes.",
+    ["Dark personal resources tip"] =
+        "Les barres de vie et de ressource affichées sous le personnage.",
+    -- Module PersonalResource
+    ["Personal resources"]             = "Ressources personnelles",
+    ["Show personal resources"]        = "Afficher les ressources personnelles",
+    ["Show personal resources tip"] =
+        "Le réglage du jeu lui-même : affiche vos barres de vie et de ressource "
+        .. "sous le personnage. Le changer est refusé en combat.",
+    ["Health bar"]                     = "Barre de vie",
+    ["Resource bar"]                   = "Barre de ressource",
+    ["Personal no text"]               = "N'afficher aucun texte",
+    ["Personal no text tip"] =
+        "Masque le texte du jeu sur cette barre, sans rien écrire à la place.",
+    ["No text active"]                 = "Décochez d'abord « N'afficher aucun texte ».",
+    ["Personal value text"]            = "Texte en valeur",
+    ["Personal value text tip"] =
+        "Écrit la valeur actuelle sur cette barre, à la place du texte du jeu.",
+    ["Personal percent text"]          = "Texte en pourcentage",
+    ["Personal percent text tip"] =
+        "Écrit le pourcentage sur cette barre, à la place du texte du jeu.",
+    ["Personal value anchor"]          = "Position de la valeur",
+    ["Personal percent anchor"]        = "Position du pourcentage",
+    ["Personal anchor tip"]            = "Le côté de la barre où ce texte se pose.",
+    ["Anchor left"]                    = "À gauche",
+    ["Anchor center"]                  = "Au centre",
+    ["Anchor right"]                   = "À droite",
+    ["Personal text size"]             = "Taille du texte",
+    ["Personal text size tip"]         = "Corps du texte de la valeur et du pourcentage.",
+    ["Needs value text"]               = "Activez d'abord le texte en valeur.",
+    ["Needs percent text"]             = "Activez d'abord le texte en pourcentage.",
+    ["Personal text needs one"]        = "Activez d'abord la valeur ou le pourcentage.",
     -- Module General (suite)
     ["Camera"]                         = "Caméra",
     ["Max camera distance"]            = "Augmenter la distance maximale de la caméra",

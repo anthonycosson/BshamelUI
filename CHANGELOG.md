@@ -2,6 +2,17 @@
 
 ## Non publié
 
+### Ajouté
+- **Une page « Ressources personnelles ».** L'interrupteur d'affichage du jeu y
+  est repris, et chaque barre — vie et ressource — se règle pour elle seule :
+  la valeur, le pourcentage, ou les deux, chacun au bord gauche, au centre ou
+  au bord droit, au corps qu'on choisit. Le texte de l'addon remplace alors
+  celui du jeu, qui revient dès qu'on décoche tout. Une case « N'afficher aucun
+  texte » fait au contraire taire la barre entièrement, sans rien écrire à la
+  place.
+- **Le mode sombre atteint les ressources personnelles.** Une ligne de plus
+  dans « Ce qu'il assombrit », pour les barres affichées sous le personnage.
+
 ### Corrigé
 - **La barre véhicule devenait une plaque noire.** Son habillage n'est pas fait
   de fins ornements comme les autres barres mais d'un panneau d'art opaque, et

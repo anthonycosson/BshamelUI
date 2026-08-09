@@ -357,6 +357,19 @@ T.SIZE = {
     -- flottent donc au-dessus du centre optique tant qu'on ne les redescend pas.
     COUNTDOWN_Y    = -2,
 
+    -- Texte posé sur une barre de statut du client (ressource personnelle).
+    -- Le retrait écarte le texte du bord quand il s'ancre à gauche ou à droite ;
+    -- l'étage le place au-dessus des textes du client, qu'il remplace.
+    BAR_TEXT_PAD   = 4,
+    BAR_TEXT_LEVEL = 5,
+
+    -- Corps du texte, au choix du joueur. Le défaut est celui de la police que
+    -- le client emploie sur ces barres ; les bornes suivent la hauteur d'une
+    -- barre — en dessous de 8 rien ne se lit, au-delà de 24 le texte déborde.
+    BAR_TEXT_SIZE     = 14,
+    BAR_TEXT_SIZE_MIN = 8,
+    BAR_TEXT_SIZE_MAX = 24,
+
     -- Pièces posées sur les cadres de chat du client. La hauteur, elle, se
     -- règle en saisissant l'onglet : rien n'est ajouté pour elle.
     CHAT_BUTTON    = 16,    -- côté du bouton de copie
@@ -927,6 +940,11 @@ local FONT_CANDIDATES = {
     -- `T.ResourceTextSize`) — d'où une police de départ moyenne plutôt que petite.
     RESOURCE     = { "NumberFont_Outline_Med", "NumberFontNormalSmall",
                      "GameFontNormalSmall" },
+
+    -- Texte posé sur une barre de statut du client — la ressource personnelle.
+    -- `TextStatusBarText` est la police que le client emploie lui-même sur ces
+    -- barres-là : notre texte remplace le sien, il doit s'écrire pareil.
+    BAR_TEXT     = { "TextStatusBarText", "GameFontHighlightSmall" },
 
     SECTION      = { "GameFontNormalMedium", "GameFontNormal" },
     LABEL        = { "GameFontHighlightMedium", "GameFontHighlight" },

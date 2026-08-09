@@ -135,6 +135,14 @@ local FRAMES = {
 
     auras = { "BuffFrame", "DebuffFrame" },
 
+    -- La ressource personnelle, sous le personnage. Un cadre à part entière
+    -- depuis Midnight — plus une barre de nom : `C_NamePlate` ne la rend plus,
+    -- même affichée, et son nom global est le seul chemin qui y mène (relevé en
+    -- jeu, voir `dev/docs/API_NOTES.md`). Son habillage est celui du
+    -- gestionnaire de temps de recharge — mêmes atlas de fond —, la teinte des
+    -- deux va donc ensemble visuellement, sans que rien ne les lie.
+    personalResource = { "PersonalResourceDisplayFrame" },
+
     tooltip = { "GameTooltip", "ItemRefTooltip" },
 
     -- Le grimoire, et **lui seul**. Le nom global d'avant la refonte, pour les
@@ -409,7 +417,13 @@ local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc" }
 --- On s'arrête donc à la porte : le cadre n'est pas descendu du tout. C'est la
 --- même économie que `STATE_TEXTURES` — on écarte par ce que la chose *est*, pas
 --- par la liste de ce qu'elle contient.
-local SIGNAL_FRAMES = { "Glow", "Alert", "Proc", "Highlight", "Assisted" }
+---
+--- « Feedback » : le petit cadre qu'une barre de ressource fait clignoter au
+--- gain et à la perte. Il ne décore rien, il ponctue — et sa texture de flash
+--- ne porte pas « Glow » dans son nom, elle échapperait donc au tri texture par
+--- texture.
+local SIGNAL_FRAMES = { "Glow", "Alert", "Proc", "Highlight", "Assisted",
+                        "Feedback" }
 
 ---@param owner table
 ---@param region table

@@ -58,17 +58,21 @@ end
 --- à lui que si ce qu'il porte réclame une autre main : voir le grimoire, traité
 --- en parchemin, et `T.SHADE_FACTOR_PARCHMENT`.
 local DARK_ELEMENTS = {
-    { key = "darkUnitFrames",      element = "unitFrames" },
-    { key = "darkActionBars",      element = "actionBars" },
+    { key = "darkUnitFrames",       element = "unitFrames" },
+    { key = "darkActionBars",       element = "actionBars" },
     -- La barre véhicule suit la même case que les autres barres — c'est une
     -- barre d'action, le joueur n'a pas deux décisions à prendre — mais pas la
     -- même main : son panneau d'art opaque devient une plaque noire au facteur
     -- commun (voir `T.SHADE_FACTOR_VEHICLE`). Deux entrées, une clé : la boucle
     -- d'application traite chaque ligne pour elle seule, la clé peut se répéter.
-    { key = "darkActionBars",      element = "vehicleBar",
+    { key = "darkActionBars",       element = "vehicleBar",
       factor = T.SHADE_FACTOR_VEHICLE },
-    { key = "darkCastBar",         element = "castBar" },
-    { key = "darkAuras",           element = "auras" },
+    { key = "darkCastBar",          element = "castBar" },
+    -- La ressource personnelle, sous le personnage. Un cadre à part entière —
+    -- plus une barre de nom — d'où sa ligne à elle : la case des auras couvre
+    -- les buffs posés à côté, pas la barre.
+    { key = "darkPersonalResource", element = "personalResource" },
+    { key = "darkAuras",            element = "auras" },
     { key = "darkCooldownManager", element = "cooldownManager" },
     { key = "darkTooltip",         element = "tooltip" },
     -- Le grimoire arrive en cours de session : il est chargé à la demande, et
@@ -354,14 +358,15 @@ BUI:RegisterModule(MODULE, {
         --
         -- Il n'y a pas de dosage — c'est la liste qui se règle, pas la
         -- profondeur du noir (voir `T.SHADE_FACTOR`).
-        darkMode            = false,
-        darkUnitFrames      = false,
-        darkActionBars      = false,
-        darkCastBar         = false,
-        darkAuras           = false,
-        darkCooldownManager = false,
-        darkTooltip         = false,
-        darkSpellbook       = false,
+        darkMode             = false,
+        darkUnitFrames       = false,
+        darkActionBars       = false,
+        darkCastBar          = false,
+        darkPersonalResource = false,
+        darkAuras            = false,
+        darkCooldownManager  = false,
+        darkTooltip          = false,
+        darkSpellbook        = false,
     },
 
     -- L'en-tête au-dessus de l'interrupteur s'appelle « Général » et non
@@ -398,6 +403,13 @@ BUI:RegisterModule(MODULE, {
             key      = "darkCastBar",
             text     = L["Cast bar"],
             tooltip  = L["Dark cast bar tip"],
+            disabled = requires("darkMode"),
+        },
+        {
+            type     = "toggle",
+            key      = "darkPersonalResource",
+            text     = L["Personal resources"],
+            tooltip  = L["Dark personal resources tip"],
             disabled = requires("darkMode"),
         },
         {

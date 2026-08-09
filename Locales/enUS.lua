@@ -162,6 +162,37 @@ BUI:RegisterLocale("enUS", {
         .. "Spell icons keep their border, which says what kind of spell it is.",
     ["Cooldown manager"]               = "Cooldown manager",
     ["Dark cooldown manager tip"]      = "The cooldown manager bars and their icons.",
+    ["Dark personal resources tip"] =
+        "The health and resource bars shown under your character.",
+    -- Module PersonalResource
+    ["Personal resources"]             = "Personal resources",
+    ["Show personal resources"]        = "Show personal resources",
+    ["Show personal resources tip"] =
+        "The game's own setting: shows your health and resource bars under "
+        .. "your character. Changing it is refused during combat.",
+    ["Health bar"]                     = "Health bar",
+    ["Resource bar"]                   = "Resource bar",
+    ["Personal no text"]               = "No text at all",
+    ["Personal no text tip"] =
+        "Hides the game's own text on this bar, without writing anything in its place.",
+    ["No text active"]                 = "Uncheck \"No text at all\" first.",
+    ["Personal value text"]            = "Value text",
+    ["Personal value text tip"] =
+        "Writes the current amount on this bar, in place of the game's own text.",
+    ["Personal percent text"]          = "Percentage text",
+    ["Personal percent text tip"] =
+        "Writes the percentage on this bar, in place of the game's own text.",
+    ["Personal value anchor"]          = "Value position",
+    ["Personal percent anchor"]        = "Percentage position",
+    ["Personal anchor tip"]            = "Side of the bar where this text sits.",
+    ["Anchor left"]                    = "Left",
+    ["Anchor center"]                  = "Center",
+    ["Anchor right"]                   = "Right",
+    ["Personal text size"]             = "Text size",
+    ["Personal text size tip"]         = "Font size of the value and the percentage.",
+    ["Needs value text"]               = "Turn on the value text first.",
+    ["Needs percent text"]             = "Turn on the percentage text first.",
+    ["Personal text needs one"]        = "Turn on the value or the percentage first.",
     -- Module General (suite)
     ["Camera"]                         = "Camera",
     ["Max camera distance"]            = "Raise the maximum camera distance",

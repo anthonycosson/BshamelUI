@@ -4187,3 +4187,64 @@ Deux leçons, et la seconde vaut au-delà des emotes :
 
 D'où plusieurs formules par emote, séparées par `;` dans la clé de locale : une
 formule de trop ne coûte rien, une formule manquante rend le module muet.
+
+---
+
+## La ressource personnelle n'est plus une plaque, et ses nombres ne se lisent plus
+
+**Symptôme** — il faut assombrir la barre de vie/ressource affichée sous le
+personnage et y poser des textes. Or `C_NamePlate.GetNamePlateForUnit("player")`
+rend `nil` même quand la barre est à l'écran, `C_NamePlate.GetNamePlates()` ne
+la contient pas, et `ClassNameplateManaBarFrame` — la barre de ressource de
+l'ancien affichage — existe mais reste caché.
+
+**Relevé** — depuis Midnight, l'affichage vit dans un cadre à part entière, sous
+un nom global : **`PersonalResourceDisplayFrame`** (géré par le mode édition,
+d'où son enfant `Selection`). Sa structure :
+
+```
+PersonalResourceDisplayFrame            (Frame, 200x44)
+  .HealthBarsContainer
+    .TempMaxHealthLoss                  (StatusBar)
+    .healthBar                          (StatusBar)  + prédictions de soins
+  .PowerBar                             (StatusBar)  + FeedbackFrame, FullPowerFrame
+  .AlternatePowerBar                    (StatusBar, druide en forme)
+  .ClassFrameContainer
+```
+
+Chaque barre est un `TextStatusBar` du client : elle porte `TextString`,
+`LeftText` et `RightText`, pilotés par le réglage « texte de statut » du jeu.
+L'habillage est celui du gestionnaire de temps de recharge (mêmes atlas
+`UI-HUD-CoolDownManager-Bar*`).
+
+**Les nombres du joueur sont secrets.** Relevé en jeu, sur le terrain :
+
+- `UnitHealth("player")` et `UnitPower("player")` rendent des nombres
+  **secrets** ; les maxima (`UnitHealthMax`, `UnitPowerMax`), eux, se lisent ;
+- l'**arithmétique** sur un secret est refusée — division, `math.floor`, tout ;
+- la **concaténation** ne lève pas : elle propage, et la chaîne produite est
+  secrète à son tour (c'est ainsi qu'une ligne de diagnostic devient `nil` dans
+  un SavedVariables : un secret n'y est jamais écrit) ;
+- la **comparaison** lève, y compris `== true` sur le `IsShown()` d'une barre
+  de nom, qui répond en booléen secret.
+
+**Ce qu'on fait** — un secret se fait passer, il ne se lit pas (même leçon que
+`T.SecretClassColor`) :
+
+- `FontString:SetText` et `SetFormattedText` **acceptent** un secret et
+  l'affichent — c'est le chemin de la valeur ;
+- `AbbreviateNumbers` accepte un secret et rend l'abréviation du client
+  (« 385 k »), secrète elle aussi : on la passe telle quelle ;
+- le pourcentage ne se calcule pas — il se **demande** : `UnitHealthPercent` et
+  `UnitPowerPercent` rendent le nombre (secret), et c'est le format qui
+  arrondit : `SetFormattedText("%.0f%%", pct)` ;
+- tout passage reste sous `pcall`, et un refus rend un texte vide — une barre
+  muette est une réponse honnête, une erreur Lua n'en est pas une.
+
+**La méthode qui a tout trouvé** — une sonde temporaire `/bui perso` qui écrit
+son relevé dans `BshamelUIDB`, relu hors du jeu après `/reload` dans
+`WTF/.../SavedVariables/BshamelUI.lua`. Quand le nom d'un cadre est inconnu,
+`EnumerateFrames()` + filtre « StatusBar visible dans telle zone de l'écran »
+le trouve quel que soit son parent. Chaque porte de la sonde sous `pcall` : une
+erreur au milieu — et « Masquer les erreurs Lua » la rend invisible — tue sinon
+tout ce qui suit.

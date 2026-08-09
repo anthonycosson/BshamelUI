@@ -117,6 +117,9 @@ read_globals = {
     -- voulu (CLAUDE.md règle 1).
     "GameMenuFrame", "AuctionHouseFrame", "TargetFrame", "FocusFrame", "PersonalFriendlyBuffFrame",
     "CharacterFrame", "InspectFrame",
+    -- La ressource personnelle, sous le personnage. Un cadre à part entière
+    -- depuis Midnight — `C_NamePlate` ne la rend plus (voir `dev/docs/API_NOTES.md`).
+    "PersonalResourceDisplayFrame",
     -- Le grimoire actuel, chargé à la demande : absent tant que le joueur ne
     -- l'a pas ouvert, ce qui est exactement le test de capacité voulu.
     "PlayerSpellsFrame",
@@ -167,6 +170,12 @@ read_globals = {
     -- Ressource de classe. `PowerBarColor` est la table où le client range la
     -- teinte de chacune : on la lit plutôt que d'en recopier sept (règle 2).
     "UnitPower", "UnitPowerMax", "PowerBarColor",
+    -- Ressource personnelle : la vie du joueur, et l'abréviation du client —
+    -- « 385 k » s'écrit comme lui l'écrit, pas comme nous l'aurions arrondi.
+    -- Les deux `*Percent` rendent le pourcentage tout fait : l'arithmétique
+    -- sur un secret est refusée, on ne peut donc pas le calculer nous-mêmes.
+    "UnitHealth", "UnitHealthMax", "AbbreviateNumbers",
+    "UnitHealthPercent", "UnitPowerPercent",
     "UnitThreatSituation", "GetSpecializationRole",
 
     -- Sélecteur de couleur du client. On n'en écrit pas : il en a un, et il a
