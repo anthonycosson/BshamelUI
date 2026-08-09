@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.6 — 2026-08-09
+
 ### Ajouté
 - **Une page « Ressources personnelles ».** L'interrupteur d'affichage du jeu y
   est repris, et chaque barre — vie et ressource — se règle pour elle seule :
