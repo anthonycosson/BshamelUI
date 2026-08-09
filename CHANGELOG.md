@@ -2,6 +2,15 @@
 
 ## Non publié
 
+### Corrigé
+- **« Afficher uniquement le nom pour les alliés » et sa couleur de classe se
+  décochaient à chaque reconnexion.** Les deux cases n'étaient qu'un miroir
+  direct de CVars cachés du client, absents de son propre panneau — et ce
+  client-là ne les persiste pas de son côté. Elles sont désormais rangées dans
+  nos réglages et reposées à chaque connexion, comme le chevauchement des
+  plaques avant elles. « Agrandir le nom des alliés » et sa taille, qui se
+  grisaient avec la case du dessus, suivent.
+
 ## 1.0.6 — 2026-08-09
 
 ### Ajouté

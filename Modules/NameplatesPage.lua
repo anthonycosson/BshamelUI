@@ -538,7 +538,8 @@ local function simplifiedLock(member)
 
     return {
         disabled = function()
-            return inCombat() or U.GetCVar(CVAR.ALLY_NAMES) == "1"
+            local mod = module()
+            return inCombat() or (mod ~= nil and mod:Get("allyNamesOnly"))
         end,
         reason = function()
             if InCombatLockdown() then return L["Cannot change in combat"] end
@@ -751,44 +752,28 @@ end
 
 --- La case « ne montrer que le nom des joueurs alliés ».
 ---
---- C'est une case du client comme les autres, à ceci près qu'allumée elle
---- décoche celle qui la double (voir « Deux réglages du client qui font la même
---- chose »). Le geste est enchaîné à l'écriture, et non posté sur un événement :
---- c'est le même clic, il doit avoir le même effet à l'écran.
+--- Ce n'était qu'une case du client comme les autres — jusqu'à ce qu'on
+--- remarque qu'elle ne survivait pas à une reconnexion : `CVAR.ALLY_NAMES` est
+--- un CVar caché, absent du panneau Blizzard, et ce client-là ne le persiste
+--- pas de son côté. On le traite désormais comme `overlap` : un réglage à nous,
+--- rangé dans `BshamelUIDB`, que `applyAllyNamesOnly` (dans `Nameplates.lua`)
+--- pose au client à chaque connexion et à chaque `CVAR_UPDATE` — y compris le
+--- geste qui décoche la case qui la double (voir « Deux réglages du client qui
+--- font la même chose »), déplacé là pour la même raison.
 ---@return table
 local function allyNamesRow()
-    local row = blizzToggle(CVAR.ALLY_NAMES,
-        L["Allied names only"], L["Allied names only tip"])
-    if not row.type then return row end
-
-    -- L'index du bit se demande à l'énumération, jamais écrit en dur : une
-    -- catégorie que ce client ne connaît pas rend `nil`, et il n'y a alors rien
-    -- à décocher (règle 1).
-    local set = row.set
-    row.set = function(value)
-        set(value)
-
-        if value and not InCombatLockdown()
-           and C_CVar and C_CVar.SetCVarBitfield then
-            local enum  = Enum.NamePlateSimplifiedType
-            local index = type(enum) == "table" and enum.FriendlyPlayer or nil
-            if type(index) == "number" then
-                pcall(C_CVar.SetCVarBitfield, "nameplateSimplifiedTypes",
-                      index, false)
-            end
-        end
-
-        -- **La page se redemande dans les deux sens, coché comme décoché.** Une
-        -- case branchée sur un réglage du client n'écrit pas dans les nôtres :
-        -- aucun message ne part de lui-même, et rien ne redessine la page. En
-        -- cochant, la case d'en face gardait sa coche alors qu'on venait de la
-        -- retirer ; en décochant, elle restait grisée alors qu'elle était rendue,
-        -- et les deux lignes d'ici restaient actives alors qu'elles ne servaient
-        -- plus à rien. Trois lignes qui mentent, faute d'un rafraîchissement.
-        BUI:SendMessage(BUI.MESSAGES.SETTING_CHANGED, MODULE)
+    if not CVAR.ALLY_NAMES or U.GetCVar(CVAR.ALLY_NAMES) == nil then
+        return {}
     end
 
-    return row
+    return {
+        type     = "toggle",
+        key      = "allyNamesOnly",
+        text     = L["Allied names only"],
+        tooltip  = L["Allied names only tip"],
+        disabled = inCombat,
+        disabledReason = L["Cannot change in combat"],
+    }
 end
 
 --- Une case du client que **notre section des unités adverses peut prendre**.
@@ -1249,7 +1234,10 @@ local function pageOptions()
             text     = L["Resize ally names"],
             tooltip  = L["Resize ally names tip"],
             indent   = true,
-            disabled = function() return U.GetCVar(CVAR.ALLY_NAMES) ~= "1" end,
+            disabled = function()
+                local mod = module()
+                return not (mod and mod:Get("allyNamesOnly"))
+            end,
             disabledReason = L["Needs allied names only"],
         },
         {
@@ -1263,13 +1251,14 @@ local function pageOptions()
             indent   = true,
             disabled = function()
                 local mod = module()
-                return U.GetCVar(CVAR.ALLY_NAMES) ~= "1"
+                return not (mod and mod:Get("allyNamesOnly"))
                     or not (mod and mod:Get("resizeAllyName"))
             end,
             -- Le motif n'est donné que pour celui qui ne se devine pas : « la
             -- case du dessus est décochée » se lit sur la case du dessus.
             disabledReason = function()
-                if U.GetCVar(CVAR.ALLY_NAMES) ~= "1" then
+                local mod = module()
+                if not (mod and mod:Get("allyNamesOnly")) then
                     return L["Needs allied names only"]
                 end
             end,
@@ -1284,8 +1273,25 @@ local function pageOptions()
         -- on ne vient pas régler « une couleur », on vient régler **le nom des
         -- alliés** — et ce qu'on cherche alors, c'est l'endroit où il est déjà
         -- question de lui.
-        blizzToggle(CVAR.ALLY_NAME_CLASS,
-            L["Ally name class colors"], L["Ally name class colors tip"], true),
+        --
+        -- Même CVar caché, même sort que « nom seul » ci-dessus : rangée dans
+        -- `BshamelUIDB` et reposée par `applyAllyNameClassColor`, plutôt que
+        -- miroir direct d'un CVar qui ne persiste pas de son côté.
+        (function()
+            if not CVAR.ALLY_NAME_CLASS
+               or U.GetCVar(CVAR.ALLY_NAME_CLASS) == nil then
+                return {}
+            end
+            return {
+                type     = "toggle",
+                key      = "allyNameClassColor",
+                text     = L["Ally name class colors"],
+                tooltip  = L["Ally name class colors tip"],
+                indent   = true,
+                disabled = inCombat,
+                disabledReason = L["Cannot change in combat"],
+            }
+        end)(),
 
         -- La barre de sorts suit immédiatement la barre de vie : c'est l'autre
         -- barre de la plaque, et elle se règle des mêmes façons.

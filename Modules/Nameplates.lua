@@ -1740,6 +1740,46 @@ local function applyOverlap(mod)
     takeCVar(CVAR.OVERLAP_V, mod:Get("overlapV"))
 end
 
+-- =========================================================================
+--  Le mode « nom seul » et la couleur de classe des alliés
+-- =========================================================================
+-- Deux CVars cachés du client — absents de son propre panneau — et pris comme
+-- `OVERLAP_H`/`OVERLAP_V` : relevés avant la première écriture, reposés à
+-- chaque `CVAR_UPDATE`, rendus tels quels en décochant. C'est ce qui manquait
+-- quand la page les branchait en direct sur le CVar (voir `NameplatesPage.lua`,
+-- `allyNamesRow`) : un CVar caché ne survit pas à une reconnexion de son côté,
+-- et une case qui ne fait qu'écrire dedans revient donc d'elle-même à zéro.
+
+---@param mod table
+local function applyAllyNamesOnly(mod)
+    if not LIVE.size then return end
+    if not mod:Get("allyNamesOnly") then return end
+
+    takeCVar(CVAR.ALLY_NAMES, 1)
+
+    -- « Nom seul » et « barre simplifiée pour les alliés » réduisent la même
+    -- plaque à la même chose (voir « Deux réglages du client qui font la même
+    -- chose », dans `NameplatesPage.lua`) : allumer le premier décoche le
+    -- second. Repris ici plutôt que dans le clic, pour qu'il retrouve son état
+    -- à chaque repassage — connexion comprise — et pas seulement au clic.
+    if not InCombatLockdown() and C_CVar and C_CVar.SetCVarBitfield then
+        local enum  = Enum.NamePlateSimplifiedType
+        local index = type(enum) == "table" and enum.FriendlyPlayer or nil
+        if type(index) == "number" then
+            pcall(C_CVar.SetCVarBitfield, "nameplateSimplifiedTypes",
+                  index, false)
+        end
+    end
+end
+
+---@param mod table
+local function applyAllyNameClassColor(mod)
+    if not LIVE.size then return end
+    if not mod:Get("allyNameClassColor") then return end
+
+    takeCVar(CVAR.ALLY_NAME_CLASS, 1)
+end
+
 --- Cette unité est-elle la cible du joueur ?
 ---
 --- `UnitIsUnit` rend un booléen **secret** dès que l'identité d'une des deux
@@ -2903,6 +2943,8 @@ end
 local function applyAll(mod)
     applySize(mod)
     applyOverlap(mod)
+    applyAllyNamesOnly(mod)
+    applyAllyNameClassColor(mod)
     applyAlpha(mod)
     paintAll(mod)
 end
@@ -2930,9 +2972,11 @@ local TEXTURE_KEYS = { barTexture = true, textureOther = true,
 --- que construits dans la fonction : une table bâtie à chaque clic est une table
 --- de trop.
 local TAKEN_CVARS = {
-    alpha   = { CVAR.OCCLUDED },
-    size    = { CVAR.SIZE, CVAR.TARGET_SCALE },
-    overlap = { CVAR.OVERLAP_H, CVAR.OVERLAP_V },
+    alpha              = { CVAR.OCCLUDED },
+    size               = { CVAR.SIZE, CVAR.TARGET_SCALE },
+    overlap            = { CVAR.OVERLAP_H, CVAR.OVERLAP_V },
+    allyNamesOnly      = { CVAR.ALLY_NAMES },
+    allyNameClassColor = { CVAR.ALLY_NAME_CLASS },
 
     -- Les deux interrupteurs de tête, que la section pose à une valeur fixe, et
     -- les familles, remplies d'après `ENEMY_UNITS` juste en dessous : la liste
@@ -3083,6 +3127,13 @@ BUI:RegisterModule(MODULE, {
 
         -- Le nom des joueurs alliés, à part : c'est ce qu'on lit en mode
         -- « le nom seul », et il se règle sans rendre le reste du texte.
+        --
+        -- Le mode lui-même — et sa couleur de classe — vivaient comme de
+        -- simples miroirs de CVars cachés, jamais réappliqués : le client les
+        -- oubliait à chaque reconnexion. Ils sont maintenant pris comme
+        -- `overlap` (voir `applyAllyNamesOnly`/`applyAllyNameClassColor`).
+        allyNamesOnly      = false,
+        allyNameClassColor = false,
         resizeAllyName = false,
         allyNameSize   = T.SIZE.PLATE_TEXT,
 
@@ -3431,6 +3482,8 @@ BUI:RegisterModule(MODULE, {
 
         applySize(self)
         applyOverlap(self)
+        applyAllyNamesOnly(self)
+        applyAllyNameClassColor(self)
         applyClientThreat(self)
         applyEnemyUnits(self)
 
@@ -3449,6 +3502,8 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("CVAR_UPDATE", U.Throttle(T.TIMING.CVAR_SETTLE, function()
             applySize(self)
             applyOverlap(self)
+            applyAllyNamesOnly(self)
+            applyAllyNameClassColor(self)
             applyAlpha(self)
                 applyClientThreat(self)
             applyEnemyUnits(self)
@@ -3460,6 +3515,8 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
             applySize(self)
             applyOverlap(self)
+            applyAllyNamesOnly(self)
+            applyAllyNameClassColor(self)
                 applyClientThreat(self)
             applyEnemyUnits(self)
             releaseClientAuras(self)
@@ -3672,6 +3729,26 @@ BUI:RegisterModule(MODULE, {
                 giveBack(TAKEN_CVARS.overlap)
             else
                 applyOverlap(self)
+            end
+            return
+        end
+
+        -- Deux CVars cachés, pris et rendus comme la superposition ci-dessus —
+        -- voir `applyAllyNamesOnly`/`applyAllyNameClassColor`.
+        if key == "allyNamesOnly" then
+            if self:Get("allyNamesOnly") then
+                applyAllyNamesOnly(self)
+            else
+                giveBack(TAKEN_CVARS.allyNamesOnly)
+            end
+            return
+        end
+
+        if key == "allyNameClassColor" then
+            if self:Get("allyNameClassColor") then
+                applyAllyNameClassColor(self)
+            else
+                giveBack(TAKEN_CVARS.allyNameClassColor)
             end
             return
         end
