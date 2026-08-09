@@ -4312,3 +4312,24 @@ rend `(id, appStatus, pendingStatus, appDuration)`. Les refus sont `declined`,
 candidature — quelques minutes —, puis le groupe redevient un inconnu. Un
 refus qui arrive pendant que la liste est affichée s'annonce par
 `LFG_LIST_APPLICATION_STATUS_UPDATED`, pas par une reconstruction de liste.
+
+---
+
+## Une release morte pour douze globales non déclarées
+
+**Symptôme** — la pipeline du tag `v1.0.7` casse au `lint` : vingt-quatre
+`(W113) accessing undefined variable`, le job `release` est ignoré, rien ne
+part. Tout était vert en local.
+
+**Cause** — la variante « globales » du piège déjà consigné plus haut :
+luacheck n'est pas installable en local, et `lua-language-server` ne signale
+pas une globale du client absente de `.luarc.json` de la même façon fatale.
+Le panneau de filtres employait douze globales de la recherche de groupe
+(`PVEFrame`, `LFGListFrame`, `LFGListSearchPanel_*`, `PLAYER_DIFFICULTY*`,
+`DUNGEONS`, `RAIDS`) déclarées nulle part.
+
+**Ce qu'on fait** — toute nouvelle globale du client entre dans `.luacheckrc`
+**et** `.luarc.json` dans le commit qui l'emploie — `check-design` vérifie que
+les deux fichiers s'accordent, pas qu'ils soient complets. Le tag mort reste
+(motif `v*` protégé, suppression refusée) : on corrige et on publie le numéro
+suivant, c'est le protocole normal.
