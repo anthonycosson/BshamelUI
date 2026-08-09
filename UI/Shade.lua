@@ -208,8 +208,9 @@ local BORDER_KEYS = { "Border", "IconBorder" }
 
 --- Clés sous lesquelles un cadre publie son **fond**, par opposition à son
 --- contour. La pièce centrale d'un nine-slice en fait partie : c'est elle qui
---- peint la surface, les huit autres dessinent le cadre.
-local BACKGROUND_KEYS = { "Center", "Bg", "Background" }
+--- peint la surface, les huit autres dessinent le cadre. La graphie minuscule
+--- est celle des barres de plaque, qui publient leur fond en camelCase.
+local BACKGROUND_KEYS = { "Center", "Bg", "Background", "background" }
 
 --- Éléments dont la texture `Border` n'est pas de l'habillage mais un **signal**.
 ---
@@ -247,6 +248,25 @@ local FLAT_BUTTONS = { actionBars = true, vehicleBar = true }
 --- chose que l'habillage. Ailleurs — un cadre d'unité, une barre d'action — le
 --- fond *est* de l'habillage et suit le reste.
 local KEEP_BACKGROUND = {
+    tooltip = true,
+
+    -- Une plaque aussi : son habillage est le **contour** de ses barres, et
+    -- c'est lui qu'on assombrit. Le fond d'une barre de sorts couvre toute la
+    -- barre — teinté, c'est la barre entière qui devient une plaque noire, et
+    -- le sort en cours ne se lit plus qu'à son remplissage.
+    nameplates = true,
+}
+
+--- Éléments dont on ne touche **pas aux boutons du tout** — ni leurs textures,
+--- ni ce qu'ils portent.
+---
+--- L'infobulle de lien (`ItemRefTooltip`) — celle qui s'ouvre au clic sur un
+--- haut fait ou un objet dans le chat — porte une croix de fermeture. C'est un
+--- contrôle, pas de l'habillage : sa croix rouge désaturée puis assombrie
+--- devenait une croix noire, et le joueur y lisait « le mode sombre déborde sur
+--- la fenêtre des hauts faits ». Un bouton sur une infobulle n'a jamais rien
+--- d'autre à dire que « cliquez-moi » — on s'arrête à sa porte.
+local SPARE_BUTTONS = {
     tooltip = true,
 }
 
@@ -359,6 +379,28 @@ local NESTED = {
             if unitFrame then collect(unitFrame.BuffFrame) end
         end
     end,
+
+    -- Les barres d'infos : l'habillage de chaque plaque à l'écran — le contour
+    -- de sa barre de vie, celui de sa barre de sorts. Elles n'ont ni nom
+    -- global ni place fixe : on prend celles qui existent à l'instant du
+    -- passage, et chaque plaque qui monte ensuite est teinte une par une par
+    -- le module (`NAME_PLATE_UNIT_ADDED` → `ApplyTo`).
+    --
+    -- Ce que la plaque **dit** est déjà protégé par le classement commun : le
+    -- remplissage des barres (`GetStatusBarTexture`), les icônes, la
+    -- surbrillance de la cible (`Highlight`, voir `STATE_KEYS`) et les cadres
+    -- de signal (`SIGNAL_FRAMES`) ne se teignent pas.
+    nameplates = function(collect)
+        if not (C_NamePlate and C_NamePlate.GetNamePlates) then return end
+
+        local ok, plates = pcall(C_NamePlate.GetNamePlates)
+        if not (ok and type(plates) == "table") then return end
+
+        for i = 1, #plates do
+            local unitFrame = plates[i] and plates[i].UnitFrame
+            if unitFrame then collect(unitFrame) end
+        end
+    end,
 }
 
 -- =========================================================================
@@ -405,7 +447,17 @@ local STATE_TEXTURES = {
 --- d'un signal absent : le client repeint la texture quand le curseur passe
 --- dessus, notre passage la rassombrit au coup d'après, et on cherche du côté de
 --- ce qui *déclenche* la lueur alors que le problème est ce qui la couvre.
-local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc" }
+---
+--- `DebuffBorder` est l'anneau coloré d'un affaiblissement : il **dit son
+--- type** — magie, poison, maladie, malédiction — dans la couleur que tout le
+--- jeu emploie pour cela. Désaturé puis assombri, il devenait un anneau noir :
+--- un signal éteint de plus, celui qui dit « ceci se dissipe ». L'enchantement
+--- d'arme (`TempEnchantBorder`, violet) est le même cas. `Highlight` ferme la
+--- liste : une texture de surbrillance — cible sélectionnée, survol — est du
+--- retour visuel par définition, comme `GetHighlightTexture` l'était déjà chez
+--- les textures qui se demandent.
+local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
+                     "DebuffBorder", "TempEnchantBorder", "Highlight" }
 
 --- Fragments de nom d'un **cadre entier** qui signale au lieu de décorer.
 ---
@@ -577,6 +629,12 @@ local function collectFrom(frame, out, seen, rules)
     if ask(frame, "IsForbidden") == true then return end
     if ask(frame, "GetObjectType") == "Cooldown" then return end
 
+    -- Un bouton d'un élément qui les épargne ne se visite pas : ni ses
+    -- textures, ni ses enfants (voir `SPARE_BUTTONS`). Avant toute prise —
+    -- c'est ce qui le distingue de `flatButtons`, qui prend l'habillage du
+    -- bouton et ne s'arrête qu'à ses enfants.
+    if rules.spareButtons and ask(frame, "GetObjectType") == "Button" then return end
+
     -- Un cadre qui n'existe que pour signaler ne se visite pas : ni lui, ni ce
     -- qu'il porte. Protégé comme le reste du classement — un doute se tranche en
     -- ne touchant pas, ce qui laisse au pire une lueur claire sur une barre
@@ -621,7 +679,14 @@ local function collectFrom(frame, out, seen, rules)
         if rules.reskins and publishedAs(frame, region, BORDER_KEYS) then return end
         if rules.borderSignals and publishedAs(frame, region, BORDER_KEYS) then return end
 
-        if rules.keepBackground and publishedAs(frame, region, BACKGROUND_KEYS) then return end
+        -- La clé d'abord, le nom en rattrapage — même partage que les signaux :
+        -- un fond qu'aucune clé ne publie porte « Background » dans son nom, et
+        -- le nom ne sert qu'à écarter, jamais à décider qu'on touche.
+        if rules.keepBackground then
+            if publishedAs(frame, region, BACKGROUND_KEYS) then return end
+            local bgName = debugName(region)
+            if bgName and bgName:find("[Bb]ackground") then return end
+        end
 
         local ok, kind = pcall(classify, frame, region)
         if not ok or kind == "portrait" then return end
@@ -664,6 +729,7 @@ local function rulesFor(element)
         keepBackground = KEEP_BACKGROUND[element] == true,
         borderSignals  = BORDER_SIGNALS[element] == true,
         flatButtons    = FLAT_BUTTONS[element] == true,
+        spareButtons   = SPARE_BUTTONS[element] == true,
         whiteText      = WHITE_TEXT[element] == true,
     }
 end

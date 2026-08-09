@@ -2,6 +2,23 @@
 
 ## Non publié
 
+### Ajouté
+- **Le mode sombre atteint les barres d'infos.** Une ligne de plus dans « Ce
+  qu'il assombrit » : le cadre autour de chaque plaque — contours de la barre
+  de vie et de la barre de sorts. Les barres elles-mêmes, la surbrillance de
+  la cible et les icônes gardent leurs couleurs.
+
+### Corrigé
+- **La croix de fermeture des fenêtres de lien devenait noire.** Cliquer un
+  haut fait ou un objet dans le chat ouvre la petite fenêtre de lien, couverte
+  par la case « Infobulle » du mode sombre — et sa croix rouge, prise pour de
+  l'habillage, ressortait noire. Un bouton posé sur une infobulle est un
+  contrôle : le mode sombre n'y touche plus.
+- **L'anneau de type des affaiblissements devenait noir.** Sur vos débuffs,
+  l'anneau coloré qui dit le type — magie, poison, maladie, malédiction —
+  était assombri comme un ornement. C'est un signal, il garde désormais sa
+  couleur ; l'enchantement d'arme temporaire (anneau violet) suit.
+
 ## 1.0.8 — 2026-08-09
 
 ### Ajouté

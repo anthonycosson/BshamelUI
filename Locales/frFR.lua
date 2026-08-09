@@ -165,6 +165,10 @@ BUI:RegisterLocale("frFR", {
     ["Dark cooldown manager tip"]      = "Les barres du gestionnaire de temps de recharge et leurs icônes.",
     ["Dark personal resources tip"] =
         "Les barres de vie et de ressource affichées sous le personnage.",
+    ["Dark nameplates tip"] =
+        "Le cadre autour de chaque barre d'infos : contours de la barre de vie et "
+        .. "de la barre de sorts. Les barres elles-mêmes, la surbrillance de la "
+        .. "cible et les icônes gardent leurs couleurs.",
     -- Module PersonalResource
     ["Personal resources"]             = "Ressources personnelles",
     ["Show personal resources"]        = "Afficher les ressources personnelles",

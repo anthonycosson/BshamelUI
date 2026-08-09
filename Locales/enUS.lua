@@ -164,6 +164,9 @@ BUI:RegisterLocale("enUS", {
     ["Dark cooldown manager tip"]      = "The cooldown manager bars and their icons.",
     ["Dark personal resources tip"] =
         "The health and resource bars shown under your character.",
+    ["Dark nameplates tip"] =
+        "The frame around every nameplate: health bar and cast bar borders. "
+        .. "The bars themselves, the target highlight and the icons keep their colors.",
     -- Module PersonalResource
     ["Personal resources"]             = "Personal resources",
     ["Show personal resources"]        = "Show personal resources",

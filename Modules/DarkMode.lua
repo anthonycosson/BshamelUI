@@ -72,6 +72,11 @@ local DARK_ELEMENTS = {
     -- plus une barre de nom — d'où sa ligne à elle : la case des auras couvre
     -- les buffs posés à côté, pas la barre.
     { key = "darkPersonalResource", element = "personalResource" },
+    -- Les barres d'infos : le contour des barres de vie et de sorts des
+    -- plaques. Elles montent et descendent sans arrêt — c'est l'abonnement à
+    -- `NAME_PLATE_UNIT_ADDED` (déjà là pour les auras du joueur) qui teinte
+    -- chaque nouvelle venue, une par une et tout de suite.
+    { key = "darkNameplates",       element = "nameplates" },
     { key = "darkAuras",            element = "auras" },
     { key = "darkCooldownManager", element = "cooldownManager" },
     { key = "darkTooltip",         element = "tooltip" },
@@ -146,6 +151,12 @@ end
 local refreshAuras      = refresher("auras")
 local refreshUnitFrames = refresher("unitFrames", true)
 
+-- Les plaques, **tout de suite et à retardement** comme les cadres d'unités,
+-- et pour la même raison : au changement de cible, le client repeint le
+-- contour de la plaque élue — en blanc — après avoir annoncé le changement.
+-- Le passage rapide rattrape ce rhabillage-là, le groupé ce qui reste.
+local refreshPlates     = refresher("nameplates", true)
+
 local refreshBars       = refresher("actionBars")
 -- La barre véhicule se rhabille à la montée : le client repose ses atlas au
 -- moment où on embarque, et c'est l'événement ci-dessous (`OnEnable`) qui nous
@@ -195,11 +206,24 @@ local function auraChanged(_, unit)
     refreshAuras()
 end
 
---- La barre de nom du **joueur**, et elle seule : c'est là que vivent les auras
---- posées sous le personnage. Les autres plaques n'ont rien qui nous concerne,
---- et une pull en monte une par mob.
+--- Une plaque vient de monter.
+---
+--- Deux clients pour le même événement. Les **barres d'infos** teignent chaque
+--- plaque à l'instant où elle apparaît — `ApplyTo` est sans effet si l'élément
+--- est éteint, le test d'état vit donc chez le moteur et pas ici. Les **auras**
+--- ne concernent que la barre de nom du joueur : c'est là que vivent celles
+--- posées sous le personnage, et une pull monte une plaque par mob.
 ---@param unit string
 local function plateAdded(_, unit)
+    local shade = BUI.Shade
+    if shade and C_NamePlate and C_NamePlate.GetNamePlateForUnit then
+        local plate = C_NamePlate.GetNamePlateForUnit(unit)
+        local unitFrame = plate and plate.UnitFrame
+        if unitFrame then
+            BUI.safecall(shade.ApplyTo, shade, "nameplates", unitFrame)
+        end
+    end
+
     if not U.IsTrue(UnitIsUnit(unit, "player")) then return end
     refreshAuras()
 end
@@ -363,6 +387,7 @@ BUI:RegisterModule(MODULE, {
         darkActionBars       = false,
         darkCastBar          = false,
         darkPersonalResource = false,
+        darkNameplates       = false,
         darkAuras            = false,
         darkCooldownManager  = false,
         darkTooltip          = false,
@@ -410,6 +435,13 @@ BUI:RegisterModule(MODULE, {
             key      = "darkPersonalResource",
             text     = L["Personal resources"],
             tooltip  = L["Dark personal resources tip"],
+            disabled = requires("darkMode"),
+        },
+        {
+            type     = "toggle",
+            key      = "darkNameplates",
+            text     = L["Nameplates"],
+            tooltip  = L["Dark nameplates tip"],
             disabled = requires("darkMode"),
         },
         {
@@ -467,7 +499,12 @@ BUI:RegisterModule(MODULE, {
         end)
         self:RegisterEvent("PLAYER_ENTERING_WORLD", refreshShade)
 
-        self:RegisterEvent("PLAYER_TARGET_CHANGED", refreshUnitFrames)
+        -- La cible change deux choses : le cadre d'unité se rhabille, et la
+        -- plaque élue reçoit son contour blanc — les deux se repassent.
+        self:RegisterEvent("PLAYER_TARGET_CHANGED", function(...)
+            refreshUnitFrames(...)
+            refreshPlates(...)
+        end)
         self:RegisterEvent("PLAYER_FOCUS_CHANGED",  refreshUnitFrames)
         self:RegisterEvent("UNIT_PET",              refreshUnitFrames)
 
