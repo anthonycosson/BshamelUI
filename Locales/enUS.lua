@@ -146,18 +146,27 @@ BUI:RegisterLocale("enUS", {
         "Replace every setting of the active profile ('%s') with a copy of '%s'?",
 
     -- Module GameSettings
-    ["Game settings"]           = "Game settings",
+    ["Game settings"]           = "Game settings (between characters)",
+    ["Game settings note"] =
+        "This page copies a character's game settings so another character, typically "
+        .. "a fresh reroll, can import them. For example: personal resources, the "
+        .. "number of enabled action bars, raid frame options.\n\n"
+        .. "1) On the properly configured character, click Update.\n"
+        .. "2) On the new character, pick the source and click Apply. The interface "
+        .. "reloads by itself.\n"
+        .. "3) The layout of frames is not handled here but in Edit Mode: load the "
+        .. "one you saved there.",
     ["Snapshot"]                = "Snapshot",
-    ["Record game settings"]    = "Record this character's game settings",
-    ["Record"]                  = "Record",
-    ["Record game settings tip"] =
+    ["Update configuration"]    = "Update this character's configuration",
+    ["Update"]                  = "Update",
+    ["Update configuration tip"] =
         "Photographs the game options stored per character — everything you changed in "
         .. "the game's own settings, action bar checkboxes included. The snapshot is "
         .. "visible from every character, so a fresh one can import it.",
-    ["Auto snapshot"]           = "Keep the snapshot fresh on logout",
+    ["Auto snapshot"]           = "Update automatically on logout",
     ["Auto snapshot tip"] =
-        "Retakes this character's snapshot every time it logs out, so what you import "
-        .. "elsewhere is never stale.",
+        "Updates this character's recorded configuration every time it logs out, so "
+        .. "what you import elsewhere is never stale.",
     ["Snapshot refused"]        = "The game refused to list its settings; nothing was recorded.",
     ["Snapshot taken"] =
         "Game settings recorded: %d settings differing from the game's defaults, "
@@ -171,11 +180,11 @@ BUI:RegisterLocale("enUS", {
     ["Pick a snapshot first"]   = "Pick a character above first.",
     ["Apply snapshot"]          = "Apply to this character",
     ["Apply snapshot tip"] =
-        "Writes the recorded game settings onto this character, after a confirmation. "
-        .. "Some settings only show after a /reload.",
+        "Writes the recorded game settings onto this character, after a confirmation, "
+        .. "then reloads the interface.",
     ["Apply snapshot confirm"] =
-        "Apply the game settings recorded on '%s' to this character?",
-    ["Snapshot applied"]        = "%d game settings applied from '%s'. Some only show after a /reload.",
+        "Apply the game settings recorded on '%s' to this character? The interface "
+        .. "will reload right away.",
     ["Delete snapshot"]         = "Delete this snapshot",
     ["Delete snapshot tip"]     = "Removes the picked character's snapshot from the list.",
     ["Delete snapshot confirm"] = "Delete the snapshot of '%s'?",

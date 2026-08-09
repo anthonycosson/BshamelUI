@@ -122,18 +122,28 @@ BUI:RegisterLocale("frFR", {
         "Remplacer tous les réglages du profil actif (« %s ») par une copie de « %s » ?",
 
     -- Module GameSettings
-    ["Game settings"]           = "Réglages du jeu",
+    ["Game settings"]           = "Réglages du jeu (entre personnages)",
+    ["Game settings note"] =
+        "Cette page copie les réglages du jeu d'un personnage pour les réimporter "
+        .. "sur un autre, typiquement un reroll tout neuf. Par exemple : l'activation "
+        .. "des ressources personnelles, le nombre de barres d'action, les réglages "
+        .. "des cadres de raid.\n\n"
+        .. "1) Sur le personnage bien réglé, cliquez sur Mettre à jour.\n"
+        .. "2) Sur le nouveau, choisissez le personnage source puis Appliquer. "
+        .. "L'interface se recharge toute seule.\n"
+        .. "3) La disposition des éléments n'est pas gérée ici mais dans le mode "
+        .. "Édition : chargez-y celle que vous avez enregistrée.",
     ["Snapshot"]                = "Relevé",
-    ["Record game settings"]    = "Relever les réglages de ce personnage",
-    ["Record"]                  = "Relever",
-    ["Record game settings tip"] =
+    ["Update configuration"]    = "Mettre à jour la configuration de ce personnage",
+    ["Update"]                  = "Mettre à jour",
+    ["Update configuration tip"] =
         "Photographie les options du jeu propres à ce personnage — tout ce que vous "
         .. "avez changé dans ses réglages, cases des barres d'action comprises. Le "
         .. "relevé est visible de tous les personnages : un petit nouveau peut l'importer.",
-    ["Auto snapshot"]           = "Tenir le relevé à jour à la déconnexion",
+    ["Auto snapshot"]           = "Mettre à jour automatiquement à la déconnexion",
     ["Auto snapshot tip"] =
-        "Reprend le relevé de ce personnage à chaque déconnexion, pour que ce qu'on "
-        .. "importe ailleurs ne soit jamais périmé.",
+        "Met à jour la configuration relevée de ce personnage à chaque déconnexion, "
+        .. "pour que ce qu'on importe ailleurs ne soit jamais périmé.",
     ["Snapshot refused"]        = "Le jeu a refusé de lister ses réglages ; rien n'a été relevé.",
     ["Snapshot taken"] =
         "Réglages du jeu relevés : %d réglages écartés des défauts du jeu, "
@@ -147,11 +157,11 @@ BUI:RegisterLocale("frFR", {
     ["Pick a snapshot first"]   = "Choisissez d'abord un personnage au-dessus.",
     ["Apply snapshot"]          = "Appliquer à ce personnage",
     ["Apply snapshot tip"] =
-        "Écrit les réglages du jeu relevés sur ce personnage, après confirmation. "
-        .. "Certains ne se voient qu'après un /reload.",
+        "Écrit les réglages du jeu relevés sur ce personnage, après confirmation, "
+        .. "puis recharge l'interface.",
     ["Apply snapshot confirm"] =
-        "Appliquer à ce personnage les réglages du jeu relevés sur « %s » ?",
-    ["Snapshot applied"]        = "%d réglages du jeu appliqués depuis « %s ». Certains ne se voient qu'après un /reload.",
+        "Appliquer à ce personnage les réglages du jeu relevés sur « %s » ? "
+        .. "L'interface se rechargera aussitôt.",
     ["Delete snapshot"]         = "Supprimer ce relevé",
     ["Delete snapshot tip"]     = "Retire de la liste le relevé du personnage choisi.",
     ["Delete snapshot confirm"] = "Supprimer le relevé de « %s » ?",

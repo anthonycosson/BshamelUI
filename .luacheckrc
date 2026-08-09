@@ -270,6 +270,8 @@ read_globals = {
     -- et l'identité du personnage.
     "SettingsPanel", "GetActionBarToggles", "SetActionBarToggles",
     "UnitFullName", "GetRealmName",
+    -- Le rechargement d'interface, du chemin récent au plus ancien.
+    "C_UI", "ReloadUI",
 
     -- Emotes. Les deux chemins pour en jouer un, du plus récent au plus ancien :
     -- c'est un test de capacité, on prend celui que le client publie.

@@ -123,6 +123,7 @@
     "GetInstanceInfo",
     "SettingsPanel", "GetActionBarToggles", "SetActionBarToggles",
     "UnitFullName", "GetRealmName",
+    "C_UI", "ReloadUI",
 
     "C_ChatInfo", "DoEmote"
   ],

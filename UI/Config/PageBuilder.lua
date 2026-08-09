@@ -20,7 +20,9 @@
 --          la valeur est une table `{ r = , g = , b = }` ; le sélecteur est
 --          celui du client (voir `UI/Widgets/ColorSwatch.lua`).
 --      { type = "button",      text = ..., label = ..., onClick = function() end }
---      { type = "description", text = ... }
+--      { type = "description", text = ..., font = ... }
+--          `font` est un objet de police **du thème** (`T.FONT.…`), pour la
+--          note qui doit se lire de loin ; à défaut, le corps d'infobulle.
 --      { type = "warning",     text = ... }   -- le même, en orange
 --      { type = "alert",       text = ... }   -- le même, en rouge
 --      { type = "spacer",      height = 10 }
@@ -133,7 +135,7 @@ local function buildWidget(page, mod, descriptor)
         return row
 
     elseif kind == "description" then
-        return W.Description(page, descriptor.text)
+        return W.Description(page, descriptor.text, descriptor.font)
 
     elseif kind == "warning" then
         return W.Warning(page, descriptor.text)

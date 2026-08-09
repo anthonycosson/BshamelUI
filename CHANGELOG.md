@@ -9,8 +9,10 @@
   les réglages de Blizzard, cases des barres d'action comprises — et une
   case optionnelle tient ce relevé à jour à chaque déconnexion. Sur le
   nouveau venu, on choisit le personnage source et on applique, après
-  confirmation. Les réglages de compte ne sont pas touchés (ils voyagent
-  déjà tout seuls), et une option disparue depuis le relevé ne s'écrit pas.
+  confirmation — l'interface se recharge aussitôt. Une note en tête de page
+  raconte le parcours, mode Édition compris pour la disposition. Les
+  réglages de compte ne sont pas touchés (ils voyagent déjà tout seuls), et
+  une option disparue depuis le relevé ne s'écrit pas.
 
 ## 1.0.9 — 2026-08-10
 

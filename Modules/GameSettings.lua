@@ -39,6 +39,7 @@
 
 local _, ns = ...
 local BUI = ns.BUI
+local T    = BUI.Theme
 local U    = BUI.Util
 local W    = BUI.Widgets
 local L    = ns.L
@@ -309,14 +310,11 @@ local function applySnapshot(mod)
     -- On n'écrit que l'écart : une CVar déjà à la bonne valeur n'émet pas de
     -- `CVAR_UPDATE`, et une CVar que ce client ne connaît plus (`nil`) ne
     -- s'invente pas.
-    local applied = 0
     if type(snap.cvars) == "table" then
         for name, value in pairs(snap.cvars) do
             local current = U.GetCVar(name)
             if current ~= nil and current ~= value then
-                if pcall(U.SetCVar, name, value) then
-                    applied = applied + 1
-                end
+                pcall(U.SetCVar, name, value)
             end
         end
     end
@@ -325,7 +323,15 @@ local function applySnapshot(mod)
         pcall(SetActionBarToggles, unpack(snap.bars))
     end
 
-    BUI:Print(BUI:Lf("Snapshot applied", applied, source))
+    -- L'interface se recharge dans la foulée — la confirmation l'a annoncé.
+    -- Plusieurs de ces réglages ne se reflètent qu'à la reconstruction, et un
+    -- import qui a l'air de ne rien faire est pire qu'un rechargement. Les
+    -- valeurs sont déjà côté serveur, le rechargement n'emporte rien.
+    if C_UI and type(C_UI.Reload) == "function" then
+        C_UI.Reload()
+    elseif type(ReloadUI) == "function" then
+        ReloadUI()
+    end
 end
 
 local function confirmApply()
@@ -365,12 +371,21 @@ BUI:RegisterModule(MODULE, {
     },
 
     options = {
+        -- Un paragraphe, et c'est voulu : la règle de la maison met tout dans
+        -- les infobulles, mais cette page est un **parcours** — deux
+        -- personnages, trois étapes, un détour par le mode Édition — et un
+        -- parcours ne se raconte pas au survol d'une ligne. Au corps des
+        -- libellés, pas à celui des infobulles : une note qu'on doit lire
+        -- avant de cliquer se lit de loin.
+        { type = "description", text = L["Game settings note"],
+          font = T.FONT.LABEL },
+
         { type = "header", text = L["Snapshot"] },
         {
             type    = "button",
-            text    = L["Record game settings"],
-            label   = L["Record"],
-            tooltip = L["Record game settings tip"],
+            text    = L["Update configuration"],
+            label   = L["Update"],
+            tooltip = L["Update configuration tip"],
             onClick = function()
                 local mod = module()
                 if mod then takeSnapshot(mod) end
