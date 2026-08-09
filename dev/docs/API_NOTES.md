@@ -84,6 +84,15 @@ d'atlas, quelle que soit la façon de la poser — mais elle n'a pas été prouv
 revenir demande de commencer par une bissection : masquer une texture de couleur
 unie, sans atlas, pour savoir si la chaîne fonctionne du tout sur cette surface.
 
+**Le besoin, lui, a trouvé un autre chemin** — vérifié en jeu sur la rangée de
+ressource de classe : un rectangle arrondi s'obtient **sans aucun masque dans la
+chaîne**, avec une texture à nous dont l'alpha est cuit dans le fichier
+(`media/rounded.tga`, comme le disque du logo), posée en découpe en neuf —
+`SetTextureSliceMargins(rayon, …)` — pour que le rayon ne s'étire pas avec la
+surface. Voir `T.TEXTURE.ROUNDED_RECT` et `UI/Widgets/ResourceBar.lua`. Cela ne
+rouvre pas la piste des bandeaux : leur texture est un atlas du client, et c'est
+elle qu'il faudrait masquer ; ici la forme est la nôtre de bout en bout.
+
 ---
 
 ## `xpcall` avec arguments
