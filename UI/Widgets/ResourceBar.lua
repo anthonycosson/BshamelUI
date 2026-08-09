@@ -27,19 +27,32 @@ local W    = BUI.Widgets
 
 --- Une case : son liseré sombre et son remplissage.
 ---
---- Le remplissage est le carré blanc du moteur, **teinté** par la couleur de
---- sommet et non reposé : `SetVertexColor` ne fait que multiplier ce qui est déjà
---- dessiné, là où `SetColorTexture` reconstruirait la texture à chaque point
---- gagné ou perdu.
+--- Le remplissage est **teinté** par la couleur de sommet et non reposé :
+--- `SetVertexColor` ne fait que multiplier ce qui est déjà dessiné, là où
+--- `SetColorTexture` reconstruirait la texture à chaque point gagné ou perdu.
 ---@param panel table
 ---@return table
 local function newCell(panel)
     local edge = panel:CreateTexture(nil, "BACKGROUND")
-    edge:SetColorTexture(T.COLOR.SHADE:GetRGB())
-    edge:SetAlpha(T.ALPHA.RESOURCE_EDGE)
-
     local fill = panel:CreateTexture(nil, "ARTWORK")
-    fill:SetTexture(T.TEXTURE.STATUSBAR_FLAT)
+
+    -- Coins arrondis, comme ceux que le client donne aux barres de la ressource
+    -- personnelle : le liseré sombre du thème et le remplissage prennent tous
+    -- deux le carré arrondi du thème, et c'est la découpe en neuf qui garde le
+    -- rayon net sur une case étirée (voir `T.TEXTURE.ROUNDED_RECT` — les marges
+    -- se posent dans `SetLayout`, qui seul connaît la taille des cases).
+    --
+    -- Test de capacité (règle 1) : un client sans découpe en neuf garde les
+    -- angles droits plutôt qu'un rayon qui s'étire en ellipse.
+    if edge.SetTextureSliceMargins then
+        edge:SetTexture(T.TEXTURE.ROUNDED_RECT)
+        edge:SetVertexColor(T.COLOR.SHADE:GetRGB())
+        fill:SetTexture(T.TEXTURE.ROUNDED_RECT)
+    else
+        edge:SetColorTexture(T.COLOR.SHADE:GetRGB())
+        fill:SetTexture(T.TEXTURE.STATUSBAR_FLAT)
+    end
+    edge:SetAlpha(T.ALPHA.RESOURCE_EDGE)
 
     local inset = T.SIZE.RESOURCE_EDGE
     fill:SetPoint("TOPLEFT",     edge, "TOPLEFT",      inset, -inset)
@@ -598,6 +611,14 @@ function W.ResourceBar(opts)
         local stepX = cellW + space
         local rowW  = shownCells * cellW + (shownCells - 1) * space
 
+        -- Marges de la découpe en neuf, bornées à la demi-case : au-delà, les
+        -- deux coins d'un même bord se chevauchent et la découpe se déchire.
+        -- Le remplissage, en retrait du liseré, arrondit d'autant moins — deux
+        -- courbes parallèles n'ont pas le même rayon.
+        local edgeRound = math.min(T.SIZE.ROUNDED_RECT_RADIUS,
+                                   math.floor(math.min(cellW, cellH) / 2))
+        local fillRound = math.max(edgeRound - T.SIZE.RESOURCE_EDGE, 1)
+
         self:SetSize(rowW, cellH)
 
         -- Le contour que les traits parcourent est celui de la rangée. Leur cœur
@@ -613,6 +634,13 @@ function W.ResourceBar(opts)
                 cell.edge:ClearAllPoints()
                 cell.edge:SetPoint("TOPLEFT", self, "TOPLEFT", (i - 1) * stepX, 0)
                 cell.edge:SetSize(cellW, cellH)
+
+                if cell.edge.SetTextureSliceMargins then
+                    cell.edge:SetTextureSliceMargins(edgeRound, edgeRound,
+                                                     edgeRound, edgeRound)
+                    cell.fill:SetTextureSliceMargins(fillRound, fillRound,
+                                                     fillRound, fillRound)
+                end
             end
 
             cell.edge:SetShown(used)

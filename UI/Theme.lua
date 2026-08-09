@@ -539,6 +539,13 @@ T.SIZE = {
     -- qu'on ne voulait pas.
     RESOURCE_EDGE     = 1,
 
+    -- Rayon des coins de `T.TEXTURE.ROUNDED_RECT`, **cuit dans le fichier** par
+    -- `dev/scripts/make-rounded-tga.ps1` : les deux valeurs bougent ensemble ou
+    -- pas du tout. C'est aussi la marge de découpe en neuf à passer à
+    -- `SetTextureSliceMargins` pour que le rayon reste celui-là quelle que soit
+    -- la taille dessinée.
+    ROUNDED_RECT_RADIUS = 5,
+
     -- Bornes des curseurs de taille. Le plancher est la case encore distinguable
     -- de sa voisine, le plafond celle au-delà de laquelle la rangée devient une
     -- deuxième barre d'action.
@@ -2066,6 +2073,17 @@ T.TEXTURE = {
     -- flous et crénelés. Une couleur unie n'a rien à perdre — elle est aussi nette
     -- sur trois pixels que sur trois cents.
     SOLID             = "Interface\\Buttons\\WHITE8x8",
+
+    -- Carré blanc **à coins arrondis**, le nôtre. Le client n'en a pas : ses
+    -- masques sont circulaires, et un masque posé à l'exécution peut ne pas
+    -- prendre du tout (voir `dev/docs/API_NOTES.md`) — l'alpha est donc cuit
+    -- dans le fichier, comme le disque du logo. Blanc pour la même raison que
+    -- `SOLID` : la teinte vient de `SetVertexColor`, jamais du fichier.
+    --
+    -- Se pose avec `SetTextureSliceMargins(T.SIZE.ROUNDED_RECT_RADIUS, …)` :
+    -- sans la découpe en neuf, le rayon s'étire avec la texture et les coins
+    -- d'une case large deviennent des ellipses.
+    ROUNDED_RECT      = "Interface\\AddOns\\BshamelUI\\media\\rounded",
 
     -- Emplacement dépourvu d'enchantement : l'icône du métier d'enchanteur, celle
     -- que le jeu donne à la compétence elle-même. Elle est **désaturée** à

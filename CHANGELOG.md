@@ -2,6 +2,12 @@
 
 ## Non publié
 
+### Modifié
+- **La rangée de ressource de classe arrondit ses coins.** Chaque case — liseré
+  sombre et remplissage — prend le même léger arrondi que l'habillage des
+  barres de la ressource personnelle, au lieu d'angles droits qui la faisaient
+  pièce rapportée à côté d'elles.
+
 ### Corrigé
 - **« Afficher uniquement le nom pour les alliés » et sa couleur de classe se
   décochaient à chaque reconnexion.** Les deux cases n'étaient qu'un miroir
