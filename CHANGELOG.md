@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- **La texture des barres de vie ne tenait plus.** Le client réécrit
+  désormais le remplissage de chaque plaque à chaque recalcul de sa
+  disposition — l'image choisie dans « Barres d'infos » s'affichait un
+  instant, puis la sienne revenait. Même remède que pour la hauteur de
+  barre : l'addon guette cette écriture-là et repose la vôtre dans le même
+  souffle. Décocher le réglage rend l'image du jeu, comme avant.
+
 ### Modifié
 - **Le « nom seul » des alliés change de moitié de page.** Le jeu propose
   désormais cette option dans son propre menu — et il la retient enfin d'une

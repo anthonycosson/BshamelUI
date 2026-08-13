@@ -1548,6 +1548,52 @@ end
 --- la lecture a été refusée.
 local barTextureTaken = {}
 
+--- texture de remplissage -> chemin qu'on veut voir dessus. Rempli par
+--- `applyBarTexture`, vidé quand le réglage se rend : c'est ce que le hook
+--- ci-dessous repose, et une texture absente de la table est une texture
+--- qu'on laisse tranquille.
+local barTextureWanted = {}
+
+--- Sommes-nous en train de poser une image ? Même rôle que `settingHeight` :
+--- le hook guette l'écriture, donc il rappellerait la nôtre.
+local settingBarTexture = false
+
+--- Repose notre image **à chaque fois que quelqu'un écrit la sienne**.
+---
+--- C'est la même course que la hauteur de barre, découverte au même symptôme :
+--- le client de 12.1 réécrit le remplissage — `SetAtlas` sur l'objet même que
+--- nous peignons — à chaque recalcul de disposition de la plaque
+--- (`UpdateAnchors`, dans `Blizzard_NamePlateUnitFrame.lua`), des moments
+--- qu'aucun de nos hooks de peinture ne couvre. Notre image tenait le temps
+--- d'un battement, puis la sienne revenait.
+---
+--- Deux méthodes guettées, parce qu'il a deux stylos : l'atlas pour les styles
+--- courants, le fichier pour le style classique.
+---@param texture table
+local function hookBarTexture(texture)
+    local guard = function()
+        local mod = module()
+        return mod ~= nil and mod:IsEnabled()
+    end
+
+    local function repost(self)
+        if settingBarTexture then return end
+
+        local wanted = barTextureWanted[self]
+        if not wanted then return end
+
+        local mod = module()
+        if not (mod and LIVE.textures and mod:Get("barTexture")) then return end
+
+        settingBarTexture = true
+        pcall(self.SetTexture, self, wanted)
+        settingBarTexture = false
+    end
+
+    U.GuardedHook(texture, "SetTexture", repost, guard)
+    U.GuardedHook(texture, "SetAtlas",   repost, guard)
+end
+
 --- Choix du réglage -> clé de `T.TEXTURE`. Deux choix, nommés par ce qu'ils
 --- font à la couleur plutôt que par leur asset : l'aplat blanc rend la teinte
 --- **vive**, le remplissage des cadres de raid la rend **standard** — c'est
@@ -1610,11 +1656,23 @@ local function applyBarTexture(mod, unitFrame, isTarget)
     local path   = T.TEXTURE[BAR_TEXTURE_KEY[choice] or ""]
     if not path then return end
 
+    -- Le hook se pose même si l'écriture qui suit échoue : c'est lui qui tient
+    -- l'image face aux réécritures du client, et le poser plus tard voudrait
+    -- dire attendre qu'une plaque repasse par ici après la sienne.
+    hookBarTexture(texture)
+    barTextureWanted[texture] = path
+
+    settingBarTexture = true
     pcall(texture.SetTexture, texture, path)
+    settingBarTexture = false
 end
 
---- Rend son image à chaque barre dont on l'a remplacée.
+--- Rend son image à chaque barre dont on l'a remplacée. La table des images
+--- voulues se vide **d'abord** : la restauration passe par les méthodes que le
+--- hook guette, et un hook qui repose pendant qu'on rend gagnerait la course
+--- qu'il est censé nous éviter.
 local function restoreBarTextures()
+    wipe(barTextureWanted)
     for bar, taken in pairs(barTextureTaken) do
         if taken ~= false then
             local texture = fillTextureOf(bar)
