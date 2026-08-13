@@ -3,6 +3,30 @@
 ## Non publié
 
 ### Corrigé
+- **Les liserés d'auras échappaient au mode sombre.** Le jeu habille
+  désormais chaque amélioration et chaque affaiblissement d'un liseré, sous
+  la région qui ne portait jusqu'ici que l'anneau coloré des types de
+  dissipation — que le mode sombre épargne, précisément parce qu'il dit
+  quelque chose. Résultat : un cadre doré clair sur chaque aura, par-dessus
+  le contour sombre. Les deux se départagent maintenant par leur atlas :
+  l'anneau typé — magie, poison, maladie, malédiction — garde sa couleur ;
+  l'habillage neutre est **emprunté et rhabillé** du contour commun, serré
+  sur l'icône — le liseré du jeu, à la géométrie inégale, laissait des
+  bords découverts. Si un affaiblissement typé se pose ensuite sur la même
+  vignette, son anneau reprend la parole : le contour s'efface et lui rend
+  sa géométrie.
+- **Les ressources de classe sortaient du mode sombre en plaque noire.** La
+  puissance sacrée d'un paladin, les runes d'un chevalier de la mort et
+  leurs semblables sont des enfants du cadre du joueur, et son
+  assombrissement les emportait. Ce sont des lectures de combat, comme les
+  cadres de boss déjà écartés : le mode sombre ne les visite plus, et leur
+  rend ce qu'il avait teinté.
+- **Le crâne du cadre de cible sortait du mode sombre en médaillon noir.**
+  L'emblème qui remplace le niveau d'une cible hors de votre portée — un
+  boss, typiquement — était classé comme habillage et assombri avec le
+  cadre. C'est un signal, pas un décor : il rejoint les textures d'état que
+  le mode sombre épargne, comme l'étoile de rare et le marqueur de raid qui,
+  eux, étaient déjà écartés.
 - **La texture des barres de vie ne tenait plus.** Le client réécrit
   désormais le remplissage de chaque plaque à chaque recalcul de sa
   disposition — l'image choisie dans « Barres d'infos » s'affichait un

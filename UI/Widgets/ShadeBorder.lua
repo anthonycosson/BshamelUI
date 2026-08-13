@@ -38,6 +38,29 @@ local function borrowFrom(owner)
             return region
         end
     end
+
+    -- Le liseré d'aura (`DebuffBorder`), **seulement quand il n'est qu'un
+    -- habillage**. Le client en pose un sur chaque aura depuis qu'il les
+    -- habille toutes, et sa géométrie ne suit pas l'icône : dessiné par-dessus
+    -- notre trait, il laissait des bords découverts. On le rhabille donc,
+    -- comme tout contour emprunté — mais pas quand son atlas dit un **type**
+    -- (magie, poison, maladie, malédiction…) : cet anneau-là est un signal,
+    -- le remplacer l'éteindrait. Le vocabulaire est celui d'`AuraUtil` : les
+    -- liserés typés portent leur type dans le nom d'atlas, le neutre porte
+    -- « default ». Un atlas illisible vaut signal — un doute se tranche en
+    -- n'empruntant pas.
+    local ring = owner.DebuffBorder
+    if type(ring) == "table" and type(ring.SetAtlas) == "function"
+       and type(ring.GetAtlas) == "function"
+       and type(ring.GetObjectType) == "function"
+       and ring:GetObjectType() == "Texture" then
+        local ok, atlas = pcall(ring.GetAtlas, ring)
+        if ok and type(atlas) == "string" and not U.IsSecret(atlas)
+           and atlas:find("default", 1, true) then
+            return ring
+        end
+    end
+
     return nil
 end
 
@@ -64,13 +87,20 @@ local function snapshot(texture)
     return state
 end
 
+--- `keepImage` rend tout **sauf** l'image et la visibilité : c'est le repli du
+--- liseré d'aura, où le client vient d'écrire lui-même un atlas et un état
+--- d'affichage plus frais que le relevé — les reposer effacerait ce qu'il
+--- vient de dire.
 ---@param texture table
 ---@param state table
-local function restore(texture, state)
-    if state.atlas then
-        texture:SetAtlas(state.atlas)
-    else
-        texture:SetTexture(state.file)
+---@param keepImage? boolean
+local function restore(texture, state, keepImage)
+    if not keepImage then
+        if state.atlas then
+            texture:SetAtlas(state.atlas)
+        else
+            texture:SetTexture(state.file)
+        end
     end
 
     texture:SetTexCoord(unpack(state.coords))
@@ -83,7 +113,7 @@ local function restore(texture, state)
         texture:SetPoint(unpack(state.points[i]))
     end
 
-    texture:SetShown(state.shown)
+    if not keepImage then texture:SetShown(state.shown) end
 end
 
 --- Le plus petit côté d'une icône, ou `nil` quand il ne se lit pas.
@@ -123,6 +153,12 @@ function W.ShadeBorder(icon)
     local borrowed = borrowFrom(owner)
     local state    = borrowed and snapshot(borrowed) or nil
 
+    -- Le liseré d'aura change de rôle en cours de vie : le bouton qui porte un
+    -- buff neutre aujourd'hui peut porter demain un affaiblissement typé, et
+    -- le client réécrit alors l'atlas lui-même. `Draw` doit le savoir pour
+    -- s'effacer devant lui (voir le repli en tête de `Draw`).
+    local auraRing = borrowed ~= nil and borrowed == owner.DebuffBorder
+
     -- Sous-calque négatif quand il faut créer : le contour se dessine dans le
     -- calque de recouvrement, mais **sous** ce que le client y met déjà
     -- (compteurs de charges, minuteurs, surbrillance). Un contour qui masquerait
@@ -160,6 +196,23 @@ function W.ShadeBorder(icon)
     ---@param color? ColorMixin  teinte du trait, blanc par défaut
     ---@param side? number  côté de l'icône, à défaut de pouvoir le mesurer
     function border:Draw(factor, color, side)
+        -- Le repli du liseré d'aura : entre deux passages, le client a pu y
+        -- écrire un atlas **typé** — un affaiblissement magique vient de se
+        -- poser, et son anneau dit quelque chose. On lui rend alors sa
+        -- géométrie et sa couleur relevées, sans toucher à l'image ni à la
+        -- visibilité qu'il vient de poser, et on ne dessine pas par-dessus.
+        -- Notre atlas à nous ne compte pas comme une reprise de parole : c'est
+        -- la trace du passage précédent.
+        if auraRing then
+            local ok, atlas = pcall(texture.GetAtlas, texture)
+            if ok and type(atlas) == "string" and not U.IsSecret(atlas)
+               and atlas ~= T.ATLAS.SHADE_BORDER
+               and not atlas:find("default", 1, true) then
+                restore(texture, state, true)
+                return
+            end
+        end
+
         T.TrySetAtlas(texture, T.ATLAS.SHADE_BORDER)
         texture:SetTexCoord(0, 1, 0, 1)
 

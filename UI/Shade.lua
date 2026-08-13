@@ -204,7 +204,13 @@ local ICON_BORDERS = {
 --- Clés sous lesquelles un cadre publie son contour. Sur les éléments qui
 --- reçoivent un contour commun, ces textures-là sont **laissées au widget**, qui
 --- les rhabille : les teinter en plus reviendrait à les traiter deux fois.
-local BORDER_KEYS = { "Border", "IconBorder" }
+---
+--- `DebuffBorder` en fait partie depuis que le client habille chaque aura d'un
+--- liseré sous cette clé. C'est le widget qui départage ses deux rôles — un
+--- anneau typé se garde, un habillage neutre se rhabille (voir `borrowFrom`
+--- dans `UI/Widgets/ShadeBorder.lua`) ; ici on se contente de ne pas le
+--- teinter en plus.
+local BORDER_KEYS = { "Border", "IconBorder", "DebuffBorder" }
 
 --- Clés sous lesquelles un cadre publie son **fond**, par opposition à son
 --- contour. La pièce centrale d'un nine-slice en fait partie : c'est elle qui
@@ -448,16 +454,27 @@ local STATE_TEXTURES = {
 --- dessus, notre passage la rassombrit au coup d'après, et on cherche du côté de
 --- ce qui *déclenche* la lueur alors que le problème est ce qui la couvre.
 ---
---- `DebuffBorder` est l'anneau coloré d'un affaiblissement : il **dit son
---- type** — magie, poison, maladie, malédiction — dans la couleur que tout le
---- jeu emploie pour cela. Désaturé puis assombri, il devenait un anneau noir :
---- un signal éteint de plus, celui qui dit « ceci se dissipe ». L'enchantement
---- d'arme (`TempEnchantBorder`, violet) est le même cas. `Highlight` ferme la
---- liste : une texture de surbrillance — cible sélectionnée, survol — est du
---- retour visuel par définition, comme `GetHighlightTexture` l'était déjà chez
---- les textures qui se demandent.
+--- L'enchantement d'arme (`TempEnchantBorder`, violet) est un signal du même
+--- ordre : il dit « ceci est une amélioration d'arme », dans la couleur que le
+--- jeu lui réserve. `Highlight` est une texture de surbrillance — cible
+--- sélectionnée, survol — du retour visuel par définition, comme
+--- `GetHighlightTexture` l'était déjà chez les textures qui se demandent.
+---
+--- `DebuffBorder` a vécu dans cette liste, et n'y est plus : le client range
+--- désormais **deux choses** sous cette clé, et une seule est un signal. La
+--- clé a rejoint `BORDER_KEYS` — c'est le widget de contour qui départage les
+--- deux rôles par l'atlas, et les rhabille ou s'efface.
+---
+--- `HighLevelTexture` est le crâne du cadre de cible — celui qui remplace le
+--- niveau quand la cible dépasse le vôtre au point de ne plus se mesurer. Il
+--- **dit** « hors de votre portée », dans l'emblème que tout le jeu emploie
+--- pour cela. C'est la seule marque de classification du cadre dont le nom ne
+--- contient ni « Icon » ni « Portrait » : ses voisines (`BossIcon`,
+--- `RaidTargetIcon`, la dorure `BossPortraitFrameTexture`) sont écartées par le
+--- classement, lui tombait dans l'habillage et sortait en médaillon noir.
 local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
-                     "DebuffBorder", "TempEnchantBorder", "Highlight" }
+                     "TempEnchantBorder", "Highlight",
+                     "HighLevelTexture" }
 
 --- Fragments de nom d'un **cadre entier** qui signale au lieu de décorer.
 ---
@@ -476,6 +493,41 @@ local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
 --- texture.
 local SIGNAL_FRAMES = { "Glow", "Alert", "Proc", "Highlight", "Assisted",
                         "Feedback" }
+
+--- Les ressources de classe du client, enfants du cadre du joueur et donc
+--- croisées par son parcours. **On ne les visite pas** : même doctrine que les
+--- cadres de boss, sortis de `FRAMES` — ce sont des lectures de combat, où la
+--- plaque sombre du client et les crans qui s'allument dessus se lisent vite ou
+--- ne se lisent pas. Assombries, la puissance sacrée d'un paladin devenait une
+--- plaque noire.
+---
+--- Des noms globaux, comme `FRAMES`, et le même contrat : un client qui n'a pas
+--- l'un de ces cadres ne fait qu'ignorer son nom. Le totem d'un chaman ferme la
+--- liste — pas une ressource au sens strict, mais la même lecture posée au même
+--- endroit.
+local READOUT_NAMES = {
+    "PaladinPowerBarFrame", "RuneFrame", "WarlockPowerFrame",
+    "ComboPointPlayerFrame", "RogueComboPointBarFrame", "DruidComboPointBarFrame",
+    "MonkHarmonyBarFrame", "MonkStaggerBar", "MageArcaneChargesFrame",
+    "EssencePlayerFrame", "InsanityBarFrame",
+    "DemonHunterSoulFragmentsBar", "DevourerFuryBar",
+    "AlternatePowerBar", "PlayerFrameAlternateManaBar",
+    "TotemFrame",
+}
+
+--- cadre -> vrai, pour les lectures de combat présentes sur ce client.
+--- Rebâtie à chaque parcours : plusieurs de ces cadres se créent à la demande —
+--- à la première spécialisation qui s'en sert — et une table figée au
+--- chargement les manquerait.
+local readouts = {}
+
+local function refreshReadouts()
+    wipe(readouts)
+    for i = 1, #READOUT_NAMES do
+        local frame = _G[READOUT_NAMES[i]]
+        if type(frame) == "table" then readouts[frame] = true end
+    end
+end
 
 ---@param owner table
 ---@param region table
@@ -629,6 +681,10 @@ local function collectFrom(frame, out, seen, rules)
     if ask(frame, "IsForbidden") == true then return end
     if ask(frame, "GetObjectType") == "Cooldown" then return end
 
+    -- Une lecture de combat ne se visite pas : ni elle, ni ce qu'elle porte
+    -- (voir `READOUT_NAMES`).
+    if readouts[frame] then return end
+
     -- Un bouton d'un élément qui les épargne ne se visite pas : ni ses
     -- textures, ni ses enfants (voir `SPARE_BUTTONS`). Avant toute prise —
     -- c'est ce qui le distingue de `flatButtons`, qui prend l'habillage du
@@ -740,6 +796,8 @@ local function collect(element)
     local out   = { art = {}, icon = {}, text = {} }
     local seen  = {}
     local rules = rulesFor(element)
+
+    refreshReadouts()
 
     -- `roots` et non `names` : le nom seul masquerait le cache de noms de
     -- débogage, déclaré plus haut dans ce fichier — deux choses différentes qui
