@@ -613,20 +613,12 @@ local function applyTextSize(mod, unitFrame)
 end
 
 -- -------------------------------------------------------------------------
---  Le nom des alliés
+--  De quel côté ranger une unité
 -- -------------------------------------------------------------------------
--- Un corps à part pour le nom des joueurs alliés : c'est tout ce qui reste
--- d'une plaque en mode « le nom seul », et il se lit de plus loin que le nom
--- d'un adversaire. Le réglage ne vaut que là où le client montre des plaques
--- alliées — hors instance : en donjon comme en raid, il les verrouille.
---
--- Appliqué **après** la taille de texte générale, à chaque peinture : le plus
--- spécifique gagne. Le client réécrit le nom par `CompactUnitFrame_UpdateName`,
--- qui est précisément l'un des deux hooks qui déclenchent la peinture — la
--- reprise est donc dans le même souffle, sans hook de plus.
-
---- nom allié -> corps qu'il portait avant qu'on y touche
-local allyNameSizes = {}
+-- Le corps à part du nom des alliés vivait ici, avec son réglage. Le mode
+-- « nom seul » est devenu une option native du jeu, et la taille de texte qui
+-- n'existait que pour lui est partie avec — restent les deux questions que le
+-- reste du fichier pose sur chaque plaque : allié ou pas, joueur ou pas.
 
 --- Un allié, au sens de cette page : **ce qu'on n'a pas le droit d'attaquer**.
 ---
@@ -665,55 +657,6 @@ end
 local function isPlayerUnit(unit)
     local answer = UnitIsPlayer(unit)
     return U.IsSecret(answer) or U.IsTrue(answer)
-end
-
----@param mod table
----@param unitFrame table
----@param unit string
-local function applyAllyName(mod, unitFrame, unit)
-    if not LIVE.size then return end
-
-    local name = unitFrame.name
-    if type(name) ~= "table" then return end
-
-    -- **Une unité cesse d'être alliée sans que la plaque change de main.** Un
-    -- contrôle mental en fait une alliée le temps de quelques secondes, puis la
-    -- rend adverse — et la plaque, elle, ne repart pas au recyclage. Sans ce
-    -- chemin de retour, le corps allié restait posé sur un adversaire jusqu'à ce
-    -- que sa plaque resserve à quelqu'un d'autre.
-    --
-    -- On rend le corps relevé : il peut être celui que la taille générale avait
-    -- posé, et c'est très bien — elle repasse avant nous à chaque peinture.
-    if not (mod:Get("resizeAllyName") and isFriendlyPlayer(unit)) then
-        local saved = allyNameSizes[name]
-        if saved == nil then return end
-
-        allyNameSizes[name] = nil
-        settingFont = true
-        T.SetTextSize(name, saved)
-        settingFont = false
-        return
-    end
-
-    if allyNameSizes[name] == nil then
-        allyNameSizes[name] = T.TextSize(name) or T.SIZE.PLATE_TEXT
-    end
-
-    settingFont = true
-    T.SetTextSize(name, mod:Get("allyNameSize"))
-    settingFont = false
-end
-
---- Rend son corps à chaque nom allié retouché. Avant `restoreTextSizes` à
---- l'extinction : le corps relevé ici peut être celui que la taille générale
---- avait posé, et c'est elle qui connaît l'original.
-local function restoreAllyNames()
-    settingFont = true
-    for name, size in pairs(allyNameSizes) do
-        T.SetTextSize(name, size)
-    end
-    settingFont = false
-    wipe(allyNameSizes)
 end
 
 --- Rend son corps à chaque texte qu'on a retaillé.
@@ -1741,45 +1684,11 @@ local function applyOverlap(mod)
     takeCVar(CVAR.OVERLAP_V, mod:Get("overlapV"))
 end
 
--- =========================================================================
---  Le mode « nom seul » et la couleur de classe des alliés
--- =========================================================================
--- Deux CVars cachés du client — absents de son propre panneau — et pris comme
--- `OVERLAP_H`/`OVERLAP_V` : relevés avant la première écriture, reposés à
--- chaque `CVAR_UPDATE`, rendus tels quels en décochant. C'est ce qui manquait
--- quand la page les branchait en direct sur le CVar (voir `NameplatesPage.lua`,
--- `allyNamesRow`) : un CVar caché ne survit pas à une reconnexion de son côté,
--- et une case qui ne fait qu'écrire dedans revient donc d'elle-même à zéro.
-
----@param mod table
-local function applyAllyNamesOnly(mod)
-    if not LIVE.size then return end
-    if not mod:Get("allyNamesOnly") then return end
-
-    takeCVar(CVAR.ALLY_NAMES, 1)
-
-    -- « Nom seul » et « barre simplifiée pour les alliés » réduisent la même
-    -- plaque à la même chose (voir « Deux réglages du client qui font la même
-    -- chose », dans `NameplatesPage.lua`) : allumer le premier décoche le
-    -- second. Repris ici plutôt que dans le clic, pour qu'il retrouve son état
-    -- à chaque repassage — connexion comprise — et pas seulement au clic.
-    if not InCombatLockdown() and C_CVar and C_CVar.SetCVarBitfield then
-        local enum  = Enum.NamePlateSimplifiedType
-        local index = type(enum) == "table" and enum.FriendlyPlayer or nil
-        if type(index) == "number" then
-            pcall(C_CVar.SetCVarBitfield, "nameplateSimplifiedTypes",
-                  index, false)
-        end
-    end
-end
-
----@param mod table
-local function applyAllyNameClassColor(mod)
-    if not LIVE.size then return end
-    if not mod:Get("allyNameClassColor") then return end
-
-    takeCVar(CVAR.ALLY_NAME_CLASS, 1)
-end
+-- Le mode « nom seul » et la couleur de classe du nom des alliés se prenaient
+-- ici, comme `OVERLAP_H`/`OVERLAP_V` : deux CVars cachés que le client
+-- oubliait à chaque reconnexion. Le jeu a fait du premier une option de son
+-- menu, qui persiste — la case a rejoint la moitié Blizzard de la page, la
+-- prise est rendue, et le palier 17 efface les deux réglages du fichier.
 
 --- Cette unité est-elle la cible du joueur ?
 ---
@@ -2783,7 +2692,6 @@ local function paint(mod, plate, unit)
     applyCastPreview(mod, unitFrame)
     applyOwnAuras(mod, plate, unit)
     applyTextSize(mod, unitFrame)
-    applyAllyName(mod, unitFrame, unit)
     applyMarkerPreview(mod, unitFrame)
     placeMarker(mod, unitFrame)
 end
@@ -2872,7 +2780,6 @@ local function releaseAll()
     restoreBarHeights()
     restoreBarTextures()
     restoreCastSizes()
-    restoreAllyNames()
     restoreTextSizes()
 end
 
@@ -2944,8 +2851,6 @@ end
 local function applyAll(mod)
     applySize(mod)
     applyOverlap(mod)
-    applyAllyNamesOnly(mod)
-    applyAllyNameClassColor(mod)
     applyAlpha(mod)
     paintAll(mod)
 end
@@ -2956,7 +2861,6 @@ end
 local SIZE_KEYS  = { resize = true, width = true, height = true,
                      flatTarget = true,
                      textSize = true,
-                     resizeAllyName = true, allyNameSize = true,
                      castTextSize = true,
                      previewCast = true,
                      previewMarker = true,
@@ -2973,11 +2877,9 @@ local TEXTURE_KEYS = { barTexture = true, textureOther = true,
 --- que construits dans la fonction : une table bâtie à chaque clic est une table
 --- de trop.
 local TAKEN_CVARS = {
-    alpha              = { CVAR.OCCLUDED },
-    size               = { CVAR.SIZE, CVAR.TARGET_SCALE },
-    overlap            = { CVAR.OVERLAP_H, CVAR.OVERLAP_V },
-    allyNamesOnly      = { CVAR.ALLY_NAMES },
-    allyNameClassColor = { CVAR.ALLY_NAME_CLASS },
+    alpha   = { CVAR.OCCLUDED },
+    size    = { CVAR.SIZE, CVAR.TARGET_SCALE },
+    overlap = { CVAR.OVERLAP_H, CVAR.OVERLAP_V },
 
     -- Les deux interrupteurs de tête, que la section pose à une valeur fixe, et
     -- les familles, remplies d'après `ENEMY_UNITS` juste en dessous : la liste
@@ -3165,17 +3067,10 @@ BUI:RegisterModule(MODULE, {
         -- change pas ce qui est écrit sur la plaque.
         textSize   = T.PlateConstant("HEALTH_BAR_FONT_HEIGHT", T.SIZE.PLATE_TEXT),
 
-        -- Le nom des joueurs alliés, à part : c'est ce qu'on lit en mode
-        -- « le nom seul », et il se règle sans rendre le reste du texte.
-        --
-        -- Le mode lui-même — et sa couleur de classe — vivaient comme de
-        -- simples miroirs de CVars cachés, jamais réappliqués : le client les
-        -- oubliait à chaque reconnexion. Ils sont maintenant pris comme
-        -- `overlap` (voir `applyAllyNamesOnly`/`applyAllyNameClassColor`).
-        allyNamesOnly      = false,
-        allyNameClassColor = false,
-        resizeAllyName = false,
-        allyNameSize   = T.SIZE.PLATE_TEXT,
+        -- Le mode « nom seul » des alliés, sa taille de texte et sa couleur de
+        -- classe n'ont **plus de clé** : le jeu a fait du mode une option
+        -- native de son menu, et la case a rejoint la moitié Blizzard de la
+        -- page. Le palier 17 efface leur trace.
 
         -- Les deux aperçus. Ils ne règlent rien : ils montrent. Ils survivent au
         -- `/reload` comme les autres réglages, ce qui est voulu — on recharge
@@ -3522,12 +3417,9 @@ BUI:RegisterModule(MODULE, {
 
         applySize(self)
         applyOverlap(self)
-        -- Les bits d'abord, les prises ensuite : le mode « nom seul » décoche
-        -- la barre simplifiée des alliés et la couleur de menace se prend —
-        -- ces deux gestes doivent avoir le dernier mot sur le rejeu.
+        -- Les bits d'abord, les prises ensuite : la couleur de menace se
+        -- prend, et ce geste doit avoir le dernier mot sur le rejeu.
         applyClientBits(self)
-        applyAllyNamesOnly(self)
-        applyAllyNameClassColor(self)
         applyClientThreat(self)
         applyEnemyUnits(self)
 
@@ -3547,8 +3439,6 @@ BUI:RegisterModule(MODULE, {
             applySize(self)
             applyOverlap(self)
             applyClientBits(self)
-            applyAllyNamesOnly(self)
-            applyAllyNameClassColor(self)
             applyAlpha(self)
                 applyClientThreat(self)
             applyEnemyUnits(self)
@@ -3561,8 +3451,6 @@ BUI:RegisterModule(MODULE, {
             applySize(self)
             applyOverlap(self)
             applyClientBits(self)
-            applyAllyNamesOnly(self)
-            applyAllyNameClassColor(self)
                 applyClientThreat(self)
             applyEnemyUnits(self)
             releaseClientAuras(self)
@@ -3728,11 +3616,6 @@ BUI:RegisterModule(MODULE, {
                 giveBackSize()
                 restoreTextSizes()
                 paintAll(self)
-            elseif key == "resizeAllyName" and not self:Get("resizeAllyName") then
-                restoreAllyNames()
-                -- La taille générale reprend les noms rendus au prochain
-                -- passage, si elle est allumée : on le lui offre tout de suite.
-                paintAll(self)
             elseif key == "resizeCast" and not self:Get("resizeCast") then
                 restoreCastSizes()
                 restoreTextSizes()
@@ -3775,26 +3658,6 @@ BUI:RegisterModule(MODULE, {
                 giveBack(TAKEN_CVARS.overlap)
             else
                 applyOverlap(self)
-            end
-            return
-        end
-
-        -- Deux CVars cachés, pris et rendus comme la superposition ci-dessus —
-        -- voir `applyAllyNamesOnly`/`applyAllyNameClassColor`.
-        if key == "allyNamesOnly" then
-            if self:Get("allyNamesOnly") then
-                applyAllyNamesOnly(self)
-            else
-                giveBack(TAKEN_CVARS.allyNamesOnly)
-            end
-            return
-        end
-
-        if key == "allyNameClassColor" then
-            if self:Get("allyNameClassColor") then
-                applyAllyNameClassColor(self)
-            else
-                giveBack(TAKEN_CVARS.allyNameClassColor)
             end
             return
         end

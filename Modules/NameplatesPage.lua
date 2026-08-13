@@ -212,9 +212,12 @@ local CVAR = {
     OVERLAP_H = "nameplateOverlapH",
     OVERLAP_V = "nameplateOverlapV",
 
-    -- Le mode « nom seul » pour les alliés. Il n'est pas emprunté — c'est une
-    -- case du client, cochée par le joueur depuis notre page — mais il est nommé
-    -- ici parce que **deux** lignes de la page le lisent, et qu'une graphie
+    -- Le mode « nom seul » pour les alliés. Longtemps un CVar caché que le
+    -- client oubliait à chaque reconnexion — l'addon l'avait donc pris et
+    -- reposé lui-même. Le jeu en a fait une option de son menu, qui persiste :
+    -- la prise est rendue, il ne reste qu'une case du client, cochée depuis
+    -- chez nous. Nommé ici parce que **deux** lignes de la page le lisent — la
+    -- case et le verrou de la barre simplifiée des alliés —, et qu'une graphie
     -- recopiée est une graphie qui divergera.
     ALLY_NAMES = "nameplateShowOnlyNameForFriendlyPlayerUnits",
 
@@ -230,7 +233,15 @@ local CVAR = {
     -- rien à rendre — ce sont des cases du client, cochées depuis chez nous.
     CLASS_ENEMY     = "nameplateShowClassColor",
     CLASS_ALLY      = "nameplateShowFriendlyClassColor",
+
+    -- Les deux compagnes du mode « nom seul » dans le menu du jeu : la couleur
+    -- de classe sur le nom, et l'affichage du royaume. Les noms viennent des
+    -- définitions du panneau de réglages de Blizzard
+    -- (`Blizzard_SettingsDefinitions_Frame/Nameplates.lua`), pas d'une
+    -- devinette — et comme toute ligne `blizzToggle`, un client qui ne les
+    -- connaît pas ne rend aucune case.
     ALLY_NAME_CLASS = "nameplateUseClassColorForFriendlyPlayerUnitNames",
+    ALLY_REALM      = "nameplateShowFriendlyRealmName",
 }
 
 -- =========================================================================
@@ -516,16 +527,13 @@ local SIMPLIFIED_LABELS = {
 -- -------------------------------------------------------------------------
 -- « Ne montrer que le nom des joueurs alliés » et « barre simplifiée pour les
 -- joueurs alliés » réduisent la même plaque à la même chose. Cochés tous les
--- deux, le second ne fait rien de plus — mais il **reste coché**, et le jour où
--- l'on décoche le premier on ne retrouve pas ce qu'on croyait retrouver.
+-- deux, le second ne fait rien de plus, et deux cases pour une seule décision
+-- font croire à deux réglages.
 --
--- Allumer le premier décoche donc le second, et le grise tant qu'il est allumé.
--- Décocher le premier ne le recoche pas : ce serait décider à la place du joueur
--- d'un réglage qu'il n'avait peut-être jamais mis.
---
--- Écrire dans un réglage du client au clic du joueur est exactement ce que fait
--- le reste de cette moitié de page : c'est sa case à lui, cochée depuis chez
--- nous. Rien n'est donc emprunté ici, et il n'y a rien à rendre.
+-- Les deux sont désormais des cases du client — le mode « nom seul » est entré
+-- dans son menu. On ne décoche donc plus rien à sa place : on se contente de
+-- griser la barre simplifiée des alliés tant que le nom seul est allumé, avec
+-- le motif qui dit lequel des deux parle.
 
 --- Le verrou d'une catégorie de barre simplifiée. Seuls les joueurs alliés en
 --- ont un : les trois autres n'ont pas de réglage qui les double.
@@ -538,8 +546,7 @@ local function simplifiedLock(member)
 
     return {
         disabled = function()
-            local mod = module()
-            return inCombat() or (mod ~= nil and mod:Get("allyNamesOnly"))
+            return inCombat() or U.GetCVar(CVAR.ALLY_NAMES) == "1"
         end,
         reason = function()
             if InCombatLockdown() then return L["Cannot change in combat"] end
@@ -787,32 +794,6 @@ local function blizzSlider(name, text, tooltip, bounds, lock)
     }
 end
 
---- La case « ne montrer que le nom des joueurs alliés ».
----
---- Ce n'était qu'une case du client comme les autres — jusqu'à ce qu'on
---- remarque qu'elle ne survivait pas à une reconnexion : `CVAR.ALLY_NAMES` est
---- un CVar caché, absent du panneau Blizzard, et ce client-là ne le persiste
---- pas de son côté. On le traite désormais comme `overlap` : un réglage à nous,
---- rangé dans `BshamelUIDB`, que `applyAllyNamesOnly` (dans `Nameplates.lua`)
---- pose au client à chaque connexion et à chaque `CVAR_UPDATE` — y compris le
---- geste qui décoche la case qui la double (voir « Deux réglages du client qui
---- font la même chose »), déplacé là pour la même raison.
----@return table
-local function allyNamesRow()
-    if not CVAR.ALLY_NAMES or U.GetCVar(CVAR.ALLY_NAMES) == nil then
-        return {}
-    end
-
-    return {
-        type     = "toggle",
-        key      = "allyNamesOnly",
-        text     = L["Allied names only"],
-        tooltip  = L["Allied names only tip"],
-        disabled = inCombat,
-        disabledReason = L["Cannot change in combat"],
-    }
-end
-
 --- Une case du client que **notre section des unités adverses peut prendre**.
 ---
 --- Identique à `blizzToggle`, au verrou près : elle se grise quand la section
@@ -969,6 +950,18 @@ local function pageOptions()
             L["Friendly player nameplates"], L["Friendly player nameplates tip"]),
         blizzToggle(pickCVar("nameplateShowFriendlyPlayerMinions", "nameplateShowFriendlyMinions"),
             L["Friendly minions"], L["Friendly minions tip"], true),
+        -- Le mode « nom seul » des alliés et ses deux compagnes, sous les
+        -- serviteurs alliés et dans l'ordre du menu du jeu : le mode, la
+        -- couleur de classe du nom, le royaume. Les cases vivaient dans notre
+        -- moitié du temps où leurs CVars étaient cachés et oubliés à chaque
+        -- reconnexion — le jeu en a fait des options natives, les lignes
+        -- redeviennent de simples cases du client (voir `CVAR.ALLY_NAMES`).
+        blizzToggle(CVAR.ALLY_NAMES,
+            L["Allied names only"], L["Allied names only tip"], true),
+        blizzToggle(CVAR.ALLY_NAME_CLASS,
+            L["Ally name class colors"], L["Ally name class colors tip"], true),
+        blizzToggle(CVAR.ALLY_REALM,
+            L["Ally realm name"], L["Ally realm name tip"], true),
         blizzToggle(pickCVar("nameplateShowFriendlyNpcs", "nameplateShowFriendlyNPCs"),
             L["Friendly NPC nameplates"], L["Friendly NPC nameplates tip"]),
 
@@ -1245,90 +1238,12 @@ local function pageOptions()
             disabled = requires("visibility"),
         },
 
-        -- Le nom des alliés, en dernières lignes de la barre de vie : c'est elle
-        -- que le mode « nom seul » remplace, et c'est là qu'on vient le chercher.
-        -- Le client sait le faire lui-même, mais son menu ne le propose nulle
-        -- part — d'où la case ici plutôt que dans la section des réglages du jeu.
-        --
-        -- **Sans titre au-dessus.** Quatre lignes ne font pas une section, et
-        -- « Alliés » en tête n'aurait dit qu'une chose que les quatre intitulés
-        -- disent déjà.
-        --
-        -- Les deux lignes en retrait ne veulent rien dire sans le mode nom seul :
-        -- c'est là que le corps du nom compte, puisqu'il ne reste que lui. Elles
-        -- se grisent donc avec lui, en plus de se griser entre elles.
-        --
-        -- La couleur de classe ferme le groupe, **en retrait comme les deux
-        -- autres**. Le retrait dit ici « ceci concerne le nom des alliés », pas
-        -- « ceci dépend de la case du dessus » — elle vaut d'ailleurs pour toute
-        -- plaque alliée qui montre un nom, mode « nom seul » ou pas, et c'est
-        -- pourquoi elle ne se grise pas avec les deux autres.
-        { section = "size" },
-        allyNamesRow(),
-        {
-            type     = "toggle",
-            key      = "resizeAllyName",
-            text     = L["Resize ally names"],
-            tooltip  = L["Resize ally names tip"],
-            indent   = true,
-            disabled = function()
-                local mod = module()
-                return not (mod and mod:Get("allyNamesOnly"))
-            end,
-            disabledReason = L["Needs allied names only"],
-        },
-        {
-            type     = "slider",
-            key      = "allyNameSize",
-            text     = L["Ally name size"],
-            tooltip  = L["Resize ally names tip"],
-            min      = 6,
-            max      = 32,
-            step     = 1,
-            indent   = true,
-            disabled = function()
-                local mod = module()
-                return not (mod and mod:Get("allyNamesOnly"))
-                    or not (mod and mod:Get("resizeAllyName"))
-            end,
-            -- Le motif n'est donné que pour celui qui ne se devine pas : « la
-            -- case du dessus est décochée » se lit sur la case du dessus.
-            disabledReason = function()
-                local mod = module()
-                if not (mod and mod:Get("allyNamesOnly")) then
-                    return L["Needs allied names only"]
-                end
-            end,
-        },
-        -- « Noms aux couleurs de classe » vivait ici, et elle y revient —
-        -- retirée le jour où l'on avait cru le jeu capable de le faire seul, il
-        -- ne le fait pas de lui-même : il attend qu'on le lui demande, par le
-        -- CVar que cette case coche (voir `CVAR.ALLY_NAME_CLASS`).
-        --
-        -- Elle est bien une couleur, et la section d'en face les rassemble.
-        -- Elle reste pourtant ici, avec les trois autres lignes du nom allié :
-        -- on ne vient pas régler « une couleur », on vient régler **le nom des
-        -- alliés** — et ce qu'on cherche alors, c'est l'endroit où il est déjà
-        -- question de lui.
-        --
-        -- Même CVar caché, même sort que « nom seul » ci-dessus : rangée dans
-        -- `BshamelUIDB` et reposée par `applyAllyNameClassColor`, plutôt que
-        -- miroir direct d'un CVar qui ne persiste pas de son côté.
-        (function()
-            if not CVAR.ALLY_NAME_CLASS
-               or U.GetCVar(CVAR.ALLY_NAME_CLASS) == nil then
-                return {}
-            end
-            return {
-                type     = "toggle",
-                key      = "allyNameClassColor",
-                text     = L["Ally name class colors"],
-                tooltip  = L["Ally name class colors tip"],
-                indent   = true,
-                disabled = inCombat,
-                disabledReason = L["Cannot change in combat"],
-            }
-        end)(),
+        -- Le nom des alliés vivait ici, en dernières lignes de la barre de
+        -- vie : le mode « nom seul », sa taille de texte et sa couleur de
+        -- classe. Le jeu a fait du mode une option native — la case est partie
+        -- dans la moitié Blizzard, sous les serviteurs alliés, et les deux
+        -- réglages qui n'existaient que pour elle sont partis avec (le
+        -- palier 17 efface leur trace).
 
         -- La barre de sorts suit immédiatement la barre de vie : c'est l'autre
         -- barre de la plaque, et elle se règle des mêmes façons.

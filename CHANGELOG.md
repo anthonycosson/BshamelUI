@@ -2,6 +2,20 @@
 
 ## Non publié
 
+### Modifié
+- **Le « nom seul » des alliés change de moitié de page.** Le jeu propose
+  désormais cette option dans son propre menu — et il la retient enfin d'une
+  session à l'autre, ce que l'addon faisait à sa place jusqu'ici. La case
+  rejoint donc les réglages Blizzard de la page des barres d'infos, juste
+  sous « Serviteurs alliés », suivie de ses deux compagnes du menu du jeu :
+  la couleur de classe sur le nom, et l'affichage du royaume. Les trois
+  lignes de l'addon disparaissent — le mode lui-même, la taille du nom allié
+  et sa couleur de classe, que les options natives couvrent. Qui avait coché
+  le mode chez nous le recoche une fois, du côté Blizzard — l'addon ne
+  recopie pas un réglage du jeu à la place du joueur. La barre simplifiée
+  des joueurs alliés reste grisée tant que le nom seul est allumé : les deux
+  réduisent la même plaque à la même chose.
+
 ## 1.0.10 — 2026-08-10
 
 ### Ajouté

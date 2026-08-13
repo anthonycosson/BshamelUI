@@ -867,12 +867,9 @@ BUI:RegisterLocale("frFR", {
         .. "voisine. Le jeu réécrit ces deux valeurs de lui-même chaque fois "
         .. "qu'il refait ses plaques — d'où l'interrupteur : tant qu'il est "
         .. "allumé, l'addon repose les vôtres derrière lui.",
-    ["Needs allied names only"] =
-        "Ne vaut qu'en mode « nom seul » : c'est là qu'il ne reste que le nom à "
-        .. "lire. Cochez la case du dessus.",
     ["Simplified taken by names only"] =
-        "« Joueurs alliés — nom seul » fait déjà cela. La case a été décochée "
-        .. "quand vous l'avez allumé ; décochez-le pour la retrouver.",
+        "« Afficher uniquement le nom pour les alliés » fait déjà cela : tant "
+        .. "qu'elle est cochée, cette case n'a plus rien à décider.",
     ["Debuff spacing"]                 = "Espacement des affaiblissements",
     ["Debuff spacing tip"] =
         "Écart vertical seulement, entre la rangée d'affaiblissements et ce qui "
@@ -983,12 +980,6 @@ BUI:RegisterLocale("frFR", {
         .. "le jeu qui peint : le réglage est le sien, repris ici. En donjon et "
         .. "en raid, il réduit les plaques alliées au nom seul — c'est alors la "
         .. "case des noms qui parle.",
-    ["Ally name class colors"]         = "Couleurs de classe sur les noms alliés",
-    ["Ally name class colors tip"] =
-        "Le nom d'un joueur allié prend la couleur de sa classe au lieu du "
-        .. "blanc — partout, donjon et raid compris, et y compris en mode « le "
-        .. "nom seul », où il ne reste que lui. C'est le jeu qui peint : le "
-        .. "réglage est le sien, repris ici.",
     ["Color enemies by kind"]          = "Colorier les adversaires par nature",
     ["Color enemies by kind tip"] =
         "La rareté d'abord, ce que fait la créature ensuite : un rare qui incante "
@@ -1033,12 +1024,15 @@ BUI:RegisterLocale("frFR", {
     ["Allied names only tip"] =
         "Les joueurs alliés n'ont qu'un nom, sans barre de vie. La leur est déjà "
         .. "sur les cadres de groupe.",
-    ["Resize ally names"]              = "Agrandir le nom des alliés",
-    ["Resize ally names tip"] =
-        "Le nom des joueurs alliés prend la taille ci-dessous. Hors instance "
-        .. "uniquement : le jeu verrouille les plaques alliées en donjon et en "
-        .. "raid.",
-    ["Ally name size"]                 = "Taille du nom allié (12 par défaut)",
+    ["Ally name class colors"]         = "Utiliser la couleur de classe pour le nom",
+    ["Ally name class colors tip"] =
+        "Le nom d'un joueur allié prend la couleur de sa classe au lieu du "
+        .. "blanc — partout, donjon et raid compris, et y compris en mode « le "
+        .. "nom seul », où il ne reste que lui.",
+    ["Ally realm name"]                = "Afficher le nom du royaume",
+    ["Ally realm name tip"] =
+        "Les joueurs alliés d'un autre royaume le portent à la suite de leur "
+        .. "nom. Décochée, seul le nom reste.",
     ["Aura scale"]                     = "Taille des auras",
     ["Aura scale tip"] =
         "Taille des icônes d'aura, en pourcentage de celle du jeu.",

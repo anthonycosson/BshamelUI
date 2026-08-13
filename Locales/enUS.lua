@@ -853,12 +853,9 @@ BUI:RegisterLocale("enUS", {
         .. "neighbour aside. The game rewrites these two values by itself "
         .. "whenever it redoes its nameplates, which is why they sit behind a "
         .. "switch: while it is on, the addon puts your values back each time.",
-    ["Needs allied names only"] =
-        "Only means something in names-only mode, where the name is all there is "
-        .. "left to read. Tick the box above.",
     ["Simplified taken by names only"] =
-        "\"Allied players — names only\" already does this. It was unticked when "
-        .. "you turned that on; untick that one to get this back.",
+        "\"Show only the name for allies\" already does this: while it is "
+        .. "ticked, this box has nothing left to decide.",
     ["Debuff spacing"]                 = "Debuff spacing",
     ["Debuff spacing tip"] =
         "Vertical gap only, between the row of debuffs and what sits above it. "
@@ -960,12 +957,6 @@ BUI:RegisterLocale("enUS", {
         .. "game does the painting: this is its own setting, surfaced here. In "
         .. "dungeons and raids it reduces allied nameplates to the name alone — "
         .. "the names tickbox speaks there.",
-    ["Ally name class colors"]         = "Class colours on allied names",
-    ["Ally name class colors tip"] =
-        "An allied player's name takes the colour of their class instead of "
-        .. "white — everywhere, dungeons and raids included, and including in "
-        .. "\"names only\" mode, where the name is all that is left. The game "
-        .. "does the painting: this is its own setting, surfaced here.",
     ["Color enemies by kind"]          = "Colour enemies by kind",
     ["Color enemies by kind tip"] =
         "Rarity first, then what the creature does: a rare that casts stays "
@@ -1008,11 +999,15 @@ BUI:RegisterLocale("enUS", {
     ["Allied names only tip"] =
         "Friendly players get a name and no health bar. Theirs is already on the "
         .. "party frames.",
-    ["Resize ally names"]              = "Enlarge allied names",
-    ["Resize ally names tip"] =
-        "Friendly players' names take the size below. Outside instances only: "
-        .. "the game locks friendly nameplates in dungeons and raids.",
-    ["Ally name size"]                 = "Allied name size (12 by default)",
+    ["Ally name class colors"]         = "Use class colour for the name",
+    ["Ally name class colors tip"] =
+        "An allied player's name takes the colour of their class instead of "
+        .. "white — everywhere, dungeons and raids included, and including in "
+        .. "\"names only\" mode, where the name is all that is left.",
+    ["Ally realm name"]                = "Show the realm name",
+    ["Ally realm name tip"] =
+        "Allied players from another realm carry it after their name. Unticked, "
+        .. "only the name remains.",
     ["Aura scale"]                     = "Aura size",
     ["Aura scale tip"]                 = "Size of the aura icons, as a percentage of the game's own.",
 

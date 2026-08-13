@@ -32,7 +32,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 16
+local SCHEMA_VERSION   = 17
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -511,6 +511,30 @@ function DB:RunMigrations()
             end
         end
         from = 16
+    end
+
+    -- Palier 17 — le mode « nom seul » des alliés est devenu une option native
+    -- du jeu, qui la persiste enfin lui-même. La case de l'addon — et la taille
+    -- de texte et la couleur de classe qui n'existaient que pour elle — n'ont
+    -- donc plus d'objet, et un réglage retiré du code resterait indéfiniment
+    -- dans le fichier, sans effet et sans explication (même motif que le
+    -- palier 3).
+    --
+    -- Rien n'est recopié vers le CVar : écrire un réglage du jeu depuis une
+    -- migration déciderait à la place du joueur sur un autre personnage que
+    -- celui qui l'avait coché (même retenue que le palier 16). Qui avait le
+    -- mode chez nous le recoche une fois, dans la moitié Blizzard de la page.
+    if from < 17 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local plates = profile.modules and profile.modules.Nameplates
+            if plates then
+                plates.allyNamesOnly      = nil
+                plates.allyNameClassColor = nil
+                plates.resizeAllyName     = nil
+                plates.allyNameSize       = nil
+            end
+        end
+        from = 17
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)
