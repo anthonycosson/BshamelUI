@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.12 — 2026-08-14
+
 ### Corrigé
 - **Les auras sous la cible et le focus restaient sans contour sombre.**
   Leurs boutons descendent d'une unité que le jeu protège : le relevé du
