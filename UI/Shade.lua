@@ -206,10 +206,10 @@ local ICON_BORDERS = {
 --- les rhabille : les teinter en plus reviendrait à les traiter deux fois.
 ---
 --- `DebuffBorder` en fait partie depuis que le client habille chaque aura d'un
---- liseré sous cette clé. C'est le widget qui départage ses deux rôles — un
---- anneau typé se garde, un habillage neutre se rhabille (voir `borrowFrom`
---- dans `UI/Widgets/ShadeBorder.lua`) ; ici on se contente de ne pas le
---- teinter en plus.
+--- liseré sous cette clé. Le widget l'emprunte et le rhabille quel que soit
+--- son atlas — l'uniforme voulu par le joueur (voir `borrowFrom` dans
+--- `UI/Widgets/ShadeBorder.lua`) ; ici on se contente de ne pas le teinter en
+--- plus.
 local BORDER_KEYS = { "Border", "IconBorder", "DebuffBorder" }
 
 --- Clés sous lesquelles un cadre publie son **fond**, par opposition à son
@@ -454,16 +454,18 @@ local STATE_TEXTURES = {
 --- dessus, notre passage la rassombrit au coup d'après, et on cherche du côté de
 --- ce qui *déclenche* la lueur alors que le problème est ce qui la couvre.
 ---
---- L'enchantement d'arme (`TempEnchantBorder`, violet) est un signal du même
---- ordre : il dit « ceci est une amélioration d'arme », dans la couleur que le
---- jeu lui réserve. `Highlight` est une texture de surbrillance — cible
---- sélectionnée, survol — du retour visuel par définition, comme
---- `GetHighlightTexture` l'était déjà chez les textures qui se demandent.
+--- `Highlight` est une texture de surbrillance — cible sélectionnée, survol —
+--- du retour visuel par définition, comme `GetHighlightTexture` l'était déjà
+--- chez les textures qui se demandent.
 ---
---- `DebuffBorder` a vécu dans cette liste, et n'y est plus : le client range
---- désormais **deux choses** sous cette clé, et une seule est un signal. La
---- clé a rejoint `BORDER_KEYS` — c'est le widget de contour qui départage les
---- deux rôles par l'atlas, et les rhabille ou s'efface.
+--- `DebuffBorder` et `TempEnchantBorder` ont vécu dans cette liste : l'anneau
+--- d'un type de dissipation et le violet d'un enchantement d'arme disent bien
+--- quelque chose. Le joueur a pourtant tranché contre eux — depuis que le
+--- client habille *chaque* aura d'un liseré, trois régimes se côtoyaient sur
+--- une même rangée, et l'uniforme sombre lui importe plus que le type dans le
+--- trait, qui reste dit ailleurs (cadres de groupe, symbole daltonien). Le
+--- premier est rhabillé par le widget (voir `BORDER_KEYS`), le second
+--- s'assombrit comme l'habillage qu'il est redevenu.
 ---
 --- `HighLevelTexture` est le crâne du cadre de cible — celui qui remplace le
 --- niveau quand la cible dépasse le vôtre au point de ne plus se mesurer. Il
@@ -473,7 +475,7 @@ local STATE_TEXTURES = {
 --- `RaidTargetIcon`, la dorure `BossPortraitFrameTexture`) sont écartées par le
 --- classement, lui tombait dans l'habillage et sortait en médaillon noir.
 local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
-                     "TempEnchantBorder", "Highlight",
+                     "Highlight",
                      "HighLevelTexture" }
 
 --- Fragments de nom d'un **cadre entier** qui signale au lieu de décorer.
@@ -1036,7 +1038,9 @@ local function drawBorder(icon, factor)
     end
     if not border then return end
 
-    cropIcon(icon)
+    -- Le widget dit lui-même quand le rognage n'a pas lieu d'être : sur un
+    -- liseré d'aura, l'anneau du client est fait pour l'icône entière.
+    if not border.skipCrop then cropIcon(icon) end
     border:Draw(factor)
 end
 
@@ -1177,18 +1181,22 @@ function S:FactorFor(element)
     return active[element]
 end
 
+--- L'intensité s'éteint **avant** de rendre, et l'ordre est un contrat : la
+--- restitution passe par les écritures que la repose des anneaux d'auras
+--- guette (voir `repost` dans `UI/Widgets/ShadeBorder.lua`), et une repose
+--- encore armée regagnerait la course qu'on est en train d'arrêter.
 ---@param element string
 function S:Restore(element)
-    restore(element)
     active[element] = nil
+    restore(element)
 end
 
 --- Rend tous les éléments à leur état d'origine. Appelé par `OnDisable`.
 function S:RestoreAll()
     for element in pairs(active) do
+        active[element] = nil
         restore(element)
     end
-    wipe(active)
 end
 
 --- Repasse la teinte sur les cadres apparus depuis le dernier passage : auras

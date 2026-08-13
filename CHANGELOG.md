@@ -3,12 +3,52 @@
 ## Non publié
 
 ### Corrigé
+- **Les auras sous la cible et le focus restaient sans contour sombre.**
+  Leurs boutons descendent d'une unité que le jeu protège : le relevé du
+  liseré — fait avant de le rhabiller, pour pouvoir le rendre — lisait
+  géométrie et couleurs sans aucune garde, et la première valeur secrète le
+  faisait mourir en silence. Chaque lecture est désormais gardée ; ce qui ne
+  se lit pas ne se relève pas, et seul ce qui a été relevé se repose.
 - **La seconde famille de ressources de classe sortait encore en plaque
   noire.** Les barres `ClassNameplateBar…` — l'autre habillage que le jeu
   donne à la même lecture — n'étaient pas dans la liste des lectures de
   combat épargnées. Relevées en jeu, elles la rejoignent.
+- **Le mode sombre des auras et du gestionnaire disparaissait un instant à
+  chaque sort lancé.** Plusieurs trous pour un seul symptôme, tous comblés :
+  le jeu réécrit ses anneaux par des chemins qu'un hook de méthode ne voit
+  pas toujours — sa fonction d'écriture est désormais guettée à la source ;
+  les repassages amortis arrivaient un battement trop tard — la
+  reconstruction du cadre de buffs, des affaiblissements et des visionneuses
+  du gestionnaire déclenche maintenant un repassage immédiat, dans le même
+  souffle ; la repose refusait d'agir sur un anneau que le dernier balayage
+  n'avait pas re-marqué — elle consulte désormais la seule autorité qui
+  compte, l'intensité réellement en vigueur ; et le jeu fait pulser l'alpha
+  des boutons proches d'expirer — le trait l'ignore, l'icône continue de le
+  dire.
+- **L'anneau sombre d'une aura clignotait au lancer d'un sort.** Deux trous
+  pour un symptôme. Le jeu réécrit son anneau à chaque rafraîchissement
+  d'aura : l'écriture est désormais guettée et l'anneau reposé dans le même
+  souffle — même remède que le remplissage des barres d'infos. Et un bouton
+  tout juste ressorti du réservoir arrivait doré, le temps que le repassage
+  — qui peut courir avant que le jeu ne se soit repeint, l'ordre des
+  abonnés d'un événement n'étant pas garanti — le rattrape : la
+  reconstruction du cadre de buffs est maintenant guettée elle aussi, et le
+  repassage court toujours après elle.
 
 ### Modifié
+- **Mode sombre : un seul liseré d'aura, sombre, partout.** La 1.0.11
+  départageait — anneau coloré gardé sur les affaiblissements typés, contour
+  sombre sur le reste — et certains buffs à habillage spécial échappaient
+  encore au critère : trois régimes se côtoyaient sur une même rangée.
+  Toutes les auras portent désormais le même anneau assombri — c'est
+  l'anneau du jeu lui-même, gardé à sa place : chaque replacement du trait à
+  la main laissait des bords découverts, jamais les mêmes selon l'icône. Il
+  s'affiche sur chaque bouton, y compris les buffs ordinaires que le jeu
+  laisse nus depuis son restyle, à une exception : l'enchantement d'arme
+  garde son seul liseré violet, assombri comme habillage — deux cadres sur
+  une vignette seraient un de trop. Le type d'un affaiblissement ne se lit
+  plus à son anneau — choix assumé : il reste dit sur les cadres de groupe
+  et par le symbole daltonien.
 - **`/bui glow` dit ce que chaque texture affiche.** Atlas ou fichier,
   désaturation et couleur de sommet s'écrivent au bout de chaque ligne,
   lectures gardées — un secret s'écrit `?`. C'est ce qui a permis de voir,

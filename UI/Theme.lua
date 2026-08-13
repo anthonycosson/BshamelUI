@@ -1994,6 +1994,15 @@ T.ATLAS = {
     -- aucun : ajoutée par-dessus un contour existant, son trait ouvragé dessine
     -- un second cadre à l'intérieur du premier.
     SHADE_BORDER = "Adventures-Spell-Border",
+
+    -- L'anneau **neutre** que le client pose sur ses boutons d'aura (le nom
+    -- vient de sa table `DEBUFF_DISPLAY_INFO`). Le mode sombre l'impose à
+    -- toutes les auras à la place des anneaux typés et des habillages
+    -- spéciaux, **sans toucher à leur géométrie** : cet art-là est taillé
+    -- exactement pour la région qui le porte, là où un trait replacé à la
+    -- main tombait entre deux pixels — des bords découverts, jamais les mêmes
+    -- selon l'icône.
+    AURA_RING = "ui-debuff-border-default-noicon",
 }
 
 --- Épaisseur du trait de la lueur de bord, d'après la hauteur d'une case.

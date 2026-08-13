@@ -58,7 +58,7 @@ read_globals = {
     -- Espaces de noms
     "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
-    "C_Item", "C_TooltipInfo", "TooltipUtil", "ItemLocation",
+    "C_Item", "C_TooltipInfo", "TooltipUtil", "ItemLocation", "AuraUtil",
 
     -- Minicarte, curseur et écran. Les deux porteurs de boutons autour de la
     -- minicarte sont cités parce qu'on teste leur présence : le client a déplacé

@@ -164,11 +164,11 @@ local refreshBars       = refresher("actionBars")
 local refreshVehicle    = refresher("vehicleBar")
 local refreshShade      = refresher(nil)
 
--- Groupé, et non traité cadre par cadre comme les auras : `RefreshLayout`
--- reconstruit l'ensemble d'un coup, et un passage complet sur quatre
--- visionneuses reste bon marché. Surtout, `Refresh` **remplace** la liste des
--- textures teintes là où `ApplyTo` y ajoute — à cette fréquence-là, ajouter
--- ferait grossir la liste sans fin (règle 7).
+-- Groupé : `Refresh` **remplace** la liste des textures teintes là où
+-- `ApplyTo` y ajoute, et c'est ce remplacement périodique qui borne les ajouts
+-- que le hook des visionneuses fait, lui, sur-le-champ (règle 7 — voir
+-- `hookCooldownViewers`, qui dit pourquoi l'immédiat est redevenu
+-- nécessaire).
 local refreshCooldowns  = refresher("cooldownManager")
 
 -- Le grimoire se rafraîchit **tout de suite et à retardement** : le client
@@ -265,6 +265,31 @@ local function hookAuraUpdates(mod)
             U.GuardedHook(frame, "UpdateAuras", styleAuras, guard)
         end
     end
+
+    -- Les cadres de buffs et d'affaiblissements du joueur, pour la même
+    -- raison mais un autre trou. `UNIT_AURA` nous réveille bien, mais le
+    -- rafraîchisseur des auras est **amorti** — c'est sa raison d'être face
+    -- aux rafales — et l'amorti est précisément la fenêtre où le liseré doré
+    -- d'un bouton tout juste ressorti du réservoir se voyait : un
+    -- clignotement à chaque sort lancé. La reconstruction du cadre, elle,
+    -- court toujours après le client : on s'y accroche et on repasse
+    -- **sur-le-champ**, par `ApplyTo` — un cadre isolé se traite pour rien,
+    -- c'est son métier. Le filet amorti garde le dernier mot : son passage
+    -- complet remplace les listes, ce qui empêche ces ajouts-là de
+    -- s'accumuler.
+    local playerFrames = { BuffFrame, DebuffFrame }
+    for i = 1, #playerFrames do
+        local frame = playerFrames[i]
+        if frame and type(frame.UpdateAuraButtons) == "function" then
+            U.GuardedHook(frame, "UpdateAuraButtons", function(self)
+                local shade = BUI.Shade
+                if shade then
+                    BUI.safecall(shade.ApplyTo, shade, "auras", self)
+                end
+                refreshAuras()
+            end, guard)
+        end
+    end
 end
 
 --- Visionneuses du gestionnaire de temps de recharge, par nom global.
@@ -301,7 +326,20 @@ local function hookCooldownViewers(mod)
     for i = 1, #COOLDOWN_VIEWERS do
         local viewer = _G[COOLDOWN_VIEWERS[i]]
         if viewer and type(viewer.RefreshLayout) == "function" then
-            U.GuardedHook(viewer, "RefreshLayout", refreshCooldowns, guard)
+            -- Sur-le-champ, par `ApplyTo`, puis le filet amorti. Le
+            -- rafraîchisseur seul est groupé — c'est sa raison d'être — et le
+            -- regroupement était précisément la fenêtre où l'habillage clair
+            -- du client se voyait : à chaque sort lancé, la visionneuse se
+            -- reconstruit, et le mode sombre semblait disparaître un instant.
+            -- Le passage complet du filet remplace les listes, ce qui empêche
+            -- les ajouts d'`ApplyTo` de s'accumuler (règle 7).
+            U.GuardedHook(viewer, "RefreshLayout", function(self)
+                local shade = BUI.Shade
+                if shade then
+                    BUI.safecall(shade.ApplyTo, shade, "cooldownManager", self)
+                end
+                refreshCooldowns()
+            end, guard)
         end
     end
 end
