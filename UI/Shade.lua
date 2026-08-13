@@ -1235,14 +1235,36 @@ local function reportName(region)
 end
 
 --- Une ligne par région : son nom, si elle est affichée, et si c'est nous qui
---- l'avons teintée. C'est la troisième colonne qui répond à la question posée —
---- les deux premières ne servent qu'à savoir de quelle texture on parle.
+--- l'avons teintée — puis ce qu'elle affiche : atlas (ou fichier), marque de
+--- désaturation, couleur de sommet. C'est ce qui permet de voir, sur pièces,
+--- si une teinte a été posée, effacée, ou jamais tentée. Chaque lecture est
+--- gardée : un secret s'écrit `?`, il ne fait pas taire la ligne.
 ---@param region table
 ---@param mine string
 local function reportRegion(region, mine)
     local shown = ask(region, "IsShown") == true and "" or " (hidden)"
     local ours  = originals[region] ~= nil and (" <- " .. mine) or ""
-    BUI:Print("  " .. reportName(region) .. shown .. ours)
+
+    local image = ask(region, "GetAtlas")
+    if type(image) ~= "string" or secret(image) or image == "" then
+        image = ask(region, "GetTexture")
+        if secret(image) then image = nil end
+        image = image ~= nil and tostring(image) or "?"
+    end
+
+    local desat = ""
+    local d = ask(region, "IsDesaturated")
+    if d ~= nil and not secret(d) and d then desat = " desat" end
+
+    local tint = "?"
+    local okV, r, g, b = pcall(region.GetVertexColor, region)
+    if okV and type(r) == "number" and not secret(r)
+       and not secret(g) and not secret(b) then
+        tint = string.format("%.2f %.2f %.2f", r, g, b)
+    end
+
+    BUI:Print("  " .. reportName(region) .. shown .. ours
+        .. " | " .. image .. desat .. " | " .. tint)
 end
 
 --- Écrit dans le chat ce que porte le cadre sous le curseur.
@@ -1253,7 +1275,7 @@ end
 function S:Diagnose()
     BUI:Print(ns.L["Glow diagnostic"])
 
-    C_Timer.After(DIAGNOSE_DELAY, function()
+    local function report(label)
         local focus = GetMouseFoci and GetMouseFoci()[1]
         if not focus and GetMouseFocus then focus = GetMouseFocus() end
 
@@ -1263,7 +1285,7 @@ function S:Diagnose()
         end
 
         local mine = ns.L["Glow diagnostic darkened"]
-        BUI:Print(reportName(focus))
+        BUI:Print(reportName(focus) .. (label or ""))
 
         for _, region in ipairs(askAll(focus, "GetRegions")) do
             if ask(region, "GetObjectType") == "Texture" then
@@ -1279,5 +1301,7 @@ function S:Diagnose()
                 end
             end
         end
-    end)
+    end
+
+    C_Timer.After(DIAGNOSE_DELAY, function() report("") end)
 end

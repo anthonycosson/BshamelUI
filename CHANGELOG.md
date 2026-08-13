@@ -8,6 +8,12 @@
   donne à la même lecture — n'étaient pas dans la liste des lectures de
   combat épargnées. Relevées en jeu, elles la rejoignent.
 
+### Modifié
+- **`/bui glow` dit ce que chaque texture affiche.** Atlas ou fichier,
+  désaturation et couleur de sommet s'écrivent au bout de chaque ligne,
+  lectures gardées — un secret s'écrit `?`. C'est ce qui a permis de voir,
+  sur pièces, qui écrivait quoi pendant la traque du clignotement.
+
 ## 1.0.11 — 2026-08-13
 
 ### Corrigé
