@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.11 — 2026-08-13
+
 ### Corrigé
 - **Les liserés d'auras échappaient au mode sombre.** Le jeu habille
   désormais chaque amélioration et chaque affaiblissement d'un liseré, sous
