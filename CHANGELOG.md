@@ -2,6 +2,12 @@
 
 ## Non publié
 
+### Corrigé
+- **La seconde famille de ressources de classe sortait encore en plaque
+  noire.** Les barres `ClassNameplateBar…` — l'autre habillage que le jeu
+  donne à la même lecture — n'étaient pas dans la liste des lectures de
+  combat épargnées. Relevées en jeu, elles la rejoignent.
+
 ## 1.0.11 — 2026-08-13
 
 ### Corrigé

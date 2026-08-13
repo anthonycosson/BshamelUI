@@ -510,9 +510,17 @@ local READOUT_NAMES = {
     "ComboPointPlayerFrame", "RogueComboPointBarFrame", "DruidComboPointBarFrame",
     "MonkHarmonyBarFrame", "MonkStaggerBar", "MageArcaneChargesFrame",
     "EssencePlayerFrame", "InsanityBarFrame",
-    "DemonHunterSoulFragmentsBar", "DevourerFuryBar",
+    "DemonHunterSoulFragmentsBar", "DevourerFuryBar", "DevourerFuryBarFrame",
     "AlternatePowerBar", "PlayerFrameAlternateManaBar",
     "TotemFrame",
+
+    -- La seconde famille de barres de ressource du client, relevée en jeu par
+    -- `/bui glow` sous le cadre du joueur — même lecture, autre habillage. Sur
+    -- un paladin, c'est celle-là qui sortait encore en plaque noire.
+    "ClassNameplateBarPaladinFrame", "ClassNameplateBarDracthyrFrame",
+    "ClassNameplateBarRogueFrame", "ClassNameplateBarFeralDruidFrame",
+    "ClassNameplateBarMageFrame", "ClassNameplateBarWindwalkerMonkFrame",
+    "ClassNameplateBarWarlockFrame",
 }
 
 --- cadre -> vrai, pour les lectures de combat présentes sur ce client.
