@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.13 — 2026-08-18
+
 ### Corrigé
 - **L'écu des sorts non interruptibles sortait noir en mode sombre.** Quand un
   sort ne peut pas être coupé, le jeu remplace son icône par un écu — sur une
