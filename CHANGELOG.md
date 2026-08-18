@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- **L'écu des sorts non interruptibles sortait noir en mode sombre.** Quand un
+  sort ne peut pas être coupé, le jeu remplace son icône par un écu — sur une
+  plaque, les deux ne s'affichent jamais ensemble. Son nom commence par
+  « Border », le moteur d'assombrissement le lisait donc comme de l'habillage
+  et le teintait. C'est un signal, pas une décoration : il garde désormais ses
+  couleurs, comme les lueurs de procédé et le crâne du cadre de cible.
+
 ## 1.0.12 — 2026-08-14
 
 ### Corrigé

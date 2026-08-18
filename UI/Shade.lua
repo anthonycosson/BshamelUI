@@ -474,9 +474,20 @@ local STATE_TEXTURES = {
 --- contient ni « Icon » ni « Portrait » : ses voisines (`BossIcon`,
 --- `RaidTargetIcon`, la dorure `BossPortraitFrameTexture`) sont écartées par le
 --- classement, lui tombait dans l'habillage et sortait en médaillon noir.
+---
+--- `BorderShield` est l'écu d'une barre d'incantation : le jeu le montre quand
+--- le sort en cours **ne peut pas être interrompu**, et sur une plaque il prend
+--- alors la place de l'icône du sort — les deux ne s'affichent jamais ensemble
+--- (`HideIconWhenNotInterruptible`, voir `CastingBarMixin:UpdateIconShown`).
+--- C'est donc l'icône que le joueur voit, et elle ne dit qu'une chose, la seule
+--- qui compte à cet instant : inutile de couper. Son nom commence par
+--- « Border », ce qui la faisait classer dans l'habillage : elle sortait en écu
+--- noir, et le symptôme se raconte « quand un sort n'est pas interruptible,
+--- l'icône est en mode sombre ».
 local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
                      "Highlight",
-                     "HighLevelTexture" }
+                     "HighLevelTexture",
+                     "BorderShield" }
 
 --- Fragments de nom d'un **cadre entier** qui signale au lieu de décorer.
 ---
