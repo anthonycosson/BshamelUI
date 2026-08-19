@@ -631,8 +631,6 @@ BUI:RegisterLocale("enUS", {
     ["PvP diagnostic sound file"]      = "sound file tried:",
     ["PvP diagnostic unavailable"]     = "The PvP module is not running.",
     ["Healer CC places"]               = "Where it runs",
-    ["Healer CC outdoors"]             = "Outdoors",
-    ["Healer CC outdoors tip"]         = "In a party outside any instance.",
     ["Healer CC dungeons"]             = "Dungeons",
     ["Healer CC dungeons tip"]         = "Dungeons and mythic keystones.",
     ["Healer CC arenas"]               = "Arenas",

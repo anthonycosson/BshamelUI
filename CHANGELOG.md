@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Modifié
+- **L'alerte de soigneur sous contrôle ne s'affiche plus en extérieur.** Il ne
+  reste que les donjons et les arènes. L'extérieur n'était pas une limite
+  technique — les jetons de groupe y existent —, c'était une case de trop : une
+  entrave posée sur un soigneur au milieu d'un monde ouvert n'est presque jamais
+  ce qui décide de la seconde qui suit, et une alerte qui se déclenche pour rien
+  apprend à être ignorée.
+
 ## 1.0.14 — 2026-08-19
 
 ### Ajouté

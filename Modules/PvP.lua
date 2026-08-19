@@ -9,10 +9,12 @@
 --  groupe, dans une rangée d'auras haute de quinze pixels, à côté de six autres.
 --
 --  **Le groupe, pas le raid.** Le module lit `party1` à `party4` et rien
---  d'autre : c'est là que vivent l'arène, le donjon et le groupe extérieur. Un
---  raid n'a pas un soigneur mais cinq, une alerte qui ne dit pas lequel ne dit
---  rien, et un champ de bataille est un raid — d'où son absence de la liste des
---  lieux.
+--  d'autre : c'est là que vivent l'arène et le donjon. Un raid n'a pas un
+--  soigneur mais cinq, une alerte qui ne dit pas lequel ne dit rien, et un
+--  champ de bataille est un raid — d'où son absence de la liste des lieux.
+--
+--  **Et rien dehors.** L'extérieur a bien des jetons de groupe : c'est un choix
+--  et non une limite (voir `PLACE_KEY`).
 --
 --  Ce que le module dessine tient en une rangée d'icônes posée sur l'écran :
 --  l'entrave elle-même, avec son horloge. Pas de texte. L'icône d'un
@@ -50,22 +52,29 @@ end
 --- allouerait quatre chaînes par événement d'aura (règle 7).
 local PARTY_UNITS = { "party1", "party2", "party3", "party4" }
 
---- Le réglage de lieu qui commande, par type d'instance. Ce que la table ne
---- nomme pas — raid, champ de bataille, scénario — n'est pas offert : le module
---- ne lit que des jetons de groupe, et ces contenus-là n'en ont pas.
+--- Le réglage de lieu qui commande, par type d'instance.
+---
+--- Ce que la table ne nomme pas n'est pas offert, et pour deux raisons
+--- différentes. Le raid, le champ de bataille et le scénario n'ont pas de jetons
+--- de groupe, et le module n'en lit pas d'autres. L'**extérieur**, lui, en a :
+--- c'est un choix, pas une limite — une entrave posée sur un soigneur au milieu
+--- d'un monde ouvert n'est presque jamais ce qui décide de la seconde qui suit,
+--- et une alerte qui se déclenche pour rien apprend à être ignorée.
 local PLACE_KEY = {
     arena = "inArena",
     party = "inDungeon",
 }
 
 --- Le réglage de lieu en vigueur ici, ou `nil` là où le module ne s'affiche pas.
+---
+--- Hors instance, c'est `nil` : le module se tait dehors. Sans `GetInstanceInfo`
+--- pour répondre, `nil` aussi — une capacité absente ne s'interprète pas.
 ---@return string|nil
 local function placeKey()
-    if not GetInstanceInfo then return "inWorld" end
+    if not GetInstanceInfo then return nil end
 
     local _, kind = GetInstanceInfo()
     if U.IsSecret(kind) then return nil end
-    if kind == nil or kind == "none" then return "inWorld" end
 
     return PLACE_KEY[kind]
 end
@@ -485,7 +494,6 @@ BUI:RegisterModule(MODULE, {
         -- Les lieux. Tous éteints, comme tout le reste : l'interrupteur du
         -- dessus ne fait donc rien tant qu'on n'a pas dit où (règle 4). C'est
         -- son libellé qui le dit, pas un défaut qui déciderait à la place.
-        inWorld   = false,
         inDungeon = false,
         inArena   = false,
     },
@@ -551,13 +559,6 @@ BUI:RegisterModule(MODULE, {
         },
 
         { type = "header", text = L["Healer CC places"] },
-        {
-            type     = "toggle",
-            key      = "inWorld",
-            text     = L["Healer CC outdoors"],
-            tooltip  = L["Healer CC outdoors tip"],
-            disabled = requires("healerCC"),
-        },
         {
             type     = "toggle",
             key      = "inDungeon",
