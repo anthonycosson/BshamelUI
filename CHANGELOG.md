@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.15 — 2026-08-19
+
 ### Modifié
 - **L'alerte de soigneur sous contrôle ne s'affiche plus en extérieur.** Il ne
   reste que les donjons et les arènes. L'extérieur n'était pas une limite
