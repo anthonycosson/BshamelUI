@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.0.14 — 2026-08-19
+
 ### Ajouté
 - **Une page « PvP », et une alerte : le soigneur du groupe est sous
   contrôle.** L'entrave s'affiche au milieu de l'écran, avec son décompte —
