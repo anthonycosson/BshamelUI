@@ -29,6 +29,7 @@
     "CreateColor", "NORMAL_FONT_COLOR", "HIGHLIGHT_FONT_COLOR",
     "DISABLED_FONT_COLOR", "WHITE_FONT_COLOR", "RED_FONT_COLOR", "GREEN_FONT_COLOR",
     "SettingsPanel", "Settings", "NineSliceUtil", "PixelUtil",
+    "PlaySoundFile", "LibStub",
 
     "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
@@ -94,6 +95,7 @@
     "IsInGroup", "IsInRaid", "GetNumGroupMembers", "UnitName", "UnitIsConnected",
     "UnitIsGroupLeader", "UnitIsGroupAssistant", "SendChatMessage",
     "DoReadyCheck", "C_PartyInfo", "LE_PARTY_CATEGORY_INSTANCE",
+    "UnitGroupRolesAssigned",
     "CompactRaidFrameManager",
 
     "DebuffFrame", "BuffFrame", "C_EventUtils",

@@ -410,6 +410,19 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
+    -- `/bui pvp` : ce que le client publie de la lueur et du son d'alerte, et ce
+    -- que le module PvP en a retenu. Une lueur absente a trois causes qui se
+    -- ressemblent toutes de l'extérieur — il ne se passe rien.
+    if arg == "pvp" then
+        local mod = registry["PvP"]
+        if mod and mod._active and mod.DiagnosePvP then
+            BUI.safecall(mod.DiagnosePvP, mod)
+        else
+            BUI:Print(L["PvP diagnostic unavailable"])
+        end
+        return
+    end
+
     -- `/bui glow` : ce que le mode sombre a fait au cadre sous le curseur. Le
     -- moteur est hors des modules, comme celui de la minicarte : on l'appelle
     -- donc directement, sans passer par le registre.

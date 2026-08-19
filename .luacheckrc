@@ -51,6 +51,9 @@ read_globals = {
     "DISABLED_FONT_COLOR", "WHITE_FONT_COLOR", "RED_FONT_COLOR", "GREEN_FONT_COLOR",
     "ORANGE_FONT_COLOR",
     "SettingsPanel", "Settings", "Menu", "NineSliceUtil",
+    -- Jouer un fichier de son, et le registre de médias partagés d'un autre
+    -- addon quand il y en a un — consulté, jamais embarqué (règle 8).
+    "PlaySoundFile", "LibStub",
     -- Arrondi à la grille de l'écran : c'est lui qui garantit qu'un filet d'un
     -- pixel en fasse un (voir `T.SetPixelHeight`).
     "PixelUtil",
@@ -202,6 +205,8 @@ read_globals = {
     "IsInGroup", "IsInRaid", "GetNumGroupMembers", "UnitName", "UnitIsConnected",
     "UnitIsGroupLeader", "UnitIsGroupAssistant", "SendChatMessage",
     "DoReadyCheck", "C_PartyInfo", "LE_PARTY_CATEGORY_INSTANCE",
+    -- Le rôle assigné : la seule source publiée qui dise qui soigne.
+    "UnitGroupRolesAssigned",
     -- Le panneau de contrôle des cadres de raid : on teste sa présence avant de
     -- le ranger, comme les autres cadres du client.
     "CompactRaidFrameManager",

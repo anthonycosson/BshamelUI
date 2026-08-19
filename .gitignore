@@ -17,3 +17,10 @@ desktop.ini
 
 # Fichiers de travail Claude Code non partagés
 .claude/settings.local.json
+
+# Son d'alerte déposé par le joueur (voir `T.ALERT_SOUND` dans `UI/Theme.lua`).
+# Il est joué en priorité s'il existe, et il ne doit **jamais** être commité :
+# un fichier dont on n'a pas vérifié la licence se copie chez soi, il ne se
+# redistribue pas dans une release (CLAUDE.md règle 8). Second verrou dans
+# `.pkgmeta`, pour que le zip l'exclue même s'il arrivait ici par accident.
+media/Sonar.ogg

@@ -4423,3 +4423,225 @@ par personnage (`CharData().clientBits`), **par nom de catégorie** — une
 énumération peut se renuméroter, un nom se retrouve — et le moteur rejoue les
 bits enregistrés à la connexion, sur `CVAR_UPDATE` et à la sortie de combat.
 L'état neutre n'enregistre rien, donc ne rejoue rien.
+
+---
+
+## La lueur du gestionnaire de temps de recharge se prête à n'importe quel cadre
+
+**Besoin** — une lueur autour d'une icône d'alerte, sans en dessiner une. Celle
+que l'addon fabrique (`UI/Widgets/ResourceBar.lua`) borde une **barre** : ses
+comètes suivent un rectangle large et plat, et elles n'ont jamais eu à tourner
+autour d'un carré.
+
+**Ce que le client publie** — un système d'alertes visuelles complet, dans
+`Blizzard_VisualAlerts`, que le gestionnaire de temps de recharge emploie pour
+faire clignoter une icône quand son sort redevient disponible :
+
+    VisualAlertsManager:AcquireAlert(Enum.VisualAlertType.MarchingAntsRed, cible)
+    VisualAlertsManager:ReleaseAlert(alerte)
+
+`Enum.VisualAlertType` offre deux formes — `MarchingAnts` (fourmis qui courent
+sur le contour) et `Flash` (halo qui pulse) — chacune en neutre plus quatre
+teintes (`…Cyan`, `…Red`, `…Green`, `…Blue`). `IsAlertRegistered` dit si une
+forme est disponible sur ce client, ce qui donne le test de capacité (règle 1).
+
+**Les trois pièges** :
+
+  · **la cible doit porter `VisualAlertTargetMixin`**, et rien d'autre. Une
+    ligne — `Mixin(frame, VisualAlertTargetMixin)` —, et un cadre à nous devient
+    un hôte d'alerte au même titre qu'une icône du gestionnaire. Le mixin lit le
+    niveau du cadre pour empiler les alertes dessus : c'est pourquoi la cible
+    doit être **à nous**, un cadre du client pouvant rendre un niveau secret ;
+  · **une alerte s'éteint toute seule.** Elle est faite pour dire « ça vient
+    d'arriver », donc elle se rend au pool au bout de sa durée.
+    `alerte:SetManualRelease(true)` retire ce renvoi automatique — indispensable
+    quand la lueur dit « c'est encore vrai » et doit durer autant que ce qu'elle
+    entoure. `ReleaseAlert` remet le renvoi automatique pour l'emprunteur
+    suivant, il n'y a donc rien à défaire ;
+  · **acquérir deux fois sans rendre pose deux lueurs**, dont la première n'est
+    plus référencée nulle part. Le garde est du côté de l'appelant.
+
+Les **sons** d'alerte du même panneau se prennent au même endroit :
+`CooldownViewerUtil.GetSoundTypeSoundKit(Enum.CooldownViewerSound.…)` rend un
+identifiant de son du client, jouable par `PlaySound`. La liste est celle que le
+gestionnaire montre au joueur, nommée et traduite par le client.
+
+Les deux paquets — `Blizzard_VisualAlerts` et `Blizzard_CooldownViewer` — ne
+sont pas à la demande : ils sont chargés dès la connexion.
+
+---
+
+## Une alerte visuelle se pose un cran au-dessus de son hôte, et pas plus
+
+**Symptôme** — la lueur d'alerte du client, demandée sur le panneau qui porte la
+rangée d'entraves du soigneur, ne s'affiche pas. Aucune erreur, aucun refus :
+l'alerte est acquise, le pool la sort, et on ne voit rien.
+
+**Cause** — `VisualAlertTargetMixin:UpdateAlerts` donne à chaque alerte le niveau
+de son hôte **plus son rang** dans la pile :
+
+    local currentLevel = self:GetFrameLevel();
+    for index, alert in ipairs(container) do
+        alert:SetFrameLevel(currentLevel + index);
+    end
+
+Une seule alerte est donc à *hôte + 1*. Or la rangée d'auras de l'addon se pose
+dix crans au-dessus de son parent (`W.AuraRow`, pour passer devant la barre de
+nom qui la porte d'ordinaire). L'anneau des fourmis se dessine **au ras** de ce
+qu'il entoure — il déborde de huit ou neuf pixels, pas plus — et il passait donc
+sous les icônes sur presque toute sa longueur.
+
+C'est le piège général de ce système : on choisit *où* l'alerte se pose, jamais
+*à quelle hauteur*. Le seul levier est le niveau de l'hôte.
+
+**Ce qu'on fait** — l'hôte n'est plus le cadre visé mais un **porteur** monté
+par-dessus lui : même boîte, vingt crans plus haut, et c'est lui qui porte
+`VisualAlertTargetMixin` (`UI/Widgets/AlertGlow.lua`). L'alerte hérite de sa
+hauteur et passe devant tout ce que le cadre visé contient. Les deux nombres —
+dix pour la rangée, vingt pour le porteur — sont liés : abaisser le second sous
+le premier éteint la lueur sans rien dire, d'où le commentaire sur la constante.
+
+**Au passage** — `CooldownViewerUtil.BuildSoundMenus(description, isSelected,
+setSelect)` construit *tout* le menu de sons du gestionnaire de temps de recharge
+dans une description de menu qu'on lui prête : ses sept familles en sous-menus,
+et un bouton d'écoute par entrée. Les deux rappels reçoivent un
+`Enum.CooldownViewerSound`. C'est ce qui permet d'offrir exactement le choix du
+client sans en redécrire une ligne — `W.Dropdown` a gagné pour cela un `build`
+qui remplace sa liste plate, et rend faux quand il n'a rien pu poser.
+
+**Épilogue** — Bshamel UI n'emploie finalement pas cette lueur : son style n'est
+pas celui de l'addon, qui a le sien (`UI/Widgets/TrackGlow.lua`). La note reste
+parce que le piège, lui, ne dépend pas du goût : quiconque posera une alerte
+visuelle du client sur un cadre dont le contenu monte plus haut que *hôte + 1*
+la verra disparaître sans un mot. Le reste — le menu de sons prêté par
+`CooldownViewerUtil`, et le `build` qu'il a fait gagner à `W.Dropdown` — est bien
+en service.
+
+---
+
+## Le registre de médias partagés se lit sans être embarqué
+
+**Besoin** — offrir le son d'un autre addon (le « Sonar » de MiniCC) sans copier
+son fichier : il est *all rights reserved*, et l'embarquer serait le
+redistribuer.
+
+**Ce qui existe** — `LibSharedMedia-3.0` est le registre commun du monde des
+addons : celui qui y inscrit une police, une texture ou un son la prête à tous.
+MiniCC/MiniAuras y inscrit les siens au chargement. La bibliothèque est un
+global posé par le premier addon qui la charge, et elle se lit sans la charger
+soi-même :
+
+    local lib = LibStub and LibStub("LibSharedMedia-3.0", true)   -- true : ne lève pas
+    local names = lib:List("sound")            -- les noms déclarés
+    local file  = lib:Fetch("sound", name, true) -- true : nil plutôt qu'un défaut
+
+On joue ensuite le fichier avec `PlaySoundFile(file, "Master")` — et non
+`PlaySound`, qui attend un identifiant de son du client.
+
+**Ce qu'on en fait** — le son de l'alerte PvP est le « Sonar » de MiniCC, joué
+là où MiniCC le range. Rien n'est copié dans le dépôt, et l'addon reste sans
+dépendance : c'est un registre qu'on consulte s'il est là, pas une bibliothèque
+dont on dépend (règle 8).
+
+**Deux précautions** — la liste **grandit en cours de partie**, un addon de
+médias s'inscrivant quand il se charge : elle se redemande à chaque ouverture du
+menu plutôt qu'elle ne se retient. Et le réglage range le nom, jamais le chemin :
+l'addon qui prête le fichier peut être désinstallé, auquel cas `Fetch` rend `nil`
+et l'alerte retombe sur l'avertissement de raid — un son de repli valant mieux
+qu'un silence que rien n'explique.
+
+**Le piège du registre : l'inscription est paresseuse.** MiniCC/MiniAuras ne
+déclare ses sons qu'au premier qu'il a lui-même à résoudre
+(`EnsureBuiltInsRegistered`, appelé depuis `GetNames`/`ResolveStrict`) — ce qui,
+une session entière, peut ne jamais arriver. Un menu qui liste le registre au
+moment où on l'ouvre montre donc une famille vide, alors que l'addon qui prête
+les sons est bien installé. Rien ne permet de forcer son inscription.
+
+D'où la parade : le registre **d'abord** — il survit à un renommage de dossier,
+et MiniCC en a déjà changé une fois —, puis le **chemin du fichier**, qui répond
+tout de suite et sans rien attendre de personne. Les deux noms de dossier connus
+sont essayés (`T.ALERT_SOUND.Files`). `PlaySoundFile` rend `willPlay`, ce qui
+permet d'enchaîner les chemins jusqu'à celui qui répond.
+
+---
+
+## Un objet de durée sait dire ce qu'il reste — et dire qu'il ne le dira pas
+
+**Besoin** — colorer le décompte d'une aura selon ce qu'il en reste, alors que
+départ et échéance ne se lisent plus : `C_UnitAuras.GetAuraDuration` rend un
+objet opaque, fait pour être passé tel quel à `SetCooldownFromDurationObject`.
+
+**Ce que l'objet publie** (`LuaDurationObjectAPI`) — il n'est opaque que de
+loin. `GetRemainingDuration()`, `GetTotalDuration()`, `GetElapsedPercent()`,
+`HasExpired()`, `IsActive()` répondent toutes en clair… *quand l'aura n'est pas
+protégée*. Sur une aura secrète, elles rendent des valeurs secrètes, et le
+moindre calcul dessus lève.
+
+**La clé est `HasSecretValues()`**, documentée `ReturnsNeverSecret = true` :
+c'est la seule question qu'on ait le droit de poser en premier, et elle dit si
+les autres réponses seraient lisibles. D'où l'ordre obligatoire :
+
+    if duration:HasSecretValues() == false then
+        local left  = duration:GetRemainingDuration()
+        local total = duration:GetTotalDuration()
+        -- … deux nombres ordinaires
+    end
+
+Le test s'écrit `== false` et non `not …` : une réponse absente n'est pas une
+réponse négative.
+
+**Ce que ça donne** — en donjon et à l'extérieur, le décompte de l'alerte PvP se
+colore comme celui d'une file d'attente (`T.CountdownColor`). En arène, où le
+client protège les auras, `HasSecretValues` rend `true` et le chiffre reste de la
+couleur ordinaire du thème. La dégradation est visible mais honnête : un dégradé
+inventé mentirait sur ce qu'on sait.
+
+**Deux pièges de voisinage** :
+
+  · **le ratio se calcule, il ne se demande pas.** `GetRemainingPercent` existe,
+    mais son nom ne dit pas s'il rend 0–1 ou 0–100 et la documentation le type
+    simplement `number`. Deux appels et une division ne laissent aucun doute ;
+  · **le balayage sombre s'éteint en trois appels, pas un.** `SetDrawSwipe(false)`
+    laisse le liseré du front (`SetDrawEdge`) et l'éclat de fin (`SetDrawBling`)
+    tourner seuls, ce qui donne un trait lumineux sans rien derrière. Les trois
+    se reposent **après** la durée : poser une durée est ce qui remet le balayage
+    en marche.
+
+---
+
+## `SetIgnoreParentScale` sort un cadre de l'espace de son parent, et tout ce qui s'y mesure devient faux
+
+**Symptôme** — la lueur posée autour de l'entrave du soigneur se dessine **sur**
+l'icône au lieu de la border. Trois réglages successifs du débordement — deux
+pixels, quatre, cinq — la rapprochent sans jamais la sortir. Le calcul, refait à
+la main, dit pourtant qu'à cinq pixels rien de plein ne devrait mordre.
+
+**Cause** — `W.AuraRow` appelle `SetIgnoreParentScale(true)`, et c'est justifié
+là où la rangée est née : elle se pose sur une barre de nom, la plaque de la
+cible n'a pas l'échelle des autres, et elle change au clic. Hors de cette
+échelle, trente pixels sont trente pixels.
+
+Posée sur un cadre à nous, la même ligne fait l'inverse du bien. Le panneau suit
+l'échelle de l'interface (`UIParent`, souvent 0,65 à 0,75) ; la rangée, elle,
+rend à l'échelle 1. Les deux portent le **même nombre** — cinquante — et n'ont
+pas la même taille à l'écran : le panneau fait trente-cinq pixels, la rangée
+cinquante. La rangée déborde donc son propre panneau de sept pixels et demi de
+chaque côté, et tout ce qui se mesure sur le panneau — sa prise à la souris, la
+lueur ancrée dessus — tombe à l'intérieur des icônes.
+
+**Pourquoi les réglages ne rattrapaient rien** — l'écart est **proportionnel** à
+l'échelle de l'interface, pas constant. Ajouter deux ou trois pixels de
+débordement à un décalage qui en vaut sept et demi rapproche sans jamais
+rattraper, et la même correction serait fausse chez un joueur dont l'échelle
+diffère. C'est la signature de ce défaut : un réglage qui améliore à chaque essai
+sans jamais aboutir désigne un rapport, pas une somme.
+
+**Ce qu'on fait** — `W.AuraRowStyle` accepte `scaled`, qui rend la rangée à
+l'échelle de son parent. Faux par défaut : les barres d'infos gardent le
+comportement pour lequel il a été écrit. Le module PvP le passe vrai, et les
+trois cadres — panneau, rangée, lueur — vivent enfin dans le même espace.
+
+**Le garde-fou** — `/bui pvp` écrit désormais la largeur, l'échelle effective et
+la taille réelle des trois cadres. Trois largeurs identiques à des échelles
+différentes ne font pas trois cadres de même taille, et c'est invisible autrement
+qu'en les écrivant côte à côte.

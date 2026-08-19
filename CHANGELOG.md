@@ -2,6 +2,56 @@
 
 ## Non publié
 
+### Ajouté
+- **Une page « PvP », et une alerte : le soigneur du groupe est sous
+  contrôle.** L'entrave s'affiche au milieu de l'écran, avec son décompte —
+  c'est l'information qui décide de la seconde qui suit, et le jeu ne l'écrit
+  nulle part ailleurs que dans une rangée d'auras haute de quinze pixels. En
+  **groupe seulement** : un raid a cinq soigneurs, et une alerte incapable de
+  dire lequel ne dit rien. Un mode aperçu montre une entrave d'exemple partout,
+  pour la placer sans attendre d'être pris ; la taille se règle, et la lueur est
+  celle de l'addon — la même que sur la rangée de ressource de classe. Les lieux
+  se choisissent un par un — extérieur, donjons, arènes — et, comme partout dans
+  l'addon, aucun n'est coché à l'installation.
+- **Le son est « Sonar », celui de MiniCC — et il n'est pas copié.** Ce fichier
+  est sous droits réservés : le mettre dans le dépôt serait le redistribuer. Il
+  est joué là où MiniCC le range, par le registre de médias partagés quand
+  MiniCC l'y a déclaré, par son chemin sinon. Un fichier `media/Sonar.ogg`
+  déposé dans le dossier de l'addon passe avant tout le reste — il n'est ni
+  commité ni livré, c'est un choix qui ne regarde que celui qui le fait. Sans
+  rien de tout cela, c'est l'avertissement de raid du jeu : un joueur qui a
+  coché « émettre un son » doit en entendre un.
+- **Le décompte de l'entrave se règle et se colore.** Un curseur donne sa
+  taille, et il passe du vert au rouge à mesure que l'entrave s'achève — le même
+  code couleur que le décompte d'une file d'attente, et le mode aperçu le montre
+  comme le reste.
+
+  La couleur demande de lire ce qu'il reste, ce que le jeu n'accorde pas
+  partout : en donjon et à l'extérieur elle fonctionne, en arène le chiffre
+  reste uni.
+- **L'icône est nue.** Ni **balayage sombre** — il tourne dans l'image et
+  l'assombrit, ce qui a du sens sur une barre de nom où l'icône est petite, mais
+  salit une alerte où le chiffre dit déjà tout — ni **liseré de nature d'aura** :
+  il distingue ce qui aide, ce qui nuit et ce qui immobilise, et ici tout
+  immobilise. Il ne restait qu'un cadre bleu autour d'une icône de sort, là où le
+  jeu n'en met jamais autour des siennes. La rangée des barres d'infos, elle,
+  garde les deux : ce sont des réglages de rangée, pas un changement global.
+- **`/bui pvp`** écrit l'état de la lueur, les chemins du son dans l'ordre où
+  ils sont essayés, et la taille réelle des trois cadres empilés. Un son muet ne
+  dit pas lequel des chemins a manqué ; celui-ci le dit. Et trois largeurs
+  identiques à des échelles différentes ne font pas trois cadres de même taille
+  — ce qui ne se voit qu'écrit côte à côte.
+
+### Modifié
+- **La lueur de la rangée de ressource de classe a déménagé** dans
+  `UI/Widgets/TrackGlow.lua`, sans un pixel de changement. Elle avait été
+  inventée pour cette rangée ; l'alerte PvP en voulait exactement la même, et
+  deux lueurs qui se ressemblent ne valent pas une lueur partagée. Elle sait
+  désormais **déborder** du cadre qu'elle borde et **imposer son épaisseur** :
+  une icône de sort n'a pas de marge, un trait posé sur son bord recouvrirait le
+  dessin au lieu de le souligner. La rangée de ressource, elle, ne change pas
+  d'un pixel — les deux réglages valent zéro par défaut.
+
 ## 1.0.13 — 2026-08-18
 
 ### Corrigé

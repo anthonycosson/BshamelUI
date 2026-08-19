@@ -28,6 +28,9 @@ ignore:
   - .luarc.json
   - CLAUDE.md
   - README.md
+  # Le son d'alerte que le joueur dépose chez lui : jamais dans le zip. Voir
+  # `.gitignore`, qui est le premier verrou, et `T.ALERT_SOUND`.
+  - media/Sonar.ogg
 
 manual-changelog:
   filename: CHANGELOG.md

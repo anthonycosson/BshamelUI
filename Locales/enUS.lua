@@ -589,6 +589,55 @@ BUI:RegisterLocale("enUS", {
         "Takes the lockout debuff out of your debuff row, since the icon above already counts it "
         .. "down. Turning this off puts it back.",
 
+    -- Module PvP
+    ["PvP"]                            = "PvP",
+    ["Healer crowd control"]           = "Healer crowd control",
+    ["Healer CC alert"]                = "Show when the group healer is crowd controlled",
+    ["Healer CC alert tip"] =
+        "Puts the crowd control on your healer, with its timer, in the middle of your screen. "
+        .. "Party only — a raid has five healers, and an alert that cannot say which one says "
+        .. "nothing. Pick where it runs below: it stays quiet until you do.",
+    ["Healer CC preview"]              = "Preview mode",
+    ["Healer CC preview tip"] =
+        "Shows a sample crowd control, anywhere, so you can place it without waiting for your "
+        .. "healer to be caught. Drag it to move it.",
+    ["Lock healer CC"]                 = "Lock it in place",
+    ["Lock healer CC tip"]             = "Freezes it where it is. It keeps alerting.",
+    ["Healer CC size"]                 = "Icon size",
+    ["Healer CC size tip"]             = "Side of the icon, in pixels. Drag the icon to move it.",
+    ["Healer CC timer size"]           = "Countdown size",
+    ["Healer CC timer size tip"] =
+        "Size of the countdown written on the icon. It goes from green to red as the crowd "
+        .. "control runs out, like a queue countdown — where the game lets the addon read how "
+        .. "much is left. In arenas it does not, and the countdown stays plain.",
+    ["Healer CC glow"]                 = "Glow around the icon",
+    ["Healer CC glow tip"] =
+        "The addon's own glow, the same one the class resource row uses. It lasts as long as "
+        .. "the crowd control does.",
+    ["Healer CC sound"]                = "Play a sound",
+    ["Healer CC sound tip"] =
+        "Plays once, the moment the crowd control lands. Ticking this box plays it. It is "
+        .. "\"Sonar\", MiniCC's sound: it is not copied into the addon, it is played where "
+        .. "MiniCC keeps it. Without MiniCC installed, the game's raid warning stands in.",
+    -- Diagnostic `/bui pvp` : la prose seulement — les noms d'API sont bruts,
+    -- parce que c'est sous ce nom-là qu'on les cherche.
+    ["PvP diagnostic"] =
+        "What the game publishes of the alert glow and sound, and what the module kept of it:",
+    ["PvP diagnostic glow built"]      = "glow built:",
+    ["PvP diagnostic glow lit"]        = "lit:",
+    ["PvP diagnostic panel"]           = "panel:",
+    ["PvP diagnostic row"]             = "icon row:",
+    ["PvP diagnostic glow"]            = "glow:",
+    ["PvP diagnostic sound file"]      = "sound file tried:",
+    ["PvP diagnostic unavailable"]     = "The PvP module is not running.",
+    ["Healer CC places"]               = "Where it runs",
+    ["Healer CC outdoors"]             = "Outdoors",
+    ["Healer CC outdoors tip"]         = "In a party outside any instance.",
+    ["Healer CC dungeons"]             = "Dungeons",
+    ["Healer CC dungeons tip"]         = "Dungeons and mythic keystones.",
+    ["Healer CC arenas"]               = "Arenas",
+    ["Healer CC arenas tip"]           = "Arena matches, rated and skirmish.",
+
     -- Module RaidPanel
     ["Group tools"]                    = "Group tools",
     ["Blizzard panel"]                 = "The game's panel",

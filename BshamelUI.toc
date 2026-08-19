@@ -51,6 +51,10 @@ UI\Widgets\MinimapButton.lua
 UI\Widgets\Tray.lua
 UI\Widgets\SecureMenu.lua
 UI\Widgets\Countdown.lua
+# La lueur de l'addon : un contour allumé que des comètes parcourent. Elle a
+# vécu dans `ResourceBar.lua`, qui l'avait inventée ; le module PvP en a voulu
+# la même, elle est donc sortie ici. Avant les deux pièces qui s'en servent.
+UI\Widgets\TrackGlow.lua
 UI\Widgets\BarText.lua
 UI\Widgets\ShadeBorder.lua
 UI\Widgets\SlotInfo.lua
@@ -116,6 +120,7 @@ Modules\Keystones.lua
 Modules\GroupFinder.lua
 Modules\Teleports.lua
 Modules\RaidCooldowns.lua
+Modules\PvP.lua
 Modules\MythicTimer.lua
 Modules\RaidPanel.lua
 Modules\CombatLog.lua

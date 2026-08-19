@@ -500,6 +500,41 @@ T.SIZE = {
     TRACKER_MIN  = 24,
     TRACKER_MAX  = 80,
 
+    -- Entrave posée sur le soigneur du groupe. Mêmes bornes que le suivi
+    -- ci-dessus, et pour la même raison : c'est une icône seule au milieu de
+    -- l'écran, et la taille à laquelle on la voit sans la chercher n'est pas la
+    -- même pour tout le monde. Elle part **plus grande**, parce qu'on la
+    -- regarde pendant qu'on se bat et non entre deux pulls.
+    --
+    -- Quatre icônes au plus : un soigneur porte rarement deux entraves à la
+    -- fois, et deux soigneurs dans un groupe de cinq est déjà l'exception. Au
+    -- delà, ce n'est plus une alerte, c'est une rangée d'auras.
+    HEALER_CC_ICON  = 50,
+    HEALER_CC_GAP   = 2,
+    HEALER_CC_MAX   = 4,
+
+    -- Corps du décompte posé sur l'entrave, et ses bornes. C'est un réglage :
+    -- le chiffre est ici la moitié de l'information — l'icône dit *quoi*, lui
+    -- dit *combien de temps* —, et la taille à laquelle on lit un chiffre d'un
+    -- coup d'œil n'est pas la même pour tout le monde.
+    --
+    -- En dessous de huit le chiffre n'est plus lisible sur une icône ; au-delà
+    -- de trente il déborde de celle qu'il annote.
+    HEALER_CC_TIMER     = 16,
+    HEALER_CC_TIMER_MIN = 8,
+    HEALER_CC_TIMER_MAX = 30,
+
+    -- Épaisseur du trait de la lueur autour de l'entrave.
+    --
+    -- Elle est **imposée** et non déduite de la hauteur : la formule de la rangée
+    -- de ressource rend cinq pixels sur une icône de cinquante, ce qui borde une
+    -- barre mais cercle une icône. Deux, comme sur la rangée, et la lueur reste
+    -- la même à l'œil d'un bout à l'autre de l'addon — c'est tout l'intérêt de
+    -- n'en avoir qu'une.
+    --
+    -- Le débordement se déduit de celle-ci, juste après la table.
+    HEALER_CC_GLOW_TH = 2,
+
     -- Barre de marqueurs. La case est celle d'un bouton de barre d'action réduit :
     -- neuf cases doivent tenir sur une rangée sans que le panneau devienne une
     -- deuxième barre d'action.
@@ -711,6 +746,26 @@ T.SIZE = {
     -- bord paraît deux fois trop épais quoi qu'on fasse.
     SHADE_ICON_CROP = 0.06,
 }
+
+--- De combien la lueur de l'entrave sort de l'icône. **Égale son épaisseur** :
+--- le trait se dessine vers l'intérieur du contour qu'on lui donne, donc le
+--- sortir d'exactement son épaisseur pose son bord intérieur **pile sur** celui
+--- de l'icône. Il occupe alors la place qu'occupait le liseré de nature d'aura —
+--- celle que l'œil attend pour un bord d'icône.
+---
+--- Les comètes, elles, sont centrées sur ce contour et débordent donc de deux
+--- pixels et demi sur le dessin. C'est **voulu** : c'est ce qui fait lire « le
+--- bord de l'icône s'allume » plutôt que « un anneau tourne à côté ». Les sortir
+--- entièrement demandait cinq pixels de débordement, et à cinq pixels la lueur
+--- ne borde plus rien, elle flotte autour.
+---
+--- Ce débordement-là a d'ailleurs existé, et pour rien : il compensait à la main
+--- le décalage d'échelle entre la rangée et son panneau (voir `scaled` dans
+--- `W.AuraRowStyle`). Le décalage corrigé, la compensation est devenue le défaut.
+---
+--- Écrit ici et non dans la table, parce qu'une table ne peut pas se citer
+--- elle-même : les deux nombres ne doivent jamais diverger.
+T.SIZE.HEALER_CC_GLOW_OUT = T.SIZE.HEALER_CC_GLOW_TH
 
 -- =========================================================================
 --  Minuteries
@@ -2360,4 +2415,119 @@ function T.Template(kind)
     end
     BUI:Warn("aucun template disponible pour « " .. kind .. " »")
     return nil
+end
+
+-- =========================================================================
+--  Le son de l'alerte
+-- =========================================================================
+-- **« Sonar », celui de MiniCC — et l'addon ne l'embarque pas.**
+--
+-- C'est un fichier de MiniCC/MiniAuras, tous droits réservés. Le copier dans le
+-- dépôt serait le redistribuer, ce que la règle 8 interdit et qu'aucune envie de
+-- l'entendre ne rend permis. On le joue donc **là où il est**, chez celui qui
+-- l'a apporté : rien n'entre dans le dépôt, rien n'est livré au joueur, et
+-- désinstaller MiniCC reprend son bien avec lui.
+--
+-- Quatre chemins, dans cet ordre, parce que les trois premiers peuvent manquer
+-- et que le dernier ne manque jamais :
+--
+--   1. **`media/Sonar.ogg`, s'il existe.** Un fichier que le joueur a déposé
+--      lui-même dans le dossier de l'addon, chez lui. C'est un choix explicite :
+--      il passe donc avant tout le reste.
+--
+--      Ce fichier **n'est pas dans le dépôt** et n'est livré à personne — il est
+--      exclu de `git` et du zip (`.gitignore`, `.pkgmeta`). Copier un son sur sa
+--      propre machine pour son propre usage ne regarde que soi ; le mettre dans
+--      une release le distribue à tous ceux qui l'installeront, et c'est cela
+--      seul que la règle 8 interdit. La ligne passe entre les deux, pas ailleurs.
+--
+--      Il ne manque donc à personne : sans lui, on descend d'un cran ;
+--
+--   2. **le registre partagé** (`LibSharedMedia-3.0`), par le nom du son. C'est
+--      le chemin prévu pour cela : MiniCC y inscrit les siens précisément pour
+--      qu'on puisse les demander, et le nom survit à un renommage de dossier —
+--      ce qui est déjà arrivé une fois, MiniCC étant devenu MiniAuras.
+--
+--      Il a un défaut : l'inscription est **paresseuse**. MiniCC ne déclare ses
+--      sons qu'au premier qu'il a lui-même à résoudre, ce qui, une session
+--      entière, peut ne jamais arriver. D'où le troisième chemin ;
+--
+--   3. **le fichier**, à l'endroit où l'addon qui le prête le range. Fragile par
+--      nature — un dossier renommé le casse —, mais il répond tout de suite et
+--      sans rien attendre de personne. Les deux noms de dossier connus sont
+--      essayés, l'actuel d'abord ;
+--
+--   4. **l'avertissement de raid** du client, quand rien de ce qui précède n'est
+--      là. Un joueur qui a coché « émettre un son » doit en entendre un : le
+--      silence se lirait comme une panne, et il n'y a rien à réparer.
+
+--- Le son de l'alerte, par ses quatre chemins. Voir le commentaire ci-dessus
+--- pour l'ordre et ses raisons.
+T.ALERT_SOUND = {
+    --- Le fichier du joueur, s'il en a posé un. Absent du dépôt et du zip.
+    Own = "Interface\\AddOns\\BshamelUI\\media\\Sonar.ogg",
+
+    --- Son nom au registre partagé.
+    Media = "Sonar",
+
+    --- Le fichier, par dossier connu. L'actuel d'abord.
+    Files = {
+        "Interface\\AddOns\\MiniAuras\\Sounds\\Effects\\Sonar.ogg",
+        "Interface\\AddOns\\MiniCC\\Sounds\\Effects\\Sonar.ogg",
+    },
+}
+
+--- La bibliothèque de médias partagés, si un autre addon l'a chargée.
+---
+--- Elle n'est **pas embarquée** : on ne fait qu'utiliser celle qu'un autre addon
+--- a apportée, si l'un l'a fait. L'addon reste sans dépendance (règle 8).
+---@return table|nil
+function T.SharedMedia()
+    if not LibStub then return nil end
+
+    local ok, lib = pcall(LibStub, "LibSharedMedia-3.0", true)
+    if not ok or type(lib) ~= "table" then return nil end
+    if not lib.Fetch then return nil end
+
+    return lib
+end
+
+--- Le fichier qu'un nom du registre partagé désigne, ou `nil`.
+---
+--- Redemandé à chaque fois, jamais retenu : le registre se remplit en cours de
+--- partie, et une réponse mise de côté trop tôt vaudrait « non » pour toute la
+--- session.
+---@param name string
+---@return string|nil
+function T.SharedMediaSound(name)
+    local lib = T.SharedMedia()
+    if not lib then return nil end
+
+    -- `true` en troisième argument : rendre `nil` plutôt que le son par défaut
+    -- de la bibliothèque. Ce qu'on veut savoir est « l'a-t-on ? », pas « qu'y
+    -- a-t-il à la place ? » — le repli est décidé ici, pas ailleurs.
+    local ok, file = pcall(lib.Fetch, lib, "sound", name, true)
+    if not ok or type(file) ~= "string" then return nil end
+
+    return file
+end
+
+--- Joue le son de l'alerte, par le premier chemin qui répond.
+---
+--- `PlaySoundFile` rend `willPlay` : un fichier absent rend faux, ce qui fait
+--- descendre d'un cran sans rien avoir à vérifier soi-même.
+function T.PlayAlertSound()
+    if PlaySoundFile(T.ALERT_SOUND.Own, "Master") then return end
+
+    local file = T.SharedMediaSound(T.ALERT_SOUND.Media)
+    if file and PlaySoundFile(file, "Master") then return end
+
+    local files = T.ALERT_SOUND.Files
+    for i = 1, #files do
+        if PlaySoundFile(files[i], "Master") then return end
+    end
+
+    if SOUNDKIT and SOUNDKIT.RAID_WARNING then
+        PlaySound(SOUNDKIT.RAID_WARNING, "Master")
+    end
 end
