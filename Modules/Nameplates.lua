@@ -639,6 +639,71 @@ local function isFriendlyPlayer(unit)
     return not U.IsTrue(UnitCanAttack("player", unit))
 end
 
+-- -------------------------------------------------------------------------
+--  Le corps du nom des alliés
+-- -------------------------------------------------------------------------
+-- Il ne vaut que dans un cas : celui où le jeu remplace la plaque des alliés par
+-- leur seul nom. C'est **sa** case, pas la nôtre, et la page grise ces deux
+-- réglages tant qu'elle est décochée. Le moteur pose la même question, parce
+-- qu'un réglage peut rester coché pendant que la case du client, elle, s'éteint.
+
+--- fontstring -> corps qu'elle portait avant qu'on y touche.
+local allyNameSizes = {}
+
+--- Repose le corps du nom d'une plaque alliée, ou le rend.
+---
+--- **Une unité cesse d'être alliée sans que la plaque change de main.** Un
+--- contrôle mental en fait une alliée quelques secondes, puis la rend adverse —
+--- et la plaque ne repart pas au recyclage. Sans ce chemin de retour, le corps
+--- allié resterait posé sur un adversaire jusqu'à ce que sa plaque resserve à
+--- quelqu'un d'autre.
+---
+--- Le corps rendu peut être celui que la taille générale avait posé, et c'est
+--- très bien : elle repasse avant nous à chaque peinture.
+---@param mod table
+---@param unitFrame table
+---@param unit string
+local function applyAllyName(mod, unitFrame, unit)
+    if not LIVE.size then return end
+
+    local name = unitFrame.name
+    if type(name) ~= "table" then return end
+
+    local wanted = mod:Get("resizeAllyName")
+        and U.GetCVar(CVAR.ALLY_NAMES) == "1"
+        and isFriendlyPlayer(unit)
+
+    if not wanted then
+        local saved = allyNameSizes[name]
+        if saved == nil then return end
+
+        allyNameSizes[name] = nil
+        settingFont = true
+        T.SetTextSize(name, saved)
+        settingFont = false
+        return
+    end
+
+    if allyNameSizes[name] == nil then
+        allyNameSizes[name] = T.TextSize(name) or T.SIZE.PLATE_TEXT
+    end
+
+    settingFont = true
+    T.SetTextSize(name, mod:Get("allyNameSize"))
+    settingFont = false
+end
+
+--- Rend son corps à chaque nom qu'on a touché. Appelé à l'extinction : ce que le
+--- module a posé doit disparaître avec lui (règle 6).
+local function restoreAllyNames()
+    settingFont = true
+    for name, size in pairs(allyNameSizes) do
+        T.SetTextSize(name, size)
+    end
+    settingFont = false
+    wipe(allyNameSizes)
+end
+
 --- Est-ce un joueur ? **Un refus de répondre compte comme un oui.**
 ---
 --- `U.IsTrue` fait valoir un secret pour « non », et c'est la bonne règle
@@ -2750,6 +2815,7 @@ local function paint(mod, plate, unit)
     applyCastPreview(mod, unitFrame)
     applyOwnAuras(mod, plate, unit)
     applyTextSize(mod, unitFrame)
+    applyAllyName(mod, unitFrame, unit)
     applyMarkerPreview(mod, unitFrame)
     placeMarker(mod, unitFrame)
 end
@@ -2918,6 +2984,7 @@ end
 --- repeint, ce qui est le cas de la quasi-totalité de la page.
 local SIZE_KEYS  = { resize = true, width = true, height = true,
                      flatTarget = true,
+                     resizeAllyName = true, allyNameSize = true,
                      textSize = true,
                      castTextSize = true,
                      previewCast = true,
@@ -3115,6 +3182,12 @@ BUI:RegisterModule(MODULE, {
         resize = false,
         width  = T.SIZE.PLATE_W,
         height = T.SIZE.PLATE_BAR_H,
+
+        -- Le corps du nom des alliés, quand le jeu les réduit à leur seul nom.
+        -- Le mode lui-même est une case du client : ces deux-là ne font que le
+        -- corps du texte, et ne servent que si elle est cochée.
+        resizeAllyName = false,
+        allyNameSize   = T.SIZE.PLATE_TEXT,
 
         -- Le grossissement de la cible, rendu au client en décochant.
         flatTarget = false,
@@ -3635,6 +3708,7 @@ BUI:RegisterModule(MODULE, {
         hideMarkerPreviews()
         restoreMarkerAlpha()
         restorePlateWidth()
+        restoreAllyNames()
         releaseAll()
         giveBackCVars()
         -- Les catégories d'auras se rendent à part : elles ne sont pas relevées

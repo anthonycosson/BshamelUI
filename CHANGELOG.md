@@ -2,6 +2,23 @@
 
 ## Non publié
 
+### Ajouté
+- **La taille du nom des alliés revient**, sous « Agrandir le nom des alliés ».
+  Elle avait disparu le jour où le mode « nom seul » est devenu une option
+  native du jeu — mais c'est justement dans ce mode qu'elle sert. Les deux
+  lignes ne s'allument donc que si la case du jeu, juste au-dessus, est cochée :
+  sans elle, le nom est une ligne d'une plaque complète, et c'est la taille
+  générale qui le règle.
+- **La distance des barres d'infos se règle enfin.** Jusqu'où une plaque
+  ennemie est encore dessinée est un CVar que le jeu possède mais n'expose dans
+  aucun menu — vérifié dans ses propres définitions d'options. La glissière
+  existait chez nous depuis un moment, endormie ; elle est rallumée, et rangée
+  avec les autres mesures de plaque plutôt que sous un en-tête à elle.
+
+  Le moteur borne cette distance sans publier sa borne. Poussée trop haut, la
+  glissière revient d'elle-même à ce que le client a retenu : c'est cette
+  valeur-là qui fait foi.
+
 ## 1.1.0 — 2026-08-20
 
 ### Retiré

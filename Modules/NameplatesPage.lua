@@ -121,9 +121,16 @@ local LIVE = {
     enemies    = true,
     overlap    = true,    -- le chevauchement des plaques entre elles
 
-    -- La distance, endormie quand la page s'est resserrée sur la liste voulue.
-    -- Le code reste : rallumer est un booléen.
-    spacing    = false,
+    -- La distance à laquelle une plaque est encore dessinée. Endormie un temps,
+    -- quand la page s'est resserrée sur la liste voulue — puis rallumée, parce
+    -- que c'est un réglage qu'on cherche vraiment et qu'on ne trouve **nulle
+    -- part** : le menu du client ne l'expose pas (vérifié dans ses propres
+    -- définitions d'options), alors que le CVar existe et qu'il obéit.
+    --
+    -- C'est exactement le cas que la section « Paramètres Blizzard » de cette
+    -- page est faite pour couvrir : un réglage que le jeu possède sans le
+    -- montrer est, pour le joueur, aussi introuvable qu'un réglage absent.
+    spacing    = true,
 }
 
 --- Le verrou qui tenait les rangées d'auras et le marqueur en pause — visibles,
@@ -362,6 +369,14 @@ local function cvarSlider(name, factor)
         if InCombatLockdown() then return end
         U.SetCVar(name, value / factor)
     end
+end
+
+--- Les deux lignes du corps du nom allié ne valent que si le jeu remplace la
+--- plaque des alliés par leur seul nom. Ce mode est **sa** case, pas la nôtre :
+--- le garde lit donc le CVar, et non un réglage de l'addon.
+---@return boolean
+local function needsAllyNames()
+    return U.GetCVar(CVAR.ALLY_NAMES) ~= "1"
 end
 
 --- Un réglage du client se grise en combat : il ne prendrait pas.
@@ -1144,6 +1159,54 @@ local function pageOptions()
             indent   = true,
             disabled = requires("resize"),
         },
+        -- Le corps du nom des alliés, et il ne vaut que dans **un** cas : celui
+        -- où le jeu remplace leur plaque par leur seul nom. Sans ce mode, le nom
+        -- est une ligne d'une plaque complète, réglée par la taille générale
+        -- juste au-dessus ; le grossir seul déséquilibrerait la plaque.
+        --
+        -- La case du mode appartient au client (`CVAR.ALLY_NAMES`) : ces deux
+        -- lignes se grisent donc sur un CVar, et non sur un réglage à nous. Le
+        -- motif le dit, parce qu'une ligne grisée sans raison lisible se lit
+        -- comme un défaut.
+        {
+            type     = "toggle",
+            key      = "resizeAllyName",
+            text     = L["Resize ally names"],
+            tooltip  = L["Resize ally names tip"],
+            disabled = needsAllyNames,
+            disabledReason = L["Needs allied names only"],
+        },
+        {
+            type     = "slider",
+            key      = "allyNameSize",
+            text     = L["Ally name size"],
+            tooltip  = L["Ally name size tip"],
+            min      = 6,
+            max      = 32,
+            step     = 1,
+            indent   = true,
+            disabled = function()
+                if needsAllyNames() then return true end
+                local mod = BUI.Modules:Get(MODULE)
+                return not (mod and mod:Get("resizeAllyName"))
+            end,
+            disabledReason = L["Needs allied names only"],
+        },
+
+        -- La distance à laquelle une plaque est encore dessinée. Le jeu possède
+        -- ce réglage et ne l'expose dans aucun menu ; il vit donc ici, au plus
+        -- près des autres mesures de plaque.
+        --
+        -- **Le maximum de la glissière n'est pas garanti par le client.** Le
+        -- moteur borne cette distance sans publier sa borne — aucune API ne la
+        -- rend, et le menu du jeu n'ayant pas ce réglage, il n'y a rien à lire
+        -- non plus de ce côté. La glissière relit le CVar après l'avoir écrit :
+        -- poussée au-delà de ce que le client accepte, elle revient d'elle-même
+        -- à la valeur retenue, et c'est celle-là qui fait foi.
+        blizzSlider("nameplateMaxDistance",
+            L["Nameplate distance"], L["Nameplate distance tip"],
+            { min = 10, max = 100, step = 5 }),
+
         -- Au rang de l'interrupteur de taille et non sous lui : le client
         -- grossit la plaque de la cible **quels que soient** nos pixels, et cette
         -- case le lui interdit. Elle vaut donc aussi pour qui ne règle aucune
@@ -1481,25 +1544,6 @@ local function pageOptions()
         enemyRows("pve"),
         { type = "header", text = L["PvP instances"], indent = true },
         enemyRows("pvp"),
-
-        -- Ces trois-là sont des réglages du client, comme ceux de la moitié
-        -- d'au-dessus, mais son menu ne les expose nulle part : il n'y a donc pas
-        -- d'autre endroit où aller les chercher, et leur place est de ce côté-ci.
-        --
-        -- Le partage entre les deux moitiés de la page n'est pas « à qui
-        -- appartient le réglage » mais « le menu du jeu sait-il le montrer ». Un
-        -- réglage qu'il possède sans l'afficher est, pour le joueur, aussi
-        -- introuvable qu'un réglage qui n'existerait pas.
-        -- La distance dort (`LIVE.spacing`) : la page s'est resserrée sur ce qui
-        -- se règle vraiment, et elle n'en fait plus partie. Le code reste — la
-        -- rallumer est un booléen. Le chevauchement, lui, est remonté avec la
-        -- barre de vie, dont il mesure la boîte.
-        { section = "spacing" },
-        { type = "header", text = L["Spacing and distance"] },
-        blizzSlider("nameplateMaxDistance",
-            L["Nameplate distance"], L["Nameplate distance tip"],
-            { min = 10, max = 100, step = 5 }),
-
     })
 end
 

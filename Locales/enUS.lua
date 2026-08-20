@@ -896,6 +896,15 @@ BUI:RegisterLocale("enUS", {
     ["Cast bar height tip"]            = "Thickness of the cast bar. The game makes it thinner than the health bar.",
 
     ["Flat target size"]               = "Do not enlarge the target",
+    ["Resize ally names"]              = "Enlarge allied names",
+    ["Resize ally names tip"] =
+        "Gives allied player names the size below. Only means something while the game replaces "
+        .. "their nameplate with their name alone — that box is the game's own, just above.",
+    ["Ally name size"]                 = "Allied name size",
+    ["Ally name size tip"]             = "Size of the name itself, in pixels.",
+    ["Needs allied names only"] =
+        "Turn on the game's own allied-names-only box first: without it, the name is one line of "
+        .. "a full nameplate, and the size above governs it.",
     ["Flat target size tip"] =
         "The game enlarges your target's nameplate to tell it apart. Ticked, "
         .. "it keeps the size of its neighbours — which is what makes yours "

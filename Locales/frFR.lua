@@ -918,6 +918,16 @@ BUI:RegisterLocale("frFR", {
         "Épaisseur de la barre de sorts. Le jeu la fait plus fine que la barre de vie.",
 
     ["Flat target size"]               = "Ne pas grossir la cible",
+    ["Resize ally names"]              = "Agrandir le nom des alliés",
+    ["Resize ally names tip"] =
+        "Donne au nom des joueurs alliés la taille ci-dessous. Ne veut dire quelque chose que "
+        .. "tant que le jeu remplace leur barre d'infos par leur seul nom — cette case est la "
+        .. "sienne, juste au-dessus.",
+    ["Ally name size"]                 = "Taille du nom allié",
+    ["Ally name size tip"]             = "Corps du nom lui-même, en pixels.",
+    ["Needs allied names only"] =
+        "Cochez d'abord la case « nom des alliés seulement » du jeu : sans elle, le nom est une "
+        .. "ligne d'une barre d'infos complète, et c'est la taille au-dessus qui le règle.",
     ["Flat target size tip"] =
         "Le jeu grossit la barre d'infos de votre cible pour la distinguer "
         .. "des autres. Cochée, elle garde la taille de ses voisines — et "
