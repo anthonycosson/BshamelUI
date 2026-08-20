@@ -222,6 +222,13 @@ BUI:RegisterLocale("frFR", {
         .. "sous le personnage. Le changer est refusé en combat.",
     ["Health bar"]                     = "Barre de vie",
     ["Resource bar"]                   = "Barre de ressource",
+    ["Personal markers"]               = "Repères",
+    ["Personal marker"]                = "Repère %d",
+    ["Personal marker tip"] =
+        "Trace un trait blanc en travers de la barre de ressource, à ce pourcentage. Zéro le "
+        .. "retire. Un pourcentage et non une valeur : le jeu garde votre ressource secrète, "
+        .. "l'addon peut donc poser un trait sur la barre mais jamais savoir à quel nombre "
+        .. "vous en êtes.",
     ["Personal no text"]               = "N'afficher aucun texte",
     ["Personal no text tip"] =
         "Masque le texte du jeu sur cette barre, sans rien écrire à la place.",
@@ -358,6 +365,12 @@ BUI:RegisterLocale("frFR", {
         "Retire la lueur clignotante posée autour de chaque cadre engagé : le vôtre, celui de "
         .. "votre familier, de votre cible, de votre focus et des boss.",
     ["Hide PvP icon"]                  = "Masquer l'icône JcJ",
+    ["Frame diagnostic"] =
+        "Pourquoi la barre de la cible ou du focus n'a pas la couleur de sa classe :",
+    ["Frame diagnostic secret"]        = "secret",
+    ["Frame diagnostic arena"]         = "par la spé d'arène :",
+    ["Frame diagnostic absent"]        = "unité absente",
+    ["Frame diagnostic unavailable"]   = "Le module des cadres d'unités ne tourne pas.",
     ["Hide PvP icon tip"] =
         "Retire l'icône JcJ et le badge de prestige des cadres du joueur, de la cible et du focus.",
     ["Party frames"]                   = "Cadres de groupe",
@@ -581,54 +594,6 @@ BUI:RegisterLocale("frFR", {
     ["Hide lust debuff tip"] =
         "Retire le débuff d'interdiction de votre rangée d'affaiblissements, puisque l'icône "
         .. "ci-dessus le décompte déjà. Décocher le remet.",
-
-    -- Module PvP
-    ["PvP"]                            = true,
-    ["Healer crowd control"]           = "Soigneur sous contrôle",
-    ["Healer CC alert"]                = "Signaler le soigneur du groupe sous contrôle",
-    ["Healer CC alert tip"] =
-        "Affiche au milieu de l'écran l'entrave posée sur votre soigneur, avec son décompte. "
-        .. "En groupe seulement : un raid a cinq soigneurs, et une alerte incapable de dire "
-        .. "lequel ne dit rien. Choisissez où elle s'affiche ci-dessous : sans cela, elle se tait.",
-    ["Healer CC preview"]              = "Mode aperçu",
-    ["Healer CC preview tip"] =
-        "Affiche une entrave d'exemple, partout, pour pouvoir la placer sans attendre que le "
-        .. "soigneur soit pris. Elle se déplace à la souris.",
-    ["Lock healer CC"]                 = "Verrouiller la position",
-    ["Lock healer CC tip"]             = "Fige l'affichage où il est. Il continue d'alerter.",
-    ["Healer CC size"]                 = "Taille de l'icône",
-    ["Healer CC size tip"] =
-        "Côté de l'icône, en pixels. Elle se déplace à la souris.",
-    ["Healer CC timer size"]           = "Taille du décompte",
-    ["Healer CC timer size tip"] =
-        "Corps du chiffre écrit sur l'icône. Il passe du vert au rouge à mesure que l'entrave "
-        .. "s'achève, comme le décompte d'une file d'attente — là où le jeu laisse l'addon lire "
-        .. "ce qu'il reste. En arène il ne le laisse pas, et le chiffre reste uni.",
-    ["Healer CC glow"]                 = "Lueur autour de l'icône",
-    ["Healer CC glow tip"] =
-        "La lueur de l'addon, la même que celle de la rangée de ressource de classe. Elle dure "
-        .. "autant que l'entrave.",
-    ["Healer CC sound"]                = "Émettre un son",
-    ["Healer CC sound tip"] =
-        "Joué une fois, au moment où l'entrave tombe. Cocher la case le fait entendre. "
-        .. "C'est « Sonar », le son de MiniCC : il n'est pas copié dans l'addon, il est joué "
-        .. "là où MiniCC le range. Sans MiniCC installé, c'est l'avertissement de raid du jeu.",
-    -- Diagnostic `/bui pvp` : la prose seulement — les noms d'API sont bruts,
-    -- parce que c'est sous ce nom-là qu'on les cherche.
-    ["PvP diagnostic"] =
-        "Ce que le client publie de la lueur et du son d'alerte, et ce que le module en a retenu :",
-    ["PvP diagnostic glow built"]      = "lueur montée :",
-    ["PvP diagnostic glow lit"]        = "allumée :",
-    ["PvP diagnostic panel"]           = "panneau :",
-    ["PvP diagnostic row"]             = "rangée d'icônes :",
-    ["PvP diagnostic glow"]            = "lueur :",
-    ["PvP diagnostic sound file"]      = "fichier de son essayé :",
-    ["PvP diagnostic unavailable"]     = "Le module PvP ne tourne pas.",
-    ["Healer CC places"]               = "Où l'afficher",
-    ["Healer CC dungeons"]             = "Donjons",
-    ["Healer CC dungeons tip"]         = "Donjons et clés mythiques.",
-    ["Healer CC arenas"]               = "Arènes",
-    ["Healer CC arenas tip"]           = "Arènes cotées et escarmouches.",
 
     -- Module RaidPanel
     ["Group tools"]                    = "Outils de groupe",

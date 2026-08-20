@@ -141,6 +141,15 @@ local muted = {}
 local paintedHealth, paintedHealthMax = -1, -1
 local paintedPower,  paintedPowerMax  = -1, -1
 
+--- Les repères posés sur la barre de ressource, montés au premier besoin. Une
+--- frame ne se détruit pas en World of Warcraft : on la construit une fois,
+--- puis on la cache et on la réaffiche (règle 7).
+---@type table|nil
+local powerMarkers
+--- Table de travail rendue au widget : trois nombres relus à chaque
+--- application, jamais une table neuve.
+local markerScratch = {}
+
 -- =========================================================================
 --  Le texte
 -- =========================================================================
@@ -295,6 +304,32 @@ local function setupBar(mod, bar, key)
     end
 end
 
+--- Pose les repères de la barre de ressource.
+---
+--- Le widget est monté au premier besoin et sur la barre du moment : le client
+--- peut avoir reconstruit son affichage entre deux passages, auquel cas la barre
+--- n'est plus la même frame et les repères d'avant sont sur un cadre mort.
+---@param mod table
+---@param bar table
+local function applyMarkers(mod, bar)
+    markerScratch[1] = mod:Get("powerMarker1")
+    markerScratch[2] = mod:Get("powerMarker2")
+    markerScratch[3] = mod:Get("powerMarker3")
+
+    if powerMarkers and powerMarkers.Owner ~= bar then
+        powerMarkers.Hide()
+        powerMarkers = nil
+    end
+
+    if not powerMarkers then
+        powerMarkers = W.BarMarkers(bar)
+        if not powerMarkers then return end
+        powerMarkers.Owner = bar
+    end
+
+    powerMarkers.Set(markerScratch)
+end
+
 --- Reconstruit tout : ancrages, corps, visibilité, silence du client. Ne
 --- tourne que sur changement de réglage ou d'arrivée en jeu — jamais depuis un
 --- chemin qui bat.
@@ -304,7 +339,10 @@ local function apply(mod)
     if health then setupBar(mod, health, "health") end
 
     local power = powerBar()
-    if power then setupBar(mod, power, "power") end
+    if power then
+        setupBar(mod, power, "power")
+        applyMarkers(mod, power)
+    end
 
     paintedHealth, paintedHealthMax = -1, -1
     paintedPower,  paintedPowerMax  = -1, -1
@@ -342,6 +380,14 @@ BUI:RegisterModule(MODULE, {
         powerPercentAnchor  = "LEFT",
 
         textSize            = T.SIZE.BAR_TEXT_SIZE,
+
+        -- Repères de la barre de ressource, en pourcentage. **Zéro éteint le
+        -- repère** : c'est la glissière elle-même qui s'annule, sans case à
+        -- cocher de plus (même motif que le seuil de brillance de la rangée de
+        -- ressource de classe). Aucun n'agit donc à l'installation.
+        powerMarker1        = 0,
+        powerMarker2        = 0,
+        powerMarker3        = 0,
     },
 
     options = (function()
@@ -382,6 +428,27 @@ BUI:RegisterModule(MODULE, {
                     return not mod:Get(needs)
                 end,
                 disabledReason = reason,
+            }
+        end
+
+        --- Une glissière de repère. Les trois sont identiques à leur numéro
+        --- près : elles se fabriquent donc, comme les lignes d'ancrage.
+        ---
+        --- **Zéro éteint le repère**, et c'est ce que dit le libellé de la
+        --- valeur : sans cela il faudrait une case à cocher par trait, soit
+        --- trois cases pour trois glissières qui savent déjà s'annuler.
+        ---@param index number
+        ---@return table
+        local function markerRow(index)
+            return {
+                type     = "slider",
+                key      = "powerMarker" .. index,
+                text     = L["Personal marker"]:format(index),
+                tooltip  = L["Personal marker tip"],
+                indent   = true,
+                min      = 0,
+                max      = 100,
+                step     = 5,
             }
         end
 
@@ -466,6 +533,9 @@ BUI:RegisterModule(MODULE, {
             },
             anchorRow("powerPercentAnchor", L["Personal percent anchor"],
                       "powerPercent", "powerNoText", L["Needs percent text"]),
+
+            { type = "header", text = L["Personal markers"], indent = true },
+            markerRow(1), markerRow(2), markerRow(3),
         }
     end)(),
 
@@ -502,6 +572,8 @@ BUI:RegisterModule(MODULE, {
         for _, widget in pairs(texts) do
             widget:Hide()
         end
+
+        if powerMarkers then powerMarkers.Hide() end
         -- On ne rend que ce qu'on a pris : les textes que le réglage du jeu
         -- cachait déjà restent cachés (voir `muted`).
         for fs in pairs(muted) do

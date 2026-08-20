@@ -51,9 +51,6 @@ read_globals = {
     "DISABLED_FONT_COLOR", "WHITE_FONT_COLOR", "RED_FONT_COLOR", "GREEN_FONT_COLOR",
     "ORANGE_FONT_COLOR",
     "SettingsPanel", "Settings", "Menu", "NineSliceUtil",
-    -- Jouer un fichier de son, et le registre de médias partagés d'un autre
-    -- addon quand il y en a un — consulté, jamais embarqué (règle 8).
-    "PlaySoundFile", "LibStub",
     -- Arrondi à la grille de l'écran : c'est lui qui garantit qu'un filet d'un
     -- pixel en fasse un (voir `T.SetPixelHeight`).
     "PixelUtil",
@@ -189,6 +186,9 @@ read_globals = {
     -- globales sont celles qu'on essaie ensuite : on cite les deux parce qu'on
     -- teste les deux.
     "C_SpecializationInfo", "GetSpecialization", "GetSpecializationInfo",
+    -- Les spés des adversaires d'arène : le seul chemin publié vers leur classe
+    -- quand le client la cache (voir `arenaClass` dans `Modules/UnitFrames.lua`).
+    "GetNumArenaOpponentSpecs", "GetArenaOpponentSpec",
     "GetSpecializationInfoByID",
     -- La spécialisation d'un autre joueur se lit dans son infobulle, par classe :
     -- voir `dev/docs/API_NOTES.md`.
@@ -205,8 +205,6 @@ read_globals = {
     "IsInGroup", "IsInRaid", "GetNumGroupMembers", "UnitName", "UnitIsConnected",
     "UnitIsGroupLeader", "UnitIsGroupAssistant", "SendChatMessage",
     "DoReadyCheck", "C_PartyInfo", "LE_PARTY_CATEGORY_INSTANCE",
-    -- Le rôle assigné : la seule source publiée qui dise qui soigne.
-    "UnitGroupRolesAssigned",
     -- Le panneau de contrôle des cadres de raid : on teste sa présence avant de
     -- le ranger, comme les autres cadres du client.
     "CompactRaidFrameManager",

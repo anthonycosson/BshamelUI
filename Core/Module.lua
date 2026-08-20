@@ -410,15 +410,14 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
-    -- `/bui pvp` : ce que le client publie de la lueur et du son d'alerte, et ce
-    -- que le module PvP en a retenu. Une lueur absente a trois causes qui se
-    -- ressemblent toutes de l'extérieur — il ne se passe rien.
-    if arg == "pvp" then
-        local mod = registry["PvP"]
-        if mod and mod._active and mod.DiagnosePvP then
-            BUI.safecall(mod.DiagnosePvP, mod)
+    -- `/bui cadres` : pourquoi la barre de la cible ou du focus n'a pas la
+    -- couleur de sa classe. Trois causes qui donnent la même barre verte.
+    if arg == "cadres" or arg == "frames" then
+        local mod = registry["UnitFrames"]
+        if mod and mod._active and mod.DiagnoseFrames then
+            BUI.safecall(mod.DiagnoseFrames, mod)
         else
-            BUI:Print(L["PvP diagnostic unavailable"])
+            BUI:Print(L["Frame diagnostic unavailable"])
         end
         return
     end

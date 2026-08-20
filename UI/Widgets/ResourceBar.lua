@@ -92,9 +92,8 @@ function W.ResourceBar(opts)
     --  Effet brillant
     -- ---------------------------------------------------------------------
     -- Le contour allumé que des comètes parcourent. Il a été inventé ici, pour
-    -- cette rangée, puis le module PvP en a voulu le même autour de l'entrave
-    -- posée sur le soigneur : il vit désormais dans `UI/Widgets/TrackGlow.lua`,
-    -- et c'est bien la même lueur des deux côtés — pas deux qui se ressemblent.
+    -- cette rangée, et vit désormais dans `UI/Widgets/TrackGlow.lua` : la lueur
+    -- de l'addon est une, et elle se prête.
     --
     -- Ce qui reste ici est ce que la rangée seule sait dire : le contour qu'il
     -- faut parcourir (`SetTrack`, dans la disposition) et le seuil à partir

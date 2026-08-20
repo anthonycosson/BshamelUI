@@ -9,9 +9,10 @@
 --  qu'on la reconnaît comme étant de l'addon et pas du jeu.
 --
 --  Elle a vécu à l'intérieur de `UI/Widgets/ResourceBar.lua`, qui l'avait
---  inventée pour lui-même. Le module PvP en a voulu la même : elle est sortie
---  ici sans une ligne de changement, et la rangée de ressource s'en sert
---  désormais par le même chemin que lui.
+--  inventée pour lui-même, et en est sortie le jour où une seconde pièce en a
+--  voulu la même — sans une ligne de changement. Cette seconde pièce a depuis
+--  été retirée ; la lueur reste ici, parce qu'une lueur partagée est ce qu'elle
+--  doit être, et que la remettre dans la rangée serait défaire pour rien.
 --
 --  **Deux couches, et deux matières** — le détail est dans le commentaire qui
 --  suit, à l'endroit exact où chacune se construit.

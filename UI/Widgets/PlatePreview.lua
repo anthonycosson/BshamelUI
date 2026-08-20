@@ -147,41 +147,11 @@ end
 ---
 --- Les deux se rendent l'un l'autre : c'est une case qui bascule, pas un état
 --- qu'on pose une fois.
----
---- **Et une troisième façon : aucune des deux.** Le liseré dit de quelle nature
---- est l'aura — elle aide, elle nuit, elle immobilise —, ce qui vaut sur une
---- rangée de barre de nom où les trois se côtoient. Une rangée qui ne montre
---- qu'une seule nature n'a rien à en dire : le liseré n'y est plus qu'un cadre
---- coloré autour d'une icône, et le jeu n'en met jamais autour des siennes.
-
---- Rend son retrait à l'image, pour que le liseré ait la place de se poser.
----@param icon table
-local function insetFace(icon)
-    icon.face:ClearAllPoints()
-    icon.face:SetPoint("TOPLEFT", T.SIZE.PLATE_AURA_EDGE, -T.SIZE.PLATE_AURA_EDGE)
-    icon.face:SetPoint("BOTTOMRIGHT", -T.SIZE.PLATE_AURA_EDGE, T.SIZE.PLATE_AURA_EDGE)
-end
-
 ---@param icon table
 ---@param kind string
 ---@param shaded boolean
 ---@param side number  côté de la vignette, celui que le curseur vient de poser
----@param edged boolean|nil  `false` retire le liseré ; `nil` le garde
-local function setEdge(icon, kind, shaded, side, edged)
-    -- Sans liseré, l'image prend toute la vignette : le retrait qu'il occupait
-    -- lui revient, sinon elle resterait deux pixels plus petite que la place
-    -- qu'on lui a réglée, pour border du vide.
-    if edged == false then
-        icon.face:SetTexCoord(0, 1, 0, 1)
-        icon.face:ClearAllPoints()
-        icon.face:SetAllPoints(icon)
-        icon.edge:Hide()
-        if icon.border then icon.border.Hide() end
-        return
-    end
-
-    insetFace(icon)
-
+local function setEdge(icon, kind, shaded, side)
     if shaded and icon.border then
         local from, to = T.SIZE.SHADE_ICON_CROP, 1 - T.SIZE.SHADE_ICON_CROP
         icon.face:SetTexCoord(from, to, from, to)
@@ -216,144 +186,14 @@ end
 --- écrite avant lui est perdue au premier balayage. Le poser ici coûte un appel
 --- par vignette affichée, sur un chemin qui ne passe que quand une aura change.
 ---@param cooldown table
----@return table|nil
-local function countdownText(cooldown)
-    if type(cooldown.GetCountdownFontString) ~= "function" then return nil end
-
-    local ok, text = pcall(cooldown.GetCountdownFontString, cooldown)
-    if not ok or type(text) ~= "table" then return nil end
-
-    return text
-end
-
----@param cooldown table
 ---@param timer number
 local function setTimerSize(cooldown, timer)
-    local text = countdownText(cooldown)
-    if text then T.SetTextSize(text, timer) end
-end
+    if type(cooldown.GetCountdownFontString) ~= "function" then return end
 
---- Le balayage sombre du client, ou son absence.
----
---- Il tourne **dans** l'image du sort et l'assombrit d'autant : sur une rangée
---- de barre de nom, où l'icône fait vingt-cinq pixels et se lit de loin, c'est
---- ce qui dit d'un coup d'œil qu'une aura s'achève. Sur une alerte posée au
---- milieu de l'écran, où le chiffre est lisible et coloré, il ne fait plus que
---- salir l'icône — d'où le réglage.
----@param cooldown table
----@param on boolean
-local function setSwipe(cooldown, on)
-    if cooldown.SetDrawSwipe then pcall(cooldown.SetDrawSwipe, cooldown, on) end
-    -- Le liseré du front de balayage et l'éclat de fin vont avec lui : les
-    -- laisser tourner seuls donnerait un trait lumineux sans rien derrière.
-    if cooldown.SetDrawEdge  then pcall(cooldown.SetDrawEdge,  cooldown, on) end
-    if cooldown.SetDrawBling then pcall(cooldown.SetDrawBling, cooldown, on) end
-end
+    local ok, text = pcall(cooldown.GetCountdownFontString, cooldown)
+    if not ok or type(text) ~= "table" then return end
 
---- Ce qu'il reste d'une aura, en proportion de sa durée pleine, ou `nil` quand
---- le client ne le dit pas.
----
---- L'horloge d'une aura est un **objet de durée**, et il sait répondre — mais
---- pas toujours. `HasSecretValues` est la seule question qu'on ait le droit de
---- lui poser d'abord : elle ne rend jamais de secret, et elle dit si les autres
---- réponses en seraient. En arène, où le client protège les auras, c'est `true`
---- et la couleur reste neutre ; en donjon et à l'extérieur, c'est `false` et le
---- décompte se colore.
----@param duration table|nil
----@return number|nil
-local function objectRatio(duration)
-    if not (duration and duration.HasSecretValues and duration.GetRemainingDuration
-            and duration.GetTotalDuration) then
-        return nil
-    end
-
-    local ok, secret = pcall(duration.HasSecretValues, duration)
-    if not ok or secret ~= false then return nil end
-
-    local okLeft,  left  = pcall(duration.GetRemainingDuration, duration)
-    local okTotal, total = pcall(duration.GetTotalDuration, duration)
-
-    if not (okLeft and okTotal) then return nil end
-    if type(left) ~= "number" or type(total) ~= "number" or total <= 0 then return nil end
-
-    return left / total
-end
-
---- Ce qu'il reste d'une vignette, quelle que soit l'horloge qu'elle porte.
----
---- **Deux sources, et il en faut deux.** Une vraie aura porte un objet de durée ;
---- une aura d'exemple porte deux nombres, qui sont à nous et se lisent toujours.
---- Sans ce repli, l'aperçu — précisément ce qui sert à régler la couleur —
---- serait le seul endroit où elle ne changerait pas.
----@param icon table
----@return number|nil
-local function iconRatio(icon)
-    local ratio = objectRatio(icon._duration)
-    if ratio then return ratio end
-
-    local total = icon._total
-    if not (total and total > 0 and icon._expires) then return nil end
-
-    return (icon._expires - GetTime()) / total
-end
-
---- Réglages d'une rangée qui ne changent pas d'une peinture à l'autre.
----
---- Les défauts sont ceux des barres d'infos, qui ont eu cette rangée avant tout
---- le monde : balayage dessiné, liseré posé, décompte de la couleur du thème, et
---- rangée affranchie de l'échelle de son parent. Une rangée qui n'appelle pas
---- cette fonction ne change donc pas de comportement.
----
---- **`scaled` mérite un mot, parce que c'est le seul réglage qui déplace des
---- pixels sans qu'on le demande.** Une rangée de barre de nom s'affranchit de
---- l'échelle de son porteur : la plaque de la cible n'a pas l'échelle des
---- autres, elle change au clic, et une rangée qui en hériterait respirerait à
---- chaque changement de cible (voir `W.AuraRow`). Posée sur un cadre à nous,
---- c'est exactement l'inverse qu'il faut : le panneau, lui, suit l'échelle de
---- l'interface, et une rangée qui s'en affranchit devient **physiquement plus
---- grande que le panneau qui la porte**. Tout ce qui se mesure sur le panneau —
---- sa prise à la souris, la lueur qui le borde — tombe alors à l'intérieur des
---- icônes, d'autant plus que l'échelle de l'interface est basse.
----@param row table
----@param opts table  `{ swipe = , edge = , tint = , scaled = }`
-function W.AuraRowStyle(row, opts)
-    row._swipe = opts.swipe ~= false
-    row._edge  = opts.edge  ~= false
-    row._tint  = opts.tint  == true
-
-    if row.SetIgnoreParentScale then
-        pcall(row.SetIgnoreParentScale, row, opts.scaled ~= true)
-    end
-end
-
---- Recolore les décomptes d'après ce qu'il reste, comme le décompte d'une file
---- d'attente (`T.CountdownColor`) : vert au départ, orange à mi-chemin, rouge à
---- l'échéance.
----
---- **À rappeler régulièrement** : ce qu'il reste diminue tout seul, sans qu'aucun
---- événement ne le dise. Une aura dont la durée ne se lit pas garde la couleur
---- ordinaire du thème — un dégradé inventé mentirait sur ce qu'on sait.
----@param row table
-function W.AuraRowTint(row)
-    if not row._icons then return end
-
-    for i = 1, #row._icons do
-        local icon = row._icons[i]
-        local cooldown = icon.cooldown
-
-        if cooldown and icon:IsShown() then
-            local text = countdownText(cooldown)
-            if text then
-                local ratio = row._tint and iconRatio(icon) or nil
-
-                if ratio then
-                    text:SetTextColor(T.CountdownColor(ratio))
-                else
-                    text:SetTextColor(T.COLOR.LABEL:GetRGB())
-                end
-            end
-        end
-    end
+    T.SetTextSize(text, timer)
 end
 
 ---@param list table
@@ -386,7 +226,7 @@ function W.AuraRowSet(row, list, side, gap, timer, shaded)
         -- Le bord se repose **après** la taille et l'image : le débordement du
         -- contour se mesure sur l'icône, et le rognage se pose sur la texture
         -- qu'on vient de lui donner.
-        setEdge(icon, entry.kind, shaded, side, row._edge)
+        setEdge(icon, entry.kind, shaded, side)
 
         if icon.cooldown then
             -- L'horloge d'une aura est un **objet de durée**, pas deux nombres :
@@ -405,17 +245,8 @@ function W.AuraRowSet(row, list, side, gap, timer, shaded)
                 icon.cooldown:Clear()
             end
 
-            -- Reposé après la durée, comme le corps du décompte : poser une
-            -- durée est ce qui remet le balayage en marche.
-            setSwipe(icon.cooldown, row._swipe ~= false)
             setTimerSize(icon.cooldown, timer)
         end
-
-        -- Gardé pour la recoloration, qui repasse sans la liste : c'est la seule
-        -- chose dont elle ait besoin, et la relire ne coûte rien.
-        icon._duration = entry.durationObject
-        icon._total    = entry.duration
-        icon._expires  = entry.expirationTime
 
         icon.count:SetText((entry.count and entry.count > 1)
                            and tostring(entry.count) or "")
@@ -433,10 +264,6 @@ function W.AuraRowSet(row, list, side, gap, timer, shaded)
 
     row:SetSize(shown * side + (shown - 1) * gap, side)
     row:Show()
-
-    -- La couleur tout de suite, sans attendre le premier battement : une aura
-    -- qui tombe déjà rouge doit apparaître rouge.
-    W.AuraRowTint(row)
 end
 
 --- Construit une rangée d'auras. Vide, cachée et **sans ancrage** : c'est

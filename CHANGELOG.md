@@ -2,6 +2,37 @@
 
 ## Non publié
 
+### Retiré
+- **La page « PvP » et son alerte de soigneur sous contrôle.** Elle ne pouvait
+  pas tenir sa promesse là où elle servait : en arène, le client refuse toute
+  lecture d'aura à un addon, et l'alerte y restait muette — c'est-à-dire
+  exactement dans le contenu pour lequel elle avait été écrite. Le seul chemin
+  qui traverse aurait demandé de tout rebâtir sur le moteur d'auras du client,
+  et de fabriquer la liste des entraves pour le son ; l'ensemble coûtait plus
+  que ce que l'alerte rapportait.
+
+  Ce qui reste de l'épisode : la lueur de l'addon vit désormais dans son propre
+  widget, et deux pièges sont consignés dans `dev/docs/API_NOTES.md` — le refus
+  de lecture en arène, et `IsInGroup()` qui répond « non » dans un groupe formé
+  par une file. Les deux valent bien au-delà de ce module.
+
+### Corrigé
+- **Les barres de vie de la cible et du focus reprennent leur couleur de classe
+  en arène.** Le client y **cache la classe** — `UnitIsPlayer` répond pourtant
+  franchement, c'est `UnitClass` qui se tait —, et l'addon renonçait donc à
+  teinter. Il passe désormais par la **spécialisation de l'adversaire**, que le
+  client publie et dont ses propres cadres d'arène tirent leurs couleurs. Hors
+  arène, rien ne change : ce chemin ne sert que quand le premier se ferme.
+- **`/bui cadres`** dit laquelle des trois causes laisse une barre verte :
+  l'unité n'est pas un joueur, le client cache que c'en est un, ou il cache sa
+  classe.
+
+### Ajouté
+- **Des repères sur la barre de ressource personnelle.** Trois traits blancs,
+  chacun posé au pourcentage qu'on veut, zéro le retirant. Un pourcentage et non
+  une valeur : le jeu garde la ressource du joueur secrète, l'addon peut donc
+  poser un trait sur la barre mais jamais savoir à quel nombre on en est.
+
 ## 1.0.15 — 2026-08-19
 
 ### Modifié

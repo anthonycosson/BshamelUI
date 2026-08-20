@@ -160,15 +160,58 @@ local function restoreBar(bar)
     pcall(bar.SetStatusBarColor, bar, state[1], state[2], state[3], state[4])
 end
 
+--- La classe d'un adversaire d'arène, par le seul chemin qui reste quand
+--- `UnitClass` se tait.
+---
+--- **En arène, le client cache la classe** — relevé par `/bui cadres` : une
+--- cible dont `UnitIsPlayer` répond franchement `true` rend une classe secrète.
+--- Il publie en revanche la **spécialisation** de chaque adversaire, et c'est
+--- par là que ses propres cadres d'arène se colorent :
+---
+---     local specID, gender = GetArenaOpponentSpec(index)
+---     local _, _, _, _, _, class = GetSpecializationInfoByID(specID, gender)
+---
+--- Reste à savoir de quel adversaire il s'agit. Les cadres de Blizzard n'ont pas
+--- ce problème — chacun **est** `arena1`, `arena2`… — alors qu'une cible peut
+--- être n'importe lequel : on l'apparie donc par `UnitIsUnit`, jeton par jeton.
+---
+--- Chaque lecture est gardée : le jour où l'un de ces trois maillons devient
+--- secret à son tour, on rend `nil` et la barre reste au client.
+---@param unit string
+---@return string|nil  le jeton de classe, « MAGE » et compagnie
+local function arenaClass(unit)
+    if not (GetNumArenaOpponentSpecs and GetArenaOpponentSpec
+            and GetSpecializationInfoByID) then
+        return nil
+    end
+
+    local count = GetNumArenaOpponentSpecs()
+    if U.IsSecret(count) or type(count) ~= "number" then return nil end
+
+    for i = 1, count do
+        if U.IsTrue(UnitIsUnit(unit, "arena" .. i)) then
+            local specID, gender = GetArenaOpponentSpec(i)
+            if U.IsSecret(specID) or type(specID) ~= "number" or specID <= 0 then
+                return nil
+            end
+
+            local ok, _, _, _, _, _, class = pcall(GetSpecializationInfoByID, specID, gender)
+            if not ok or U.IsSecret(class) or type(class) ~= "string" then return nil end
+
+            return class
+        end
+    end
+
+    return nil
+end
+
 --- Les unités qui ne sont pas des joueurs gardent la couleur du client : un
 --- sanglier n'a pas de classe, et le vert dit déjà tout ce qu'il y a à dire.
 ---
---- `U.IsTrue` et non le booléen brut : le client rend des réponses **secrètes**
---- sur l'identité d'une unité là où il refuse de nous laisser conclure, et un
---- booléen secret ne se teste pas — `if flag then` lève. Un secret vaut donc
---- « ce n'est pas un joueur », ce qui laisse la barre au client. Certains PNJ
---- ont une classe dans les données du jeu, chaman compris : sans ce garde-fou,
---- ce sont eux qui décideraient de la couleur.
+--- `U.IsTrue` et non le booléen brut : un booléen secret ne se teste pas, et un
+--- secret vaut donc « ce n'est pas un joueur ». Certains PNJ ont une classe dans
+--- les données du jeu, chaman compris : sans ce garde-fou, ce sont eux qui
+--- décideraient de la couleur.
 ---@param bar table|nil
 ---@param unit string|nil
 local function colorBar(bar, unit)
@@ -180,7 +223,14 @@ local function colorBar(bar, unit)
     end
 
     local _, class = UnitClass(unit)
+
+    -- La classe cachée n'est pas la fin du chemin en arène : la spécialisation
+    -- de l'adversaire, elle, est publiée.
     if U.IsSecret(class) then
+        class = arenaClass(unit)
+    end
+
+    if class == nil or U.IsSecret(class) then
         restoreBar(bar)
         return
     end
@@ -1316,6 +1366,51 @@ BUI:RegisterModule(MODULE, {
             if name == "Blizzard_ArenaUI" then rescaleArena() end
         end)
         self:RegisterEvent("ARENA_OPPONENT_UPDATE", rescaleArena)
+    end,
+
+    --- `/bui cadres` : pourquoi la barre de la cible n'a pas la couleur de sa
+    --- classe.
+    ---
+    --- Trois réponses possibles, et elles se ressemblent toutes de l'écran — la
+    --- barre est verte :
+    ---
+    ---   · l'unité n'est pas un joueur, et c'est juste ;
+    ---   · le client **cache** si c'en est un (`UnitIsPlayer` secret), ce qu'il
+    ---     fait en arène, et le garde-fou renonce avant même de lire la classe ;
+    ---   · il laisse dire que c'en est un mais **cache la classe**.
+    ---
+    --- Seul le troisième cas est sans issue. Le deuxième ne l'est peut-être pas,
+    --- et c'est cette ligne-là qui le dira. Même motif que `/bui noms` : la prose
+    --- est traduite, les noms d'API sont bruts.
+    DiagnoseFrames = function(self)
+        self:Print(L["Frame diagnostic"])
+
+        --- Ce que le client répond, ou « secret » quand il refuse de conclure.
+        ---@param value any
+        ---@return string
+        local function tell(value)
+            if U.IsSecret(value) then return L["Frame diagnostic secret"] end
+            return tostring(value)
+        end
+
+        for _, unit in ipairs({ "target", "focus" }) do
+            if not U.IsTrue(UnitExists(unit)) then
+                self:Print(unit, L["Frame diagnostic absent"])
+            else
+                local _, class = UnitClass(unit)
+
+                self:Print(unit,
+                    "UnitIsPlayer:", tell(UnitIsPlayer(unit)),
+                    "— UnitClass:", tell(class),
+                    "— " .. L["Frame diagnostic arena"], tostring(arenaClass(unit)))
+            end
+        end
+
+        -- Le réglage du client pour les couleurs de classe sur les cadres PvP.
+        -- Il ne commande pas les nôtres, mais s'il est éteint, la question ne se
+        -- pose peut-être pas là où on la croit.
+        self:Print("pvpFramesDisplayClassColor:",
+            tostring(U.GetCVar("pvpFramesDisplayClassColor")))
     end,
 
     OnDisable = function()

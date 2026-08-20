@@ -4645,3 +4645,130 @@ trois cadres — panneau, rangée, lueur — vivent enfin dans le même espace.
 la taille réelle des trois cadres. Trois largeurs identiques à des échelles
 différentes ne font pas trois cadres de même taille, et c'est invisible autrement
 qu'en les écrivant côte à côte.
+
+---
+
+## `IsInGroup()` répond « non » dans un groupe formé par une file
+
+**Symptôme** — l'alerte de soigneur sous contrôle ne se déclenche jamais en
+arène. Les réglages sont bons, le lieu est reconnu (`inArena`), et `/bui pvp`
+écrit pourtant :
+
+    où l'on est : inArena — le module regarde : désactivée
+    party1 rôle DAMAGER — party2 rôle HEALER
+
+Les jetons de groupe existent, les rôles sont assignés, et le module se juge
+malgré tout hors service.
+
+**Cause** — `IsInGroup()` sans argument ne répond que pour la catégorie
+**maison** (`LE_PARTY_CATEGORY_HOME`), celle d'un groupe qu'on monte soi-même.
+Un groupe formé par une file — arène, champ de bataille, donjon aléatoire — est
+un groupe **d'instance**, et la fonction le déclare absent. `UnitExists("party1")`
+et `UnitGroupRolesAssigned` continuent, eux, de répondre normalement : rien dans
+l'affichage ne laisse deviner d'où vient le refus.
+
+C'est le pire des cas de figure — le module s'éteint **exactement dans les
+contenus pour lesquels il a été écrit**, et marche partout où on le teste en
+montant un groupe à la main.
+
+**Ce qu'on fait** — tester les deux catégories :
+
+    IsInGroup() or IsInGroup(Enum.PartyCategory.Instance or LE_PARTY_CATEGORY_INSTANCE)
+
+L'énumération d'abord, la constante `LE_` en repli : les deux existent, et c'est
+la première qui est le chemin récent. Même chose pour `IsInRaid`, dont le
+comportement est identique — sans quoi un champ de bataille passerait pour un
+groupe ordinaire.
+
+`Modules/RaidPanel.lua` faisait déjà ce test pour choisir son canal de
+discussion ; la leçon n'avait simplement pas quitté ce fichier.
+
+---
+
+## En arène, lire une aura est refusé — quel que soit le soin qu'on y mette
+
+**Symptôme** — l'alerte de soigneur sous contrôle ne montre rien en arène.
+`/bui pvp` donne la raison mot pour mot :
+
+    C_UnitAuras.GetUnitAuras: activée
+    party2 rôle HEALER — entraves trouvées :
+        GetUnitAuras(): Auras cannot be accessed when secret while tainted by 'BshamelUI'
+
+**Cause** — ce n'est ni une API absente, ni un filtre mal écrit, ni une garde de
+secret oubliée. En arène, `C_Secrets.ShouldAurasBeSecret` est vrai, et le client
+refuse **toute lecture d'aura à du code d'addon**. « Tainted by 'BshamelUI' » ne
+désigne pas une faute : l'exécution d'un addon est insécurisée par nature, et
+c'est cela seul que le client constate. Aucune garde, aucun `pcall`, aucune
+précaution d'écriture ne lève ce refus — il n'y a pas de version prudente de
+`GetUnitAuras` en arène.
+
+Le piège est que la même fonction **marche partout ailleurs**, y compris sur les
+barres de nom en donjon, où elle rend des valeurs secrètes qui se peignent sans
+se lire. On peut donc écrire un module entier, le tester, le publier, et ne
+découvrir qu'en arène qu'il ne fonctionne pas là où il devait servir.
+
+**Le seul chemin qui traverse** est de ne jamais lire : un cadre de type
+`AuraContainer` monté sur `CustomAuraContainerTemplate`, à qui l'on déclare des
+groupes filtrés —
+
+    frame:SetUnit(unit)
+    frame:AddAuraGroup("cc", "HARMFUL|CROWD_CONTROL", {
+        maxFrameCount = n,
+        initializeFrame = function(button) ... end,
+    })
+
+— et c'est le **moteur** qui montre et cache les boutons. L'addon ne demande
+jamais « cette unité est-elle entravée ? » ; il déclare un filtre, et le client
+répond en pixels. Le son se prend au même endroit :
+`C_UnitAuras.AddAuraSound(Enum.UnitAuraSoundTrigger.Added, { unitToken, spellID,
+soundFileName, outputChannel })`, où c'est encore le moteur qui joue.
+
+Ce que ce chemin coûte : on ne connaît plus ni la durée, ni le nombre de cumuls,
+ni même la présence — donc pas de décompte coloré, et pas d'état à partir duquel
+déclencher quoi que ce soit de notre côté.
+
+**Relevé en lisant** MiniAuras, qui est bâti tout entier sur ce constat (règle 8 :
+aucun code repris, seuls les noms d'API et le principe).
+
+---
+
+## En arène, la classe se lit par la spécialisation, pas par `UnitClass`
+
+**Symptôme** — les barres de vie de la cible et du focus perdent leur couleur de
+classe en arène, et seulement là.
+
+**Ce que la sonde a répondu** (`/bui cadres`, sur un adversaire ciblé) :
+
+    target UnitIsPlayer: true — UnitClass: secret
+
+C'est-à-dire : le client **confirme** que c'est un joueur, et **refuse** de dire
+lequel. La garde qui traitait un `UnitIsPlayer` secret comme « pas un joueur »
+n'était donc pas en cause — elle passait ; c'est la lecture suivante qui se
+taisait. Sans le relevé, les deux hypothèses étaient indiscernables : dans les
+deux cas la barre reste verte.
+
+**Le chemin qui reste** — le client publie la **spécialisation** de chaque
+adversaire d'arène, et ses propres cadres s'en servent pour les colorer
+(`Blizzard_UnitFrame/Mainline/CompactArenaFrame.lua`) :
+
+    local specID, gender = GetArenaOpponentSpec(index)
+    local _, _, _, _, _, class = GetSpecializationInfoByID(specID, gender)
+
+Le sixième retour est le jeton de classe — « MAGE » —, exactement ce qu'attend
+une table de couleurs de classe.
+
+**Le maillon qui manque, et qu'il faut ajouter soi-même** : les cadres de
+Blizzard n'ont pas à chercher de quel adversaire il s'agit, chacun **est**
+`arena1`, `arena2`… Une cible, elle, peut être n'importe lequel. On l'apparie par
+`UnitIsUnit(unit, "arena" .. i)`, jeton par jeton — lisible, lui, contrairement à
+la classe.
+
+**À retenir au-delà de ce cas** : « le client cache X » ne veut pas dire « le
+client cache tout ce qui touche à X ». Il cache l'identité et laisse la
+spécialisation ; il cache les auras et laisse leur affichage au moteur. À chaque
+fois, la porte est ailleurs — et une garde de secret qui rend `nil` sans dire
+lequel des maillons a cédé est ce qui empêche de la trouver.
+
+**Le CVar voisin** : `pvpFramesDisplayClassColor` commande les couleurs de classe
+sur les **cadres d'arène du client**, pas sur les nôtres. Il ne remplace rien ;
+il vaut d'être connu pour ne pas le confondre avec notre réglage.
