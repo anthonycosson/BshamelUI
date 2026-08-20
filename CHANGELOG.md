@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.0 — 2026-08-20
+
 ### Retiré
 - **La page « PvP » et son alerte de soigneur sous contrôle.** Elle ne pouvait
   pas tenir sa promesse là où elle servait : en arène, le client refuse toute
