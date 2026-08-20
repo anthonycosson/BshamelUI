@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.1 — 2026-08-20
+
 ### Ajouté
 - **La taille du nom des alliés revient**, sous « Agrandir le nom des alliés ».
   Elle avait disparu le jour où le mode « nom seul » est devenu une option
