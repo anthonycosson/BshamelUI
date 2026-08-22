@@ -32,7 +32,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 17
+local SCHEMA_VERSION   = 18
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -537,7 +537,34 @@ function DB:RunMigrations()
         from = 17
     end
 
+    -- Palier 18 — les temps de passage des boss n'existent plus : leur affichage
+    -- réécrivait les lignes du suivi d'objectifs, et une passe du suivi
+    -- interrompue en combat ne se reprogramme plus de la session (voir
+    -- `dev/docs/API_NOTES.md`, « Le suivi d'objectifs ne se répare pas »). La
+    -- case disparaît, et un réglage retiré du code resterait indéfiniment dans
+    -- le fichier, sans effet et sans explication (même motif que le palier 3).
+    if from < 18 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local timer = profile.modules and profile.modules.MythicTimer
+            if timer then timer.splits = nil end
+        end
+        from = 18
+    end
+
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)
+
+    -- L'historique des clés qui servait ces temps vivait **par personnage**
+    -- (`CharData`), hors de portée d'un palier : le schéma est au compte, et le
+    -- personnage connecté au moment où il monte est le seul qu'il verrait. Ce
+    -- balayage-ci passe donc à chaque connexion — idempotent, et vide dès la
+    -- première : la fonctionnalité n'a jamais rien enregistré chez les joueurs,
+    -- il n'y a au pire qu'une table vide à retirer.
+    local charData = BshamelUICharDB and BshamelUICharDB.data
+    local timer    = charData and charData.MythicTimer
+    if timer then
+        timer.runs = nil
+        if next(timer) == nil then charData.MythicTimer = nil end
+    end
 end
 
 --- Retire les valeurs égales aux défauts juste avant l'écriture du fichier.

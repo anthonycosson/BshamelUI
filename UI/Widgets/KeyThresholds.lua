@@ -4,8 +4,8 @@
 --
 --  Le client affiche le temps restant, le niveau de la clé, une barre qui se vide
 --  et un compteur de morts. Ce qu'il ne dit pas est ce qui décide d'une clé : où
---  tombent **+2** et **+3**, ce que les morts ont coûté, et à quelle minute chaque
---  boss est tombé. Ces choses-là se calculaient de tête en courant.
+--  tombent **+2** et **+3**, et ce que les morts ont coûté. Ces choses-là se
+--  calculaient de tête en courant.
 --
 --  Un panneau à nous a vécu ici. Il redisait le temps restant à côté de celui du
 --  client — deux chronos pour une clé, dont un seul est le vrai — et il fallait le
@@ -18,9 +18,13 @@
 --  - **Deux repères sur la barre**, aux deux paliers, rentrés dans le remplissage.
 --  - **Le temps perdu par les morts**, sur l'en-tête du suivi : la ligne du chrono
 --    est prise par les trois temps, et le compteur de morts du client ne bouge pas.
---  - **Le temps de chaque boss** sur les lignes du suivi, et l'écart avec une clé
---    de même niveau déjà réussie dans le chrono : vert si on est devant, rouge
---    sinon.
+--
+--  **Et rien sur les lignes du suivi.** Les temps de boss y ont vécu, écrits en
+--  réécrivant le texte et la hauteur des lignes du client : c'est retiré, et pas
+--  seulement par économie — une passe de mise en page du suivi qui meurt en
+--  combat ne se reprogramme plus de la session (voir `dev/docs/API_NOTES.md`,
+--  « Le suivi d'objectifs ne se répare pas »). Ce widget ne touche donc qu'au
+--  bloc de chrono ; les lignes d'objectifs ne servent qu'à l'aperçu, hors donjon.
 --
 --  **Le code couleur est celui des trois paliers d'une clé**, et il vaut pour les
 --  trois nombres : bleu pour le +1 qu'on obtient en finissant dans le chrono, or
@@ -32,9 +36,8 @@
 --  milieu d'une clé (voir `dev/docs/API_NOTES.md`), et un aperçu ne peut pas
 --  ressembler à autre chose que le vrai puisque c'est le vrai qui dessine.
 --
---  Réversibilité : chaque pièce se cache, et les deux textes du client qu'on
---  retouche — la couleur du chrono, le texte d'une ligne de boss — sont réécrits
---  par le client à sa passe suivante.
+--  Réversibilité : chaque pièce se cache, et l'aperçu rend au bloc l'état où le
+--  client l'avait laissé.
 -- =========================================================================
 
 local _, ns = ...
@@ -45,8 +48,6 @@ local W    = BUI.Widgets
 
 ---@class BUI.KeyBoss
 ---@field name string     intitulé de la ligne
----@field at number       secondes écoulées quand il est tombé
----@field delta? number   écart avec la clé de référence
 
 ---@class BUI.KeySample
 ---@field name string             nom du donjon montré par l'aperçu
@@ -58,8 +59,7 @@ local W    = BUI.Widgets
 ---@field deaths? table           `{ count, lost }`, les morts d'exemple
 
 ---@class BUI.KeyThresholdOpts
----@field deaths? fun(): number|nil                          secondes perdues par les morts
----@field split? fun(index: any): number|nil, number|nil     temps du boss, écart
+---@field deaths? fun(): number|nil   secondes perdues par les morts
 
 --- Fractions du chrono qui accordent des niveaux supplémentaires, **de la plus dure
 --- à la plus facile** — c'est l'ordre dans lequel on les perd, donc l'ordre dans
@@ -114,7 +114,6 @@ function W.KeyThresholds(opts)
     local countdown = {}
     local tiersOn   = false   -- repères, teinte du chrono et compte-à-rebours
     local deathsOn  = false   -- temps perdu par les morts
-    local splitsOn  = false   -- temps de boss sur les lignes du suivi
     local sample    = nil     ---@type BUI.KeySample|nil
     local elapsed   = 0       -- avancement de l'aperçu, en secondes
     local ticker    = nil
@@ -378,28 +377,6 @@ function W.KeyThresholds(opts)
         end
     end
 
-    --- Le suffixe d'une ligne de boss : son temps, et l'écart s'il y a une référence.
-    ---
-    --- Une ligne du suivi est un **seul texte**, donc une seule couleur, et il en
-    --- faut trois — le nom au ton du client, le temps à l'or de l'habillage, l'écart
-    --- en vert ou en rouge. Les couleurs passent donc par des codes en ligne.
-    ---
-    --- **L'écart passe à la ligne, toujours.** Bout à bout, la ligne tenait sur un
-    --- rang pour « Ranjit » et sur deux pour « Grand sage Viryx » : le retour à la
-    --- ligne tombait alors selon la longueur du nom, donc à un endroit différent pour
-    --- chaque boss, et la colonne des écarts n'existait pas. Un retour forcé le rend
-    --- prévisible — le temps reste contre le nom, l'écart est toujours dessous.
-    ---@param at number
-    ---@param delta? number
-    ---@return string
-    local function splitSuffix(at, delta)
-        local suffix = "  " .. T.Colorize(T.COLOR.FRAME_GOLD, U.Clock(at))
-        if not delta then return suffix end
-
-        local color = (delta <= 0) and T.COLOR.GREEN or T.COLOR.RED
-        return suffix .. "\n" .. T.Colorize(color, U.Delta(delta))
-    end
-
     -- ---------------------------------------------------------------------
     --  Ce que le client nous dit
     -- ---------------------------------------------------------------------
@@ -424,44 +401,11 @@ function W.KeyThresholds(opts)
     -- appelle cette fonction, donc ce hook suffit à couvrir le départ d'une clé.
     U.GuardedHook(block, "SetUpAffixes", anchorDeaths, function() return deathsOn end)
 
-    -- ---------------------------------------------------------------------
-    --  Les temps de boss
-    -- ---------------------------------------------------------------------
-    -- Le suivi construit ses lignes par `AddObjective`, qui pose le texte **et en
-    -- déduit la hauteur de la ligne**. On ne peut donc pas rallonger un texte sans
-    -- refaire ce calcul : un nom de boss long passerait à la ligne, et la ligne
-    -- suivante lui monterait dessus.
-    --
-    -- On refait donc le calcul avec la fonction du client, `SetStringText`, qui rend
-    -- la hauteur du texte, et on reporte l'écart sur la hauteur du bloc. Le reste
-    -- suit tout seul : les lignes s'ancrent l'une sous l'autre.
-    --
-    -- On lui passe `useFullHeight` **vrai** là où le client passe faux, ce qui lève
-    -- son plafond de deux rangs. L'écart occupant désormais un rang à lui seul, un
-    -- nom de boss qui passe à la ligne en demanderait trois, et le troisième serait
-    -- coupé — c'est-à-dire l'écart, la seule chose qu'on a ajoutée.
-
+    --- Les lignes d'objectifs du suivi. **Aperçu seulement** : hors donjon, elles
+    --- sont vides et l'aperçu y pose ses exemples. En clé, ce widget n'y touche
+    --- pas — réécrire une ligne du suivi depuis notre pile d'appels est ce qui
+    --- gelait le suivi entier (voir l'en-tête).
     local objectives = tracker.ObjectivesBlock
-
-    if objectives and objectives.AddObjective and objectives.SetStringText then
-        U.GuardedHook(objectives, "AddObjective",
-            function(self, objectiveKey, text, _, _, _, colorStyle)
-                if type(text) ~= "string" or not opts.split then return end
-
-                local at, delta = opts.split(objectiveKey)
-                if not at then return end
-
-                local line = self.GetExistingLine and self:GetExistingLine(objectiveKey)
-                if not (line and line.Text) then return end
-
-                local before = line:GetHeight()
-                local after  = self:SetStringText(line.Text, text .. splitSuffix(at, delta),
-                                                 true, colorStyle, self.isHighlighted)
-                line:SetHeight(after)
-                self.height = (self.height or 0) + (after - before)
-            end,
-            function() return splitsOn end)
-    end
 
     -- ---------------------------------------------------------------------
     --  Aperçu
@@ -480,8 +424,7 @@ function W.KeyThresholds(opts)
     ---
     --- Elles passent par `AddObjective`, la fonction du client, avec ses pastilles et
     --- ses teintes : un aperçu bâti autrement montrerait autre chose que ce qu'on
-    --- verra. Leur suffixe est composé ici plutôt que laissé au hook des vrais temps
-    --- de boss — celui-là interroge l'état d'une clé en cours, et il n'y en a pas.
+    --- verra.
     ---@param module table
     local function layoutSampleLines(module)
         if not (sample and sample.bosses and objectives and objectives.Reset) then return end
@@ -491,14 +434,8 @@ function W.KeyThresholds(opts)
         for i = 1, #sample.bosses do
             local boss = sample.bosses[i]
             local text = string.format("%d/%d %s", 1, 1, boss.name or "")
-            if splitsOn and boss.at then
-                text = text .. splitSuffix(boss.at, boss.delta)
-            end
 
-            -- `useFullHeight` vrai pour la même raison que sur les vraies lignes :
-            -- l'écart occupe un rang à lui, et le plafond de deux le couperait dès
-            -- qu'un nom passe à la ligne.
-            local line = objectives:AddObjective(i, text, nil, true,
+            local line = objectives:AddObjective(i, text, nil, nil,
                                                  OBJECTIVE_DASH_STYLE_HIDE,
                                                  OBJECTIVE_TRACKER_COLOR["Complete"])
             if line and line.Icon then
@@ -636,17 +573,6 @@ function W.KeyThresholds(opts)
         paintDeaths()
     end
 
-    --- Affiche ou retire les temps de boss. Les lignes déjà écrites ne se retouchent
-    --- pas : on redemande une passe, et le client les réécrit — avec notre suffixe
-    --- si le réglage est allumé, sans lui sinon. C'est aussi ce qui rend le module
-    --- indétectable une fois éteint.
-    ---@param visible boolean
-    function marker:SetSplits(visible)
-        local was = splitsOn
-        splitsOn  = visible and true or false
-        if was ~= splitsOn then self:Refresh() end
-    end
-
     --- Allume l'aperçu sur le relevé donné, ou l'éteint avec `nil`.
     ---@param data BUI.KeySample|nil
     function marker:SetPreview(data)
@@ -679,7 +605,6 @@ function W.KeyThresholds(opts)
         self:SetPreview(nil)
         self:SetThresholds(false)
         self:SetDeaths(false)
-        self:SetSplits(false)
     end
 
     return marker

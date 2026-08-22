@@ -663,11 +663,6 @@ BUI:RegisterLocale("enUS", {
     ["Show death time tip"] =
         "The seconds your deaths added, small and in red, between the key level and the affixes. "
         .. "The game counts them and only shows that number in a tooltip.",
-    ["Show boss times"]                = "Show boss times",
-    ["Show boss times tip"] =
-        "The time each boss went down, against its name in the tracker, and on the line below the "
-        .. "gap with your fastest timed run of the same dungeon at the same level: green when you "
-        .. "are ahead, red when behind.",
     ["Timer preview"]                  = "Preview mode",
     ["Timer preview tip"] =
         "Shows the game's timer outside a dungeon, on a sample key with sample bosses and enemy "

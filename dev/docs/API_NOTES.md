@@ -2049,13 +2049,19 @@ qui écrive une seconde, et encore : elle est **demandée** au chrono de zone
 réordonne d'un patch à l'autre ; l'historique rangé par rang comparerait alors le
 troisième boss d'aujourd'hui au deuxième d'hier.
 
-Puis on redemande une passe au suivi (`module:MarkDirty()`) au lieu de compter sur
-la sienne : rien ne garantit l'ordre dans lequel deux cadres reçoivent le même
-événement, et un boss horodaté après le passage du suivi ne s'afficherait qu'au
-suivant.
+Puis on ne redemande **rien** au suivi : il se marque sale seul sur ces deux
+événements, sa passe est différée d'une frame, donc un horodatage posé pendant la
+distribution est toujours en place quand elle le lit. Un `MarkDirty` de notre
+pile est le chemin du gel décrit plus bas (« Le suivi d'objectifs ne se répare
+pas »).
 
 **La fin d'une clé est aussi la chute d'un boss.** `CHALLENGE_MODE_COMPLETED` doit
 donc horodater avant de ranger, sans quoi la ligne qui compte le plus manque.
+
+*(La fonctionnalité qui exploitait tout ceci — les temps de boss du chrono
+mythique+ — a été retirée en août 2026 : leur affichage exigeait de réécrire les
+lignes du suivi, ce qui gèle sa mise en page. La technique d'horodatage reste
+valable pour un affichage qui vivrait chez nous.)*
 
 ---
 
@@ -4772,3 +4778,103 @@ lequel des maillons a cédé est ce qui empêche de la trouver.
 **Le CVar voisin** : `pvpFramesDisplayClassColor` commande les couleurs de classe
 sur les **cadres d'arène du client**, pas sur les nôtres. Il ne remplace rien ;
 il vaut d'être connu pour ne pas le confondre avec notre réglage.
+
+---
+
+## `GetWorldElapsedTime` rend son type en troisième, pas en premier
+
+**Symptôme** — les temps de passage des boss ne s'affichent jamais, et aucune clé
+réussie n'entre dans l'historique. Rien dans BugSack : la fonction rend bien
+quelque chose, ce n'est simplement pas ce qu'on croit lire.
+
+**Ce que rend l'appel** — `GetWorldElapsedTime(timerID)` rend trois valeurs, et le
+type de chrono est la **troisième**. Le client la lit ainsi lui-même :
+
+```lua
+local _, elapsedTime, type = GetWorldElapsedTime(timerID);
+```
+(`ScenarioTimerMixin:CheckTimers`, `Blizzard_ScenarioObjectiveTracker.lua`.)
+
+Comparer le **premier** retour à `Enum.WorldElapsedTimerTypes.ChallengeMode`
+échoue donc toujours. L'identifiant du chrono n'est jamais retenu, le temps écoulé
+n'est jamais lu, et tout ce qui en dépend se tait — sans erreur, puisque chaque
+étape a une sortie propre pour le cas « pas de chrono ».
+
+**La leçon** — un retour multiple qu'on ne consomme qu'en partie ne lève rien
+quand on se trompe de rang. Quand une lecture d'API nourrit une chaîne dont chaque
+maillon sait rendre `nil`, la panne est silencieuse par construction : c'est la
+position qui doit être vérifiée dans la source du client, pas le résultat.
+
+---
+
+## Le suivi d'objectifs ne se répare pas : son drapeau « sale » ne redescend pas
+
+**Symptôme** — en donjon mythique+, tout le suivi de scénario disparaît d'un
+coup : nom du donjon, chrono, liste des boss, décompte des troupes. Plusieurs
+fois par donjon. Rien dans BugSack, et **rien ne le ramène qu'un `/reload`**.
+
+**Cause** — le suivi ne se met jamais en page dans l'événement qui le réveille.
+Il se marque sale, et `DirtiableMixin` (`Blizzard_SharedXML/MixinUtil.lua`)
+programme la passe pour la frame suivante :
+
+```lua
+function DirtiableMixin:SetDirtyMethod(method)
+    self.dirtyCallback = function()
+        method(self);
+        self.dirty = nil;      -- ← après, et seulement après
+    end;
+end
+
+function DirtiableMixin:MarkDirty()
+    if not self.dirty then
+        RunNextFrame(self.dirtyCallback);
+    end
+    self.dirty = true;
+end
+```
+
+Le drapeau ne retombe **qu'à la sortie** de la mise en page. Si celle-ci
+s'interrompt en chemin, `self.dirty` reste vrai pour toujours : tous les
+`MarkDirty` suivants voient le drapeau levé, ne programment plus rien, et le
+suivi ne se remet plus en page de la session. D'où le `/reload` comme unique
+remède — il reconstruit le cadre, drapeau compris.
+
+**Pourquoi rien dans BugSack** — une erreur Lua serait attrapée. Une **action
+refusée** ne l'est pas : le client interrompt la pile et affiche sa fenêtre
+« action réservée à l'IU de Blizzard » sans passer par le gestionnaire d'erreurs.
+Or `ObjectiveTrackerContainerMixin:Update` finit par `ManageFramePositions()`,
+qui repose des cadres protégés. Exécuté depuis une pile salie, en combat, cet
+appel est refusé — et la mise en page s'arrête juste avant `self.dirty = nil`.
+
+**Ce qu'on en tire** — ne **jamais** faire partir la mise en page du suivi depuis
+notre propre pile d'appels quand le client va la demander de lui-même. Sur
+`SCENARIO_CRITERIA_UPDATE` et `SCENARIO_UPDATE`, il se marque sale seul
+(`ScenarioObjectiveTrackerMixin:OnEvent`) ; comme la passe est différée d'une
+frame, tout ce qu'on écrit pendant la distribution de l'événement est en place
+quand elle le lit. Un `module:MarkDirty()` de notre part n'avance donc rien et
+ajoute une pile salie par clé — et par boss.
+
+**Pour l'attraper en jeu** — `/bui blocked` avant d'entrer, puis la clé : la
+veille nomme la fonction refusée au moment où le suivi s'éteint. Voir plus haut
+« Le client ne dit pas quelle action il a bloquée », et son avertissement sur la
+CVar `scriptErrors`. Le témoin se lit aussi directement, pendant le gel :
+
+    /run local t=ScenarioObjectiveTracker print(t.parentContainer.dirty)
+
+`true` qui ne redescend pas après quelques secondes, avec des lignes visibles
+mais périmées, signe le drapeau bloqué. (Attention au collage dans le chat : il
+fond les retours à la ligne et tronque à 255 caractères — une commande à la
+fois, et courte.)
+
+**Confirmé en jeu, deux fois** (août 2026). D'abord notre `MarkDirty` par boss :
+retiré, la disparition du suivi a cessé. Puis la réécriture des lignes du suivi
+pour les temps de boss — texte et hauteur repris par `SetStringText` depuis
+notre hook sur `AddObjective` : le suivi gelait boss et troupes, chrono et
+morts continuant (eux se mettent à jour hors mise en page — `OnUpdate` du
+`ScenarioTimerFrame` et `CHALLENGE_MODE_DEATH_COUNT_UPDATED` directement sur le
+bloc). Le `/dump` a montré `dirty = true` tenace, `shouldShowCriteria` sain. Le
+second cas est le plus instructif : **aucun** appel de mise en page ne partait
+de chez nous, il suffisait que des valeurs écrites par nous (hauteurs de
+lignes, `block.height`) soient relues par la passe du client pour la salir. La
+fonctionnalité a été retirée — il n'existe pas de façon sûre de réécrire une
+ligne du suivi d'objectifs.

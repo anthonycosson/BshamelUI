@@ -657,11 +657,6 @@ BUI:RegisterLocale("frFR", {
     ["Show death time tip"] =
         "Les secondes que vos morts ont ajoutées, en rouge et en petit, entre le niveau de la clé "
         .. "et les affixes. Le jeu les compte et ne montre ce nombre que dans une infobulle.",
-    ["Show boss times"]                = "Afficher les temps de boss",
-    ["Show boss times tip"] =
-        "Le temps auquel chaque boss est tombé, contre son nom dans le suivi, et sur la ligne du "
-        .. "dessous l'écart avec votre clé la plus rapide réussie dans le chrono au même niveau : "
-        .. "vert si vous êtes devant, rouge sinon.",
     ["Timer preview"]                  = "Mode aperçu",
     ["Timer preview tip"] =
         "Affiche le chrono du jeu hors donjon, sur une clé d'exemple avec des boss et un décompte "

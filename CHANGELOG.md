@@ -2,6 +2,23 @@
 
 ## Non publié
 
+### Corrigé
+- **Le suivi d'objectifs ne se fige plus en clé.** Le chrono mythique+ faisait
+  travailler la mise en page du suivi depuis sa propre pile d'appels — en lui
+  redemandant une passe à chaque boss, et en réécrivant ses lignes pour les
+  temps de passage. Une passe interrompue en combat ne se reprogramme plus de
+  la session : le suivi disparaissait, ou gelait boss et troupes, jusqu'au
+  `/reload`. Le module ne touche plus qu'au bloc de chrono du client, jamais à
+  ses lignes ni à sa mise en page.
+
+### Retiré
+- **« Afficher les temps de boss »**, et l'historique des clés qui la servait.
+  La fonctionnalité ne pouvait pas s'écrire sans réécrire les lignes du suivi —
+  ce qui précède —, et elle n'a de surcroît jamais fonctionné : un défaut de
+  lecture du chrono de zone la rendait muette depuis sa sortie, si bien qu'il
+  n'y a rien eu à enregistrer et rien à regretter. Les paliers +2 / +3, le coût
+  des morts et le mode aperçu restent.
+
 ## 1.1.1 — 2026-08-20
 
 ### Ajouté
