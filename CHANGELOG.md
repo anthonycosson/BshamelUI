@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.2 — 2026-08-22
+
 ### Corrigé
 - **Le suivi d'objectifs ne se fige plus en clé.** Le chrono mythique+ faisait
   travailler la mise en page du suivi depuis sa propre pile d'appels — en lui
