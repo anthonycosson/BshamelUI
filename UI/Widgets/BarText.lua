@@ -48,6 +48,9 @@ function W.BarText(bar)
     -- Au-dessus des textes du client : les nôtres les remplacent, ils ne
     -- doivent pas se battre avec eux pour l'avant-plan.
     overlay:SetFrameLevel(bar:GetFrameLevel() + T.SIZE.BAR_TEXT_LEVEL)
+    -- Enfant d'une barre que le mode sombre parcourt : la marque le fait
+    -- passer sans être teinté (voir `collectFrom` dans `UI/Shade.lua`).
+    overlay.buiOwn = true
 
     local value   = overlay:CreateFontString(nil, "OVERLAY", T.FONT.BAR_TEXT)
     local percent = overlay:CreateFontString(nil, "OVERLAY", T.FONT.BAR_TEXT)

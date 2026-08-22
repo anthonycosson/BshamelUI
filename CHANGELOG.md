@@ -2,6 +2,18 @@
 
 ## Non publié
 
+### Corrigé
+- **Les repères de la barre de ressource se placent en points, et restent
+  blancs.** Les glissières parlaient en pourcentage de la largeur de la barre :
+  sur une ressource dont le maximum dépasse cent — énergie ou puissance runique
+  talentées —, un repère « à 30 » ne tombait pas à trente points. Elles parlent
+  désormais en points de ressource, posés contre le maximum du moment — le
+  maximum se lit en clair, seule la valeur courante est secrète — et se
+  reposent quand il change. Le gris, lui, était l'œuvre de notre propre mode
+  sombre : il assombrit la ressource personnelle en descendant tout le cadre du
+  client, et teintait au passage nos traits, qui y vivent en enfants. Le moteur
+  épargne désormais les cadres de l'addon lui-même.
+
 ## 1.1.2 — 2026-08-22
 
 ### Corrigé

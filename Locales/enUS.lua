@@ -222,9 +222,9 @@ BUI:RegisterLocale("enUS", {
     ["Personal markers"]               = "Markers",
     ["Personal marker"]                = "Marker %d",
     ["Personal marker tip"] =
-        "Draws a white line across the resource bar at that percentage. Zero removes it. "
-        .. "A percentage and not a value: the game keeps your resource secret, so the addon can "
-        .. "place a line on the bar but can never know what number you are at.",
+        "Draws a white line across the resource bar at that resource value — 30 marks thirty "
+        .. "points, whatever the bar's maximum. Zero removes it, and a marker above the current "
+        .. "maximum stays hidden.",
     ["Personal no text"]               = "No text at all",
     ["Personal no text tip"] =
         "Hides the game's own text on this bar, without writing anything in its place.",

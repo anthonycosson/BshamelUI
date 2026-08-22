@@ -29,6 +29,8 @@
 --  Repeindre est idempotent : on rend d'abord, on recollecte, on reteinte.
 --
 --  Ce qu'on ne touche jamais :
+--    · les cadres de l'addon lui-même (marque `buiOwn`, posée par le widget à
+--      sa création) : leurs couleurs sont celles du thème, déjà voulues ;
 --    · la texture de remplissage d'une barre de statut — c'est la donnée (vie,
 --      ressource, temps restant), pas l'habillage ;
 --    · les portraits et icônes de classe : les assombrir barbouille le visage du
@@ -701,6 +703,14 @@ local function collectFrom(frame, out, seen, rules)
 
     if ask(frame, "IsForbidden") == true then return end
     if ask(frame, "GetObjectType") == "Cooldown" then return end
+
+    -- Un cadre de l'addon lui-même ne se visite pas : ni lui, ni ce qu'il
+    -- porte. Nos widgets se posent en enfants de cadres du client que le
+    -- moteur assombrit — les repères de la barre de ressource personnelle,
+    -- ses textes — et le parcours les croisait comme n'importe quel enfant :
+    -- un trait que le thème dit blanc ressortait gris. Leurs couleurs sont
+    -- celles du thème, il n'y a rien à corriger dessus.
+    if frame.buiOwn then return end
 
     -- Une lecture de combat ne se visite pas : ni elle, ni ce qu'elle porte
     -- (voir `READOUT_NAMES`).

@@ -225,10 +225,9 @@ BUI:RegisterLocale("frFR", {
     ["Personal markers"]               = "Repères",
     ["Personal marker"]                = "Repère %d",
     ["Personal marker tip"] =
-        "Trace un trait blanc en travers de la barre de ressource, à ce pourcentage. Zéro le "
-        .. "retire. Un pourcentage et non une valeur : le jeu garde votre ressource secrète, "
-        .. "l'addon peut donc poser un trait sur la barre mais jamais savoir à quel nombre "
-        .. "vous en êtes.",
+        "Trace un trait blanc en travers de la barre de ressource, à cette valeur de "
+        .. "ressource — 30 marque trente points, quel que soit le maximum de la barre. Zéro "
+        .. "le retire, et un repère au-delà du maximum du moment reste éteint.",
     ["Personal no text"]               = "N'afficher aucun texte",
     ["Personal no text tip"] =
         "Masque le texte du jeu sur cette barre, sans rien écrire à la place.",

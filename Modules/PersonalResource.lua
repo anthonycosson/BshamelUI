@@ -306,15 +306,32 @@ end
 
 --- Pose les repères de la barre de ressource.
 ---
+--- Les glissières parlent en **points de ressource**, le widget en fraction de
+--- largeur : la conversion se fait ici, contre le maximum du moment.
+--- `UnitPowerMax` se lit en clair — seule la valeur courante est secrète (voir
+--- `dev/docs/API_NOTES.md`) — mais un client qui le rendrait secret à son tour
+--- ne doit rien casser : le garde éteint alors tous les repères, un trait
+--- absent étant plus honnête qu'un trait posé au hasard. Un repère au-delà du
+--- maximum du moment s'éteint pour la même raison : il désigne un point que la
+--- barre ne contient pas.
+---
 --- Le widget est monté au premier besoin et sur la barre du moment : le client
 --- peut avoir reconstruit son affichage entre deux passages, auquel cas la barre
 --- n'est plus la même frame et les repères d'avant sont sur un cadre mort.
 ---@param mod table
 ---@param bar table
 local function applyMarkers(mod, bar)
-    markerScratch[1] = mod:Get("powerMarker1")
-    markerScratch[2] = mod:Get("powerMarker2")
-    markerScratch[3] = mod:Get("powerMarker3")
+    local max = UnitPowerMax("player")
+    local readable = not U.IsSecret(max) and type(max) == "number" and max > 0
+
+    for i = 1, T.SIZE.BAR_MARKER_MAX do
+        local value = tonumber(mod:Get("powerMarker" .. i)) or 0
+        if readable and value > 0 and value <= max then
+            markerScratch[i] = value / max * 100
+        else
+            markerScratch[i] = 0
+        end
+    end
 
     if powerMarkers and powerMarkers.Owner ~= bar then
         powerMarkers.Hide()
@@ -381,7 +398,8 @@ BUI:RegisterModule(MODULE, {
 
         textSize            = T.SIZE.BAR_TEXT_SIZE,
 
-        -- Repères de la barre de ressource, en pourcentage. **Zéro éteint le
+        -- Repères de la barre de ressource, en points de ressource — 30 vaut
+        -- trente points, quel que soit le maximum du moment. **Zéro éteint le
         -- repère** : c'est la glissière elle-même qui s'annule, sans case à
         -- cocher de plus (même motif que le seuil de brillance de la rangée de
         -- ressource de classe). Aucun n'agit donc à l'installation.
@@ -437,6 +455,12 @@ BUI:RegisterModule(MODULE, {
         --- **Zéro éteint le repère**, et c'est ce que dit le libellé de la
         --- valeur : sans cela il faudrait une case à cocher par trait, soit
         --- trois cases pour trois glissières qui savent déjà s'annuler.
+        ---
+        --- La borne haute couvre toutes les ressources à jauge — énergie,
+        --- puissance runique, maelström… plafonnent sous les deux cents, talents
+        --- compris. Une glissière ne peut pas suivre le maximum du personnage,
+        --- qui bouge avec la forme et le moment ; un repère poussé au-delà du
+        --- maximum courant reste simplement éteint.
         ---@param index number
         ---@return table
         local function markerRow(index)
@@ -447,7 +471,7 @@ BUI:RegisterModule(MODULE, {
                 tooltip  = L["Personal marker tip"],
                 indent   = true,
                 min      = 0,
-                max      = 100,
+                max      = 200,
                 step     = 5,
             }
         end
@@ -558,10 +582,20 @@ BUI:RegisterModule(MODULE, {
         end
         self:RegisterEvent("UNIT_POWER_UPDATE",   powerChanged)
         self:RegisterEvent("UNIT_POWER_FREQUENT", powerChanged)
-        self:RegisterEvent("UNIT_MAXPOWER",       powerChanged)
+
+        -- Les repères sont posés contre le maximum : quand il bouge — forme,
+        -- talents, ressource affichée qui change avec la spécialisation — ils
+        -- se reposent avec lui. Événements rares, jamais le chemin qui bat.
+        local maxChanged = function(_, unit)
+            if unit ~= "player" then return end
+            refreshPower(self)
+            local bar = powerBar()
+            if bar then applyMarkers(self, bar) end
+        end
+        self:RegisterEvent("UNIT_MAXPOWER",     maxChanged)
         -- La barre change de ressource avec la forme : le maximum repart de
         -- zéro, le texte aussi.
-        self:RegisterEvent("UNIT_DISPLAYPOWER",   powerChanged)
+        self:RegisterEvent("UNIT_DISPLAYPOWER", maxChanged)
 
         -- L'arrivée en jeu reconstruit : c'est là qu'un cadre du client qui
         -- n'existait pas encore finit par exister.

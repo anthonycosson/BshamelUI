@@ -7,12 +7,12 @@
 --  fixée ? », et un trait répond à ça mieux qu'un nombre — on le franchit, on ne
 --  le lit pas.
 --
---  **Un pourcentage, et pas une valeur.** Ce n'est pas un choix de confort : la
---  vie et la ressource du joueur sont des valeurs **secrètes** en jeu (voir
---  `Modules/PersonalResource.lua`). Un repère à « 30 000 de mana » demanderait
---  de comparer un secret au maximum, ce qui lève ; un repère à trente pour cent
---  ne demande que la **largeur** de la barre, qui est une géométrie et non une
---  valeur de jeu. C'est la seule forme de ce réglage qui puisse exister.
+--  **Le widget parle en pourcentage de largeur** — une géométrie, la seule
+--  chose qu'un trait connaisse. Un repère voulu « à 30 points » se convertit
+--  chez l'appelant, contre le maximum de la barre : `UnitPowerMax` se lit en
+--  clair là où la valeur **courante** reste secrète (voir
+--  `dev/docs/API_NOTES.md`), et c'est cette lecture-là, une valeur de jeu et
+--  non une géométrie, qui n'a pas sa place ici.
 --
 --  Les traits vivent sur un cadre à nous, posé sur la barre. On ne touche donc
 --  ni à ses textures, ni à ses ancrages, ni à rien de ce qui lui appartient : à
@@ -39,6 +39,20 @@ function W.BarMarkers(bar)
 
     pcall(overlay.SetAllPoints, overlay, bar)
     pcall(overlay.EnableMouse, overlay, false)
+
+    -- La marque que le mode sombre respecte : ce cadre vit en enfant d'une
+    -- barre du client que le moteur assombrit, et sans elle le parcours
+    -- teintait nos traits comme de l'habillage — un blanc du thème ressortait
+    -- gris (voir `collectFrom` dans `UI/Shade.lua`).
+    overlay.buiOwn = true
+
+    -- Au-dessus de l'habillage que le client pose sur ses propres enfants de
+    -- barre — au niveau de la barre, le trait passerait dessous — et sous nos
+    -- textes (`BAR_TEXT_LEVEL`), qui doivent rester lisibles en le croisant.
+    local okLevel, level = pcall(bar.GetFrameLevel, bar)
+    if okLevel and type(level) == "number" then
+        pcall(overlay.SetFrameLevel, overlay, level + T.SIZE.BAR_MARKER_LEVEL)
+    end
 
     local markers = {}
     --- Les pourcentages voulus, tels que l'appelant les a donnés. Zéro éteint le

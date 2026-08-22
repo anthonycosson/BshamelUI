@@ -683,6 +683,11 @@ T.SIZE = {
     -- graduation, et une barre graduée ne se lit plus d'un coup d'œil.
     BAR_MARKER_W   = 2,
     BAR_MARKER_MAX = 3,
+    -- L'étage des repères : au-dessus de l'habillage que le client pose sur
+    -- ses propres enfants de barre — resté au niveau de la barre, le trait
+    -- passerait dessous — et juste sous nos textes (`BAR_TEXT_LEVEL`), qui
+    -- doivent rester lisibles en croisant un trait.
+    BAR_MARKER_LEVEL = 4,
 
     KEY_TIER_H_RATIO = 0.75,
     KEY_TIER_W_RATIO = 0.16,
