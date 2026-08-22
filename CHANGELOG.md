@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.3 — 2026-08-22
+
 ### Corrigé
 - **Les repères de la barre de ressource se placent en points, et restent
   blancs.** Les glissières parlaient en pourcentage de la largeur de la barre :
