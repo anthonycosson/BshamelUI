@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- **La carte du monde agrandie n'est plus tronquée.** Le module Fenêtres
+  réimposait la position et l'échelle mémorisées — celles du mode fenêtre — sur
+  la carte plein écran, dont la disposition appartient au client : décalée ou
+  débordante, elle sortait de l'écran. Tant que la carte est agrandie, le
+  moteur ne touche plus à rien, lui rend son échelle d'origine en y entrant,
+  et repose la position du joueur au retour en mode fenêtre.
+
 ## 1.1.4 — 2026-08-25
 
 ### Ajouté

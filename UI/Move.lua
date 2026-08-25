@@ -153,6 +153,39 @@ local DRAG_HANDLES = {
     WorldMapFrame = "WorldMapTitleButton",
 }
 
+--- Fenêtres qui possèdent, en plus de leur mode fenêtre, une disposition
+--- **plein écran** pilotée par le client. La carte du monde agrandie remplit
+--- l'écran : sa taille se calcule dans les unités de son parent — un calcul
+--- juste seulement à l'échelle d'origine — et son ancrage vient du
+--- gestionnaire de panneaux. Réimposer notre position la décale, notre
+--- échelle la fait déborder : dans les deux cas elle sort de l'écran, donc
+--- tronquée aux bords.
+---
+--- Tant que `active` répond vrai, le moteur ne touche à rien. Les deux
+--- méthodes sont crochetées pour les deux transitions : `enter` rend au cadre
+--- son échelle d'origine — la disposition du client se calcule pour elle —,
+--- `leave` repose ce qui est mémorisé, car le client ne repasse pas par
+--- `OnShow` en revenant au mode fenêtre. Tests de capacité partout : un cadre
+--- sans ces méthodes n'a simplement pas de plein écran.
+local FULLSCREEN_MODES = {
+    WorldMapFrame = {
+        active = function(frame)
+            return frame.IsMaximized ~= nil and frame:IsMaximized() == true
+        end,
+        enter = "Maximize",
+        leave = "Minimize",
+    },
+}
+
+--- La disposition plein écran du client est-elle en vigueur sur ce cadre ?
+---@param entry table
+---@param frame table
+---@return boolean
+local function fullscreenNow(entry, frame)
+    local mode = entry.mode
+    return mode ~= nil and mode.active(frame) == true
+end
+
 -- =========================================================================
 --  Hôte
 -- =========================================================================
@@ -348,6 +381,7 @@ end
 ---@param entry table
 local function applyStored(frame, entry)
     if not host then return end
+    if fullscreenNow(entry, frame) then return end
     if protectedNow(frame) and InCombatLockdown() then return end
 
     local scale = host.GetScale(entry.name)
@@ -372,6 +406,17 @@ end
 local function restoreOrigin(frame, entry)
     local points = entry.points
     if not points then return end
+
+    -- En plein écran, la disposition à l'écran est déjà celle du client, et
+    -- l'échelle d'origine lui a été rendue en y entrant : reposer les ancrages
+    -- mémorisés — ceux du mode fenêtre — la déplacerait. Il n'y a rien à
+    -- défaire ; le client reposera lui-même son mode fenêtre à la sortie.
+    if fullscreenNow(entry, frame) then
+        entry.points = nil
+        entry.scale  = nil
+        return
+    end
+
     if protectedNow(frame) and InCombatLockdown() then return end
 
     if entry.scale then rescale(frame, entry.scale) end
@@ -494,6 +539,7 @@ end
 ---@param frame table
 ---@param entry table
 local function startDrag(frame, entry)
+    if fullscreenNow(entry, frame) then return end
     if protectedNow(frame) and InCombatLockdown() then return end
 
     -- Le point suivi n'est pas le même selon ce qu'on tient. Une fenêtre est
@@ -548,6 +594,7 @@ local hoverTicker
 local function stepScale(frame, delta)
     local entry = state[frame]
     if not (host and entry) then return end
+    if fullscreenNow(entry, frame) then return end
     if protectedNow(frame) and InCombatLockdown() then return end
 
     local current = host.GetScale(entry.name) or frame:GetScale() or 1
@@ -664,6 +711,33 @@ local function hookFrame(frame, name)
     local handle = DRAG_HANDLES[name]
     if handle then attachDrag(_G[handle], frame, entry) end
 
+    -- Les deux bascules du plein écran, quand le cadre en a un. À l'entrée,
+    -- l'échelle d'origine est rendue **après** que le client a calculé sa
+    -- disposition : elle a été calculée pour cette échelle-là, jamais pour la
+    -- nôtre. À la sortie, ce qui est mémorisé se repose — le client ne
+    -- repasse pas par `OnShow`, et sa bascule ne touche pas à l'échelle.
+    local mode = FULLSCREEN_MODES[name]
+    if mode then
+        entry.mode = mode
+
+        if type(frame[mode.enter]) == "function" then
+            U.GuardedHook(frame, mode.enter, function()
+                if not host then return end
+                if entry.scale
+                   and math.abs((frame:GetScale() or 1) - entry.scale) >= 0.001 then
+                    rescale(frame, entry.scale)
+                end
+            end, function() return M:IsActive() end)
+        end
+
+        if type(frame[mode.leave]) == "function" then
+            U.GuardedHook(frame, mode.leave, function()
+                if not host then return end
+                applyStored(frame, entry)
+            end, function() return M:IsActive() end)
+        end
+    end
+
     -- Le client réancre ses fenêtres à l'ouverture : c'est ici qu'on repose la
     -- nôtre, et pas seulement au démarrage.
     frame:HookScript("OnShow", function()
@@ -680,6 +754,7 @@ local function hookFrame(frame, name)
         if applying then return end
         if drag.frame == frame then return end       -- ne pas se battre avec le glisser
         if not host then return end
+        if fullscreenNow(entry, frame) then return end
 
         local pos = host.GetPosition(name)
         if not pos then return end
@@ -693,6 +768,7 @@ local function hookFrame(frame, name)
     U.GuardedHook(frame, "SetScale", function()
         if applying then return end
         if not host then return end
+        if fullscreenNow(entry, frame) then return end
 
         local scale = host.GetScale(name)
         if not scale then return end

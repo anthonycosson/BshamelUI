@@ -1000,6 +1000,20 @@ glisser et zoome à la molette : un glisser posé dessus ferait les deux à la f
 seul cas rencontré, mais il en existera d'autres — d'où une table
 (`DRAG_HANDLES`) plutôt qu'une exception écrite dans le code.
 
+**La carte agrandie appartient au client.** `WorldMapMixin:UpdateMaximizedSize`
+calcule sa taille dans les unités de son **parent** — un calcul juste seulement
+à l'échelle d'origine — et `MaximizeUIPanel` l'ancre par le gestionnaire de
+panneaux. Réimposer une position mémorisée la décale, une échelle mémorisée la
+fait déborder : dans les deux cas la carte sort de l'écran, donc tronquée aux
+bords. Le symptôme n'accuse pas le coupable : c'est la carte *agrandie* qui est
+cassée, par un réglage posé sur la carte *fenêtre*.
+
+Tant que `WorldMapFrame:IsMaximized()` répond vrai, le moteur ne touche à rien
+(table `FULLSCREEN_MODES`). Les transitions se crochettent sur les méthodes
+`Maximize`/`Minimize` du cadre : ni l'une ni l'autre ne touche à l'échelle et le
+retour en fenêtre ne repasse pas par `OnShow`, il faut donc rendre l'échelle
+d'origine à l'entrée et reposer soi-même ce qui est mémorisé à la sortie.
+
 **On n'appelle jamais `EnableMouse` sur un cadre du client.** Une fenêtre qui ne
 reçoit pas la souris ne sera donc pas déplaçable. C'est une limite assumée : la
 rendre telle serait exactement l'écriture d'état qui taint.
