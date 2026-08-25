@@ -537,6 +537,12 @@ T.SIZE = {
     -- la place à sa droite ne coûte rien. Plus étroite que la colonne des
     -- réglages — un nom d'instance et sa case, sans bornes à loger.
     GF_LIST_COL_W     = 220,
+    -- Bouton qui range ou ressort le panneau, posé sur la recherche du client
+    -- à côté de son bouton d'actualisation. Même côté que le bouton de copie
+    -- du chat, pour la même raison : il vit sur une fenêtre qui ne nous
+    -- appartient pas, et doit s'y faire petit.
+    GF_STOW_BUTTON    = 16,
+    GF_STOW_GAP       = 4,
 
     -- Rangée de ressource de classe : points de combo, puissance sacrée, chi,
     -- fragments d'âme, runes, cumuls d'Arme-tempête.
@@ -1300,9 +1306,10 @@ T.ALPHA = {
     GRIP           = 0.70,  -- poignée de redimensionnement au repos
     GRIP_HOVER     = 1.00,
 
-    -- Pièces posées sur le chat du client, au repos. Plus discrètes que nos
-    -- propres poignées : elles vivent par-dessus le texte que le joueur lit, et
-    -- ce texte prime sur elles. Elles reviennent à pleine opacité au survol,
+    -- Pièces posées sur les cadres du client — bouton de copie du chat,
+    -- rangement du panneau de filtres —, au repos. Plus discrètes que nos
+    -- propres poignées : elles vivent par-dessus ce que le joueur lit, et
+    -- cela prime sur elles. Elles reviennent à pleine opacité au survol,
     -- qui est le seul moment où elles ont quelque chose à dire.
     CHAT_TOOL       = 0.35,
     CHAT_TOOL_HOVER = 1.00,
@@ -2088,6 +2095,13 @@ T.TEXTURE = {
     -- elle existe depuis toujours. Une icône de presse-papier n'existe pas dans
     -- le jeu, l'inventer ferait une pièce rapportée de plus.
     CHAT_COPY         = "Interface\\Buttons\\UI-GuildButton-PublicNote-Up",
+
+    -- Bouton de rangement du panneau de filtres : les flèches de tourne-page
+    -- du grimoire, présentes depuis la première extension. Le sens dit le
+    -- geste — vers la fenêtre pour ranger le panneau, vers l'extérieur pour
+    -- le ressortir.
+    GF_STOW           = "Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Up",
+    GF_SHOW           = "Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up",
 
     -- Vignette du bouton « retirer tous les marqueurs » : le rond barré rouge du
     -- **passage sur un butin**. Le jeu s'en sert déjà pour dire « celui-ci, non »

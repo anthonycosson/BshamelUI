@@ -538,7 +538,13 @@ BUI:RegisterLocale("enUS", {
     ["Premade filter panel"]           = "Filter panel on the group browser",
     ["Premade filter panel tip"] =
         "Docks a filter panel to the right of the premade group browser: difficulty, "
-        .. "role counts, group size, specific instance. With nothing set, it hides nothing.",
+        .. "role counts, group size, specific instance. With nothing set, it hides nothing. "
+        .. "Drag the panel to move it; the small arrow next to the refresh button stows it.",
+    ["Stow filter panel"]              = "Stow the filter panel",
+    ["Show filter panel"]              = "Show the filter panel",
+    ["Stow filter panel tip"] =
+        "Tucks the panel away without touching its filters: they keep applying. "
+        .. "Click again to bring it back.",
     ["Hide declined groups"]           = "Hide groups that declined you",
     ["Hide declined groups tip"] =
         "Hides listings that turned down your application, including those that filled up "

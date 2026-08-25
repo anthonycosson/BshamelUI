@@ -1,6 +1,9 @@
 -- =========================================================================
 --  Bshamel UI — UI/Widgets/GroupFilterPanel.lua
 --  Panneau de filtres posé contre le bord droit de la recherche de groupe.
+--  Il se déplace en le faisant glisser, et un petit bouton posé sur la
+--  recherche (`W.GroupFilterStowButton`, en fin de fichier) le range et le
+--  ressort sans toucher aux filtres.
 --
 --  Le widget ne connaît ni la base de données ni l'API de la recherche de
 --  groupe : il reçoit des descripteurs (`get`/`set` fournis par l'appelant,
@@ -50,6 +53,8 @@ local L    = ns.L
 ---@class BUI.GroupFilterPanelOpts
 ---@field parent table        la frame du client dont on suit la visibilité
 ---@field anchor table        celle contre laquelle on se pose (son bord droit)
+---@field getOffset? fun(): number, number   écart mémorisé au point d'ancrage par défaut
+---@field setOffset? fun(x: number, y: number)  mémorise l'écart, au relâcher du glisser
 ---@field title string
 ---@field resetLabel string
 ---@field resetTooltip? string
@@ -191,8 +196,52 @@ function W.GroupFilterPanel(opts)
     -- bas seulement — plus il a de lignes, plus il pend sous la fenêtre du
     -- client. Accroché par le milieu, il grandit des deux côtés et reste en
     -- face d'elle.
-    panel:SetPoint("LEFT", opts.anchor, "RIGHT", S.GF_PANEL_OFFSET_X, 0)
+    --
+    -- L'ancrage reste **relatif** à la fenêtre du client, même une fois le
+    -- panneau déplacé : ce qui se mémorise est l'écart au point par défaut,
+    -- jamais une position d'écran. Le panneau suit ainsi la fenêtre où
+    -- qu'elle aille — déplacée ou remise à l'échelle par le module Fenêtres.
+    local function applyPosition()
+        local dx, dy = 0, 0
+        if opts.getOffset then
+            local x, y = opts.getOffset()
+            dx, dy = x or 0, y or 0
+        end
+        panel:ClearAllPoints()
+        panel:SetPoint("LEFT", opts.anchor, "RIGHT", S.GF_PANEL_OFFSET_X + dx, dy)
+    end
+    applyPosition()
+
     W.PanelChrome(panel)
+
+    -- Le panneau se déplace en le faisant glisser — par son titre, ses marges,
+    -- tout endroit que ses lignes n'interceptent pas. `StartMoving` est permis
+    -- ici, contrairement aux fenêtres du client (`UI/Move.lua`) : cette frame
+    -- est la nôtre, la rendre déplaçable ne taint rien. Au relâcher, la
+    -- position redevient un écart d'ancrage, remis à l'appelant.
+    panel:EnableMouse(true)
+    panel:SetMovable(true)
+    panel:SetClampedToScreen(true)
+    panel:RegisterForDrag("LeftButton")
+    panel:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    panel:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+
+        -- Panneau et fenêtre partagent leur échelle — il vit en enfant de la
+        -- recherche — : leurs coordonnées se comparent donc directement.
+        local left   = self:GetLeft()
+        local right  = opts.anchor:GetRight()
+        local _, cy  = self:GetCenter()
+        local _, acy = opts.anchor:GetCenter()
+
+        if opts.setOffset and left and right and cy and acy then
+            opts.setOffset(left - right - S.GF_PANEL_OFFSET_X, cy - acy)
+        end
+
+        -- Reposé tout de suite en relatif : `StopMovingOrSizing` laisse un
+        -- ancrage d'écran, qui ne suivrait plus la fenêtre du client.
+        applyPosition()
+    end)
 
     local title = W.SectionHeader(panel, opts.title)
     title:SetPoint("TOPLEFT", panel, "TOPLEFT", S.TOOL_PAD, -S.TOOL_PAD)
@@ -414,4 +463,68 @@ function W.GroupFilterPanel(opts)
     end
 
     return panel
+end
+
+--- Petit bouton posé sur la recherche du client, qui range le panneau ou le
+--- ressort. Même vocabulaire que le bouton de copie du chat : discret au
+--- repos, franc au survol — il vit sur une fenêtre qui ne nous appartient pas,
+--- et ce qu'elle affiche prime sur lui.
+---
+--- La flèche dit le geste : vers la fenêtre pour ranger, vers l'extérieur pour
+--- ressortir. `Refresh` est à rappeler quand l'état change sans passer par le
+--- bouton.
+---@class BUI.GroupFilterStowOpts
+---@field parent table      la frame du client qui porte le bouton
+---@field anchor? table     le voisin contre le bord gauche duquel se poser ;
+---                         à défaut, le coin haut-droit du parent
+---@field isStowed fun(): boolean
+---@field onToggle fun()
+---@field stowTitle string
+---@field showTitle string
+---@field tooltip? string
+
+---@param opts BUI.GroupFilterStowOpts
+---@return table button
+function W.GroupFilterStowButton(opts)
+    local S = T.SIZE
+
+    local button = CreateFrame("Button", nil, opts.parent)
+    button:SetSize(S.GF_STOW_BUTTON, S.GF_STOW_BUTTON)
+
+    if opts.anchor then
+        button:SetPoint("RIGHT", opts.anchor, "LEFT", -S.GF_STOW_GAP, 0)
+    else
+        button:SetPoint("TOPRIGHT", opts.parent, "TOPRIGHT",
+            -S.GF_STOW_GAP, -S.GF_STOW_GAP)
+    end
+
+    -- Au-dessus des pièces du client qui courent sur la même bande, comme le
+    -- bouton de copie du chat : c'est lui qui doit prendre le clic.
+    button:SetFrameLevel(opts.parent:GetFrameLevel() + 6)
+
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints()
+    icon:SetAlpha(T.ALPHA.CHAT_TOOL)
+
+    button:SetScript("OnEnter", function() icon:SetAlpha(T.ALPHA.CHAT_TOOL_HOVER) end)
+    button:SetScript("OnLeave", function() icon:SetAlpha(T.ALPHA.CHAT_TOOL) end)
+
+    --- Met la flèche et l'infobulle d'accord avec l'état courant.
+    function button:Refresh()
+        local stowed = opts.isStowed()
+        icon:SetTexture(stowed and T.TEXTURE.GF_SHOW or T.TEXTURE.GF_STOW)
+        -- `W.Tooltip` se rappelle sans dommage : elle remplace les textes et
+        -- ne pose ses scripts qu'une fois — c'est ce qui permet au titre de
+        -- suivre l'état.
+        W.Tooltip(button, stowed and opts.showTitle or opts.stowTitle, opts.tooltip)
+    end
+
+    button:SetScript("OnClick", function()
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+        opts.onToggle()
+        button:Refresh()
+    end)
+
+    button:Refresh()
+    return button
 end

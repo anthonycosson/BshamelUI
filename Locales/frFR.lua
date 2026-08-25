@@ -527,7 +527,13 @@ BUI:RegisterLocale("frFR", {
     ["Premade filter panel tip"] =
         "Ancre un panneau de filtres à droite de la recherche de groupe personnalisée : "
         .. "difficulté, nombre par rôle, taille du groupe, instance précise. Sans rien "
-        .. "régler, il ne cache rien.",
+        .. "régler, il ne cache rien. Le panneau se déplace en le faisant glisser ; la "
+        .. "petite flèche à côté du bouton d'actualisation le range.",
+    ["Stow filter panel"]              = "Ranger le panneau de filtres",
+    ["Show filter panel"]              = "Ressortir le panneau de filtres",
+    ["Stow filter panel tip"] =
+        "Replie le panneau sans toucher à ses filtres : ils continuent d'agir. "
+        .. "Un second clic le ressort.",
     ["Hide declined groups"]           = "Masquer les groupes qui ont refusé",
     ["Hide declined groups tip"] =
         "Cache les annonces qui ont décliné votre candidature, y compris celles qui se sont "

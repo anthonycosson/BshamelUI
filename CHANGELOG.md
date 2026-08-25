@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Ajouté
+- **Le panneau de filtres de la recherche de groupe se déplace et se range.**
+  Il se déplace en le faisant glisser — la position, mémorisée comme un écart à
+  sa place par défaut, suit la fenêtre du client où qu'elle aille. Une petite
+  flèche posée à côté du bouton d'actualisation de la recherche le replie et le
+  ressort, sans toucher aux filtres : rangés, ils continuent d'agir.
+
 ### Corrigé
 - **Le menu de téléportation nomme le donjon, pas la voie, pour les donjons à
   article.** « Voie de la végétation florissante » s'affiche désormais « Le val

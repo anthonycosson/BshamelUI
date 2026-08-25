@@ -646,7 +646,7 @@ end
 --  Le panneau
 -- =========================================================================
 
-local panel
+local panel, stowButton
 
 --- Cases « montré / caché » d'un contexte. L'absence vaut coché : l'état
 --- neutre ne s'écrit pas sur le disque.
@@ -863,23 +863,71 @@ local function doSearch()
     end
 end
 
---- Montre le panneau si le contexte en veut un, le cache sinon.
+--- Montre le panneau si le contexte en veut un, le cache sinon. Le bouton de
+--- rangement suit le même contexte, mais reste visible panneau rangé : c'est
+--- lui qui permet de le ressortir.
 ---@param mod table
 local function updatePanel(mod)
     local ctx = contextOf(currentCategory)
 
     if not (ctx and mod:Get("filterPanel")) then
         if panel then panel:Hide() end
+        if stowButton then stowButton:Hide() end
         return
     end
 
     local sp = searchPanel()
     if not (sp and PVEFrame) then return end
 
+    if not stowButton then
+        stowButton = W.GroupFilterStowButton({
+            parent    = sp,
+            -- Contre le bouton d'actualisation du client quand il existe :
+            -- les petits outils de la recherche se rangent sur la même ligne.
+            -- Absent, le widget retombe sur le coin haut-droit du parent.
+            anchor    = sp.RefreshButton,
+            isStowed  = function()
+                local m = module()
+                return (m and m:Get("filterStowed")) and true or false
+            end,
+            onToggle  = function()
+                local m = module()
+                if m then m:Set("filterStowed", not m:Get("filterStowed")) end
+            end,
+            stowTitle = L["Stow filter panel"],
+            showTitle = L["Show filter panel"],
+            tooltip   = L["Stow filter panel tip"],
+        })
+    end
+    stowButton:Refresh()
+    stowButton:Show()
+
+    -- Rangé : les filtres continuent d'agir, seul le panneau se tait.
+    if mod:Get("filterStowed") then
+        if panel then panel:Hide() end
+        return
+    end
+
     if not panel then
         panel = W.GroupFilterPanel({
             parent        = sp,
             anchor        = PVEFrame,
+
+            -- L'écart du panneau à sa place par défaut. Réglages sans
+            -- contrôle : ils s'écrivent en le faisant glisser, comme l'angle
+            -- des boutons de minicarte.
+            getOffset     = function()
+                local m = module()
+                if not m then return 0, 0 end
+                return m:Get("filterPanelX") or 0, m:Get("filterPanelY") or 0
+            end,
+            setOffset     = function(x, y)
+                local m = module()
+                if not m then return end
+                m:Set("filterPanelX", U.Round(x, 0))
+                m:Set("filterPanelY", U.Round(y, 0))
+            end,
+
             title         = L["Filters"],
             resetLabel    = L["Reset"],
             resetTooltip  = L["Reset filters tip"],
@@ -984,6 +1032,16 @@ BUI:RegisterModule(MODULE, {
         autoRoleCheck  = false,
         queueTimer     = false,
         filterPanel    = false,
+
+        -- Écart du panneau de filtres à sa place par défaut, en pixels.
+        -- Réglages sans contrôle : ils s'écrivent en faisant glisser le
+        -- panneau — même statut que l'angle du bouton de téléportation.
+        filterPanelX   = 0,
+        filterPanelY   = 0,
+
+        -- Panneau replié derrière son bouton de rangement. Sans contrôle lui
+        -- aussi : c'est le petit bouton posé sur la recherche qui l'écrit.
+        filterStowed   = false,
 
         -- Sans ligne dans la page : sa case vit au pied du panneau de filtres,
         -- où l'on est quand on pense à lui. Un réglage quand même — coché, il
@@ -1091,6 +1149,7 @@ BUI:RegisterModule(MODULE, {
     OnDisable = function()
         stopCountdowns()
         if panel then panel:Hide() end
+        if stowButton then stowButton:Hide() end
         restoreResults()
     end,
 
@@ -1101,14 +1160,19 @@ BUI:RegisterModule(MODULE, {
             if not self:Get("queueTimer") then stopCountdowns() end
         end
 
+        -- Ranger ou ressortir n'éteint rien : les filtres continuent d'agir,
+        -- seul le panneau apparaît ou disparaît.
+        if key == "filterStowed" then
+            updatePanel(self)
+            return
+        end
+
         if key == nil or key == "filterPanel" or key == "hideDeclined" then
             local wantsAny = self:Get("filterPanel") or self:Get("hideDeclined")
 
-            if self:Get("filterPanel") then
-                updatePanel(self)
-            elseif panel then
-                panel:Hide()
-            end
+            -- `updatePanel` sait aussi cacher : panneau et bouton de rangement
+            -- s'éteignent par le même chemin qui les allume.
+            updatePanel(self)
 
             if wantsAny then
                 -- Une liste est peut-être déjà à l'écran : elle se relève et
