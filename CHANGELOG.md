@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.4 — 2026-08-25
+
 ### Ajouté
 - **Le panneau de filtres de la recherche de groupe se déplace et se range.**
   Il se déplace en le faisant glisser — la position, mémorisée comme un écart à
