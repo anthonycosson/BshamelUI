@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- **Le menu de téléportation nomme le donjon, pas la voie, pour les donjons à
+  article.** « Voie de la végétation florissante » s'affiche désormais « Le val
+  Aveuglant ». Le rapprochement passe par la description du sort, qui contracte
+  l'article du nom (« …du val Aveuglant ») : le nom entier de la carte ne s'y
+  retrouvait jamais. On cherche désormais le nom débarrassé de son article de
+  tête — la part qui survit à la contraction.
+
 ## 1.1.3 — 2026-08-22
 
 ### Corrigé

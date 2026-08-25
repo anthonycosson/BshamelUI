@@ -391,6 +391,11 @@ BUI:RegisterLocale("enUS", {
     -- Le français réunit toutes les familles sous « Voie » ; l'anglais nomme
     -- chacune autrement, d'où deux entrées ici.
     ["Teleport spell prefixes"]        = "Path,Timeway",
+    -- L'article initial des noms de donjon. Les descriptions de sort le
+    -- contractent ou l'élident (« du val Aveuglant ») : le nom d'une carte ne
+    -- s'y retrouve qu'une fois son article retiré. Même contrat que les
+    -- préfixes : une liste fausse ne coûte que des rapprochements en moins.
+    ["Dungeon name articles"]          = "The",
 
     -- Module Bags
     ["Sold junk"]                      = "Sold junk for %s.",

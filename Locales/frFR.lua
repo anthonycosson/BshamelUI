@@ -471,6 +471,10 @@ BUI:RegisterLocale("frFR", {
     -- temporelle. Un seul préfixe suffit donc, et il les prend toutes — y
     -- compris celles qu'une extension ajoutera.
     ["Teleport spell prefixes"]        = "Voie",
+    -- L'article initial des noms de donjon. Les descriptions de sort le
+    -- contractent ou l'élident (« du val Aveuglant ») : le nom d'une carte ne
+    -- s'y retrouve qu'une fois son article retiré.
+    ["Dungeon name articles"]          = "Le,La,Les,L'",
 
     -- Module Bags
     ["Bags and repairs"]               = "Sacs & Réparations",

@@ -2483,6 +2483,16 @@ liste écrite ici. Deux chemins, du plus sûr au plus large :
    même description contient. Aucune langue n'est écrite nulle part : c'est du
    texte du client comparé à du texte du client.
 
+**Le piège de l'article** — la carte se nomme avec son article (« Le val
+Aveuglant ») mais la phrase de la description le **contracte** (« Vous téléporte
+aux abords *du* val Aveuglant ») : le nom entier n'y figure jamais tel quel, et
+la recherche échouait sur tous les donjons à article — la ligne gardait le nom
+du sort (« Voie de la végétation florissante » au lieu du val Aveuglant). On
+cherche donc le nom **débarrassé de son article de tête**, la part qui survit à
+la contraction. Les articles sont des chaînes du client, rangées en locale
+(`Dungeon name articles`) comme les préfixes de familles, avec le même contrat :
+une liste fausse ne coûte que des rapprochements en moins.
+
 Une description **vide** n'est pas une réponse négative : le client charge celle
 d'un sort à la demande. On la réclame (`C_Spell.RequestLoadSpellData`) et on rend
 la main sans rien retenir, pour que la reconstruction suivante repose la

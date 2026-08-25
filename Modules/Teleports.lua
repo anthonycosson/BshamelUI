@@ -209,9 +209,11 @@ end
 --   1. la carte de mode défi publie parfois **son** sort de téléportation. Le
 --      lien est alors donné, il n'y a rien à interpréter ;
 --   2. sinon, la **description du sort** nomme le donjon (« Vous téléporte à
---      l'entrée de… »). On y cherche lequel des donjons connus est nommé. C'est
---      du texte du client comparé à du texte du client : aucune langue n'est
---      écrite ici, et une description muette ne fait que rendre la main.
+--      l'entrée de… »). On y cherche lequel des donjons connus est nommé —
+--      débarrassé de son article de tête, que la phrase contracte (voir
+--      `searchKey`). C'est du texte du client comparé à du texte du client :
+--      aucune langue n'est écrite ici, et une description muette ne fait que
+--      rendre la main.
 --
 -- Le nom du sort reste le dernier recours. Rien ne dépend donc de ce mécanisme :
 -- au pire, la ligne s'appelle comme avant.
@@ -225,9 +227,56 @@ local MAX_CHALLENGE_MAP = 1200
 --- sort de téléportation -> nom du donjon, quand le client publie le lien.
 local dungeonBySpell = {}
 
---- Tous les donjons connus, du nom le plus long au plus court : « Tazavesh : le
---- Gambit de So'leah » doit l'emporter sur « Tazavesh », que sa description
---- contient aussi.
+--- Articles par lesquels un nom de donjon peut commencer, en minuscules. Le
+--- client nomme ses cartes avec leur article (« Le val Aveuglant ») mais ses
+--- descriptions le contractent (« Vous téléporte aux abords **du** val
+--- Aveuglant ») : le nom entier n'y figure alors jamais tel quel, et la
+--- recherche échouait sur tous les donjons à article — la ligne gardait le nom
+--- du sort. On cherche donc le nom **sans** lui, la part qui survit à la
+--- contraction. Chaînes du client, rangées en locale comme les préfixes de
+--- familles, avec le même contrat : une liste fausse ne coûte que des
+--- rapprochements en moins.
+local articles = {}
+local articlesRead = false
+
+---@return string[]
+local function nameArticles()
+    if articlesRead then return articles end
+    articlesRead = true
+
+    local declared = L["Dungeon name articles"]
+    if type(declared) ~= "string" then return articles end
+
+    for article in declared:gmatch("[^,]+") do
+        article = strtrim(article):lower()
+        if article ~= "" then articles[#articles + 1] = article end
+    end
+    return articles
+end
+
+--- Ce qui se cherche de ce nom dans une description : minuscules, sans
+--- l'article de tête. Un article élidé (« L' ») colle au mot qu'il précède,
+--- les autres s'en séparent par une espace.
+---@param name string
+---@return string
+local function searchKey(name)
+    local key = name:lower()
+    local list = nameArticles()
+
+    for i = 1, #list do
+        local head = list[i]
+        if head:sub(-1) ~= "'" then head = head .. " " end
+        if key:sub(1, #head) == head then
+            return key:sub(#head + 1)
+        end
+    end
+    return key
+end
+
+--- Tous les donjons connus — `name` tel que le client l'affiche, `key` tel
+--- qu'il se cherche —, de la clé la plus longue à la plus courte :
+--- « tazavesh : le gambit de so'leah » doit l'emporter sur « tazavesh », que
+--- la même description contient aussi.
 local dungeonNames = {}
 
 local mapsScanned = false
@@ -245,12 +294,12 @@ local function scanChallengeMaps()
         -- `U.IsSecret` avant la comparaison, jamais après : une chaîne secrète a
         -- le type `string`, et c'est `~= ""` qui lèverait.
         if ok and type(name) == "string" and not U.IsSecret(name) and name ~= "" then
-            dungeonNames[#dungeonNames + 1] = name
+            dungeonNames[#dungeonNames + 1] = { name = name, key = searchKey(name) }
             if type(spell) == "number" then dungeonBySpell[spell] = name end
         end
     end
 
-    table.sort(dungeonNames, function(a, b) return #a > #b end)
+    table.sort(dungeonNames, function(a, b) return #a.key > #b.key end)
 end
 
 --- sort -> nom du donjon, ou `false` quand la question a été posée sans réponse.
@@ -292,8 +341,8 @@ local function dungeonName(spellID)
 
     local lowered = text:lower()
     for i = 1, #dungeonNames do
-        if lowered:find(dungeonNames[i]:lower(), 1, true) then
-            name = dungeonNames[i]
+        if lowered:find(dungeonNames[i].key, 1, true) then
+            name = dungeonNames[i].name
             break
         end
     end
