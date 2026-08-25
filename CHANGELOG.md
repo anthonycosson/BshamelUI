@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.5 — 2026-08-25
+
 ### Corrigé
 - **La carte du monde agrandie n'est plus tronquée.** Le module Fenêtres
   réimposait la position et l'échelle mémorisées — celles du mode fenêtre — sur
