@@ -4973,3 +4973,41 @@ du donjon, typiquement. Le point par où tous passent est `DisplayToast`.
 `Hide()`. `CloseActiveToasts` joue l'animation de sortie avec un délai nul et
 laisse la file continuer d'elle-même ; c'est un état que le client atteint à
 chaque toast congédié à la souris, donc sûr. Voir `Modules/Annoyances.lua`.
+
+---
+
+## Les plaques 12.1 disent la cible par deux textures, et leurs noms ne préviennent pas
+
+**Symptôme** — mode sombre des plaques allumé, « la barre de vie de l'add est
+toute noire ». La couleur, elle, était juste : la sonde (`/bui barre`, retirée)
+a relevé le violet miniboss sur la barre **et** sur son remplissage — et, sur
+le conteneur, deux textures teintes à `0.05, 0.05, 0.05`, le facteur des
+plaques :
+
+    conteneur tex2 | shown=true  | image=UI-HUD-Nameplates-Selected        | vertex=0.05…
+    conteneur tex3 | shown=false | image=ui-hud-nameplates-deselected-overlay | …
+
+**Cause** — le patch 12.1 (celui de la saison) a ajouté à la barre de vie des
+plaques une paire d'état absente de 12.0.5 (vérifié dans le miroir
+`Gethe/wow-ui-source`, `Blizzard_NamePlates.xml`) :
+
+- `selectedBorder` (atlas `UI-HUD-Nameplates-Selected`) — le liseré de la
+  **cible** ;
+- `deselectedOverlay` (atlas `ui-hud-nameplates-deselected-overlay`) — le
+  voile posé sur **toute** la barre des plaques non ciblées pour les éteindre.
+
+Le tri du Shade protège les états par clé publiée et par nom (`STATE_KEYS`) —
+« Highlight », « Glow »… Aucun des deux noms ne contient un de ces mots : ils
+tombaient dans l'habillage, et un voile clair multiplié par le facteur des
+plaques devient un couvercle noir. Le symptôme désigne la barre, jamais le
+voile posé dessus — même leçon que la lueur assombrie de `/bui glow`.
+
+**Ce qu'on fait** — les deux clés, telles quelles, dans `STATE_KEYS`
+(`UI/Shade.lua`) : elles protègent par clé publiée et par nom d'un coup.
+
+**La leçon durable** — à chaque refonte d'interface du client, les listes de
+protection par **nom** ont un train de retard : le patch qui ajoute une texture
+d'état sous un nom nouveau la livre au tri comme habillage. Quand un élément
+sombre « ne devrait pas l'être », relever les textures et leurs teintes (sonde
+ou `/bui glow`) avant de soupçonner les couleurs — une teinte `0.05` uniforme
+signe notre facteur, pas une couleur choisie.

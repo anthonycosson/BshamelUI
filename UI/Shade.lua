@@ -486,10 +486,19 @@ local STATE_TEXTURES = {
 --- « Border », ce qui la faisait classer dans l'habillage : elle sortait en écu
 --- noir, et le symptôme se raconte « quand un sort n'est pas interruptible,
 --- l'icône est en mode sombre ».
+--- `selectedBorder` et `deselectedOverlay` sont la paire d'état des plaques
+--- depuis 12.1 : le liseré qui marque la **cible**, et le voile que le client
+--- pose sur toute la barre des plaques **non ciblées** pour les éteindre. Ni
+--- « Highlight » ni « Glow » dans leurs noms : le tri les prenait pour de
+--- l'habillage, et au facteur des plaques le voile clair devenait un couvercle
+--- noir — « la barre de vie est toute noire », relevé en jeu par sonde sur
+--- l'add d'affixe (voir `dev/docs/API_NOTES.md`). Les deux sont du retour
+--- visuel : ils disent qui est ciblé, ils ne décorent rien.
 local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
                      "Highlight",
                      "HighLevelTexture",
-                     "BorderShield" }
+                     "BorderShield",
+                     "selectedBorder", "deselectedOverlay" }
 
 --- Fragments de nom d'un **cadre entier** qui signale au lieu de décorer.
 ---

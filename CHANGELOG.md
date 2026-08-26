@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- **Le mode sombre ne noircit plus les barres de vie des plaques.** Le patch de
+  la saison a ajouté aux plaques deux textures d'état — le liseré de la cible
+  et le voile qui éteint les plaques non ciblées — que le tri prenait pour de
+  l'habillage : assombri au facteur des plaques, le voile devenait un couvercle
+  noir sur la barre. Ces deux textures sont du retour visuel, elles ne se
+  teignent plus.
+
 ## 1.1.7 — 2026-08-26
 
 ### Ajouté
