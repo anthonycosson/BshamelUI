@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.6 — 2026-08-26
+
 ### Corrigé
 - **Les casters de la nouvelle saison retrouvent leur couleur.** Beaucoup de
   créatures des donjons récents arrivent sans classe renseignée, et le
