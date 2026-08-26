@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.7 — 2026-08-26
+
 ### Ajouté
 - **Nuisances peut faire taire la découverte des pierres d'accès.** Depuis la
   nouvelle saison, chaque boss de donjon tué annonce sa pierre d'accès par une
