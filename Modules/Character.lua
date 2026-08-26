@@ -101,11 +101,14 @@ local PLACEMENT = {
     FeetSlot     = "LEFT",  Finger0Slot = "LEFT",  Finger1Slot  = "LEFT",
     Trinket0Slot = "LEFT",  Trinket1Slot = "LEFT",
 
-    -- Les deux armes sont côte à côte sous le modèle, et chacune se range **vers
-    -- l'extérieur** : la main droite est celle de gauche à l'écran, sa colonne
-    -- part donc à gauche, et l'inverse pour la main gauche. Elles s'empilaient
-    -- au-dessus, faute de côté libre — sauf qu'un côté libre, elles en ont chacune
-    -- un : celui qui donne sur le vide, pas celui qui donne sur l'autre arme.
+    -- Les deux armes empilent leur colonne au-dessus de leur case (voir
+    -- `buildSlots`) ; leur entrée ici ne dit pas un côté de rangement mais leur
+    -- **côté libre** — celui qui donne sur le vide, pas sur l'autre arme. C'est
+    -- vers lui qu'une ligne plus large que l'icône déborde : la main droite est
+    -- à gauche de l'écran, son vide est à gauche, et l'inverse pour la main
+    -- gauche. Centrées, les deux lignes débordaient l'une vers l'autre et
+    -- s'écrivaient l'une sur l'autre. `levelLine` lit aussi cette entrée pour
+    -- ordonner « (rang) niveau » : le niveau reste ainsi contre la case.
     MainHandSlot = "LEFT", SecondaryHandSlot = "RIGHT",
 }
 
@@ -642,8 +645,12 @@ local function buildSlots(sheet)
                 -- deux pièces qu'on lit ensemble. Au-dessus, elles se
                 -- ressemblent, et la place est libre depuis que le niveau
                 -- d'objet du personnage est monté en tête de fiche.
+                --
+                -- Chacune passe son côté libre : sans lui, les deux lignes se
+                -- centrent sur des cases collées et débordent l'une sur l'autre.
                 info:SetPlacement(WEAPON_SLOTS[name] and "ABOVE"
-                                  or PLACEMENT[name] or "RIGHT", true)
+                                  or PLACEMENT[name] or "RIGHT", true,
+                                  WEAPON_SLOTS[name] and PLACEMENT[name] or nil)
                 sheet.slots[#sheet.slots + 1] = { id = slotID, name = name, info = info }
             end
 

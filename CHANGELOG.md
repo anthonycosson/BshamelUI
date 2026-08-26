@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Corrigé
+- **Les textes des deux armes ne se chevauchent plus sur la fiche de
+  personnage.** Le niveau et le rang de chaque arme s'écrivaient centrés
+  au-dessus de sa case ; les deux cases étant collées, les lignes débordaient
+  l'une sur l'autre. Chacune se cale désormais contre la frontière des deux
+  armes et déborde vers son côté libre.
+
 ## 1.1.6 — 2026-08-26
 
 ### Corrigé

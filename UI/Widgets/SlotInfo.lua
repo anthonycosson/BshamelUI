@@ -165,15 +165,31 @@ function W.SlotInfo(button)
     --- ne peut s'accrocher que par son bas — s'accrocher par le haut la ferait
     --- redescendre sur l'icône dès la deuxième ligne — et la ligne fixe est donc
     --- celle du bas (voir `arrange`).
+    ---
+    --- `side` ne vaut que pour `"ABOVE"` : le côté **libre** de la case, celui
+    --- vers lequel une ligne plus large que l'icône a le droit de déborder.
+    --- Centrée, elle déborde des deux côtés — et deux cases voisines qui
+    --- débordent l'une vers l'autre écrivent leurs textes l'un sur l'autre :
+    --- c'est ce que faisaient les deux armes. Calée contre le bord opposé au
+    --- côté libre, la ligne s'arrête à la frontière des deux cases.
     ---@param where string  "LEFT", "RIGHT" ou "ABOVE"
     ---@param top? boolean  accrocher par le haut plutôt que centrer
-    function info:SetPlacement(where, top)
+    ---@param side? string  pour "ABOVE" : "LEFT" ou "RIGHT", le côté libre
+    function info:SetPlacement(where, top, side)
         row:ClearAllPoints()
         self._upward = where == "ABOVE"
 
         if where == "ABOVE" then
-            self._edge = nil
-            row:SetPoint("BOTTOM", button, "TOP", 0, T.SIZE.SLOT_INFO_GAP)
+            if side == "LEFT" then
+                self._edge = "RIGHT"
+                row:SetPoint("BOTTOMRIGHT", button, "TOPRIGHT", 0, T.SIZE.SLOT_INFO_GAP)
+            elseif side == "RIGHT" then
+                self._edge = "LEFT"
+                row:SetPoint("BOTTOMLEFT", button, "TOPLEFT", 0, T.SIZE.SLOT_INFO_GAP)
+            else
+                self._edge = nil
+                row:SetPoint("BOTTOM", button, "TOP", 0, T.SIZE.SLOT_INFO_GAP)
+            end
         elseif where == "LEFT" then
             self._edge = "RIGHT"
             row:SetPoint(top and "TOPRIGHT" or "RIGHT", button,
