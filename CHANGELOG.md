@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.8 — 2026-08-27
+
 ### Corrigé
 - **Le mode sombre ne noircit plus les barres de vie des plaques.** Le patch de
   la saison a ajouté aux plaques deux textures d'état — le liseré de la cible
