@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Corrigé
+- **Les casters de la nouvelle saison retrouvent leur couleur.** Beaucoup de
+  créatures des donjons récents arrivent sans classe renseignée, et le
+  classement les prenait pour de la mêlée. Une élite au niveau du joueur dont
+  la ressource est le mana est désormais classée caster : le mana paie les
+  sorts, il est renseigné même quand la classe ne l'est pas.
+
 ## 1.1.5 — 2026-08-25
 
 ### Corrigé

@@ -1927,8 +1927,10 @@ end
 --- foudroient bien plus qu'elles ne frappent, et c'est ce qu'on cherche à
 --- repérer — qui interrompre, pas qui porte une arme.
 ---
---- Une créature sans classe rend `nil` : elle tombe alors en mêlée, ce qui est le
---- bon défaut — la plupart des mobs sans classe cognent.
+--- Une créature sans classe rend `nil`. Elle tombait alors en mêlée, et c'était
+--- le bon défaut — jusqu'à ce que les donjons récents livrent des casters
+--- entiers sans classe renseignée. La classe ne suffit donc plus : c'est la
+--- ressource qui rattrape ces mobs-là, voir `hasMana` ci-dessous.
 local CASTER_CLASSES = {
     MAGE    = true,
     PRIEST  = true,
@@ -1938,6 +1940,26 @@ local CASTER_CLASSES = {
     DRUID   = true,
     EVOKER  = true,
 }
+
+--- Le mana d'une créature dit qu'elle incante, même quand sa classe se tait.
+---
+--- La classe est un champ que quelqu'un remplit à la main, et les donjons de la
+--- saison d'août 2026 ont montré qu'il ne l'est plus systématiquement. La
+--- ressource, elle, n'est pas décorative : c'est elle qui paie les sorts du
+--- mob, et elle est donc toujours renseignée. Un mob dont la barre est du mana
+--- incante — quelques soigneurs de mêlée passeront pour des casters, et c'est
+--- le bon côté où se tromper (voir `dev/docs/API_NOTES.md`).
+---@param unit string
+---@return boolean
+local function hasMana(unit)
+    if UnitPowerType then
+        local power = UnitPowerType(unit)
+        return not U.IsSecret(power) and power == Enum.PowerType.Mana
+    elseif UnitHasPowerType then
+        return U.IsTrue(UnitHasPowerType(unit, Enum.PowerType.Mana))
+    end
+    return false
+end
 
 --- Niveau **effectif** d'une unité, celui que la mise à l'échelle lui donne.
 ---
@@ -2009,9 +2031,10 @@ local function classify(unit)
     end
 
     -- Une élite au niveau du joueur : du trash, et c'est le seul endroit où la
-    -- classe d'une créature veut dire quelque chose.
+    -- classe d'une créature veut dire quelque chose — quand elle est renseignée.
     local class = UnitClassBase and UnitClassBase(unit)
     if not U.IsSecret(class) and CASTER_CLASSES[class] then return "caster" end
+    if hasMana(unit) then return "caster" end
 
     return "melee"
 end

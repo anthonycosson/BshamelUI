@@ -170,6 +170,9 @@ read_globals = {
     -- Ressource de classe. `PowerBarColor` est la table où le client range la
     -- teinte de chacune : on la lit plutôt que d'en recopier sept (règle 2).
     "UnitPower", "UnitPowerMax", "PowerBarColor",
+    -- Type de ressource d'une créature : le mana signe un caster quand la
+    -- classe n'est pas renseignée (voir Modules/Nameplates.lua, `hasMana`).
+    "UnitPowerType", "UnitHasPowerType",
     -- Ressource personnelle : la vie du joueur, et l'abréviation du client —
     -- « 385 k » s'écrit comme lui l'écrit, pas comme nous l'aurions arrondi.
     -- Les deux `*Percent` rendent le pourcentage tout fait : l'arithmétique

@@ -76,6 +76,7 @@
     "UnitSelectionColor", "UnitClassification", "UnitLevel", "UnitEffectiveLevel",
     "UnitClassBase", "UnitIsBossMob", "UnitCanAttack", "UnitIsFriend",
     "UnitPower", "UnitPowerMax", "PowerBarColor",
+    "UnitPowerType", "UnitHasPowerType",
     "UnitHealth", "UnitHealthMax", "AbbreviateNumbers", "PersonalResourceDisplayFrame",
     "UnitHealthPercent", "UnitPowerPercent",
     "UnitThreatSituation", "GetSpecializationRole",

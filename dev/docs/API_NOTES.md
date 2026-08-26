@@ -4902,3 +4902,32 @@ de chez nous, il suffisait que des valeurs écrites par nous (hauteurs de
 lignes, `block.height`) soient relues par la passe du client pour la salir. La
 fonctionnalité a été retirée — il n'existe pas de façon sûre de réécrire une
 ligne du suivi d'objectifs.
+
+---
+
+## La classe d'une créature n'est plus toujours renseignée — le mana la remplace
+
+**Symptôme** — dans les donjons de la saison d'août 2026, beaucoup de casters de
+trash s'affichent en mêlée. Minibosses et boss restent justes : eux se classent
+au niveau, pas à la classe.
+
+**Cause** — la note « La classe d'une créature n'est fiable que sur une élite »
+(plus haut) reste vraie, mais son terrain a rétréci : le champ de classe que lit
+`UnitClassBase` n'est plus systématiquement rempli, même sur le trash de donjon
+où il l'était « avec soin ». Sur les créatures de la nouvelle saison, des
+casters entiers arrivent sans classe et tombaient dans notre repli mêlée. Ce
+n'est pas notre régression : Plater a eu le même symptôme et l'a corrigé le
+17 août 2026 (« Fixing caster recognition for unit type coloring »).
+
+**Ce qu'on fait** — le critère relevé chez Plater (lu pour identifier l'API,
+règle 8 — aucune ligne reprise) : **la ressource**. La barre de mana n'est pas
+décorative, c'est elle qui paie les sorts du mob, et elle est donc renseignée
+même quand la classe ne l'est pas. `UnitPowerType(unit) ==
+Enum.PowerType.Mana`, sous garde de secret, avec `UnitHasPowerType` en repli de
+capacité. Le test de classe reste en premier — là où le champ est rempli, il
+est plus précis — et le mana rattrape le reste (`hasMana`,
+`Modules/Nameplates.lua`).
+
+**Le compromis est connu** : un soigneur de mêlée à mana passera pour un
+caster. C'est le bon côté où se tromper — une couleur de trop se voit, un
+caster invisible ne s'interrompt pas.
