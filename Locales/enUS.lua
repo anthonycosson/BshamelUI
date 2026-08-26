@@ -283,6 +283,10 @@ BUI:RegisterLocale("enUS", {
     ["Hide talking heads tip"]         = "Hides the talking head frame that pops up during quests and dungeons.",
     ["Hide Lua errors"]                = "Hide Lua errors",
     ["Hide Lua errors tip"]            = "Suppresses the error popup. Errors are still reported to error handlers.",
+    ["Hide waystone discoveries"]      = "Hide waystone discoveries",
+    ["Hide waystone discoveries tip"] =
+        "Silences the banner announcing the waystone after each dungeon boss. "
+        .. "The stone itself still appears and works.",
 
 
     -- Module Character

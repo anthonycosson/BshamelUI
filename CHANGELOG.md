@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Ajouté
+- **Nuisances peut faire taire la découverte des pierres d'accès.** Depuis la
+  nouvelle saison, chaque boss de donjon tué annonce sa pierre d'accès par une
+  bannière plein écran. Une case la congédie par le geste du clic droit du
+  client, à l'instant où elle s'ouvre — la pierre elle-même apparaît et
+  fonctionne toujours, et les autres bannières ne sont pas touchées.
+
 ### Corrigé
 - **Les textes des deux armes ne se chevauchent plus sur la fiche de
   personnage.** Le niveau et le rang de chaque arme s'écrivaient centrés

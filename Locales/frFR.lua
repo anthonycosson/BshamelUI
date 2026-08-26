@@ -290,6 +290,10 @@ BUI:RegisterLocale("frFR", {
     ["Hide Lua errors"]                = "Masquer les erreurs Lua",
     ["Hide Lua errors tip"] =
         "Supprime la fenêtre d'erreur. Les erreurs restent transmises aux gestionnaires d'erreurs.",
+    ["Hide waystone discoveries"]      = "Masquer la découverte des pierres d'accès",
+    ["Hide waystone discoveries tip"] =
+        "Fait taire la bannière qui annonce la pierre d'accès après chaque boss de donjon. "
+        .. "La pierre elle-même apparaît et fonctionne toujours.",
 
 
     -- Module Character

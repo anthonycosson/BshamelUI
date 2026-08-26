@@ -2,15 +2,16 @@
 --  Bshamel UI — Modules/Annoyances.lua
 --  Ce que le jeu impose et qu'on préfère ne pas voir.
 --
---  Trois choses sans rapport technique, et une seule raison de les rassembler :
+--  Quatre choses sans rapport technique, et une seule raison de les rassembler :
 --  ce sont les réglages qu'on cherche en se disant « comment je fais taire
---  ça ? ». Elles vivaient dans *Général*, qui n'était pas cet endroit-là.
---  Un palier de migration (`Core/DB.lua`) suit les réglages de ceux qui les
---  avaient changés.
+--  ça ? ». Les trois premières vivaient dans *Général*, qui n'était pas cet
+--  endroit-là. Un palier de migration (`Core/DB.lua`) suit les réglages de ceux
+--  qui les avaient changés.
 --
 --  Réversibilité (règle 6) : la CVar des erreurs Lua retrouve sa valeur d'origine,
---  et les deux hooks de touches passent par `U.GuardedScript`, donc deviennent
---  inertes dès que le module s'éteint. Rien n'est laissé derrière.
+--  les deux hooks de touches passent par `U.GuardedScript` et celui des toasts
+--  par `U.GuardedHook`, donc tous deviennent inertes dès que le module s'éteint.
+--  Rien n'est laissé derrière.
 -- =========================================================================
 
 local _, ns = ...
@@ -205,6 +206,65 @@ local function hideTalkingHead(mod)
 end
 
 -- =========================================================================
+--  Pierres d'accès
+-- =========================================================================
+-- Chaque boss de donjon tué « découvre » une pierre d'accès — le point de
+-- contrôle où l'on ressuscite et se téléporte — et le serveur l'annonce par une
+-- bannière plein écran, à chaque boss, sans réglage pour la taire.
+--
+-- L'annonce est un **toast d'événement** : le serveur pousse une entrée dans la
+-- file de `EventToastManagerFrame`, qui l'affiche sur `DISPLAY_EVENT_TOASTS`.
+-- Son identité stable est son `eventToastID`, relevé en jeu par sonde (voir
+-- `dev/docs/API_NOTES.md`) : le libellé change avec la langue, l'identifiant
+-- non. Le toast du début de donjon (« Le val Aveuglant », ID 5) et tous les
+-- autres passent sans être touchés.
+
+--- L'annonce « Découverte : pierre d'accès », et elle seule.
+local WAYSTONE_TOAST_ID = 288
+
+--- Ferme l'annonce de pierre d'accès à l'instant où elle s'ouvre.
+---
+--- Appelée juste après `DisplayToast` du client, donc quand le toast à juger
+--- est en place mais pas encore peint : le fermer ici ne laisse rien à voir.
+---
+--- Le geste est **celui du clic droit du client**, repris à l'identique
+--- (`EventToastManagerFrameMixin:OnMouseDown`) : `CloseActiveToasts` puis
+--- `Hide`. C'est un état que le client atteint lui-même à chaque toast
+--- congédié — sa file continue proprement — et c'est aussi pourquoi il n'y a
+--- rien à restaurer : hook inerte, l'annonce revient.
+local function muzzleWaystoneToast()
+    local frame = EventToastManagerFrame
+    local toast = frame and frame.currentDisplayingToast
+    local info  = toast and toast.toastInfo
+    local id    = info and info.eventToastID
+
+    -- Garde de secret avant toute comparaison, comme partout : un identifiant
+    -- protégé vaut « pas le nôtre », et l'annonce s'affiche plutôt que de lever.
+    if U.IsSecret(id) or id ~= WAYSTONE_TOAST_ID then return end
+
+    if frame.CloseActiveToasts then frame:CloseActiveToasts() end
+    frame:Hide()
+end
+
+--- Pose le hook sur l'affichage des toasts, une fois pour toutes.
+---
+--- Sur l'affichage et non sur `DISPLAY_EVENT_TOASTS` : l'événement n'accompagne
+--- que le **premier** toast d'une salve. Ceux qui attendent en file — la pierre
+--- d'accès derrière l'annonce du donjon, par exemple — s'affichent quand le
+--- précédent se termine, sans nouvel événement, et un abonnement les aurait
+--- laissés passer. `DisplayToast` est le point par où tous sortent.
+---
+--- `U.GuardedHook` est le seul motif autorisé pour un hook (règle 6) : posé une
+--- fois, il devient inerte quand le module ou l'option s'éteint.
+---@param mod table
+local function hookWaystoneToast(mod)
+    if not EventToastManagerFrame then return end
+
+    U.GuardedHook(EventToastManagerFrame, "DisplayToast", muzzleWaystoneToast,
+        function() return mod:IsEnabled() and mod:Get("hideWaystoneToast") end)
+end
+
+-- =========================================================================
 --  Déclaration du module
 -- =========================================================================
 
@@ -214,9 +274,10 @@ BUI:RegisterModule(MODULE, {
     order    = 90,
 
     defaults = {
-        skipCinematics  = false,
-        hideTalkingHead = false,
-        hideLuaErrors   = false,
+        skipCinematics    = false,
+        hideTalkingHead   = false,
+        hideLuaErrors     = false,
+        hideWaystoneToast = false,
     },
 
     -- Pas d'intitulé de section : la page s'appelle déjà « Nuisances », et le
@@ -239,6 +300,12 @@ BUI:RegisterModule(MODULE, {
             key     = "hideLuaErrors",
             text    = L["Hide Lua errors"],
             tooltip = L["Hide Lua errors tip"],
+        },
+        {
+            type    = "toggle",
+            key     = "hideWaystoneToast",
+            text    = L["Hide waystone discoveries"],
+            tooltip = L["Hide waystone discoveries tip"],
         },
     },
 
@@ -263,6 +330,8 @@ BUI:RegisterModule(MODULE, {
             skipMovie(self)
         end)
         self:RegisterEvent("TALKINGHEAD_REQUESTED", function() hideTalkingHead(self) end)
+
+        hookWaystoneToast(self)
     end,
 
     OnDisable = function()

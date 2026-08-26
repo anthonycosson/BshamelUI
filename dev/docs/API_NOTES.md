@@ -4931,3 +4931,45 @@ est plus précis — et le mana rattrape le reste (`hasMana`,
 **Le compromis est connu** : un soigneur de mêlée à mana passera pour un
 caster. C'est le bon côté où se tromper — une couleur de trop se voit, un
 caster invisible ne s'interrompt pas.
+
+---
+
+## L'annonce de pierre d'accès est un toast d'événement, et il se nomme par son ID
+
+**Symptôme** — depuis la saison d'août 2026, chaque boss de donjon tué fait
+« découvrir » une pierre d'accès (point de résurrection et de téléportation,
+sort 1228297) et le serveur l'annonce par une bannière plein écran. À chaque
+boss, sans réglage client pour la taire — le mot « Waystone » n'apparaît même
+pas dans le code de l'interface.
+
+**Comment on l'a identifiée** — sonde SavedVariables (`/bui waystone`,
+retirée) sur `DISPLAY_EVENT_TOASTS`, un boss tué en donjon, relevé lu dans WTF :
+
+    toast | eventToastID=288 | eventType=18 (SpellScript) | displayType=6 (Scenario)
+          | title=Découverte | subtitle=Pierre d'accès
+          | uiTextureKit=evergreen-scenario | link=…|Hspell:1228297|h…
+
+**Ce que le relevé enseigne** :
+
+- l'annonce passe par `EventToastManagerFrame` (`Blizzard_FrameXML/
+  EventToastManager.lua`), l'afficheur générique des bannières « Découverte » ;
+- son identité stable est **`eventToastID` (288 pour la pierre d'accès)** — le
+  titre et le sous-titre changent avec la langue du client, l'ID non. Le toast
+  du début de donjon (« Le val Aveuglant ») porte l'ID 5 : filtrer par ID ne
+  touche que ce qu'on vise ;
+- le toast courant se lit dans `EventToastManagerFrame.currentDisplayingToast
+  .toastInfo`, posé par `DisplayToast` **avant** le premier rendu : agir dans un
+  post-hook de `DisplayToast` ne laisse rien paraître à l'écran.
+
+**Le piège de l'événement** — `DISPLAY_EVENT_TOASTS` n'accompagne que le
+**premier** toast d'une salve : `OnEvent` du client ne fait rien si un toast
+s'affiche déjà, et les suivants sortent de la file par `ToastingEnded` →
+`DisplayToast`, sans nouvel événement. Un abonnement à l'événement rate donc
+tout toast qui attend derrière un autre — la pierre d'accès derrière l'annonce
+du donjon, typiquement. Le point par où tous passent est `DisplayToast`.
+
+**Le geste propre pour en congédier un** — celui du clic droit du client
+(`EventToastManagerFrameMixin:OnMouseDown`) : `CloseActiveToasts()` puis
+`Hide()`. `CloseActiveToasts` joue l'animation de sortie avec un délai nul et
+laisse la file continuer d'elle-même ; c'est un état que le client atteint à
+chaque toast congédié à la souris, donc sûr. Voir `Modules/Annoyances.lua`.

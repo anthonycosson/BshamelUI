@@ -48,6 +48,7 @@
     "CinematicFrame_CancelCinematic", "GameMovieFinished",
     "CinematicFrame", "MovieFrame", "StopCinematic", "CanCancelScene", "CancelScene",
     "TalkingHeadFrame", "TalkingHeadFrame_CloseImmediately",
+    "EventToastManagerFrame",
     "CanMerchantRepair", "GetRepairAllCost", "CanGuildBankRepair", "RepairAllItems",
     "GetMoney", "GetCoinTextureString",
     "GetMaxBattlefieldID", "GetBattlefieldStatus", "GetBattlefieldPortExpiration",

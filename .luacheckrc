@@ -130,6 +130,9 @@ read_globals = {
     "CinematicFrame_CancelCinematic", "GameMovieFinished",
     "CinematicFrame", "MovieFrame", "StopCinematic", "CanCancelScene", "CancelScene",
     "TalkingHeadFrame", "TalkingHeadFrame_CloseImmediately",
+    -- L'afficheur des toasts d'événement : la bannière des pierres d'accès
+    -- s'y ferme par le geste du clic droit (voir Modules/Annoyances.lua).
+    "EventToastManagerFrame",
 
     -- Chat
     "NUM_CHAT_WINDOWS", "ChatTypeInfo", "ChangeChatColor",
