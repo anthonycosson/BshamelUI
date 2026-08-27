@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.10 — 2026-08-27
+
 ### Corrigé
 - **Le bouton de sortie de véhicule n'est plus noirci par le mode sombre.** Sa
   texture « normale » n'est pas l'anneau d'une case mais tout son visage — la
