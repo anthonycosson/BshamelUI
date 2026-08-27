@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- **Le mode sombre ne noircit plus le bouclier d'absorption des plaques.** Sur
+  un mob à gros bouclier — l'add de l'affixe de la semaine, typiquement — la
+  texture d'absorption couvre toute la barre de vie, et le mode sombre la
+  teignait comme de l'habillage : la barre paraissait entièrement noire. Le
+  bouclier et les prévisions de soins sont du retour visuel, ils ne se
+  teignent plus.
+
 ## 1.1.8 — 2026-08-27
 
 ### Corrigé

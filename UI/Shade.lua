@@ -490,15 +490,23 @@ local STATE_TEXTURES = {
 --- depuis 12.1 : le liseré qui marque la **cible**, et le voile que le client
 --- pose sur toute la barre des plaques **non ciblées** pour les éteindre. Ni
 --- « Highlight » ni « Glow » dans leurs noms : le tri les prenait pour de
---- l'habillage, et au facteur des plaques le voile clair devenait un couvercle
---- noir — « la barre de vie est toute noire », relevé en jeu par sonde sur
---- l'add d'affixe (voir `dev/docs/API_NOTES.md`). Les deux sont du retour
---- visuel : ils disent qui est ciblé, ils ne décorent rien.
+--- l'habillage et les assombrissait au facteur des plaques.
+---
+--- `totalAbsorb`, son `totalAbsorbOverlay` et les deux prévisions de soins sont
+--- le **bouclier d'absorption** et les soins en route, dessinés par-dessus le
+--- remplissage de la barre de vie. Ce ne sont pas des textures d'habillage :
+--- elles disent combien de bouclier il reste. Assombries, elles couvraient la
+--- barre d'un couvercle noir — sur les seuls mobs à bouclier, l'add d'affixe en
+--- tête, ce qui faisait accuser sa couleur. La preuve est dans le relevé de la
+--- sonde : leur frère `overAbsorbGlow` porte « Glow » dans son nom, lui seul
+--- était protégé, lui seul était resté blanc (voir `dev/docs/API_NOTES.md`).
 local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
                      "Highlight",
                      "HighLevelTexture",
                      "BorderShield",
-                     "selectedBorder", "deselectedOverlay" }
+                     "selectedBorder", "deselectedOverlay",
+                     "totalAbsorb", "totalAbsorbOverlay",
+                     "myHealPrediction", "otherHealPrediction" }
 
 --- Fragments de nom d'un **cadre entier** qui signale au lieu de décorer.
 ---

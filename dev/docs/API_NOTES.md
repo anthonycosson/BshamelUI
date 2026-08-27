@@ -5005,9 +5005,28 @@ voile posé dessus — même leçon que la lueur assombrie de `/bui glow`.
 **Ce qu'on fait** — les deux clés, telles quelles, dans `STATE_KEYS`
 (`UI/Shade.lua`) : elles protègent par clé publiée et par nom d'un coup.
 
+**Le premier correctif n'a pas suffi, et le relevé disait déjà pourquoi.** La
+barre restait noire — mais **sur le seul add d'affixe**, détail qui écarte à
+lui seul toute texture présente sur chaque plaque. Ce que l'add a en propre :
+un **bouclier d'absorption**. `totalAbsorb` (`Interface\RaidFrame\Shield-Fill`,
+fichier 798064) et `totalAbsorbOverlay` (798065) se dessinent par-dessus le
+remplissage, sur toute la largeur que le bouclier couvre — la barre entière
+quand il est plein. Teintes à `0.05`, elles la couvraient de noir ; les mobs
+sans bouclier, eux, n'affichaient rien et semblaient sains.
+
+**La preuve était dans le relevé dès le premier jour** : leur frère
+`overAbsorbGlow` (`Shield-Overshield`, 898250) y figure en `vertex=1,1,1` —
+le seul du groupe dont le nom contient « Glow », donc le seul que `STATE_KEYS`
+protégeait déjà. Un seul frère clair au milieu de voisins à `0.05` désigne la
+liste de protection, pas les couleurs. `totalAbsorb`, `totalAbsorbOverlay` et
+les deux prévisions de soins (`myHealPrediction`, `otherHealPrediction`,
+fichier 137014) ont rejoint `STATE_KEYS`.
+
 **La leçon durable** — à chaque refonte d'interface du client, les listes de
 protection par **nom** ont un train de retard : le patch qui ajoute une texture
 d'état sous un nom nouveau la livre au tri comme habillage. Quand un élément
 sombre « ne devrait pas l'être », relever les textures et leurs teintes (sonde
 ou `/bui glow`) avant de soupçonner les couleurs — une teinte `0.05` uniforme
-signe notre facteur, pas une couleur choisie.
+signe notre facteur, pas une couleur choisie. Et quand un symptôme ne touche
+que **certains** porteurs d'un même cadre, chercher ce que ces porteurs
+affichent **en plus**, pas ce que tous partagent.
