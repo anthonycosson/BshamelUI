@@ -529,8 +529,18 @@ local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
 --- gain et à la perte. Il ne décore rien, il ponctue — et sa texture de flash
 --- ne porte pas « Glow » dans son nom, elle échapperait donc au tri texture par
 --- texture.
+---
+--- « AbsorbBar », « HealPredictionBar », « ManaCostPrediction » : les segments
+--- que les cadres d'unités posent **par-dessus** leurs barres — bouclier
+--- d'absorption, absorption de soins, soins en route, coût du sort en cours.
+--- Sur les plaques ce sont des textures (voir `STATE_KEYS`) ; sur le cadre de
+--- cible ce sont des cadres entiers (`TotalAbsorbBar` et ses frères, chacun
+--- portant `Fill` et `TiledFillOverlay`), et c'est donc ici qu'ils s'écartent.
+--- Assombri, le bouclier de l'add d'affixe couvrait de noir la barre de vie du
+--- cadre de cible — même mob, même semaine, autre porteur que les plaques.
 local SIGNAL_FRAMES = { "Glow", "Alert", "Proc", "Highlight", "Assisted",
-                        "Feedback" }
+                        "Feedback",
+                        "AbsorbBar", "HealPredictionBar", "ManaCostPrediction" }
 
 --- Les ressources de classe du client, enfants du cadre du joueur et donc
 --- croisées par son parcours. **On ne les visite pas** : même doctrine que les

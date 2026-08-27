@@ -2,6 +2,14 @@
 
 ## Non publié
 
+### Corrigé
+- **Le mode sombre ne noircit plus le bouclier d'absorption sur le cadre de la
+  cible.** Même défaut que sur les plaques en 1.1.9, autre porteur : sur le
+  cadre de cible, le bouclier, l'absorption de soins et les soins en route sont
+  des cadres posés par-dessus la barre de vie, et le parcours les assombrissait.
+  Face à un mob à gros bouclier, la barre du cadre de cible paraissait noire.
+  Ces segments sont du retour visuel, ils ne se teignent plus.
+
 ## 1.1.10 — 2026-08-27
 
 ### Corrigé

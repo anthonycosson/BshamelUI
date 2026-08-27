@@ -5030,3 +5030,15 @@ ou `/bui glow`) avant de soupçonner les couleurs — une teinte `0.05` uniforme
 signe notre facteur, pas une couleur choisie. Et quand un symptôme ne touche
 que **certains** porteurs d'un même cadre, chercher ce que ces porteurs
 affichent **en plus**, pas ce que tous partagent.
+
+**Le même état change de forme d'un cadre à l'autre.** Le bouclier
+d'absorption est une **texture** sur les plaques (`totalAbsorb`, clé de
+`STATE_KEYS`) mais un **cadre entier** sur le cadre de cible
+(`TotalAbsorbBar`, avec `MyHealPredictionBar`, `OtherHealPredictionBar` et
+`HealAbsorbBar` — chacun portant `Fill` et `TiledFillOverlay`, des noms qui ne
+disent rien). Protéger la texture n'a donc pas protégé le cadre de cible : le
+même mob à bouclier y gardait sa barre noire. Les segments s'écartent par
+`SIGNAL_FRAMES` (« AbsorbBar », « HealPredictionBar », « ManaCostPrediction »),
+qui arrête le parcours à leur porte. Corollaire : une protection posée pour un
+état doit se chercher **sur chaque cadre qui l'affiche**, la forme n'est pas
+portable.
