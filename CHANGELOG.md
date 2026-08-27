@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.9 — 2026-08-27
+
 ### Corrigé
 - **Le mode sombre ne noircit plus le bouclier d'absorption des plaques.** Sur
   un mob à gros bouclier — l'add de l'affixe de la semaine, typiquement — la
