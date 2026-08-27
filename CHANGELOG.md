@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.11 — 2026-08-27
+
 ### Corrigé
 - **Le mode sombre ne noircit plus le bouclier d'absorption sur le cadre de la
   cible.** Même défaut que sur les plaques en 1.1.9, autre porteur : sur le
