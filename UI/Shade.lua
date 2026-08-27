@@ -97,12 +97,18 @@ end
 
 --- élément -> noms globaux des cadres du client.
 local FRAMES = {
+    -- `MainMenuBarVehicleLeaveButton` a vécu dans cette liste, et c'était une
+    -- erreur de classement : sur un bouton d'action, la texture normale est
+    -- l'anneau de la case — de l'habillage — mais sur lui elle est **tout son
+    -- visage**, la flèche rouge de sortie de véhicule. Assombrie au facteur des
+    -- barres, elle devenait un disque noir. Même précédent que la croix de
+    -- l'infobulle de lien (`SPARE_BUTTONS`) : un bouton dont la face entière
+    -- dit « cliquez-moi » ne se teint pas, on ne le visite pas du tout.
     actionBars = {
         "MainMenuBar", "MainMenuBarArtFrame",
         "MultiBarBottomLeft", "MultiBarBottomRight", "MultiBarRight", "MultiBarLeft",
         "MultiBar5", "MultiBar6", "MultiBar7",
         "StanceBar", "PetActionBar", "PossessActionBar",
-        "MainMenuBarVehicleLeaveButton",
     },
 
     -- La barre véhicule, à part des autres barres : même case de réglage, autre

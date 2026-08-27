@@ -2,6 +2,12 @@
 
 ## Non publié
 
+### Corrigé
+- **Le bouton de sortie de véhicule n'est plus noirci par le mode sombre.** Sa
+  texture « normale » n'est pas l'anneau d'une case mais tout son visage — la
+  flèche rouge de sortie — et le mode sombre la teignait comme l'habillage des
+  barres d'action. Il garde désormais son apparence d'origine.
+
 ## 1.1.9 — 2026-08-27
 
 ### Corrigé
