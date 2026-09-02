@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 1.1.12 — 2026-09-02
+
 ### Ajouté
 - **Clés mythiques : ne garder que la clé dans le suivi d'objectifs.** Pendant
   une clé, le suivi ne montre plus que le chrono, les boss et les troupes ; la
