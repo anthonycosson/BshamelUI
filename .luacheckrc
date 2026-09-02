@@ -249,6 +249,9 @@ read_globals = {
     "C_ChallengeMode", "C_MythicPlus", "NUM_BAG_SLOTS",
     "GetCursorInfo", "ClearCursor",
     "ScenarioObjectiveTracker", "CHALLENGE_MODE_POWER_LEVEL",
+    -- Le suivi d'objectifs lui-même : c'est lui qui tient la liste de ses
+    -- modules, et donc de tout ce qu'on cache pendant une clé.
+    "ObjectiveTrackerFrame",
     "GetWorldElapsedTimers", "GetWorldElapsedTime",
     "C_Scenario", "C_ScenarioInfo",
     -- Style de tiret et jeu de teintes d'une ligne du suivi d'objectifs : les

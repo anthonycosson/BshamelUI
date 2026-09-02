@@ -509,6 +509,11 @@ BUI:RegisterLocale("frFR", {
         "Place votre clé dans la fontaine de puissance dès qu'elle s'ouvre. Une clé déjà posée "
         .. "par quelqu'un d'autre n'est pas touchée.",
     ["No keystone"]                    = "Pas de clé.",
+    ["Objective tracker"]              = "Suivi d'objectifs",
+    ["Key timer only"]                 = "Ne garder que la clé dans le suivi",
+    ["Key timer only tip"] =
+        "Pendant une clé, masque tout le reste du suivi d'objectifs : campagne, quêtes, hauts "
+        .. "faits, métiers. Tout revient à la fin de la clé.",
     ["Dungeon dialogue"]               = "Dialogues de donjon",
     ["Auto dungeon gossip"]            = "Parler aux PNJ à votre place",
     ["Auto dungeon gossip tip"] =

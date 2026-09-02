@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Ajouté
+- **Clés mythiques : ne garder que la clé dans le suivi d'objectifs.** Pendant
+  une clé, le suivi ne montre plus que le chrono, les boss et les troupes ; la
+  campagne, les quêtes, les hauts faits et les métiers sont masqués. Tout revient
+  à la fin de la clé, et rien n'est déplacé — les cadres sont cachés, aucune mise
+  en page du suivi n'est redemandée.
+
 ## 1.1.11 — 2026-08-27
 
 ### Corrigé

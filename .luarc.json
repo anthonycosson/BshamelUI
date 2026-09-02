@@ -110,7 +110,7 @@
 
     "C_MythicPlus", "NUM_BAG_SLOTS", "GetCursorInfo", "ClearCursor",
     "GetWorldElapsedTimers", "GetWorldElapsedTime",
-    "ScenarioObjectiveTracker", "CHALLENGE_MODE_POWER_LEVEL",
+    "ScenarioObjectiveTracker", "ObjectiveTrackerFrame", "CHALLENGE_MODE_POWER_LEVEL",
     "C_Scenario", "C_ScenarioInfo",
     "OBJECTIVE_DASH_STYLE_HIDE", "OBJECTIVE_TRACKER_COLOR",
 

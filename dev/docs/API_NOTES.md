@@ -4905,6 +4905,54 @@ ligne du suivi d'objectifs.
 
 ---
 
+## Cacher une partie du suivi d'objectifs sans jamais le remettre en page
+
+**Ce qu'on veut** — pendant une clé mythique, ne garder dans le suivi que le
+module de scénario (chrono, boss, troupes) et taire tout le reste : campagne,
+quêtes, hauts faits, métiers.
+
+**Ce qu'on ne fait pas** — `container:RemoveModule(module)` est pourtant la
+fonction prévue pour ça, et c'est précisément ce qui l'interdit : elle finit par
+`MarkDirty`, donc une passe de mise en page programmée depuis **notre** pile. En
+combat, cette passe est refusée à `ManageFramePositions()` et le drapeau « sale »
+reste levé pour la session (voir la note précédente). Un réglage de confort ne
+vaut pas un suivi gelé.
+
+**Ce qu'on fait** — on cache les cadres, et rien d'autre. Cacher un cadre ne
+relève d'aucune mise en page : le conteneur continue de réserver la place du
+module (`GetContentsHeight` se lit sur son état, pas sur sa visibilité), et comme
+`ScenarioObjectiveTracker` est le **premier** module
+(`ObjectiveTrackerManager:Init`), ce qui reste est du vide sous la clé, jamais un
+trou au milieu. Le fond du suivi étant transparent, ce vide ne se voit pas.
+
+**Où poser le hook — et pas sur le suivi.**
+`ObjectiveTrackerContainerMixin:OnLoad` fait :
+
+```lua
+self:SetDirtyMethod(GenerateClosure(self.Update, self, dirtyUpdate));
+```
+
+`GenerateClosure` capture la **valeur** de `self.Update` au chargement. Le chemin
+normal — se salir, puis se mettre en page à la frame suivante — appelle donc
+cette référence-là, et un `hooksecurefunc(ObjectiveTrackerFrame, "Update", …)`
+posé après coup n'est jamais vu. Seuls les appels directs (`UpdateAll`,
+`SetCollapsed`) passeraient par le champ.
+
+Les **modules**, eux, sont appelés par leur champ à chaque passe
+(`module:Update(availableHeight, dirtyUpdate)`) : c'est là qu'on se pose, un hook
+par module, et le module se recache après chaque passe qui l'avait montré.
+
+**Un module en train de glisser ne se cache pas.** `ObjectiveTrackerModuleMixin:OnHide`
+appelle `EndSlide`, qui rend la main au module (`OnEndSlide`) : on saute le
+passage tant que `IsSliding()` est vrai, la passe suivante le reprendra.
+
+**Rendre, c'est refaire ce que fait `EndLayout`** — `module:SetShown(module:IsDisplayable()
+and not container:IsCollapsed())` — et surtout pas redemander une passe. C'est ce
+que fait l'extinction du module, où la case peut être encore cochée et la clé
+encore en cours.
+
+---
+
 ## La classe d'une créature n'est plus toujours renseignée — le mana la remplace
 
 **Symptôme** — dans les donjons de la saison d'août 2026, beaucoup de casters de

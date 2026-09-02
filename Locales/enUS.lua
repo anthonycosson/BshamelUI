@@ -521,6 +521,11 @@ BUI:RegisterLocale("enUS", {
         "Puts your keystone into the font of power as soon as it opens. A keystone already "
         .. "slotted by someone else is left alone.",
     ["No keystone"]                    = "No keystone.",
+    ["Objective tracker"]              = "Objective tracker",
+    ["Key timer only"]                 = "Keep only the key in the tracker",
+    ["Key timer only tip"] =
+        "While a keystone is running, hides everything else from the objective tracker: "
+        .. "campaign, quests, achievements, professions. It all comes back when the key ends.",
     ["Dungeon dialogue"]               = "Dungeon dialogue",
     ["Auto dungeon gossip"]            = "Talk to dungeon NPCs for you",
     ["Auto dungeon gossip tip"] =

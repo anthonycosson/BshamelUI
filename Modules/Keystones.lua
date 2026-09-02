@@ -265,6 +265,117 @@ local function autoGossip(mod)
 end
 
 -- =========================================================================
+--  Le suivi d'objectifs pendant une clé
+-- =========================================================================
+-- En donjon, le suivi d'objectifs porte le chrono de la clé, la liste des boss
+-- et le décompte des troupes — et, sous tout cela, la campagne, les hauts faits
+-- et les quêtes ramassées en chemin. Une clé se court en regardant ce coin de
+-- l'écran : ce qui n'est pas la clé y est du bruit, et le bruit y est en bas de
+-- ce qu'on lit.
+--
+-- **On ne redemande jamais de passe de mise en page.** Ni `MarkDirty`, ni
+-- `RemoveModule` qui en programme une : une passe partie de notre pile et
+-- refusée en combat laisse le drapeau « sale » levé, et le suivi ne se remet
+-- plus en page de la session — `/reload` pour seul remède. C'est arrivé deux
+-- fois (voir `dev/docs/API_NOTES.md`, « Le suivi d'objectifs ne se répare
+-- pas »). Tout ce qui suit se contente donc de **cacher des cadres**, ce qui ne
+-- relève d'aucune mise en page, et de le refaire après chaque passe du client.
+--
+-- Rien n'est déplacé pour autant : le module de scénario est le premier du
+-- suivi (`ObjectiveTrackerManager:Init`), donc cacher les autres laisse du vide
+-- sous lui, jamais un trou au milieu. Ce vide ne se voit pas — le fond du suivi
+-- est transparent.
+
+--- Faut-il taire le reste du suivi à cet instant ?
+---
+--- Une clé qui tourne, et rien d'autre : hors donjon mythique+, un réglage de
+--- clé n'a pas à décider de ce que montre le suivi d'objectifs.
+---@param mod table
+---@return boolean
+local function hushTracker(mod)
+    if not mod:Get("keyTimerOnly") then return false end
+    if not (C_ChallengeMode and C_ChallengeMode.GetActiveChallengeMapID) then return false end
+    return C_ChallengeMode.GetActiveChallengeMapID() ~= nil
+end
+
+--- Cache ce module du suivi, ou le rend au client.
+---
+--- `hush` arrive en argument et ne se relit pas ici : à l'extinction du module,
+--- la case peut être encore cochée et la clé encore en cours, et c'est pourtant
+--- le suivi entier qu'il faut rendre.
+---@param hush boolean
+---@param tracked table
+local function focusModule(hush, tracked)
+    if hush then
+        -- Un module en train de glisser se cacherait au milieu de son
+        -- glissement : `OnHide` appelle `EndSlide`, qui rend la main au module
+        -- et peut le resalir. On le laisse finir — la passe suivante le
+        -- reprendra, et une passe suivante il y en a toujours une tant qu'un
+        -- glissement est en cours.
+        if tracked.IsSliding and tracked:IsSliding() then return end
+        tracked:Hide()
+        return
+    end
+
+    -- Rendre, c'est refaire exactement ce que `EndLayout` du client vient de
+    -- faire : un module se montre s'il a du contenu affichable et si le suivi
+    -- n'est pas replié. On ne décide rien d'autre, et on ne recalcule rien.
+    if not tracked.IsDisplayable then return end
+
+    local frame     = ObjectiveTrackerFrame
+    local collapsed = frame and frame.IsCollapsed and frame:IsCollapsed()
+    tracked:SetShown(tracked:IsDisplayable() and not collapsed)
+end
+
+--- Les deux fonctions du hook, construites une fois pour la session : elles se
+--- reposent sur chaque module du suivi, et en fabriquer une paire par passage
+--- serait de l'ordure à chaque donjon (règle 7).
+local hookBody, hookGuard
+
+--- Pose sur ce module du suivi le hook qui le tiendra caché.
+---
+--- Sur `Update` du module et non sur celui du suivi : le suivi capture sa propre
+--- `Update` dans `SetDirtyMethod` au chargement, et l'appelle par cette
+--- référence-là — un hook posé après coup ne serait jamais vu par le chemin
+--- normal. Les modules, eux, sont appelés par leur champ (`module:Update(…)`).
+---@param mod table
+---@param tracked table
+local function hookModule(mod, tracked)
+    if not hookBody then
+        hookBody  = function(self) focusModule(hushTracker(mod), self) end
+        hookGuard = function() return mod:IsEnabled() end
+    end
+
+    U.GuardedHook(tracked, "Update", hookBody, hookGuard)
+end
+
+--- Passe sur tous les modules du suivi sauf celui de la clé.
+---
+--- `mod` vaut `nil` quand on ne fait que rendre — le module s'éteint, il n'y a
+--- plus de hook à poser ni de réglage à consulter.
+---@param mod table|nil
+local function sweepTracker(mod)
+    local frame = ObjectiveTrackerFrame
+    local list  = frame and frame.modules
+    if type(list) ~= "table" then return end
+
+    local hush = mod ~= nil and hushTracker(mod)
+
+    -- Le module qui porte la clé — chrono, boss, troupes — est le seul qu'on
+    -- garde. Il se relit à chaque passage plutôt que d'être retenu : il naît
+    -- avec l'interface du client, pas avec nous.
+    local key = ScenarioObjectiveTracker
+
+    for i = 1, #list do
+        local tracked = list[i]
+        if type(tracked) == "table" and tracked ~= key and tracked.Hide and tracked.Update then
+            if mod then hookModule(mod, tracked) end
+            focusModule(hush, tracked)
+        end
+    end
+end
+
+-- =========================================================================
 --  Déclaration du module
 -- =========================================================================
 
@@ -277,6 +388,7 @@ BUI:RegisterModule(MODULE, {
         answerKeysRequest = false,
         autoSlotKeystone  = false,
         autoDungeonGossip = false,
+        keyTimerOnly      = false,
     },
 
     options = {
@@ -292,6 +404,13 @@ BUI:RegisterModule(MODULE, {
             key     = "autoSlotKeystone",
             text    = L["Auto slot keystone"],
             tooltip = L["Auto slot keystone tip"],
+        },
+        { type = "header", text = L["Objective tracker"] },
+        {
+            type    = "toggle",
+            key     = "keyTimerOnly",
+            text    = L["Key timer only"],
+            tooltip = L["Key timer only tip"],
         },
         { type = "header", text = L["Dungeon dialogue"] },
         {
@@ -328,10 +447,31 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("GOSSIP_SHOW",   function() autoGossip(self) end)
         -- La conversation est finie : ce qu'on a cliqué dedans ne vaut plus rien.
         self:RegisterEvent("GOSSIP_CLOSED", function() wipe(gossipClicked) end)
+
+        -- Les moments où la réponse à « une clé tourne-t-elle ? » change. Le
+        -- hook des modules du suivi fait le reste, passe après passe ; ces
+        -- quatre-là sont ce qui le pose la première fois, et ce qui rend le
+        -- suivi à la fin d'une clé sans attendre qu'une passe veuille bien
+        -- venir.
+        local sweep = function() sweepTracker(self) end
+        self:RegisterEvent("PLAYER_ENTERING_WORLD",    sweep)
+        self:RegisterEvent("CHALLENGE_MODE_START",     sweep)
+        self:RegisterEvent("CHALLENGE_MODE_COMPLETED", sweep)
+        self:RegisterEvent("CHALLENGE_MODE_RESET",     sweep)
+
+        sweepTracker(self)
     end,
 
     OnDisable = function()
         wipe(answered)
         wipe(gossipClicked)
+
+        -- Le hook devient inerte tout seul, mais ce qu'il avait caché le
+        -- resterait : éteindre le module doit le rendre indétectable (règle 6).
+        sweepTracker(nil)
+    end,
+
+    OnSettingChanged = function(self)
+        sweepTracker(self)
     end,
 })
