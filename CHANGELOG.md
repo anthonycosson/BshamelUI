@@ -2,6 +2,20 @@
 
 ## Non publié
 
+### Interne
+- **Sonde de compatibilité, en vue de *World of Warcraft: Forever*.**
+  `dev/scripts/make-probe.sh` extrait du dépôt tout ce que l'addon demande au
+  client — API, globales, cadres nommés par une chaîne, événements, CVars,
+  templates, atlas — et `dev/probe/BshamelUI_Probe/` les pose à un client
+  inconnu pour rendre un score par fichier. La décision d'architecture qui va
+  avec (un seul addon, un `.toc` par flavor) est consignée dans
+  `dev/docs/FOREVER.md`. Rien de tout cela ne part chez un joueur : `.pkgmeta`
+  exclut `dev/` du zip.
+- **Les scripts PowerShell du dépôt s'écrivent avec un BOM.** Windows
+  PowerShell 5.1 lit un `.ps1` sans BOM comme de l'ANSI ; un tiret cadratin y
+  devient un guillemet fermant et le script ne se parse plus. La règle est
+  déclarée dans `.editorconfig` et `.gitattributes`.
+
 ## 1.1.12 — 2026-09-02
 
 ### Ajouté

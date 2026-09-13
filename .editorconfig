@@ -20,3 +20,10 @@ trim_trailing_whitespace = true
 
 [*.sh]
 end_of_line = lf
+
+[*.ps1]
+# Windows PowerShell 5.1 — celui qui est installé par défaut — lit un script
+# sans BOM comme de l'ANSI. Un tiret cadratin devient alors un guillemet
+# fermant, qui termine la chaîne où il se trouve : le script ne se parse plus.
+# Le BOM est la seule marque que cette version-là respecte.
+charset = utf-8-bom

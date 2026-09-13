@@ -1,0 +1,19 @@
+## Title: |cff00aeefBshamel|rUI — sonde
+## Notes: Development probe. Reports which client symbols Bshamel UI can rely on. Not for players.
+## Author: Bshamel
+## Version: 1.0.0
+## SavedVariables: BshamelUIProbeDB
+## X-License: All Rights Reserved
+
+# `## Interface` doit correspondre au client, sinon l'addon apparaît « périmé ».
+# Sur un client inconnu — une bêta, par exemple — il y a deux chemins :
+#   · cocher « Charger les AddOns périmés » à l'écran de sélection des
+#     personnages, c'est tout ce que demande une sonde ;
+#   · ou laisser `dev/scripts/install-probe.ps1 -Interface <numéro>` réécrire
+#     cette ligne à l'installation.
+## Interface: 120007
+
+# `Data.lua` est engendré par `dev/scripts/make-probe.sh` depuis le dépôt.
+# Il charge en premier : `Probe.lua` ne fait que lire ce qu'il publie.
+Data.lua
+Probe.lua
