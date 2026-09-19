@@ -5090,3 +5090,68 @@ même mob à bouclier y gardait sa barre noire. Les segments s'écartent par
 qui arrête le parcours à leur porte. Corollaire : une protection posée pour un
 état doit se chercher **sur chaque cadre qui l'affiche**, la forme n'est pas
 portable.
+
+---
+
+## Forever cherche ses infobulles de caractéristiques sous leur nom traduit
+
+**Symptôme** — sur la bêta de *Forever*, ouvrir la fiche de personnage lève
+`PaperDollFrameStats.lua:286: bad argument #1 to 'format' (string expected, got
+nil)`, une fois par caractéristique. Le relevé d'erreur donne
+`statName="Force"`, `classFileName="SHAMAN"`, `classStatText=nil`. Le client
+anglais ne voit rien.
+
+**Cause** — `Blizzard_UIPanels_Game/Camelot/PaperDollFrameStats.lua` compose la
+clé de sa chaîne avec le nom **traduit** de la caractéristique :
+
+```lua
+local statName = _G["SPELL_STAT"..statIndex.."_NAME"]        -- « Force »
+local classStatText = _G[strupper(classFileName).."_"..strupper(statName).."_".."TOOLTIP"]
+```
+
+La clé devient `SHAMAN_FORCE_TOOLTIP`, qui n'existe pas : les chaînes du client
+portent des clés **anglaises** (`SHAMAN_STRENGTH_TOOLTIP`) et des valeurs
+traduites. Le repli `DEFAULT_FORCE_TOOLTIP` manque pour la même raison, et le
+`string.format` qui suit reçoit `nil`.
+
+**Ce qu'on fait** — `Modules/Beta.lua` pose les clés traduites manquantes en
+les faisant pointer sur les chaînes anglaises, dont la valeur est déjà dans la
+langue du joueur. Écrire une globale de chaîne est accepté par le client
+(vérifié en jeu : `/dump SHAMAN_FORCE_TOOLTIP` rend le texte français). On
+n'écrit que ce qui est absent, et l'extinction du module retire ce qu'on a
+posé.
+
+**À retenir** — un bug qui n'existe que hors anglais ne se voit pas en lisant
+le code une fois : ici, tout repose sur `strupper(statName)`, où `statName` a
+l'air d'un identifiant et n'en est pas un.
+
+---
+
+## CurseForge ne connaissait pas la version de jeu de Forever
+
+**Symptôme** — le job `release` publie, mais le log dit `WARNING: No CurseForge
+game version match for "1.60.1", using "1.0.0"`, et le fichier arrive étiqueté
+pour une version retail fantôme.
+
+**Cause** — notre copie de `dev/packager/release.sh` datait d'avant la prise en
+charge de Forever par l'amont BigWigs. Une interface `16001` retombait dans le
+cas par défaut, « retail », puis le packager cherchait « 1.60.1 » parmi les
+versions retail de CurseForge et prenait la plus proche en dessous.
+
+**Ce qu'on fait** — packager resynchronisé depuis l'amont : `16???` donne le
+type `forever`, dont l'identifiant de jeu CurseForge est `88568`. Le packager
+annonce alors `Game version: 12.1.0, 12.0.7, 1.60.1`.
+
+---
+
+## Le changelog publié reprenait tout l'historique
+
+**Symptôme** — la page du fichier sur CurseForge affiche le journal complet des
+versions, plusieurs centaines de lignes.
+
+**Cause** — le packager envoie le fichier désigné par `manual-changelog` **en
+entier**. `.pkgmeta` pointait sur `CHANGELOG.md`.
+
+**Ce qu'on fait** — `dev/scripts/tag-release.sh` extrait la section qu'il vient
+de dater dans `CHANGELOG-release.md`, et c'est ce fichier que `.pkgmeta`
+désigne. L'historique complet reste livré avec l'addon.
