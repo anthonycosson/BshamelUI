@@ -325,9 +325,24 @@ local function hookHealthBars(mod)
         return mod:IsEnabled() and mod:Get("classColorHealth") == true
     end
 
+    -- **On repeint à l'image suivante, pas dans l'appel du client.**
+    --
+    -- Un hook s'exécute *à l'intérieur* de l'appel qu'il coiffe : tout ce que
+    -- notre code touche pendant ce temps **teinte l'exécution en cours**, et
+    -- c'est la suite du code de Blizzard qui paie l'addition. Sur *Forever*,
+    -- ouvrir la fiche de personnage lançait ainsi une lecture de la barre de
+    -- vie du joueur, et le client comparait ses propres valeurs devenues
+    -- secrètes : « attempt to compare a secret number value (execution tainted
+    -- by BshamelUI) », sur une ligne où nous n'avions rien à faire.
+    --
+    -- Un report d'une image suffit : le client termine son passage sans nous,
+    -- et la couleur se pose ensuite, dans une exécution qui n'appartient qu'à
+    -- nous. L'œil ne voit pas la différence — c'est la même image.
     U.GuardedHook("UnitFrameHealthBar_Update", function(bar, unit)
-        colorBar(bar, unit)
-        colorTargetOfTarget()
+        C_Timer.After(0, function()
+            colorBar(bar, unit)
+            colorTargetOfTarget()
+        end)
     end, guard)
 end
 
