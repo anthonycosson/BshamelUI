@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.0 — 2026-09-19
+
 ### Ajouté
 - **Bshamel UI se charge sur *World of Warcraft: Forever*** (bêta, interface
   16001). Le même addon, le même zip : dix-sept modules y chargent.
