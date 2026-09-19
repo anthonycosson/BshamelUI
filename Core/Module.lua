@@ -48,6 +48,12 @@ BUI.CATEGORIES = {
     -- aucune catégorie ne porte le nom d'un de ses modules (voir plus haut).
     { key = "Sharing",    label = "Import / export" },
 
+    -- Ce qui ne répare que la bêta de *Forever*, et qui disparaîtra avec elle.
+    -- Sa propre catégorie parce que ces pages ne se rangent nulle part
+    -- ailleurs : elles ne règlent rien, elles rattrapent. Vide sur retail, où
+    -- aucun module ne s'y déclare — la barre latérale saute alors la catégorie.
+    { key = "Beta",       label = "Beta" },
+
     -- En dernier, et c'est sa place : on ne descend pas jusqu'ici en cherchant
     -- un réglage, on y descend en ayant fini de chercher. Ce qui s'y range ne
     -- rend rien plus lisible ni plus rapide — c'est le seul endroit de l'addon

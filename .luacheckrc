@@ -245,6 +245,9 @@ read_globals = {
     "C_SkillInfo", "C_TradeSkillUI", "GetProfessions", "GetProfessionInfo",
     "LOCALIZED_CLASS_NAMES_MALE",
 
+    -- Ramassage rapide
+    "GetNumLootItems", "LootSlot",
+
     -- Cadre du joueur : la bande de statut du nom (lueur de combat)
     "PlayerFrame", "IsResting",
 

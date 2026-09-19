@@ -594,6 +594,12 @@ BUI:RegisterLocale("enUS", {
         .. "it is missing.",
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
+    ["Beta"]                           = "Beta",
+    ["Looting"]                        = "Looting",
+    ["Fast loot"]                      = "Fast loot",
+    ["Fast loot tip"] =
+        "Takes everything the moment a corpse is opened, so the loot window never appears. "
+        .. "Only when auto-loot is already on, or its modifier key is held.",
     ["Beta fixes"]                     = "Beta fixes",
     ["Client bugs"]                    = "Client bugs",
     ["Fix stat tooltips"]              = "Fix character stat tooltips",

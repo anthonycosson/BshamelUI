@@ -291,6 +291,38 @@ local function repairAtMerchant(mod)
 end
 
 -- =========================================================================
+--  Ramassage
+-- =========================================================================
+-- **Ramasser sans attendre la fenêtre.** Le client annonce le butin d'un
+-- cadavre par `LOOT_READY`, puis monte sa fenêtre et joue l'animation de
+-- chaque objet qui s'en va. En ramassant tout à l'annonce, il ne reste plus
+-- rien à montrer : la fenêtre ne s'ouvre pas, et le butin est dans le sac le
+-- temps d'un clic.
+--
+-- **Seulement quand le butin automatique est déjà voulu.** L'événement dit
+-- lui-même si c'est le cas (`autoloot`) — réglage du jeu, ou touche de
+-- modification maintenue. Ramasser à la place du joueur qui a choisi la
+-- fenêtre serait décider pour lui, et lui retirerait le choix de ce qu'il
+-- prend.
+--
+-- **À l'envers, du dernier au premier.** Ramasser une case décale les
+-- suivantes : parcourue dans l'ordre, la liste saute une case sur deux.
+
+---@param mod table
+---@param autoloot boolean|nil
+local function onLootReady(mod, autoloot)
+    if not mod:Get("fastLoot") then return end
+    if not U.IsTrue(autoloot) then return end
+    if not (GetNumLootItems and LootSlot) then return end
+
+    for slot = GetNumLootItems(), 1, -1 do
+        -- Une case peut refuser : objet réservé à un autre joueur, sac plein.
+        -- Chacune échoue pour elle seule, et le reste part quand même.
+        pcall(LootSlot, slot)
+    end
+end
+
+-- =========================================================================
 --  Déclaration du module
 -- =========================================================================
 
@@ -307,6 +339,8 @@ BUI:RegisterModule(MODULE, {
         -- Éteint, et c'est le seul défaut possible : la fenêtre qu'on saute est
         -- la dernière chose qui sépare un butin encore échangeable de sa vente.
         skipSellConfirm = false,
+
+        fastLoot        = false,
     },
 
     options = {
@@ -331,6 +365,14 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Auto-repair tip"],
         },
 
+        { type = "header", text = L["Looting"] },
+        {
+            type    = "toggle",
+            key     = "fastLoot",
+            text    = L["Fast loot"],
+            tooltip = L["Fast loot tip"],
+        },
+
         { type = "header", text = L["Confirmations"] },
         {
             type    = "toggle",
@@ -351,6 +393,12 @@ BUI:RegisterModule(MODULE, {
             repairAtMerchant(self)
         end)
         self:RegisterEvent("MERCHANT_CLOSED", function() onMerchantClosed(self) end)
+
+        -- `LOOT_READY` et non `LOOT_OPENED` : il arrive avant que la fenêtre
+        -- ne monte, et c'est ce qui permet de ne jamais la voir.
+        self:RegisterEvent("LOOT_READY", function(_, autoloot)
+            onLootReady(self, autoloot)
+        end)
     end,
 
     OnDisable = function()

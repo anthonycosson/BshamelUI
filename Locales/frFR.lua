@@ -582,6 +582,12 @@ BUI:RegisterLocale("frFR", {
         .. "buff, en blanc quand il manque.",
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
+    ["Beta"]                           = "Beta",
+    ["Looting"]                        = "Ramassage des monstres",
+    ["Fast loot"]                      = "Ramassage rapide",
+    ["Fast loot tip"] =
+        "Prend tout dès l'ouverture d'un cadavre : la fenêtre de butin n'apparaît plus. "
+        .. "Seulement quand le butin automatique est déjà actif, ou sa touche maintenue.",
     ["Beta fixes"]                     = "Correctifs de la bêta",
     ["Client bugs"]                    = "Bugs du client",
     ["Fix stat tooltips"]              = "Corriger les infobulles de caractéristiques",

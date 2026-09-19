@@ -116,6 +116,10 @@ local ON_DEMAND = {
     ["Blizzard_EncounterJournal"]   = { "EncounterJournal" },
     ["Blizzard_FlightMap"]          = { "FlightMapFrame" },
     ["Blizzard_GenericTraitUI"]     = { "GenericTraitFrame" },
+    -- La recherche de groupe de *Forever* : une autre fenêtre que `PVEFrame`,
+    -- apportée par un addon chargé à la demande. Sur retail, ce nom d'addon
+    -- n'arrive jamais, la ligne ne coûte donc rien.
+    ["Blizzard_GroupFinder_VanillaStyle"] = { "LFGParentFrame" },
     ["Blizzard_GuildBankUI"]        = { "GuildBankFrame" },
     ["Blizzard_InspectUI"]          = { "InspectFrame" },
     ["Blizzard_ItemInteractionUI"]  = { "ItemInteractionFrame" },

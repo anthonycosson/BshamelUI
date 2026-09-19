@@ -126,7 +126,7 @@ end
 
 BUI:RegisterModule(MODULE, {
     title    = L["Beta fixes"],
-    category = "QoL",
+    category = "Beta",
     order    = 90,
 
     defaults = {
