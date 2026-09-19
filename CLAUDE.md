@@ -79,16 +79,27 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   ne fait rien seul, parce que sa liste est vide. C'est au libellé de le dire,
   pas au défaut de le rattraper.
 
-  **Une exception existe, et une seule** : le bouton de minicarte
+  **Deux exceptions existent**, et elles se ressemblent moins qu'il n'y paraît.
+
+  La première : le bouton de minicarte
   (`Modules/General.lua`), marqué `@default-on`. La règle protège une promesse
   précise — installer l'addon ne change rien **au jeu**. Ce bouton ne change rien
   au jeu : il ne remplace, ne cache ni ne déplace quoi que ce soit, il dit que
   l'addon est là et par où l'ouvrir. Livré éteint, il ne restait aucune porte
   visible, et un addon sans porte n'est pas discret, il est absent.
 
-  La marque se pose donc sur ce qui **montre** l'addon, jamais sur ce qui
-  **agit** à la place du joueur. Toute nouvelle ligne `@default-on` demande le
-  même examen, écrit au-dessus d'elle.
+  La seconde : les correctifs de bêta (`Modules/Beta.lua`, *Forever*
+  seulement). Ils ne font rien d'autre que réparer un bug du client — la fiche
+  de personnage lève une erreur Lua à chaque survol sur tout client non
+  anglais. La promesse protège ce que le jeu **fait**, pas ce qu'il **rate** :
+  un plantage n'est pas un état qu'on préserve. Chaque case reste là, et la
+  décocher redonne le bug à qui veut le constater. Ces correctifs sont
+  provisoires par construction — le jour où Blizzard corrige, la ligne
+  disparaît.
+
+  La marque se pose donc sur ce qui **montre** l'addon ou sur ce qui **répare
+  le client**, jamais sur ce qui **agit** à la place du joueur. Toute nouvelle
+  ligne `@default-on` demande le même examen, écrit au-dessus d'elle.
 
   `dev/scripts/check-design.sh` le vérifie sur tous les blocs `defaults`, et
   refuse tout défaut vrai qui ne porte pas la marque.

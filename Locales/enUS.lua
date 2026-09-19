@@ -594,6 +594,13 @@ BUI:RegisterLocale("enUS", {
         .. "it is missing.",
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
+    ["Beta fixes"]                     = "Beta fixes",
+    ["Client bugs"]                    = "Client bugs",
+    ["Fix stat tooltips"]              = "Fix character stat tooltips",
+    ["Fix stat tooltips tip"] =
+        "The beta looks up its stat tooltips by their translated name, which only exists in "
+        .. "English: opening the character sheet throws a Lua error. This adds the missing "
+        .. "keys. Unticking it brings the bug back.",
     ["Buff giver"]                     = "%s (%s)",
     ["Benefit mark"]                   = "Armor, stats and resistances",
     ["Benefit kings"]                  = "All stats (%)",

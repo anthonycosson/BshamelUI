@@ -582,6 +582,13 @@ BUI:RegisterLocale("frFR", {
         .. "buff, en blanc quand il manque.",
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
+    ["Beta fixes"]                     = "Correctifs de la bêta",
+    ["Client bugs"]                    = "Bugs du client",
+    ["Fix stat tooltips"]              = "Corriger les infobulles de caractéristiques",
+    ["Fix stat tooltips tip"] =
+        "La bêta cherche ses infobulles de caractéristiques sous leur nom traduit, qui "
+        .. "n'existe qu'en anglais : ouvrir la fiche de personnage lève une erreur Lua. Ce "
+        .. "correctif pose les clés manquantes. Décocher redonne le bug.",
     ["Buff giver"]                     = "%s (%s)",
     ["Benefit mark"]                   = "Armure, caractéristiques et résistances",
     ["Benefit kings"]                  = "Toutes les caractéristiques (%)",

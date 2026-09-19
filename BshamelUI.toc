@@ -138,6 +138,8 @@ Modules\RaidCooldowns.lua [AllowLoadGameType standard]
 # moteur agit.
 Modules\BuffTrackerData.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 Modules\BuffTracker.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
+# Les bugs de la bêta de Forever, rattrapés en attendant que Blizzard corrige.
+Modules\Beta.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 Modules\MythicTimer.lua [AllowLoadGameType standard]
 Modules\RaidPanel.lua
 Modules\CombatLog.lua
