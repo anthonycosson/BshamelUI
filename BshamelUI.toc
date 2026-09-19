@@ -3,6 +3,9 @@
 # Forever porte l'interface de retail, et les modules qui n'y ont pas de sens
 # sont écartés plus bas par `[AllowLoadGameType standard]` — `standard` est
 # retail seul, `camelot` est Forever, `mainline` couvre les deux.
+# **Le client retail ne connaît pas `camelot`** et charge la ligne quand même
+# (constaté le 19 septembre 2026) : un fichier réservé à Forever porte donc
+# aussi `[ExcludeLoadGameType standard]`, que retail comprend.
 ## Title: |cff00aeefBshamel|rUI
 # `Notes` est le repli pour tous les clients : il doit rester en anglais.
 # Les variantes `Notes-<locale>` le remplacent quand la locale correspond.
@@ -37,7 +40,7 @@ Core\DB.lua
 Core\Module.lua
 # Les réglages que Forever n'a pas. Lu par `RegisterModule`, donc avant tout
 # module ; absent de retail, où la liste est simplement vide.
-Core\Forever.lua [AllowLoadGameType camelot]
+Core\Forever.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 
 # Design system
 UI\Theme.lua
@@ -133,8 +136,8 @@ Modules\Teleports.lua [AllowLoadGameType standard]
 Modules\RaidCooldowns.lua [AllowLoadGameType standard]
 # Sur Forever, le suivi des buffs prend sa place : la page décrit, puis le
 # moteur agit.
-Modules\BuffTrackerData.lua [AllowLoadGameType camelot]
-Modules\BuffTracker.lua [AllowLoadGameType camelot]
+Modules\BuffTrackerData.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
+Modules\BuffTracker.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 Modules\MythicTimer.lua [AllowLoadGameType standard]
 Modules\RaidPanel.lua
 Modules\CombatLog.lua

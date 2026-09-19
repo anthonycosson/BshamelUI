@@ -18,6 +18,9 @@ mécaniquement une partie (`dev/scripts/check-design.sh`).
   qui n'a pas de sens sur Forever n'est pas gardé par une condition : sa ligne
   porte `[AllowLoadGameType standard]` (`standard` = retail seul, `camelot` =
   Forever, `mainline` = les deux). `Core/`, `UI/` et `Locales/` chargent partout.
+  Un fichier **réservé à Forever** porte
+  `[AllowLoadGameType camelot] [ExcludeLoadGameType standard]` : le client
+  retail ne connaît pas `camelot` et charge la ligne sans la seconde directive.
   Une **option** qui n'a pas de sens sur Forever se retire de la même façon :
   une ligne dans `Core/Forever.lua` (chargé par Forever seul), jamais un
   `hidden` qui devinerait le client.

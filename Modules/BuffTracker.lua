@@ -3,7 +3,7 @@
 --  Suivi des buffs du joueur : un panneau qui liste les bonus qu'on a choisi
 --  de suivre, en vert quand on les a, en blanc quand ils manquent.
 --
---  *Forever* seulement (sa ligne du `.toc` porte `[AllowLoadGameType camelot]`).
+--  *Forever* seulement (sa ligne du `.toc` l'écarte de retail, voir `CLAUDE.md` §1).
 --  Il y prend la place de « BL et résurrection », qui n'y a pas de sens. C'est
 --  un module **à lui** et non celui-là renommé : le nom d'un module est une clé
 --  de base de données, et le renommer casserait les réglages de retail.

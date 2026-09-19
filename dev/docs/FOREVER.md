@@ -52,7 +52,11 @@ mécanisme de Blizzard lui-même, et celui d'Auctionator.
 quels** — le tri de leurs options, un module à la fois, vient ensuite.
 
 L'inverse existe aussi : `BuffTracker` (et ses données, `BuffTrackerData`)
-ne charge que sur Forever, `[AllowLoadGameType camelot]`. Il y prend la place
+ne charge que sur Forever, `[AllowLoadGameType camelot] [ExcludeLoadGameType
+standard]`. **Les deux directives sont nécessaires** : le client retail ne
+connaît pas `camelot` et charge une ligne qui n'a que la première — constaté
+en jeu le 19 septembre 2026, où le suivi des buffs apparaissait sur retail et
+`Core/Forever.lua` y retirait des options. `standard`, lui, retail le connaît. Il y prend la place
 de `RaidCooldowns` sous un autre nom de module — ce nom est une clé de base.
 
 La règle qui va avec est dans `CLAUDE.md` §1.
@@ -60,7 +64,7 @@ La règle qui va avec est dans `CLAUDE.md` §1.
 ### Une option, pas un module
 
 Même principe, un cran plus fin : `Core/Forever.lua` est chargé par Forever
-seul (`[AllowLoadGameType camelot]`) et publie `ns.WITHDRAWN`, la liste des
+seul (`[AllowLoadGameType camelot] [ExcludeLoadGameType standard]`) et publie `ns.WITHDRAWN`, la liste des
 options que ce client n'a pas. `RegisterModule` les sort de la page et de la
 recherche ; `self:Get` rend leur défaut quoi que la base contienne. Le module
 ne sait rien, et la valeur en base reste intacte pour retail.

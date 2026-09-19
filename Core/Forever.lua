@@ -6,7 +6,8 @@
 --  enchantables).
 --
 --  Ce fichier n'est chargé que par le client de Forever : sa ligne du `.toc`
---  porte `[AllowLoadGameType camelot]`. C'est la règle « le client se choisit
+--  porte `[AllowLoadGameType camelot] [ExcludeLoadGameType standard]` — la
+--  seconde parce que retail ne connaît pas `camelot`. C'est la règle « le client se choisit
 --  dans le `.toc`, jamais dans un `if` » (CLAUDE.md §1), appliquée à une
 --  option plutôt qu'à un fichier : un module qui charge sur les deux clients
 --  garde son code intact, et c'est la présence de cette liste qui décide.
