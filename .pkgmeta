@@ -32,6 +32,11 @@ ignore:
   # `.gitignore`, qui est le premier verrou, et `T.ALERT_SOUND`.
   - media/Sonar.ogg
 
+# Ce que CurseForge affiche sur la page du fichier. Le packager envoie ce
+# fichier **en entier** : il ne contient donc que les notes de la version en
+# cours, engendrées par `dev/scripts/tag-release.sh` à partir de la section
+# fraîchement datée de `CHANGELOG.md`. L'historique complet reste dans
+# `CHANGELOG.md`, livré avec l'addon.
 manual-changelog:
-  filename: CHANGELOG.md
+  filename: CHANGELOG-release.md
   markup-type: markdown

@@ -57,10 +57,24 @@ sed "s|^## Non publié$|## Non publié\n\n## $VERSION — $TODAY|" CHANGELOG.md 
 mv "$tmp" CHANGELOG.md
 echo "✓ section $VERSION datée du $TODAY"
 
+# Les notes de cette version seules, pour CurseForge.
+#
+# Le packager envoie le fichier que `.pkgmeta` désigne **en entier** : pointé
+# sur `CHANGELOG.md`, il publiait tout l'historique sur la page de chaque
+# fichier. On extrait donc la section qu'on vient de dater — de son titre
+# jusqu'au titre suivant — et c'est ce fichier-là que `.pkgmeta` désigne.
+awk -v version="## $VERSION — $TODAY" '
+    $0 == version { inside = 1; print; next }
+    inside && /^## / { exit }
+    inside { print }
+' CHANGELOG.md > CHANGELOG-release.md
+[[ -s CHANGELOG-release.md ]] || die "notes de version vides — CHANGELOG.md n'a rien sous « ## Non publié »"
+echo "✓ notes de la version seules dans CHANGELOG-release.md ($(wc -l < CHANGELOG-release.md) lignes)"
+
 # -------------------------------------------------------------------------
 step "commit et tag"
 # -------------------------------------------------------------------------
-git add CHANGELOG.md
+git add CHANGELOG.md CHANGELOG-release.md
 git commit -q -m "Preparer la version $VERSION"
 git tag -a "$TAG" -m "$TAG"
 echo "✓ $TAG créé"
