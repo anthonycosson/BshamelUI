@@ -153,8 +153,17 @@ local ON_DEMAND = {
 --- La carte du monde se déplace au glisser et zoome à la molette : un glisser
 --- posé sur son corps ferait les deux à la fois. On la prend par sa barre de
 --- titre, comme le fait le client lui-même.
+--- Une entrée vaut un nom, ou plusieurs.
+---
+--- La recherche de groupe de *Forever* est le cas à plusieurs : ses trois
+--- pages — recherche, annonce, liste des joueurs — sont des cadres à part,
+--- posés sur toute la fenêtre (`setAllPoints`) et **preneurs de souris**. La
+--- fenêtre elle-même ne reçoit donc jamais un clic, alors que la molette, qui
+--- passe par « le curseur est-il au-dessus ? », fonctionnait très bien : d'où
+--- une fenêtre qu'on pouvait redimensionner sans pouvoir la déplacer.
 local DRAG_HANDLES = {
-    WorldMapFrame = "WorldMapTitleButton",
+    WorldMapFrame  = "WorldMapTitleButton",
+    LFGParentFrame = { "LFGListingFrame", "LFGBrowseFrame", "LFGWhoListFrame" },
 }
 
 --- Fenêtres qui possèdent, en plus de leur mode fenêtre, une disposition
@@ -712,8 +721,14 @@ local function hookFrame(frame, name)
 
     attachDrag(frame, frame, entry)
 
-    local handle = DRAG_HANDLES[name]
-    if handle then attachDrag(_G[handle], frame, entry) end
+    local handles = DRAG_HANDLES[name]
+    if type(handles) == "string" then
+        attachDrag(_G[handles], frame, entry)
+    elseif type(handles) == "table" then
+        for i = 1, #handles do
+            attachDrag(_G[handles[i]], frame, entry)
+        end
+    end
 
     -- Les deux bascules du plein écran, quand le cadre en a un. À l'entrée,
     -- l'échelle d'origine est rendue **après** que le client a calculé sa

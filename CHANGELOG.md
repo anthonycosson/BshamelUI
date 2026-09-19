@@ -8,7 +8,9 @@
   Seulement quand le butin automatique est déjà actif, ou sa touche maintenue.
 - **La fenêtre de recherche de groupe de Forever se déplace** comme les autres.
   C'est une autre fenêtre que celle de retail, apportée par un addon du client
-  chargé à la demande.
+  chargé à la demande, et ses trois pages couvrent la fenêtre entière : le clic
+  n'arrivait jamais jusqu'à elle, d'où une fenêtre qu'on redimensionnait sans
+  pouvoir la déplacer.
 - **Correctifs de la bêta de Forever**, nouveau module. Il ne répare que ce que
   le client casse, et ses cases sont cochées à la livraison : un plantage n'est
   pas un réglage de confort. Premier correctif : la fiche de personnage levait
