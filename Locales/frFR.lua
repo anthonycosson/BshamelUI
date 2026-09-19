@@ -172,6 +172,9 @@ BUI:RegisterLocale("frFR", {
     ["Auto-accept quests"]      = "Accepter automatiquement les quêtes",
     ["Auto-accept quests tip"] =
         "Accepte automatiquement les quêtes proposées par les PNJ et les objets de quête.",
+    ["Escort quests not auto-accepted"] =
+        "Les quêtes d'escorte que vous prenez ne sont pas acceptées automatiquement. Celles "
+        .. "lancées par un membre du groupe le sont.",
     ["Auto-turn-in quests"]     = "Rendre automatiquement les quêtes",
     ["Auto-turn-in quests tip"] =
         "Termine la quête et prend la récompense automatiquement lorsqu'il n'y en a qu'une.",
@@ -303,7 +306,7 @@ BUI:RegisterLocale("frFR", {
     ["Show average item level tip"] =
         "Écrit le niveau d'objet moyen au-dessus des armes. C'est celui que vous portez, "
         .. "pas celui que vos sacs promettent.",
-    ["Item level headline"]            = "Ilvl : %s",
+    ["Item level headline"]            = "Niveau d'objet : %s",
     ["Item level decimals"]            = "Décimales",
     ["Item level decimals tip"] =
         "Précision du niveau d'objet du personnage. À zéro, il est arrondi à l'entier.",
@@ -323,7 +326,7 @@ BUI:RegisterLocale("frFR", {
     ["Show gems tip"] =
         "Vert quand toutes les châsses sont serties, rouge dès qu'il en reste une vide.",
     ["Bags and bank"]                  = "Sacs et banque",
-    ["Show item level in bags"]        = "Afficher le niveau d'objet sur l'équipement rangé",
+    ["Show item level in bags"]        = "Afficher le niveau d'objet des équipements dans le sac",
     ["Show item level in bags tip"] =
         "Inscrit le niveau d'objet sur chaque pièce d'équipement dans les sacs, la banque et la banque de bataillon.",
     ["Enchant badge"]                  = "Enchantement",
@@ -571,6 +574,64 @@ BUI:RegisterLocale("frFR", {
     ["3v3"]                            = true,
     ["Dungeons"]                       = "Donjons",
     ["Raids"]                          = true,
+    -- Module BuffTracker (Forever)
+    ["Buff tracking"]                  = "Suivi des buffs (Work in progress)",
+    ["Enable buff tracking"]           = "Activer le suivi des buffs manquants",
+    ["Enable buff tracking tip"] =
+        "Affiche dans un panneau les lignes cochées ci-dessous : en vert quand vous avez le "
+        .. "buff, en blanc quand il manque.",
+    ["Buff panel title"]               = "Buffs",
+    ["Buff separator"]                 = " / ",
+    ["Buff giver"]                     = "%s (%s)",
+    ["Benefit mark"]                   = "Armure, caractéristiques et résistances",
+    ["Benefit kings"]                  = "Toutes les caractéristiques (%)",
+    ["Benefit melee AP"]               = "Puissance d'attaque en mêlée",
+    ["Benefit melee AP shout"]         = "Puissance d'attaque en mêlée (cumulable)",
+    ["Benefit shadow resistance"]      = "Résistance à l'Ombre",
+    ["Benefit threat"]                 = "Menace réduite",
+    ["Benefit healing received"]       = "Soins reçus",
+    ["Benefit ranged AP"]              = "Puissance d'attaque à distance",
+    ["Buffs header"]                   = "Buffs",
+    ["Weapon"]                         = "Arme",
+    ["Scrolls"]                        = "Parchemins",
+    ["Buff pending scrolls"]           = "Mis de côté : personne ne s'en sert.",
+    ["Buff kinds"]                     = "Selon l'objet : %s",
+    ["Consumables"]                    = "Consommables",
+    ["Pending buffs"]                  = "Mis de côté",
+    ["World buffs"]                    = "Buffs mondiaux",
+    ["Future version"]                 = "Prévu pour une version future.",
+    ["Buff pending no stat"]           = "Mis de côté : ne donne pas de caractéristique.",
+    ["Buff pending tent"]              = "Mis de côté : expérience reposée, une fois, pas une caractéristique.",
+    ["Buff pending undecided"]         = "Pas encore décidé.",
+    ["Stat strength"]                  = "Force",
+    ["Stat agility"]                   = "Agilité",
+    ["Stat stamina"]                   = "Endurance",
+    ["Stat intellect"]                 = "Intelligence",
+    ["Stat spirit"]                    = "Esprit",
+    ["Stat critical"]                  = "Coup critique",
+    ["Stat health"]                    = "Points de vie",
+    ["Stat armor"]                     = "Armure",
+    ["Stat attack power"]              = "Puissance d'attaque",
+    ["Stat spell power"]               = "Dégâts des sorts",
+    ["Stat healing"]                   = "Soins",
+    ["Stat mana regen"]                = "Régénération de mana",
+    ["Stat resistance"]                = "Résistances",
+    ["Well fed"]                       = "Bien nourri",
+    ["Flask"]                          = "Flacon",
+    ["Elixir"]                         = "Élixir",
+    ["Weapon enhancement"]             = "Amélioration d'arme",
+    ["Sharpening stone"]               = "Pierre à aiguiser",
+    ["Weightstone"]                    = "Pierre de lest",
+    ["Weapon oil"]                     = "Huile",
+    ["Scope"]                          = "Lunette de visée",
+    ["Weapon temp note"] =
+        "Une arme de chaman ou un poison de voleur compte aussi : ils prennent la même place "
+        .. "et ne se cumulent pas.",
+    ["Buff source class"]              = "Classe : %s",
+    ["Buff source profession"]         = "Métier : %s",
+    ["Buff source campfire"]           = "À poser près d'un feu de camp, puis s'asseoir.",
+    ["Buff via camp"]                  = "%s (objet de camp, %s)",
+    ["Buff via profession"]            = "%s (%s)",
     -- Module RaidCooldowns
     ["Bloodlust and battle res"]       = "BL & Résurrections",
     ["Battle resurrections"]           = "Résurrections de combat",

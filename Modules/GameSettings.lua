@@ -156,6 +156,17 @@ local function eachVariable(category, fn)
     end
 end
 
+--- CVars par personnage que le panneau Options ne montre pas, et qui méritent
+--- pourtant de voyager. Elles passent par les mêmes refus que les autres : une
+--- variable que ce client ne connaît pas ne répond pas, et s'écarte seule.
+---
+--- `showQuestLevel` : le niveau des quêtes dans le journal et sur la carte. Il
+--- se règle par personnage, hors du panneau, et sur *Forever* il compte — c'est
+--- l'écart de niveau qui dit si une quête vaut encore le détour.
+local EXTRA_CVARS = {
+    "showQuestLevel",
+}
+
 --- Relève les CVars du personnage dans `out`, en traversant le registre du
 --- panneau Options.
 ---
@@ -179,21 +190,24 @@ local function collectCVars(out)
     local count = 0
     local seen  = {}
 
+    local function consider(variable)
+        local okInfo, value, default, _, perCharacter, locked =
+            pcall(C_CVar.GetCVarInfo, variable)
+
+        if okInfo and perCharacter == true and locked ~= true
+           and type(value) == "string" and not U.IsSecret(value)
+           and type(default) == "string" and not U.IsSecret(default)
+           and value ~= default then
+            out[variable] = value
+            count = count + 1
+        end
+    end
+
     local walked = eachCategory(function(category)
         eachVariable(category, function(variable)
             if seen[variable] then return end
             seen[variable] = true
-
-            local okInfo, value, default, _, perCharacter, locked =
-                pcall(C_CVar.GetCVarInfo, variable)
-
-            if okInfo and perCharacter == true and locked ~= true
-               and type(value) == "string" and not U.IsSecret(value)
-               and type(default) == "string" and not U.IsSecret(default)
-               and value ~= default then
-                out[variable] = value
-                count = count + 1
-            end
+            consider(variable)
         end)
     end)
 
@@ -203,6 +217,15 @@ local function collectCVars(out)
     -- un maillon a changé de nom — et non un joueur aux réglages vierges :
     -- refuser vaut mieux qu'enregistrer un relevé vide qui a l'air vrai.
     if next(seen) == nil then return nil end
+
+    -- Puis celles que le panneau ne montre pas, mêmes refus.
+    for i = 1, #EXTRA_CVARS do
+        local variable = EXTRA_CVARS[i]
+        if not seen[variable] then
+            seen[variable] = true
+            consider(variable)
+        end
+    end
 
     return count
 end

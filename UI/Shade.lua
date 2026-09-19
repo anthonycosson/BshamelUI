@@ -269,6 +269,12 @@ local KEEP_BACKGROUND = {
     -- barre — teinté, c'est la barre entière qui devient une plaque noire, et
     -- le sort en cours ne se lit plus qu'à son remplissage.
     nameplates = true,
+
+    -- La barre d'incantation, pour la même raison : son contour s'assombrit,
+    -- son fond garde sa couleur. Teinté, il faisait de la barre entière un
+    -- pavé noir. La zone du nom de sort, en dessous, n'est pas un fond mais
+    -- une seule image (`TextBorder`) : elle continue de s'assombrir.
+    castBar = true,
 }
 
 --- Éléments dont on ne touche **pas aux boutons du tout** — ni leurs textures,
@@ -492,11 +498,31 @@ local STATE_TEXTURES = {
 --- « Border », ce qui la faisait classer dans l'habillage : elle sortait en écu
 --- noir, et le symptôme se raconte « quand un sort n'est pas interruptible,
 --- l'icône est en mode sombre ».
---- `selectedBorder` et `deselectedOverlay` sont la paire d'état des plaques
---- depuis 12.1 : le liseré qui marque la **cible**, et le voile que le client
---- pose sur toute la barre des plaques **non ciblées** pour les éteindre. Ni
---- « Highlight » ni « Glow » dans leurs noms : le tri les prenait pour de
---- l'habillage et les assombrissait au facteur des plaques.
+--- `highLevelTexture` est le même crâne sur la pastille de niveau des plaques
+--- de *Forever*, écrit avec une minuscule : la recherche de nom distingue la
+--- casse, la graphie de retail ne le couvrait pas.
+---
+--- `PvpBackgroundIcon` est l'emblème de faction que *Forever* pose sur les
+--- cadres du joueur et de la cible, dans un rond (`PvpBackgroundCircle`). Le
+--- rond est l'habillage et s'assombrit ; l'emblème **dit** « JcJ activé, dans
+--- ce camp » et sortait en disque noir. Son nom contient bien « Icon », mais le
+--- rattrapage par le nom ne l'avait pas écarté : la clé, elle, ne dépend pas de
+--- ce que `GetDebugName` veut bien rendre.
+---
+--- `LevelBackgroundCircle` est le rond qui porte le niveau sur ces mêmes
+--- cadres. Pas un signal au sens strict, mais le fond d'un chiffre, comme celui
+--- d'une infobulle : assombri, le niveau se lisait sur une pastille noire.
+---
+--- `deselectedOverlay` est le voile que le client pose, depuis 12.1, sur toute
+--- la barre des plaques **non ciblées** pour les éteindre. Ni « Highlight » ni
+--- « Glow » dans son nom : le tri le prenait pour de l'habillage, et un voile
+--- clair assombri devient un couvercle noir.
+---
+--- Son frère `selectedBorder`, le liseré blanc de la **cible**, a été protégé
+--- avec lui puis rendu à l'habillage : c'est un contour, et le joueur le veut
+--- sombre comme celui des autres plaques. La cible reste désignée par le voile
+--- que les autres portent. Le client le repeint en blanc à chaque changement
+--- de cible — le module repasse derrière (`PLAYER_TARGET_CHANGED`).
 ---
 --- `totalAbsorb`, son `totalAbsorbOverlay` et les deux prévisions de soins sont
 --- le **bouclier d'absorption** et les soins en route, dessinés par-dessus le
@@ -508,9 +534,10 @@ local STATE_TEXTURES = {
 --- était protégé, lui seul était resté blanc (voir `dev/docs/API_NOTES.md`).
 local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
                      "Highlight",
-                     "HighLevelTexture",
+                     "HighLevelTexture", "highLevelTexture",
+                     "PvpBackgroundIcon", "LevelBackgroundCircle",
                      "BorderShield",
-                     "selectedBorder", "deselectedOverlay",
+                     "deselectedOverlay",
                      "totalAbsorb", "totalAbsorbOverlay",
                      "myHealPrediction", "otherHealPrediction" }
 
@@ -577,11 +604,39 @@ local READOUT_NAMES = {
 --- chargement les manquerait.
 local readouts = {}
 
+--- Textures précises qu'on ne teint pas, désignées par leur chemin depuis un
+--- cadre global. Le dernier recours, quand ni une clé ni un nom ne suffisent :
+--- la même clé est de l'habillage à un endroit et un cache à un autre.
+---
+--- Le rond de l'emblème JcJ du **joueur**, sur *Forever*. Sur la cible,
+--- Blizzard le pose une couche sous l'emblème ; sur le joueur, les deux
+--- partagent la même couche et l'ordre n'est pas garanti. Désaturé et
+--- assombri, le rond passait devant et l'emblème disparaissait sous un disque
+--- noir — alors qu'il se voit très bien sans mode sombre. Le rond de la cible,
+--- lui, reste assombri : c'est le contour de l'emblème.
+local SPARE_PATHS = {
+    { "PlayerFrame", "PlayerFrameContent", "PlayerFrameContentMain", "PvpBackgroundCircle" },
+}
+
+--- texture -> vrai, rebâtie à chaque parcours comme `readouts`.
+local spared = {}
+
 local function refreshReadouts()
     wipe(readouts)
     for i = 1, #READOUT_NAMES do
         local frame = _G[READOUT_NAMES[i]]
         if type(frame) == "table" then readouts[frame] = true end
+    end
+
+    wipe(spared)
+    for i = 1, #SPARE_PATHS do
+        local path = SPARE_PATHS[i]
+        local node = _G[path[1]]
+        for j = 2, #path do
+            if type(node) ~= "table" then break end
+            node = node[path[j]]
+        end
+        if type(node) == "table" then spared[node] = true end
     end
 end
 
@@ -783,7 +838,7 @@ local function collectFrom(frame, out, seen, rules)
     end
 
     local function take(region)
-        if type(region) ~= "table" or informs(region) then return end
+        if type(region) ~= "table" or informs(region) or spared[region] then return end
         if type(region.SetVertexColor) ~= "function" then return end
 
         -- Protégé comme le classement plus bas, et pour la même raison : un

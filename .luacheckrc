@@ -241,6 +241,13 @@ read_globals = {
     -- Auras, charges de sort et enchantements d'arme
     "C_DurationUtil", "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
 
+    -- Suivi des buffs (Forever) : métiers, noms de classes, compétences
+    "C_SkillInfo", "C_TradeSkillUI", "GetProfessions", "GetProfessionInfo",
+    "LOCALIZED_CLASS_NAMES_MALE",
+
+    -- Cadre du joueur : la bande de statut du nom (lueur de combat)
+    "PlayerFrame", "IsResting",
+
     -- Clés mythiques et chrono de donjon. Le chrono affiché est celui du client :
     -- `ScenarioObjectiveTracker` est le module de son suivi d'objectifs qui porte le
     -- bloc, et `CHALLENGE_MODE_POWER_LEVEL` l'intitulé du niveau de clé. Les deux

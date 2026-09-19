@@ -1,6 +1,6 @@
 ﻿# Bshamel UI — règles du dépôt
 
-Addon World of Warcraft **retail uniquement**, un seul dossier, zéro dépendance.
+Addon World of Warcraft **retail et *Forever***, un seul dossier, zéro dépendance.
 Licence *all rights reserved*. Distribution : CurseForge via GitLab CI.
 
 Ce fichier n'est pas un guide de style : c'est la liste des règles dont la
@@ -11,7 +11,16 @@ mécaniquement une partie (`dev/scripts/check-design.sh`).
 
 ## 1. Périmètre et compatibilité
 
-- Cible : `## Interface: 120007` minimum (WoW 12.0.7).
+- Cible : `## Interface: 120007` minimum (WoW 12.0.7), et `16001`
+  (*World of Warcraft: Forever*). Détail et sources : `dev/docs/FOREVER.md`.
+- **Le client se choisit dans le `.toc`, jamais dans un `if`.**
+  Un fichier chargé par les deux clients ne teste que des capacités. Un module
+  qui n'a pas de sens sur Forever n'est pas gardé par une condition : sa ligne
+  porte `[AllowLoadGameType standard]` (`standard` = retail seul, `camelot` =
+  Forever, `mainline` = les deux). `Core/`, `UI/` et `Locales/` chargent partout.
+  Une **option** qui n'a pas de sens sur Forever se retire de la même façon :
+  une ligne dans `Core/Forever.lua` (chargé par Forever seul), jamais un
+  `hidden` qui devinerait le client.
 - **Jamais de branche par numéro de patch** dans le code métier.
   Interdit : `if select(4, GetBuildInfo()) >= 120100 then`.
   À la place, tester la capacité : `if C_Foo and C_Foo.Bar then`.
@@ -171,6 +180,9 @@ Le dépôt est monté dans le jeu par une jonction NTFS :
 C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI
   -> C:\Users\Cosso\Documents\Claude\BshamelUI
 ```
+
+Une seconde jonction, identique, part de
+`_classic_beta_\Interface\AddOns\BshamelUI` (bêta de Forever).
 
 Éditer le dépôt, `/reload` en jeu, c'est tout.
 

@@ -1,66 +1,103 @@
 # Porter Bshamel UI sur *World of Warcraft: Forever*
 
 *World of Warcraft: Forever* — le « Classic+ » annoncé le 12 septembre 2026,
-bêta le 17 septembre, sortie le 4 novembre — est un **client séparé**, sur une
-base vanilla, plafonné au niveau 60. Ce n'est pas un patch de retail : son API
-a une dizaine d'années d'écart avec la nôtre.
+bêta le 17 septembre, sortie le 4 novembre — est un **client séparé**
+(`_classic_beta_`, produit `wow_classic_beta`), plafonné au niveau 60.
 
-Cette note dit ce qui est décidé, ce qui ne l'est pas, et l'outil qui tranche.
+Cette note dit ce qui est décidé, ce qui ne l'est pas, et où chercher.
 
 ---
 
-## Un seul addon, plusieurs `.toc`
+## Ce qu'est le client, vu du code
 
-Pas de second dépôt, pas de second projet CurseForge.
+La première version de cette note le supposait bâti sur une base vanilla, avec
+une API à dix ans de la nôtre. C'est faux, et la lecture du client l'a montré
+(bêta 1.60.1.69913, 19 septembre 2026) :
 
-La moitié du code — `Core/`, `UI/Theme.lua`, `UI/Widgets/`, `UI/Config/`,
-`Locales/` — ne touche pas au jeu : c'est un système de design, une base de
-réglages et une fabrique de widgets. Le dupliquer, c'est se condamner à
-corriger chaque bug deux fois.
+- **C'est l'interface de retail.** Mode Édition, `CooldownViewer`,
+  `PersonalResourceDisplay`, compartiment d'addons, valeurs secrètes : tout y
+  est. Quelques cadres seulement reçoivent un habillage propre — joueur, cible,
+  points de combo — rangé dans des dossiers `Camelot/`.
+- **L'API C documentée est la même** à treize fonctions près, dont aucune n'est
+  appelée par l'addon.
+- **`## Interface: 16001`.**
+- **Le nom de jeu, dans les directives de `.toc`, est `camelot`.** Blizzard
+  s'en sert partout : `standard` désigne retail seul, `camelot` Forever, et
+  `mainline` les deux — d'où ses lignes
+  `[AllowLoadGameType mainline] [ExcludeLoadGameType camelot]`.
 
-Le mécanisme existe déjà de bout en bout :
+Ce qui manque est le **contenu** vanilla, pas l'API : pas de Mythique+
+(`Blizzard_ChallengesUI` est `standard, mists`), pas de ressources de classe
+modernes (charges arcaniques, puissance sacrée, chi…).
 
-| Maillon | Ce qu'il sait faire |
-|---|---|
-| Le client | cherche `BshamelUI_<Flavor>.toc`, puis `BshamelUI.toc` |
-| `dev/packager/release.sh` | reconnaît le suffixe et construit un zip par flavor |
-| CurseForge | un projet, des fichiers étiquetés par version de jeu |
-| WTF | arborescences séparées : `BshamelUIDB` garde son nom, sans collision |
+## Un seul addon, un seul `.toc`
 
-À terme :
+Pas de second dépôt, pas de second projet CurseForge, et finalement pas de
+second `.toc` non plus.
 
 ```
-BshamelUI_Mainline.toc   ## Interface: 120007, 120100   liste actuelle
-BshamelUI_<Forever>.toc  ## Interface: ?????            socle + modules portables
+## Interface: 120007, 120100, 16001
+...
+Modules\Keystones.lua [AllowLoadGameType standard]
 ```
 
-Le suffixe exact reste à confirmer : le motif de `release.sh` ne connaît pas
-encore Forever, il faudra resynchroniser le packager depuis l'amont BigWigs.
+Un module qui n'a pas de sens sur Forever porte `[AllowLoadGameType standard]`
+sur sa ligne : le client de Forever ne le charge pas, il n'apparaît pas dans le
+menu, ses réglages dorment dans `BshamelUIDB` sans rien gêner. C'est le
+mécanisme de Blizzard lui-même, et celui d'Auctionator.
 
-## La règle, le jour où le second `.toc` existe
+Écartés aujourd'hui : `ClassResource`, `RaidCooldowns`, `NameplatesPage`,
+`Nameplates`, `AuctionHouse`, `Keystones`, `GroupFinder`, `Teleports`,
+`MythicTimer`, `Emotes`. Les autres modules chargent sur les deux clients, **tels
+quels** — le tri de leurs options, un module à la fois, vient ensuite.
 
-À ajouter à `CLAUDE.md` §1 à ce moment-là, pas avant :
+L'inverse existe aussi : `BuffTracker` (et ses données, `BuffTrackerData`)
+ne charge que sur Forever, `[AllowLoadGameType camelot]`. Il y prend la place
+de `RaidCooldowns` sous un autre nom de module — ce nom est une clé de base.
 
-> **Le flavor se choisit dans le `.toc`, jamais dans un `if`.**
-> Un fichier listé dans les deux TOC ne peut tester que des capacités
-> (`if C_Foo and C_Foo.Bar then`). Un module qui n'a pas de sens sur un flavor
-> n'est pas gardé par une condition : il n'est pas dans ce `.toc`.
+La règle qui va avec est dans `CLAUDE.md` §1.
 
-`check-design.sh` refuse déjà `WOW_PROJECT_ID` et `GetBuildInfo()` : le
-garde-fou est en place, il n'y a rien à écrire.
+### Une option, pas un module
 
-La frontière se pose sur l'arborescence existante, sans la bouger :
-`Core/`, `UI/` et `Locales/` doivent compiler sur les deux ; `Modules/` se
-répartit une ligne de `.toc` à la fois.
+Même principe, un cran plus fin : `Core/Forever.lua` est chargé par Forever
+seul (`[AllowLoadGameType camelot]`) et publie `ns.WITHDRAWN`, la liste des
+options que ce client n'a pas. `RegisterModule` les sort de la page et de la
+recherche ; `self:Get` rend leur défaut quoi que la base contienne. Le module
+ne sait rien, et la valeur en base reste intacte pour retail.
 
-`T.Template()` fait déjà le bon travail côté `UI/` — les templates de base
-existent partout, et ceux qui manquent dégradent proprement.
+Le même fichier publie `ns.PREVIEW` : un module qui existe sur Forever mais
+n'y est pas encore vérifié s'affiche grisé, comme un module `preview`.
+
+## Où chercher une réponse
+
+Dans cet ordre :
+
+1. **Le code du client.** Le miroir `Gethe/wow-ui-source` a une branche
+   `forever`, au build près de la bêta. Ce sont les fichiers que Blizzard livre
+   dans le client, extraits sans retouche, y compris
+   `Blizzard_APIDocumentationGenerated` — la documentation que `/api` affiche
+   en jeu. Les `.toc` de Blizzard y disent quel fichier charge sur `camelot`.
+2. **Le jeu.** La sonde ci-dessous, ou `/api` et `/fstack` en jeu.
+3. warcraft.wiki.gg, en dernier : communautaire, et en retard sur une bêta.
+
+Un nom de cadre ne se trouve pas toujours par recherche de texte : Blizzard
+écrit `$parentToT`, pas `TargetFrameToT`. Pour un cadre, la sonde a raison
+contre le grep.
+
+## Publication
+
+Tant que la bêta dure, le travail Forever reste sur GitLab.
+
+**Avant la prochaine `/buiprod`**, le packager doit connaître Forever : notre
+copie de `dev/packager/release.sh` classe toute interface inconnue en
+« retail », et enverrait donc `16001` à CurseForge comme une version retail
+`1.60.1`. Resynchroniser depuis l'amont BigWigs, vérifier que CurseForge a
+ouvert la version de jeu Forever — ou retirer `16001` de la ligne le temps de
+la release.
 
 ---
 
 ## La sonde : ce qui remplace les suppositions
-
-Deviner quelle API survit est un exercice qui se trompe. La sonde mesure.
 
 `dev/probe/BshamelUI_Probe/` est un addon autonome qui pose au client toutes
 les demandes du dépôt — fonctions, globales, cadres nommés, événements, CVars,
@@ -91,7 +128,7 @@ bash dev/scripts/make-probe.sh --calibrer "<chemin rendu à l'étape 2>"
 
 ```powershell
 # 4. Poser sur la bêta Forever, et lire le verdict
-powershell -File dev/scripts/install-probe.ps1 -Client "<...\_beta_>" -Interface <numéro>
+powershell -File dev/scripts/install-probe.ps1 -Client "C:\Program Files (x86)\World of Warcraft\_classic_beta_" -Interface 16001
 ```
 
 En jeu : le résumé s'affiche à la connexion, `/buiprobe` le redonne,
@@ -113,16 +150,13 @@ pour que l'exclusion reste relisible.
 
 Non étalonnée, la sonde le dit en toutes lettres et ses scores sont trop bas.
 
----
+## Environnement de développement
 
-## Ce qu'on sait déjà sans sonder
+Une seconde jonction, sur le modèle de celle de retail :
 
-Une partie des modules n'a pas d'équivalent sur un client vanilla : il n'y a
-rien à porter, il n'y a pas de sujet — Keystones, MythicTimer, CooldownManager,
-Teleports, GroupFinder. D'autres visent des cadres et des CVars qui existent
-sous un autre nom : c'est une réécriture, pas un portage.
+```
+C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns\BshamelUI
+  -> C:\Users\Cosso\Documents\Claude\BshamelUI
+```
 
-Le noyau portable réaliste tourne autour de dix modules sur vingt-cinq. C'est
-une première version Forever honnête, et surtout le **même addon**.
-
-La sonde est là pour remplacer ce paragraphe par des chiffres.
+Le même dépôt se teste donc sur les deux clients, par `/reload`.

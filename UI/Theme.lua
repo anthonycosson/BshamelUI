@@ -500,6 +500,13 @@ T.SIZE = {
     TRACKER_MIN  = 24,
     TRACKER_MAX  = 80,
 
+    -- Suivi des buffs : une liste de noms, un par ligne. La largeur est un
+    -- plancher — le panneau s'élargit à sa plus longue ligne, qui porte le buff
+    -- et ce qui le remplace ; la hauteur d'une ligne est celle d'un libellé,
+    -- sans marge — c'est une liste qu'on parcourt, pas un menu qu'on clique.
+    BUFF_PANEL_W = 230,
+    BUFF_ROW_H   = 16,
+
     -- Barre de marqueurs. La case est celle d'un bouton de barre d'action réduit :
     -- neuf cases doivent tenir sur une rangée sans que le panneau devienne une
     -- deuxième barre d'action.
@@ -748,6 +755,8 @@ T.TIMING = {
                             -- premier : le client rhabille un cadre d'unité
                             -- *après* avoir annoncé le changement de cible, et
                             -- ce délai-là doit rester invisible
+    BUFF_SCAN     = 0.2,    -- relecture des buffs du joueur, une fois la rafale
+                            -- d'`UNIT_AURA` retombée
     SHADE_SETTLE  = 0.2,    -- délai avant de repasser le mode sombre sur les
                             -- cadres apparus après coup (auras, fenêtres
                             -- chargées à la demande)

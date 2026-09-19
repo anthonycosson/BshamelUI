@@ -915,8 +915,71 @@ local function releaseAll()
     wipe(stowed)
 end
 
+-- -------------------------------------------------------------------------
+--  La lueur rouge du nom du joueur
+-- -------------------------------------------------------------------------
+-- La lueur de combat du joueur a une seconde pièce, que les chemins ci-dessus
+-- ne couvrent pas : `StatusTexture`, la bande qui pulse sur le nom. Elle ne se
+-- range pas sous le parent masqué comme les autres, parce qu'elle sert deux
+-- fois — **jaune** au repos, **rouge** en combat — et que la ranger éteindrait
+-- aussi le repos, qui a son propre réglage.
+--
+-- On la cache donc à la main, et seulement quand elle dit « combat » : même
+-- test que le client (`PlayerFrame_UpdateStatus`), le repos d'abord.
+
+---@return table|nil
+local function statusTexture()
+    local content = PlayerFrame and PlayerFrame.PlayerFrameContent
+    local main    = content and content.PlayerFrameContentMain
+    local region  = main and main.StatusTexture
+
+    if type(region) == "table" and type(region.Hide) == "function" then return region end
+    return nil
+end
+
+--- La bande est-elle, à cet instant, la lueur de combat ?
+---
+--- `inCombat` vaut `1` et non `true` : le client l'écrit en nombre. Un test
+--- d'égalité à `true` ne passait jamais, et la bande restait. Il ne vaut
+--- d'ailleurs pas « en combat » mais « en **attaque automatique** »
+--- (`PLAYER_ENTER_COMBAT`) — d'où un défaut qui semblait aléatoire : la bande
+--- ne s'allume qu'au corps à corps, pas quand on se bat aux sorts.
+---@return boolean
+local function statusMeansCombat()
+    if U.IsTrue(IsResting()) then return false end
+    return PlayerFrame ~= nil and PlayerFrame.inCombat ~= nil
+end
+
+---@param mod table
+local function applyCombatStatus(mod)
+    local region = statusTexture()
+    if not (region and statusMeansCombat()) then return end
+
+    if mod:IsEnabled() and mod:Get("hideCombatGlow") then
+        pcall(region.Hide, region)
+    else
+        pcall(region.Show, region)
+    end
+end
+
+--- Le client la remontre à chaque entrée en combat : on repasse derrière, au
+--- moment même où il l'écrit. Même motif que la plaque de réputation.
+---@param mod table
+local function hookCombatStatus(mod)
+    local region = statusTexture()
+    if not region then return end
+
+    U.GuardedHook(region, "Show", function(self)
+        if statusMeansCombat() then pcall(self.Hide, self) end
+    end, function()
+        return mod:IsEnabled() and mod:Get("hideCombatGlow") == true
+    end)
+end
+
 ---@param mod table
 local function applyDecorations(mod)
+    applyCombatStatus(mod)
+
     -- Ces éléments pendent de cadres protégés : les reparenter en combat lève
     -- une erreur d'action bloquée. Ce qui est refusé ici est rattrapé à la
     -- sortie de combat (voir `OnEnable`).
@@ -1285,6 +1348,7 @@ BUI:RegisterModule(MODULE, {
         hookHealthBars(self)
         hookPortraits(self)
         hookReputationColor(self)
+        hookCombatStatus(self)
         hookScaledFrames(self)
 
         -- **Ce qui se voit ne passe pas par ici.** Barre de vie, portrait et
@@ -1421,6 +1485,10 @@ BUI:RegisterModule(MODULE, {
         restoreReputationColor()
         releaseAll()
         restoreAllScales()
+
+        -- La bande rouge du nom : rendue si le combat la réclame encore.
+        local region = statusTexture()
+        if region and statusMeansCombat() then pcall(region.Show, region) end
     end,
 
     OnSettingChanged = function(self, key)

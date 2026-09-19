@@ -543,7 +543,11 @@ BUI:RegisterModule(MODULE, {
             refreshUnitFrames(...)
             refreshPlates(...)
         end)
-        self:RegisterEvent("PLAYER_FOCUS_CHANGED",  refreshUnitFrames)
+        -- Le focus aussi : sa plaque reçoit le même liseré, en orange.
+        self:RegisterEvent("PLAYER_FOCUS_CHANGED", function(...)
+            refreshUnitFrames(...)
+            refreshPlates(...)
+        end)
         self:RegisterEvent("UNIT_PET",              refreshUnitFrames)
 
         -- Les auras de la cible ne sont pas rafraîchies ici : `hookAuraUpdates`

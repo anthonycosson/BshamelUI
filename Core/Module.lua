@@ -73,12 +73,18 @@ local ModuleMixin = {}
 ---@param key string
 ---@return any
 function ModuleMixin:Get(key)
+    -- Une option que ce client n'a pas vaut son défaut, quoi que la base
+    -- contienne (voir `Core/Forever.lua`). Le module n'a rien à savoir.
+    if self._withdrawn and self._withdrawn[key] then
+        return self.defaults[key]
+    end
     return BUI.DB:Get(self.name, key)
 end
 
 ---@param key string
 ---@param value any
 function ModuleMixin:Set(key, value)
+    if self._withdrawn and self._withdrawn[key] then return end
     BUI.DB:Set(self.name, key, value)
 end
 
@@ -187,7 +193,43 @@ function BUI:RegisterModule(name, definition)
     -- la base d'un joueur, ni par un clic. Le forçage est ici, à l'écriture des
     -- défauts, et pas seulement dans l'interface : un réglage qui n'existe pas
     -- ne doit pas pouvoir s'allumer par un autre chemin que celui qu'on a prévu.
+    -- Un module que ce client annonce sans le livrer encore (voir
+    -- `Core/Forever.lua`) : même traitement qu'un module en avant-première.
+    if ns.PREVIEW and ns.PREVIEW[name] then mod.preview = true end
     if mod.preview then mod.defaults.enabled = false end
+
+    -- Les options que ce client n'a pas sortent de la page — et donc de la
+    -- recherche, qui lit la même liste. La liste n'existe que sur les clients
+    -- dont le `.toc` charge `Core/Forever.lua` ; ailleurs, rien ne bouge.
+    local withdrawn = ns.WITHDRAWN and ns.WITHDRAWN[name]
+    if withdrawn and type(mod.options) == "table" then
+        mod._withdrawn = withdrawn
+        local kept = {}
+        for i = 1, #mod.options do
+            local descriptor = mod.options[i]
+            if not (descriptor.key and withdrawn[descriptor.key]) then
+                kept[#kept + 1] = descriptor
+            end
+        end
+        mod.options = kept
+    end
+
+    -- Les avertissements que ce client pose sous une option, en rouge. Même
+    -- source et même règle que ci-dessus : absents ailleurs.
+    local notes = ns.NOTES and ns.NOTES[name]
+    if notes and type(mod.options) == "table" then
+        local with = {}
+        for i = 1, #mod.options do
+            local descriptor = mod.options[i]
+            with[#with + 1] = descriptor
+            for j = 1, #notes do
+                if descriptor.key and notes[j].after == descriptor.key then
+                    with[#with + 1] = { type = "alert", text = L[notes[j].text], indent = true }
+                end
+            end
+        end
+        mod.options = with
+    end
 
     registry[name] = mod
     BUI.DB:RegisterDefaults(name, mod.defaults)

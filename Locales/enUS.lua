@@ -56,6 +56,10 @@ BUI:RegisterLocale("enUS", {
     ["Automation"]              = "Automation",
     ["Auto-accept quests"]      = "Auto-accept quests",
     ["Auto-accept quests tip"]  = "Automatically accepts quests offered by NPCs and quest items.",
+    -- Posée sous l'option, en rouge, sur Forever seulement (voir `Core/Forever.lua`).
+    ["Escort quests not auto-accepted"] =
+        "Escort quests you pick up are not accepted automatically. One started by a group "
+        .. "member is.",
     ["Auto-turn-in quests"]     = "Auto-turn-in quests",
     ["Auto-turn-in quests tip"] = "Automatically completes quests and takes the reward when there is only one.",
     ["Filters"]                 = "Filters",
@@ -296,10 +300,10 @@ BUI:RegisterLocale("enUS", {
     ["Show average item level tip"] =
         "Writes the average item level above the weapons. The one you wear, not the one "
         .. "your bags promise.",
-    -- L'intitulé du niveau d'objet du personnage. Abrégé, parce qu'il tient sous
-    -- le modèle entre deux armes : le mot entier y prendrait plus de place que le
-    -- nombre qu'il annonce, et « Ilvl » est ce que les joueurs écrivent déjà.
-    ["Item level headline"]            = "Ilvl: %s",
+    -- L'intitulé du niveau d'objet du personnage. En toutes lettres, comme le
+    -- client l'écrit dans ses propres caractéristiques : « Ilvl » est ce que les
+    -- joueurs tapent, pas ce que le jeu affiche.
+    ["Item level headline"]            = "Item level: %s",
     ["Item level decimals"]            = "Decimal places",
     ["Item level decimals tip"] =
         "How precise the character's item level should be. Zero rounds it to a whole "
@@ -318,7 +322,7 @@ BUI:RegisterLocale("enUS", {
     ["Show gems"]                      = "Show gems",
     ["Show gems tip"]                  = "Green when every socket is filled, red as soon as one is empty.",
     ["Bags and bank"]                  = "Bags and bank",
-    ["Show item level in bags"]        = "Show item level on stored gear",
+    ["Show item level in bags"]        = "Show item level on gear in bags",
     ["Show item level in bags tip"] =
         "Prints the item level on every piece of gear in your bags, your bank and the warband bank.",
 
@@ -582,6 +586,64 @@ BUI:RegisterLocale("enUS", {
     ["3v3"]                            = "3v3",
     ["Dungeons"]                       = "Dungeons",
     ["Raids"]                          = "Raids",
+    -- Module BuffTracker (Forever)
+    ["Buff tracking"]                  = "Buff tracking (Work in progress)",
+    ["Enable buff tracking"]           = "Track missing buffs",
+    ["Enable buff tracking tip"] =
+        "Shows the lines ticked below in a panel: green when you have the buff, white when "
+        .. "it is missing.",
+    ["Buff panel title"]               = "Buffs",
+    ["Buff separator"]                 = " / ",
+    ["Buff giver"]                     = "%s (%s)",
+    ["Benefit mark"]                   = "Armor, stats and resistances",
+    ["Benefit kings"]                  = "All stats (%)",
+    ["Benefit melee AP"]               = "Melee attack power",
+    ["Benefit melee AP shout"]         = "Melee attack power (stacks)",
+    ["Benefit shadow resistance"]      = "Shadow resistance",
+    ["Benefit threat"]                 = "Less threat",
+    ["Benefit healing received"]       = "Healing received",
+    ["Benefit ranged AP"]              = "Ranged attack power",
+    ["Buffs header"]                   = "Buffs",
+    ["Weapon"]                         = "Weapon",
+    ["Scrolls"]                        = "Scrolls",
+    ["Buff pending scrolls"]           = "Set aside: nobody uses them.",
+    ["Buff kinds"]                     = "Depending on the item: %s",
+    ["Consumables"]                    = "Consumables",
+    ["Pending buffs"]                  = "Set aside",
+    ["World buffs"]                    = "World buffs",
+    ["Future version"]                 = "Planned for a future version.",
+    ["Buff pending no stat"]           = "Set aside: gives no stat.",
+    ["Buff pending tent"]              = "Set aside: rested experience, once, not a stat.",
+    ["Buff pending undecided"]         = "Not decided yet.",
+    ["Stat strength"]                  = "Strength",
+    ["Stat agility"]                   = "Agility",
+    ["Stat stamina"]                   = "Stamina",
+    ["Stat intellect"]                 = "Intellect",
+    ["Stat spirit"]                    = "Spirit",
+    ["Stat critical"]                  = "Critical strike",
+    ["Stat health"]                    = "Health",
+    ["Stat armor"]                     = "Armor",
+    ["Stat attack power"]              = "Attack power",
+    ["Stat spell power"]               = "Spell damage",
+    ["Stat healing"]                   = "Healing",
+    ["Stat mana regen"]                = "Mana regeneration",
+    ["Stat resistance"]                = "Resistances",
+    ["Well fed"]                       = "Well fed",
+    ["Flask"]                          = "Flask",
+    ["Elixir"]                         = "Elixir",
+    ["Weapon enhancement"]             = "Weapon enhancement",
+    ["Sharpening stone"]               = "Sharpening stone",
+    ["Weightstone"]                    = "Weightstone",
+    ["Weapon oil"]                     = "Weapon oil",
+    ["Scope"]                          = "Scope",
+    ["Weapon temp note"] =
+        "A shaman weapon or a rogue poison counts too: it takes the same place and does not "
+        .. "stack.",
+    ["Buff source class"]              = "Class: %s",
+    ["Buff source profession"]         = "Profession: %s",
+    ["Buff source campfire"]           = "Place it near a campfire and sit down.",
+    ["Buff via camp"]                  = "%s (camp object, %s)",
+    ["Buff via profession"]            = "%s (%s)",
     -- Module RaidCooldowns
     ["Bloodlust and battle res"]       = "Bloodlust and battle res",
     ["Battle resurrections"]           = "Battle resurrections",

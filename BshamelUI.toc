@@ -1,4 +1,8 @@
-## Interface: 120007, 120100
+## Interface: 120007, 120100, 16001
+# 16001 : *World of Warcraft: Forever*. Même addon, même zip : le client de
+# Forever porte l'interface de retail, et les modules qui n'y ont pas de sens
+# sont écartés plus bas par `[AllowLoadGameType standard]` — `standard` est
+# retail seul, `camelot` est Forever, `mainline` couvre les deux.
 ## Title: |cff00aeefBshamel|rUI
 # `Notes` est le repli pour tous les clients : il doit rester en anglais.
 # Les variantes `Notes-<locale>` le remplacent quand la locale correspond.
@@ -31,6 +35,9 @@ Locales\frFR.lua
 
 Core\DB.lua
 Core\Module.lua
+# Les réglages que Forever n'a pas. Lu par `RegisterModule`, donc avant tout
+# module ; absent de retail, où la liste est simplement vide.
+Core\Forever.lua [AllowLoadGameType camelot]
 
 # Design system
 UI\Theme.lua
@@ -68,6 +75,7 @@ UI\Widgets\ChatTools.lua
 # donc avant les pièces qui s'appuient dessus.
 UI\Widgets\Panel.lua
 UI\Widgets\IconTracker.lua
+UI\Widgets\BuffList.lua
 UI\Widgets\MarkerBar.lua
 UI\Widgets\ResourceBar.lua
 # Les paliers d'une clé ne sont pas un panneau : ils se posent sur le bloc de
@@ -106,30 +114,34 @@ Modules\DarkMode.lua
 Modules\Character.lua
 Modules\ActionBars.lua
 Modules\UnitFrames.lua
-Modules\ClassResource.lua
+Modules\ClassResource.lua [AllowLoadGameType standard]
 Modules\PersonalResource.lua
 # Les barres d'infos tiennent en deux fichiers : ce que la page déclare, puis le
 # moteur qui agit. La page charge d'abord — le moteur relit ce qu'elle publie, et
 # `RegisterModule` réclame la liste des options au moment où il s'exécute.
-Modules\NameplatesPage.lua
-Modules\Nameplates.lua
+Modules\NameplatesPage.lua [AllowLoadGameType standard]
+Modules\Nameplates.lua [AllowLoadGameType standard]
 Modules\CooldownManager.lua
 Modules\Windows.lua
 Modules\Chat.lua
 Modules\Bags.lua
-Modules\AuctionHouse.lua
+Modules\AuctionHouse.lua [AllowLoadGameType standard]
 Modules\Quest.lua
-Modules\Keystones.lua
-Modules\GroupFinder.lua
-Modules\Teleports.lua
-Modules\RaidCooldowns.lua
-Modules\MythicTimer.lua
+Modules\Keystones.lua [AllowLoadGameType standard]
+Modules\GroupFinder.lua [AllowLoadGameType standard]
+Modules\Teleports.lua [AllowLoadGameType standard]
+Modules\RaidCooldowns.lua [AllowLoadGameType standard]
+# Sur Forever, le suivi des buffs prend sa place : la page décrit, puis le
+# moteur agit.
+Modules\BuffTrackerData.lua [AllowLoadGameType camelot]
+Modules\BuffTracker.lua [AllowLoadGameType camelot]
+Modules\MythicTimer.lua [AllowLoadGameType standard]
 Modules\RaidPanel.lua
 Modules\CombatLog.lua
 Modules\Annoyances.lua
 # Seul module de la catégorie « Inutile mais indispensable », et il ferme donc la
 # liste comme sa catégorie ferme la barre latérale.
-Modules\Emotes.lua
+Modules\Emotes.lua [AllowLoadGameType standard]
 
 # `Modules/Upcoming.lua` a disparu : un module annoncé n'est plus une déclaration
 # sans code, c'est son propre fichier avec `preview = true` en tête. Le core

@@ -50,11 +50,15 @@ local MODULE = "Character"
 ---
 --- Chemise et tabard sont absents : ils n'ont ni niveau d'objet, ni
 --- enchantement, ni châsse. Une pastille en face d'eux ne dirait rien.
+---
+--- L'arme à distance n'a de case que sur *Forever*. Retail n'a plus de bouton
+--- `CharacterRangedSlot` : l'emplacement y est simplement sauté, comme tout
+--- nom dont le client n'a pas le bouton.
 local SLOT_NAMES = {
     "HeadSlot", "NeckSlot", "ShoulderSlot", "BackSlot", "ChestSlot",
     "WristSlot", "HandsSlot", "WaistSlot", "LegsSlot", "FeetSlot",
     "Finger0Slot", "Finger1Slot", "Trinket0Slot", "Trinket1Slot",
-    "MainHandSlot", "SecondaryHandSlot",
+    "MainHandSlot", "SecondaryHandSlot", "RangedSlot",
 }
 
 --- Emplacements qui acceptent un enchantement.
@@ -67,7 +71,16 @@ local SLOT_NAMES = {
 --- Elle ne se devine pas d'une extension à l'autre : la cape et les bracelets
 --- s'enchantaient hier et ne s'enchantent plus, le casque et les épaules font le
 --- chemin inverse. Elle se relève en jeu, et c'est ce qui a été fait.
-local ENCHANTABLE = {
+---
+--- Trois valeurs :
+---   · `true`       — l'emplacement s'enchante, quoi qu'il porte ;
+---   · `"weapon"`   — seulement s'il porte une arme (voir `isWeapon`) ;
+---   · `"engineer"` — seulement chez un ingénieur (voir `isEngineer`).
+---
+--- *Forever* a la sienne, relevée dans les tables de sa bêta et publiée par
+--- `Core/Forever.lua` : elle remplace celle-ci entière, parce que c'est un
+--- autre jeu et pas une variante de celui-ci.
+local ENCHANTABLE = ns.ENCHANTABLE or {
     HeadSlot          = true,
     ShoulderSlot      = true,
     ChestSlot         = true,
@@ -76,8 +89,25 @@ local ENCHANTABLE = {
     Finger0Slot       = true,
     Finger1Slot       = true,
     MainHandSlot      = true,
-    SecondaryHandSlot = true,
+    SecondaryHandSlot = "weapon",
 }
+
+--- Numéro d'un emplacement, ou `nil` si le client ne connaît pas ce nom.
+---
+--- Sous `pcall` : `GetInventorySlotInfo` **lève** sur un nom inconnu au lieu
+--- de rendre `nil`, et `SLOT_NAMES` en cite un que retail n'a plus.
+---@param name string
+---@return integer|nil
+local function slotIDOf(name)
+    if not GetInventorySlotInfo then return nil end
+    local ok, slotID = pcall(GetInventorySlotInfo, name)
+    if ok then return slotID end
+    return nil
+end
+
+--- Ingénierie, par l'identifiant de sa ligne de compétence. Un identifiant de
+--- jeu, pas une chaîne affichée : il ne se traduit pas.
+local ENGINEERING_SKILL = 202
 
 --- Où poser la colonne de pastilles de chaque emplacement : toujours **du côté
 --- opposé au modèle**, celui qui donne sur le vide.
@@ -110,6 +140,12 @@ local PLACEMENT = {
     -- s'écrivaient l'une sur l'autre. `levelLine` lit aussi cette entrée pour
     -- ordonner « (rang) niveau » : le niveau reste ainsi contre la case.
     MainHandSlot = "LEFT", SecondaryHandSlot = "RIGHT",
+
+    -- *Forever* seulement : la troisième case, à droite de la main gauche. Son
+    -- vide est à droite comme celui de la main gauche — sans rang
+    -- d'amélioration sur ce client, les lignes tiennent sur la largeur d'une
+    -- case et ne débordent pas l'une vers l'autre.
+    RangedSlot   = "RIGHT",
 }
 
 --- Les deux emplacements qui ouvrent les colonnes, de gauche à droite à l'écran.
@@ -127,6 +163,7 @@ local HEADLINE_ANCHORS = { "HeadSlot", "HandsSlot" }
 local WEAPON_SLOTS = {
     MainHandSlot      = true,
     SecondaryHandSlot = true,
+    RangedSlot        = true,
 }
 
 --- Cet emplacement porte-t-il une arme ?
@@ -143,13 +180,51 @@ local function isWeapon(link)
     return classID == (Enum and Enum.ItemClass and Enum.ItemClass.Weapon or 2)
 end
 
----@param slotName string
+--- L'unité est-elle ingénieur ?
+---
+--- Ne se sait que du joueur : le client ne dit pas les métiers d'un personnage
+--- inspecté. Pour lui, la réponse est « non » — un emplacement qu'on ne sait
+--- pas réclamer ne doit pas s'afficher en rouge.
+---@param unit string
+---@return boolean
+local function isEngineer(unit)
+    if unit ~= "player" then return false end
+
+    if C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID then
+        local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, ENGINEERING_SKILL)
+        if ok and type(info) == "table" then
+            return type(info.rank) == "number" and info.rank > 0
+        end
+    end
+
+    if GetProfessions and GetProfessionInfo then
+        local first, second = GetProfessions()
+        for _, index in ipairs({ first, second }) do
+            local skillLine = select(7, GetProfessionInfo(index))
+            if skillLine == ENGINEERING_SKILL then return true end
+        end
+    end
+    return false
+end
+
+--- L'arme est-elle à deux mains ? Elle occupe alors aussi la main gauche, et
+--- le niveau d'objet moyen la compte pour les deux emplacements.
 ---@param link string
 ---@return boolean
-local function expectsEnchant(slotName, link)
-    if not ENCHANTABLE[slotName] then return false end
-    if slotName == "SecondaryHandSlot" then return isWeapon(link) end
-    return true
+local function isTwoHanded(link)
+    if not (C_Item and C_Item.GetItemInfoInstant) then return false end
+    return select(4, C_Item.GetItemInfoInstant(link)) == "INVTYPE_2HWEAPON"
+end
+
+---@param slotName string
+---@param link string
+---@param unit string
+---@return boolean
+local function expectsEnchant(slotName, link, unit)
+    local rule = ENCHANTABLE[slotName]
+    if rule == "weapon"   then return isWeapon(link) end
+    if rule == "engineer" then return isEngineer(unit) end
+    return rule == true
 end
 
 -- =========================================================================
@@ -624,7 +699,7 @@ local function buildSlots(sheet)
     for i = 1, #SLOT_NAMES do
         local name   = SLOT_NAMES[i]
         local button = _G[sheet.prefix .. name]
-        local slotID = GetInventorySlotInfo(name)
+        local slotID = button and slotIDOf(name)
 
         if button and slotID then
             local info = W.SlotInfo(button)
@@ -720,15 +795,16 @@ local MAX_LEVEL_DECIMALS = 2
 
 --- Écrit le niveau d'objet du personnage, ou l'efface.
 ---
---- **Celui qu'il porte, pas celui qu'il possède.** `GetAverageItemLevel` rend les
---- deux : le premier nombre compte le meilleur équipement des sacs, le second ce
---- qui est réellement équipé. C'est le second qu'on affiche — le premier promet
---- un niveau qu'il faudrait aller chercher.
+--- **Celui qu'il porte, pas celui qu'il possède**, et on le **calcule** : la somme
+--- des pièces que la fiche affiche, divisée par le nombre d'emplacements — un
+--- emplacement vide compte zéro, comme chez le client. Une arme à deux mains
+--- compte deux fois quand la main gauche est vide.
 ---
---- Sur une fiche d'inspection, ce chemin n'existe pas : la fonction ne parle que
---- du joueur. On somme alors les seize pièces, ce qui est exactement ce que le
---- client fait lui-même — armes comprises, et une seule fois quand il n'y en a
---- qu'une, la main gauche vide reprenant la valeur de la droite.
+--- `GetAverageItemLevel` a servi ici, et il est parti : sur *Forever*, son
+--- second retour — l'équipé — ne suivait pas les pièces qu'on retire, et
+--- la fiche annonçait un équipement qu'on ne portait plus. Calculé, le nombre est celui
+--- des colonnes, au même instant, sur les deux clients et sur la fiche
+--- d'inspection — qui n'a jamais eu d'autre chemin.
 ---@param mod table
 ---@param sheet table
 ---@param unit string
@@ -741,28 +817,28 @@ local function paintHeadline(mod, sheet, unit)
         return
     end
 
-    local level
-    if unit == "player" and GetAverageItemLevel then
-        level = select(2, GetAverageItemLevel())
+    local total, worn, mainHand, offHandEmpty = 0, 0, nil, false
+    for i = 1, #sheet.slots do
+        local slot = sheet.slots[i]
+        local link = GetInventoryItemLink(unit, slot.id)
+        local each = link and itemLevel(unit, slot.id, link)
+        if each then
+            total = total + each
+            worn  = worn + 1
+        end
+        if slot.name == "MainHandSlot" and link and isTwoHanded(link) then
+            mainHand = each
+        end
+        if slot.name == "SecondaryHandSlot" and not link then offHandEmpty = true end
     end
 
-    if not level then
-        local total, count = 0, 0
-        for i = 1, #sheet.slots do
-            local slot = sheet.slots[i]
-            local link = GetInventoryItemLink(unit, slot.id)
-            local each = link and itemLevel(unit, slot.id, link)
-            if each then
-                total = total + each
-                count = count + 1
-            end
-        end
-        if count == 0 then
-            headline:Hide()
-            return
-        end
-        level = total / count
+    if worn == 0 then
+        headline:Hide()
+        return
     end
+    if mainHand and offHandEmpty then total = total + mainHand end
+
+    local level = total / #sheet.slots
 
     -- Le format du nombre se construit à partir du réglage. Ce n'est pas une
     -- chaîne affichée : il ne dit que la précision, et c'est l'intitulé qui porte
@@ -928,7 +1004,7 @@ local function updateSlot(mod, slot, unit)
     -- lues, et disent en plus **laquelle** — ce qu'un mot ne disait pas.
     info:BeginIcons()
 
-    if mod:Get("showEnchants") and expectsEnchant(slot.name, link) then
+    if mod:Get("showEnchants") and expectsEnchant(slot.name, link, unit) then
         info:AddIcon(enchantIcon(unit, slot.id))
     end
 
@@ -1213,10 +1289,10 @@ BUI:RegisterModule(MODULE, {
         -- plus. On le nomme, pour que la réponse se rapporte à une pièce.
         for i = 1, #SLOT_NAMES do
             local name   = SLOT_NAMES[i]
-            local slotID = GetInventorySlotInfo and GetInventorySlotInfo(name)
+            local slotID = slotIDOf(name)
             local link   = slotID and GetInventoryItemLink(unit, slotID)
 
-            if link and expectsEnchant(name, link) then
+            if slotID and link and expectsEnchant(name, link, unit) then
                 local data = C_TooltipInfo and C_TooltipInfo.GetInventoryItem
                              and C_TooltipInfo.GetInventoryItem(unit, slotID)
                 if data and TooltipUtil and TooltipUtil.SurfaceArgs then

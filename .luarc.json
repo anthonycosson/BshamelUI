@@ -108,6 +108,9 @@
 
     "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
 
+    "C_SkillInfo", "C_TradeSkillUI", "GetProfessions", "GetProfessionInfo",
+    "LOCALIZED_CLASS_NAMES_MALE", "PlayerFrame", "IsResting",
+
     "C_MythicPlus", "NUM_BAG_SLOTS", "GetCursorInfo", "ClearCursor",
     "GetWorldElapsedTimers", "GetWorldElapsedTime",
     "ScenarioObjectiveTracker", "ObjectiveTrackerFrame", "CHALLENGE_MODE_POWER_LEVEL",
