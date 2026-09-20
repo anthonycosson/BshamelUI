@@ -79,7 +79,7 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   ne fait rien seul, parce que sa liste est vide. C'est au libellé de le dire,
   pas au défaut de le rattraper.
 
-  **Deux exceptions existent**, et elles se ressemblent moins qu'il n'y paraît.
+  **Trois exceptions existent**, et elles se ressemblent moins qu'il n'y paraît.
 
   La première : le bouton de minicarte
   (`Modules/General.lua`), marqué `@default-on`. La règle protège une promesse
@@ -97,9 +97,20 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   provisoires par construction — le jour où Blizzard corrige, la ligne
   disparaît.
 
-  La marque se pose donc sur ce qui **montre** l'addon ou sur ce qui **répare
-  le client**, jamais sur ce qui **agit** à la place du joueur. Toute nouvelle
-  ligne `@default-on` demande le même examen, écrit au-dessus d'elle.
+  La troisième : masquer les erreurs Lua (`Modules/Annoyances.lua`). C'est la
+  plus discutable — elle ne montre pas l'addon et ne répare pas le client, elle
+  éteint quelque chose. Ce qu'elle éteint n'est pas une fonction du jeu, c'est
+  le **rapport d'une panne** : la fenêtre rouge ne fait rien arriver, elle
+  signale ce qui est déjà arrivé, et elle le signale à qui n'en fera rien — un
+  joueur ne corrige pas l'erreur Lua d'un addon, il la ferme. Rien n'est perdu :
+  on coupe la CVar du client, pas les gestionnaires d'erreurs, et BugSack
+  reçoit tout.
+
+  La marque se pose donc sur ce qui **montre** l'addon, sur ce qui **répare le
+  client**, ou sur ce qui **tait le symptôme** d'une panne — jamais sur ce qui
+  **agit** à la place du joueur. Une case qui sauterait les cinématiques ou
+  parlerait à sa place ne l'aura pas. Toute nouvelle ligne `@default-on`
+  demande le même examen, écrit au-dessus d'elle.
 
   `dev/scripts/check-design.sh` le vérifie sur tous les blocs `defaults`, et
   refuse tout défaut vrai qui ne porte pas la marque.

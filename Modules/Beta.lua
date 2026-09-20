@@ -322,10 +322,10 @@ BUI:RegisterModule(MODULE, {
         -- option se comprend par son libellé et son infobulle. Ici, il y a un
         -- ordre à respecter, et un ordre ne tient pas dans une infobulle.
         { type = "alert",       text = L["Settings lost warning"] },
-        { type = "description", text = L["Settings lost step 1"] },
-        { type = "description", text = L["Settings lost step 2"] },
-        { type = "description", text = L["Settings lost step 3"] },
-        { type = "description", text = L["Settings lost step 4"] },
+        { type = "note",        text = L["Settings lost step 1"] },
+        { type = "note",        text = L["Settings lost step 2"] },
+        { type = "note",        text = L["Settings lost step 3"] },
+        { type = "note",        text = L["Settings lost step 4"] },
         {
             type    = "button",
             text    = L["Save config to macros"],

@@ -150,6 +150,25 @@ function W.Description(parent, label, font)
     return frame
 end
 
+--- Le même paragraphe, en blanc : ce qu'il dit est à **faire**, pas à savoir.
+---
+--- Le gris du paragraphe ordinaire est celui d'une note — on la lit si on veut,
+--- et le reste de la page se comprend sans elle. Une marche à suivre n'a pas ce
+--- statut : elle se lit dans l'ordre, chaque ligne commande la suivante, et
+--- l'écrire en gris reviendrait à la proposer. Le blanc est la couleur des
+--- libellés, c'est-à-dire de ce qui porte l'action.
+---
+--- Rare par construction : l'addon n'a qu'une marche à suivre, et si un jour il
+--- en avait trois, c'est qu'il aurait un autre problème.
+---@param parent table
+---@param label string
+---@return table
+function W.Note(parent, label)
+    local frame = W.Description(parent, label)
+    frame.text:SetTextColor(T.COLOR.LABEL:GetRGB())
+    return frame
+end
+
 --- Le même paragraphe, en orange : ce qu'il dit engage quelque chose qui ne se
 --- rattrape pas.
 ---

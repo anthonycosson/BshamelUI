@@ -276,7 +276,28 @@ BUI:RegisterModule(MODULE, {
     defaults = {
         skipCinematics    = false,
         hideTalkingHead   = false,
-        hideLuaErrors     = false,
+
+        -- **Troisième exception au « aucun défaut ne vaut vrai »** (CLAUDE.md
+        -- §4), et la plus discutable des trois : celle-ci ne montre pas
+        -- l'addon et ne répare pas le client, elle éteint quelque chose.
+        --
+        -- L'examen, écrit pour qu'on puisse le contester. Ce que cette case
+        -- éteint n'est pas une fonction du jeu, c'est **le rapport d'une
+        -- panne** : la fenêtre rouge ne fait rien arriver, elle signale ce qui
+        -- est déjà arrivé. Et elle le signale à qui n'en fera rien — un joueur
+        -- ne corrige pas l'erreur Lua d'un addon, il la ferme. Le seul geste
+        -- qu'elle lui laisse est celui qu'il ferait de toute façon.
+        --
+        -- Rien n'est perdu pour autant : on coupe la CVar du client, pas les
+        -- gestionnaires d'erreurs. BugSack et ses pareils reçoivent tout, et
+        -- qui veut la fenêtre de Blizzard décoche la case.
+        --
+        -- La limite reste nette : la marque va sur ce qui **tait un
+        -- symptôme**, jamais sur ce qui change une règle du jeu. Une case qui
+        -- sauterait des cinématiques ou parlerait à la place du joueur ne
+        -- l'aura pas.
+        hideLuaErrors     = true,  -- @default-on
+
         hideWaystoneToast = false,
     },
 

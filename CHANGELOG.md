@@ -25,6 +25,16 @@
   respecter ne tient pas dans une infobulle.
 
 ### Modifié
+- **Masquer les erreurs Lua est désormais coché à l'installation.** Troisième
+  et dernière exception au principe « aucun défaut ne vaut vrai », et la plus
+  discutable : ce que la case éteint n'est pas une fonction du jeu, c'est le
+  rapport d'une panne — la fenêtre rouge signale ce qui est déjà arrivé, à
+  quelqu'un qui n'y peut rien. Les gestionnaires d'erreurs, eux, reçoivent
+  toujours tout : seule la fenêtre du client se tait, et la décocher la rend.
+- **Le module Journalisation ne s'annonce plus à la connexion.** Sa ligne
+  existe pour répondre au joueur qui vient de cocher la case ; elle partait
+  aussi quand le core rejouait l'état des modules, c'est-à-dire à chaque
+  restauration de configuration.
 - **Le message sur la sauvegarde de la bêta disait faux, il est remplacé.** La
   2.0.1 conseillait de supprimer `BshamelUI.lua` : ça ne répare rien, et le
   témoin CVar censé déclencher ce conseil n'est même pas écrit par ce client.

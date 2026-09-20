@@ -137,7 +137,17 @@ BUI:RegisterModule(MODULE, {
         end
     end,
 
-    OnSettingChanged = function(self)
+    --- `key` est `nil` quand ce n'est pas le joueur qui vient de cocher : le
+    --- core rejoue alors l'état des modules après un changement de profil — ou
+    --- après une restauration de configuration, qui arrive à la connexion. Il
+    --- n'y a personne à rassurer dans ce cas-là, seulement une ligne de plus
+    --- dans un chat déjà chargé.
+    ---@param key string|nil
+    OnSettingChanged = function(self, key)
+        if key == nil then
+            applyLogging(self)
+            return
+        end
         toggleLogging(self)
     end,
 })

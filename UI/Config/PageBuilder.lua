@@ -23,6 +23,8 @@
 --      { type = "description", text = ..., font = ... }
 --          `font` est un objet de police **du thème** (`T.FONT.…`), pour la
 --          note qui doit se lire de loin ; à défaut, le corps d'infobulle.
+--      { type = "note",        text = ... }   -- le même, en blanc : une marche
+--          à suivre, pas une note qu'on lit si on veut.
 --      { type = "warning",     text = ... }   -- le même, en orange
 --      { type = "alert",       text = ... }   -- le même, en rouge
 --      { type = "spacer",      height = 10 }
@@ -136,6 +138,9 @@ local function buildWidget(page, mod, descriptor)
 
     elseif kind == "description" then
         return W.Description(page, descriptor.text, descriptor.font)
+
+    elseif kind == "note" then
+        return W.Note(page, descriptor.text)
 
     elseif kind == "warning" then
         return W.Warning(page, descriptor.text)
