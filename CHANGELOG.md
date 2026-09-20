@@ -2,6 +2,10 @@
 
 ## Non publié
 
+### Corrigé
+- **Le mode sombre n'éteint plus le ZZZ du repos** sur le cadre du joueur. Le
+  petit Z animé qui dit qu'on accumule du repos sortait noir sur le portrait.
+
 ## 2.0.2 — 2026-09-20
 
 ### Ajouté

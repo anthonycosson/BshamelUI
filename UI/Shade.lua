@@ -423,6 +423,14 @@ local NESTED = {
     end,
 }
 
+-- **Le menu de la touche Échap a vécu ici**, et il en est sorti pour une raison
+-- qui vaut d'être notée : ses boutons sont dessinés en trois morceaux d'une
+-- seule image (`128-RedButton`), où le liseré doré et le corps rouge sont cuits
+-- ensemble. Le moteur ne sait que multiplier une couleur de sommet : il prend
+-- les deux ou aucun. Assombrir « seulement le contour », qui est ce qu'on
+-- voulait, demanderait de redessiner le bouton par-dessus — un rectangle sur
+-- une forme à bouts arrondis. On ne l'assombrit donc pas du tout.
+
 -- =========================================================================
 --  Classement des textures
 -- =========================================================================
@@ -565,8 +573,19 @@ local STATE_KEYS = { "OutOfRange", "SpellHighlight", "Glow", "Alert", "Proc",
 --- portant `Fill` et `TiledFillOverlay`), et c'est donc ici qu'ils s'écartent.
 --- Assombri, le bouclier de l'add d'affixe couvrait de noir la barre de vie du
 --- cadre de cible — même mob, même semaine, autre porteur que les plaques.
+---
+--- « PlayerRestLoop » est le **ZZZ du repos**, posé sur le cadre du joueur dès
+--- qu'on s'arrête dans une auberge ou une ville. Ce n'est ni de l'habillage ni
+--- une décoration : il dit « vous accumulez du repos », et il le dit tout seul —
+--- rien d'autre à l'écran ne porte cette information. Sa texture s'appelle
+--- `RestTexture`, sans « Icon » ni « Glow » dans le nom et sans clé d'état qui
+--- la publie : le tri la classait dans l'habillage, et le Z sortait noir sur le
+--- portrait. Le cadre entier s'écarte plutôt que la seule texture, parce que
+--- c'est un cadre d'animation — le client y range un flipbook, il peut y ranger
+--- autre chose demain.
 local SIGNAL_FRAMES = { "Glow", "Alert", "Proc", "Highlight", "Assisted",
                         "Feedback",
+                        "PlayerRestLoop",
                         "AbsorbBar", "HealPredictionBar", "ManaCostPrediction" }
 
 --- Les ressources de classe du client, enfants du cadre du joueur et donc
