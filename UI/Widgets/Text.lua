@@ -158,13 +158,17 @@ end
 --- l'écrire en gris reviendrait à la proposer. Le blanc est la couleur des
 --- libellés, c'est-à-dire de ce qui porte l'action.
 ---
+--- D'un corps au-dessus du paragraphe ordinaire, pour la même raison que la
+--- couleur : le corps d'infobulle est celui d'un texte qu'on survole, pas d'un
+--- texte qu'on suit du doigt.
+---
 --- Rare par construction : l'addon n'a qu'une marche à suivre, et si un jour il
 --- en avait trois, c'est qu'il aurait un autre problème.
 ---@param parent table
 ---@param label string
 ---@return table
 function W.Note(parent, label)
-    local frame = W.Description(parent, label)
+    local frame = W.Description(parent, label, T.FONT.NOTICE)
     frame.text:SetTextColor(T.COLOR.LABEL:GetRGB())
     return frame
 end

@@ -594,8 +594,9 @@ BUI:RegisterLocale("frFR", {
     ["Settings lost step 3"] =
         "3. Au démarrage suivant, l'addon relit cette macro et réapplique les réglages.",
     ["Settings lost step 4"] =
-        "4. Pour le refaire à la main : exécutez la macro BUIconfig, ou le bouton "
-        .. "Restaurer ci-dessous.",
+        "4. Posez la macro BUIconfig sur une barre d'action : si les réglages ne "
+        .. "reviennent pas tout seuls, un clic dessus les remet — le bouton Restaurer "
+        .. "ci-dessous fait la même chose.",
     ["Save config to macros"]          = "Enregistrer les réglages dans des macros",
     ["Save"]                           = "Enregistrer",
     ["Save config to macros tip"] =
@@ -608,7 +609,8 @@ BUI:RegisterLocale("frFR", {
         .. "le client n'a rien rendu : ce bouton ne sert donc presque jamais.",
     ["Config macros saved"]            = "Réglages enregistrés dans %d macro(s).",
     ["Config macros hint"] =
-        "Placez la macro %s sur une barre ou un raccourci : elle les restaure à la demande.",
+        "Posez maintenant la macro %s sur une barre d'action : si les réglages ne "
+        .. "reviennent pas tout seuls au prochain démarrage, un clic dessus les remet.",
     ["Config macros restored"]         = "Réglages restaurés depuis vos macros.",
     ["Config macros missing"]          = "Aucune macro de réglages trouvée. Enregistrez d'abord les vôtres.",
     ["Config macros invalid"]          = "Les macros de réglages sont abîmées ou incomplètes.",

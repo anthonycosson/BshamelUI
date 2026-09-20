@@ -605,7 +605,9 @@ BUI:RegisterLocale("enUS", {
     ["Settings lost step 3"] =
         "3. On the next launch, the addon reads that macro back and reapplies them.",
     ["Settings lost step 4"] =
-        "4. To redo it by hand: run the BUIconfig macro, or the Restore button below.",
+        "4. Put the BUIconfig macro on an action bar: if the settings do not come "
+        .. "back on their own, one click restores them -- the Restore button below "
+        .. "does the same.",
     ["Save config to macros"]          = "Save settings to macros",
     ["Save"]                           = "Save",
     ["Save config to macros tip"] =
@@ -618,7 +620,8 @@ BUI:RegisterLocale("enUS", {
         .. "the client returned nothing, so you rarely need this button.",
     ["Config macros saved"]            = "Settings saved into %d macro(s).",
     ["Config macros hint"] =
-        "Put the %s macro on an action bar or a keybind: it restores them on demand.",
+        "Now put the %s macro on an action bar: if the settings do not come back on "
+        .. "their own at the next launch, one click restores them.",
     ["Config macros restored"]         = "Settings restored from your macros.",
     ["Config macros missing"]          = "No settings macro found. Save yours first.",
     ["Config macros invalid"]          = "The settings macros are damaged or incomplete.",

@@ -2102,10 +2102,19 @@ T.TEXTURE = {
     -- Icône des macros de sauvegarde de configuration : le point
     -- d'interrogation, celui que le jeu donne d'office à une macro neuve.
     -- **Ce n'est pas un choix esthétique, c'est ce qui la rend posable** : une
-    -- macro dont l'icône n'est pas une icône de macro ne se glisse pas sur une
-    -- barre d'action. Le client écrit ce chemin-là mot pour mot
-    -- (`Blizzard_AddOnList/AddonList.lua`).
-    CONFIG_MACRO      = "Interface\\ICONS\\INV_Misc_QuestionMark",
+    -- macro sans icône valable ne se glisse pas sur une barre d'action.
+    --
+    -- **Un identifiant de fichier, pas un chemin.** `CreateMacro` reçoit ce que
+    -- le sélecteur d'icônes du client lui donne, et celui-ci lui passe le
+    -- retour de `GetIconTexture()`, qui est un identifiant
+    -- (`Blizzard_MacroIconSelector.lua`). Un chemin y est ignoré : la macro
+    -- sort sans icône. Le client publie la valeur sous deux noms selon les
+    -- versions ; le nombre n'est là que pour le jour où il n'en publierait
+    -- aucun.
+    CONFIG_MACRO      = QUESTION_MARK_ICON
+                        or (Constants and Constants.CurrencyConsts
+                            and Constants.CurrencyConsts.QUESTIONMARK_INV_ICON)
+                        or 134400,
 
     -- Bouton de copie posé sur le cadre de chat : l'icône de note du client.
     -- C'est déjà ce qu'il met sur « du texte qu'on lit et qu'on recopie », et
