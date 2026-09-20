@@ -216,7 +216,13 @@ BUI:RegisterModule(MODULE, {
         tray   = false,
 
         maxCameraDistance = false,
-        cameraZoomFactor  = 2.9,
+
+        -- Le facteur de zoom, quand la case au-dessus est cochée. **Deux**, et
+        -- non le maximum que le curseur autorise : la case dit « augmenter la
+        -- distance maximale », pas « la pousser au bout ». Un défaut posé sur la
+        -- butée ne laisse plus voir qu'un réglage — on ne peut que le réduire —
+        -- alors que le milieu de la course se règle dans les deux sens.
+        cameraZoomFactor  = 2.0,
 
         compactGameMenu = false,
         gameMenuScale   = 75,
