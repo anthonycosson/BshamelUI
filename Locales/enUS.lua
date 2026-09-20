@@ -595,6 +595,11 @@ BUI:RegisterLocale("enUS", {
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
     ["Beta"]                           = "Beta",
+    ["Saved settings not read"] =
+        "Your settings could not be read: the game writes the file but no longer loads it.",
+    ["Saved settings not read fix"] =
+        "Quit the game, then delete BshamelUI.lua and BshamelUI.lua.bak from the folder "
+        .. "WTF/Account/<account>/SavedVariables. The files the game writes next load fine.",
     ["Looting"]                        = "Looting",
     ["Fast loot"]                      = "Fast loot",
     ["Fast loot tip"] =

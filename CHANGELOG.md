@@ -3,6 +3,11 @@
 ## Non publié
 
 ### Ajouté
+- **Un message explique la panne de sauvegarde de la bêta.** Quand le client
+  écrit le fichier de réglages sans jamais le relire — constaté sur Forever —
+  l'addon s'en aperçoit à la connexion et dit quoi faire : quitter le jeu et
+  supprimer `BshamelUI.lua` du dossier `SavedVariables`. Le témoin qui permet
+  cette détection vit dans une CVar, hors du fichier en cause.
 - **Ramassage rapide** (Sacs et réparations). Tout est pris dès l'ouverture
   d'un cadavre : la fenêtre de butin n'apparaît plus, et son animation avec.
   Seulement quand le butin automatique est déjà actif, ou sa touche maintenue.
