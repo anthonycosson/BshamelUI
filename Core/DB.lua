@@ -5,6 +5,7 @@
 --  Forme du SavedVariables (compte) :
 --      BshamelUIDB = {
 --          schema   = 1,
+--          seen     = { loginHint = true },   -- voir DB:Seen
 --          profiles = { ["Default"] = { modules = { Quest = { autoAccept = true } } } },
 --          chars    = {                       -- voir DB:CharData
 --              ["Bshamel-Forever"] = {
@@ -12,7 +13,6 @@
 --                  data    = { Chat = { history = { ... } } },
 --              },
 --          },
---          seen     = { loginHint = true },   -- voir DB:Seen
 --      }
 --
 --  **Rien de ce qui compte ne vit dans le SavedVariables du personnage.** Le
@@ -52,9 +52,14 @@ local DEFAULT_PROFILE  = "Default"
 local defaultsRegistry = {}
 
 local initialized = false
+--- Vrai quand le client n'a rien rendu au chargement : la base était absente,
+--- et l'addon est reparti de ses défauts. Voir `DB:LoadedEmpty`.
+local loadedEmpty = false
+
 
 -- =========================================================================
 --  Accès interne
+
 -- =========================================================================
 --- Identifiant du personnage connecté, une fois pour la session.
 ---
@@ -124,7 +129,6 @@ local orphanData = {}
 --- migration dont il est le voisin de sens, mais `BindCharacter` l'appelle.
 local sweepCharData
 
-
 local function profileName()
     local entry = charTable(false)
     return (entry and entry.profile) or DEFAULT_PROFILE
@@ -161,52 +165,6 @@ local function applyAllDefaults()
 end
 
 -- =========================================================================
---  Détection d'une sauvegarde qui ne se relit plus
--- =========================================================================
--- **Le client peut écrire le fichier de réglages sans jamais le relire.**
--- Constaté sur la bêta de *Forever* le 20 septembre 2026 : `BshamelUIDB` est
--- `nil` à chaque chargement, l'addon repart donc de ses défauts, et le joueur
--- perd tout à chaque `/reload`. Le fichier, lui, est bien réécrit à la
--- déconnexion — il est juste ignoré à la lecture. Deux plantages du client
--- avaient précédé. Le seul remède connu est de **supprimer le fichier** :
--- celui que le jeu recrée ensuite se relit normalement.
---
--- Un addon ne peut pas effacer un fichier. Il peut en revanche s'apercevoir
--- de la panne et dire quoi faire, au lieu de laisser le joueur croire que ses
--- réglages ne tiennent pas.
---
--- **Le témoin ne peut pas vivre dans le SavedVariables** — il disparaîtrait
--- avec ce qu'il sert à détecter. Il vit dans une CVar enregistrée par
--- l'addon, que le client range dans son propre fichier de configuration.
--- C'est le mécanisme dont Blizzard se sert lui-même pour retenir un état
--- d'une session à l'autre (`RegisterCVar`, voir sa bannière de haut fait).
---
--- La règle est simple : le témoin est posé à la déconnexion, quand on sait
--- que le jeu va écrire. S'il est là au chargement suivant alors que la base
--- est absente, c'est que le fichier existe et n'a pas été lu.
-
-local SAVE_CHECK = "BshamelUISaveCheck"
-
---- Vrai si le témoin est en place, c'est-à-dire si un fichier a déjà été écrit.
----@return boolean
-local function saveWitness()
-    if not (C_CVar and C_CVar.RegisterCVar) then return false end
-
-    -- Enregistrer une CVar déjà connue ne coûte rien : c'est le chemin normal,
-    -- et il rend la lecture sûre dès la première session.
-    pcall(C_CVar.RegisterCVar, SAVE_CHECK, "0")
-    return U.GetCVar(SAVE_CHECK) == "1"
-end
-
---- Dit au joueur ce qui se passe, et ce qu'il peut faire. Une fois par session.
-local function warnSaveBroken()
-    BUI:RegisterEventOnce("PLAYER_LOGIN", function()
-        BUI:Print(ns.L["Saved settings not read"])
-        BUI:Print(ns.L["Saved settings not read fix"])
-    end)
-end
-
--- =========================================================================
 --  Cycle de vie
 -- =========================================================================
 
@@ -215,7 +173,7 @@ function DB:Initialize()
     if initialized then return end
 
     -- Avant toute création de table : ensuite, `BshamelUIDB` existe toujours.
-    if BshamelUIDB == nil and saveWitness() then warnSaveBroken() end
+    loadedEmpty = (BshamelUIDB == nil)
 
     BshamelUIDB     = BshamelUIDB     or {}
     BshamelUICharDB = BshamelUICharDB or {}
@@ -232,6 +190,25 @@ function DB:Initialize()
     if characterKey() then applyAllDefaults() end
 
     initialized = true
+
+--- L'addon est-il reparti de zéro, faute d'avoir reçu sa base ?
+---
+--- Vrai à la première installation — c'est normal et sans conséquence — et vrai
+--- à chaque démarrage du jeu sur la bêta de *Forever*, dont le client
+--- **n'exécute jamais le SavedVariables d'un addon au lancement**. Vérifié le
+--- 20 septembre 2026 avec un addon témoin de vingt lignes ne contenant qu'un
+--- compteur : écrit proprement à chaque déconnexion, relu jamais, compteur
+--- bloqué à 1 après deux démarrages complets. Aucun addon n'y échappe, et rien
+--- dans le nôtre ne peut y remédier.
+---
+--- Faux après un `/reload` d'une session déjà chargée : ce qui est en mémoire
+--- y survit. C'est ce qui rend l'avertissement supportable — il paraît au
+--- lancement du jeu, pas à chaque rechargement.
+---@return boolean
+function DB:LoadedEmpty()
+    return loadedEmpty
+end
+
 end
 --- Attache la base au personnage connecté. Appelé à `PLAYER_LOGIN`, **avant**
 --- l'activation des modules : c'est là, et seulement là, que le profil actif
@@ -272,7 +249,6 @@ function DB:BindCharacter()
     sweepCharData(entry.data)
     applyAllDefaults()
 end
-
 
 --- Point d'entrée unique des migrations de schéma.
 --- Chaque palier est idempotent et fait progresser `schema` d'exactement un.
@@ -755,13 +731,6 @@ end
 local function onLogout()
     if not initialized then return end
 
-    -- Le jeu s'apprête à écrire : le témoin dit qu'un fichier existe désormais
-    -- (voir `saveWitness`). Posé ici et pas au chargement, pour qu'une
-    -- première session interrompue avant toute écriture ne le pose pas.
-    if C_CVar and C_CVar.RegisterCVar then
-        pcall(C_CVar.RegisterCVar, SAVE_CHECK, "0")
-        U.SetCVar(SAVE_CHECK, "1")
-    end
     for _, profile in pairs(BshamelUIDB.profiles) do
         if profile.modules then
             for moduleName, settings in pairs(profile.modules) do
