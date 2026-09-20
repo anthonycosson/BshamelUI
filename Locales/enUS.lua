@@ -232,6 +232,9 @@ BUI:RegisterLocale("enUS", {
     ["Personal no text"]               = "No text at all",
     ["Personal no text tip"] =
         "Hides the game's own text on this bar, without writing anything in its place.",
+    ["Personal no text needs bar text"] =
+        "Does nothing unless \"Show Bar Text\" is checked in Edit Mode: with it "
+        .. "off, the game writes nothing to hide.",
     ["No text active"]                 = "Uncheck \"No text at all\" first.",
     ["Personal value text"]            = "Value text",
     ["Personal value text tip"] =

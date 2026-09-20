@@ -509,6 +509,17 @@ BUI:RegisterModule(MODULE, {
                 text    = L["Personal no text"],
                 tooltip = L["Personal no text tip"],
             },
+            -- En rouge sous la case, et non dans son infobulle : c'est une
+            -- limite qui se constate en jeu, pas une précision qu'on va
+            -- chercher. Faire taire le client ne se voit que s'il parlait —
+            -- et il ne parle sur ces barres que si le mode Édition le lui
+            -- demande. Sans cette ligne, la case a l'air cassée.
+            --
+            -- La note est répétée sous la case de l'autre barre : le mode
+            -- Édition n'a qu'un seul réglage pour les deux, mais une ligne
+            -- posée sous la seule barre de vie se lirait comme ne valant que
+            -- pour elle.
+            { type = "alert", text = L["Personal no text needs bar text"] },
             {
                 type     = "toggle",
                 key      = "healthValue",
@@ -537,6 +548,7 @@ BUI:RegisterModule(MODULE, {
                 text    = L["Personal no text"],
                 tooltip = L["Personal no text tip"],
             },
+            { type = "alert", text = L["Personal no text needs bar text"] },
             {
                 type     = "toggle",
                 key      = "powerValue",

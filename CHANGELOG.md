@@ -6,6 +6,9 @@
 - **Le gestionnaire de temps de recharge n'est plus grisé sur *Forever*.** La
   bêta porte le même que retail, et centrer les améliorations suivies y marche
   comme ailleurs.
+- **Ressource personnelle** : une ligne rouge sous « N'afficher aucun texte »
+  rappelle qu'il faut « Afficher le texte de la barre » dans le mode Édition —
+  sans quoi le jeu n'écrit rien, et la case semble ne rien faire.
 
 ## 2.0.3 — 2026-09-20
 

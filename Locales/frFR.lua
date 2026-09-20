@@ -234,6 +234,9 @@ BUI:RegisterLocale("frFR", {
     ["Personal no text"]               = "N'afficher aucun texte",
     ["Personal no text tip"] =
         "Masque le texte du jeu sur cette barre, sans rien écrire à la place.",
+    ["Personal no text needs bar text"] =
+        "Sans effet si « Afficher le texte de la barre » est décoché dans le mode "
+        .. "Édition : le jeu n'écrit alors rien à masquer.",
     ["No text active"]                 = "Décochez d'abord « N'afficher aucun texte ».",
     ["Personal value text"]            = "Texte en valeur",
     ["Personal value text tip"] =
