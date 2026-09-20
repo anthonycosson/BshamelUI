@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.3 — 2026-09-20
+
 ### Ajouté
 - **Choisir où apparaissent les jets de butin** (Fenêtres du jeu). La fenêtre
   Besoin / Cupidité / Passe s'empile au-dessus des barres d'action, où elle ne
