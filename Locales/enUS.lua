@@ -825,6 +825,19 @@ BUI:RegisterLocale("enUS", {
     ["Scale windows tip"] =
         "Hold Ctrl and scroll over a window to make it bigger or smaller. "
         .. "The size is remembered like the position.",
+    ["Loot roll window"]               = "Loot roll window",
+    ["Loot roll"]                      = "Loot roll",
+    ["Move loot roll window"]          = "Choose where loot rolls appear",
+    ["Move loot roll window tip"] =
+        "The Need / Greed / Pass window goes where you put it instead of stacking "
+        .. "above the action bars. Nothing moves until you drop the preview below.",
+    ["Loot roll preview"]              = "Show the preview",
+    ["Loot roll preview tip"] =
+        "Shows an empty frame the exact size of a loot roll. Drag it where you want "
+        .. "rolls to appear, then untick this.",
+    ["Lock loot roll window"]          = "Lock the position",
+    ["Lock loot roll window tip"] =
+        "The preview refuses to be dragged. The position it already holds stays.",
     ["Reset"]                          = "Reset",
     ["Reset window layout"]            = "Reset every window",
     ["Reset window layout tip"] =

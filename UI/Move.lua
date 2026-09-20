@@ -40,6 +40,7 @@ local BUI = ns.BUI
 local T    = BUI.Theme
 local U    = BUI.Util
 local W    = BUI.Widgets
+local L    = ns.L
 
 local M = {}
 BUI.Move = M
@@ -211,6 +212,9 @@ end
 ---@field SetPosition fun(name: string, x: number|nil, y: number|nil)
 ---@field GetScale fun(name: string): number|nil
 ---@field SetScale fun(name: string, scale: number|nil)
+---@field PlaceLoot fun(): boolean          l'emplacement du butin est-il à nous ?
+---@field LootLocked fun(): boolean         l'aperçu refuse-t-il le glisser ?
+---@field LootPreview fun(): boolean        l'aperçu est-il demandé ?
 
 ---@type BUI.MoveHost|nil
 local host
@@ -1073,6 +1077,201 @@ local function restoreBags()
     wipe(bagOrigin)
 end
 
+-- =========================================================================
+--  La fenêtre de jet de butin : un cadre qu'on n'a pas le temps d'attraper
+-- =========================================================================
+-- Elle ne passe pas par `hookFrame`, et trois choses l'en écartent.
+--
+-- **On ne peut pas la prendre au glisser.** Une fenêtre du client s'ouvre et
+-- attend qu'on en ait fini ; celle-ci dure le temps d'un jet, arrive sans
+-- prévenir et repart. Le geste « tenir un modificateur et glisser » suppose
+-- qu'on ait le loisir de viser, et ici on ne l'a pas. D'où un **aperçu** : un
+-- cadre à nous, de la taille exacte d'un jet, qu'on pose à froid et qui ne sert
+-- qu'à cela.
+--
+-- **Le client la range dans une colonne, il ne l'ancre pas.** Elle est *gérée*
+-- — un conteneur de disposition l'empile au-dessus des barres d'action chaque
+-- fois qu'elle s'affiche, et un ancrage posé par-dessus ne tiendrait pas une
+-- image. Le client a prévu la sortie : un cadre qui porte
+-- `ignoreFramePositionManager` n'est pas pris en charge. On la pose plutôt que
+-- de lutter, et le hook sur `SetPoint` couvre le reste, comme pour les fenêtres.
+--
+-- **Elle grandit d'un cran par jet.** Le conteneur réserve une hauteur fixe par
+-- jet et empile les cadres depuis son **bas**. Ancré par son centre — ce que
+-- font toutes les autres fenêtres de ce fichier —, le premier jet descendrait à
+-- l'arrivée du deuxième. On l'ancre donc par le bas, et la pile monte comme
+-- elle monte chez le client. Ce qui est rangé en base reste un décalage de
+-- centre à centre, mais c'est celui du **premier jet**, pas celui du
+-- conteneur : c'est ce cadre-là que le joueur a sous les yeux, et c'est lui que
+-- l'aperçu représente.
+--
+-- Effet de bord assumé : tant qu'un jet est affiché, le client enchaîne ses
+-- annonces de butin au-dessus de cette fenêtre. Les déplacer n'est pas demandé,
+-- mais elles suivent pendant ces quelques secondes.
+
+--- Nom de la fenêtre de jet dans les réglages. Comme la pile de sacs : une
+--- position, rangée avec celles des fenêtres.
+local LOOT_NAME = "LootRoll"
+
+--- Le conteneur du client, par son nom global — résolu à chaque fois, comme le
+--- reste du registre. Un client qui ne l'a pas ignore simplement la section.
+local LOOT_FRAME = "GroupLootContainer"
+
+--- Hauteur que le client réserve à un jet. Elle se lit sur le cadre
+--- (`reservedSize`) ; ce nombre n'est que le repli du jour où la clé changerait
+--- de nom, et il vaut ce que le client réserve aujourd'hui.
+local LOOT_SLOT = 100
+
+--- État d'origine du conteneur, de la même forme que celui des fenêtres : c'est
+--- lui qui permet de le rendre tel qu'on l'a trouvé (règle 6).
+local lootEntry = { name = LOOT_NAME }
+
+--- L'aperçu, bâti au premier besoin et jamais détruit (règle 7).
+local lootPanel
+
+local lootHooked    = false
+local lootScheduled = false
+
+---@return table|nil
+local function lootContainer()
+    local frame = _G[LOOT_FRAME]
+    if not usable(frame) then return nil end
+    return frame
+end
+
+--- Position demandée pour le **premier jet**, ou `nil` quand l'emplacement
+--- reste celui du client.
+---@return table|nil
+local function lootPosition()
+    if not host then return nil end
+    if host.PlaceLoot() ~= true then return nil end
+    return host.GetPosition(LOOT_NAME)
+end
+
+--- Pose le conteneur pour que le premier jet tombe sur la position rangée.
+local function applyLoot()
+    local frame = lootContainer()
+    if not frame then return end
+
+    local pos = lootPosition()
+    if not pos then return end
+
+    captureOrigin(frame, lootEntry)
+
+    -- Posé ici et non au branchement : tant que le joueur n'a rien demandé, le
+    -- cadre reste entièrement au client.
+    frame.ignoreFramePositionManager = true
+
+    local slot = tonumber(frame.reservedSize) or LOOT_SLOT
+    anchor(frame, "BOTTOM", UIParent, "CENTER", pos.x, pos.y - slot / 2)
+end
+
+--- Repose à l'image suivante, jamais dans l'appel du client. Mêmes deux raisons
+--- que `applySoon` pour les fenêtres, qui les explique.
+local function applyLootSoon()
+    if lootScheduled then return end
+
+    lootScheduled = true
+    C_Timer.After(0, function()
+        lootScheduled = false
+        if host then BUI.safecall(applyLoot) end
+    end)
+end
+
+--- Branche le conteneur. Idempotent : rebrancher ne fait rien.
+local function hookLoot()
+    if lootHooked then return end
+
+    local frame = lootContainer()
+    if not frame then return end
+    lootHooked = true
+
+    frame:HookScript("OnShow", applyLootSoon)
+
+    U.GuardedHook(frame, "SetPoint", function()
+        if applying then return end
+        if not lootPosition() then return end
+        applyLootSoon()
+    end, function() return M:IsActive() end)
+end
+
+--- Rend le conteneur au client : sa prise en charge d'abord, son ancrage
+--- ensuite. L'ordre compte — tant que le drapeau est posé, le conteneur de
+--- disposition passe son tour et l'ancrage rendu resterait seul à décider.
+local function restoreLoot()
+    local frame = lootContainer()
+    if not frame then return end
+
+    frame.ignoreFramePositionManager = nil
+    BUI.safecall(restoreOrigin, frame, lootEntry)
+end
+
+--- L'aperçu. Il ne connaît pas la base : il rend et reçoit un décalage de centre
+--- à centre, et c'est l'hôte qui le range.
+---@return table|nil
+local function lootPreview()
+    if lootPanel then return lootPanel end
+
+    lootPanel = W.Panel({
+        width  = T.SIZE.LOOT_PREVIEW_W,
+        height = T.SIZE.LOOT_PREVIEW_H,
+        title  = L["Loot roll"],
+        -- La vraie fenêtre vit dans cette strate : un aperçu qui se glisserait
+        -- sous ce qu'elle recouvrira ne dirait pas la vérité sur la place
+        -- qu'on lui choisit.
+        strata = "DIALOG",
+
+        isLocked = function() return host ~= nil and host.LootLocked() == true end,
+
+        getPos = function()
+            local pos = host and host.GetPosition(LOOT_NAME)
+            if not pos then return 0, 0 end
+            return pos.x, pos.y
+        end,
+
+        setPos = function(x, y)
+            if not host then return end
+            host.SetPosition(LOOT_NAME, x, y)
+            BUI.safecall(applyLoot)
+        end,
+    })
+
+    return lootPanel
+end
+
+--- Montre ou cache l'aperçu.
+local function applyLootPreview()
+    local wanted = host ~= nil
+                   and host.PlaceLoot() == true
+                   and host.LootPreview() == true
+
+    if not wanted then
+        if lootPanel then lootPanel:Hide() end
+        return
+    end
+
+    local panel = lootPreview()
+    if not panel then return end
+
+    panel:ApplyPosition()
+    panel:ApplyLock()
+    panel:Show()
+end
+
+--- Branchement, pose et aperçu de la fenêtre de jet. À rappeler à chaque
+--- changement de réglage qui la concerne.
+function M:RefreshLoot()
+    hookLoot()
+
+    if lootPosition() then
+        BUI.safecall(applyLoot)
+    else
+        BUI.safecall(restoreLoot)
+    end
+
+    BUI.safecall(applyLootPreview)
+end
+
 --- Branche les fenêtres qu'un addon de Blizzard vient d'apporter.
 --- À appeler sur `ADDON_LOADED`.
 ---@param addonName string
@@ -1123,6 +1322,9 @@ function M:Refresh()
     -- La pile de sacs n'est pas dans `hooked` : elle ne se repose pas cadre par
     -- cadre, mais d'un seul geste (voir la section « sacs »).
     BUI.safecall(applyBags)
+
+    -- La fenêtre de jet non plus : elle s'ancre par le bas et porte son aperçu.
+    self:RefreshLoot()
 end
 
 --- Rend toutes les fenêtres à leur état d'origine et range les frames de
@@ -1154,6 +1356,12 @@ function M:Stop()
     -- fenêtres. Rendre la pile, c'est faire redisposer le client ; tant que
     -- l'hôte est là, notre propre hook sur sa disposition la reprendrait aussitôt.
     restoreBags()
+
+    -- La fenêtre de jet, pour la même raison : rendre sa prise en charge au
+    -- client pendant que le hook sur `SetPoint` est encore vivant reviendrait à
+    -- la lui reprendre dans la foulée.
+    if lootPanel then lootPanel:Hide() end
+    BUI.safecall(restoreLoot)
 end
 
 --- Rend toutes les fenêtres **et** efface ce que la base sait d'elles.
@@ -1173,6 +1381,7 @@ function M:ResetAll()
             end
         end
         host.SetPosition(BAGS_NAME, nil, nil)
+        host.SetPosition(LOOT_NAME, nil, nil)
     end
 
     for i = 1, #hooked do
@@ -1186,6 +1395,11 @@ function M:ResetAll()
     -- La position de la pile vient d'être effacée : `applyBags` ne trouvera plus
     -- rien à reposer, et la disposition du client reprend la main pour de bon.
     restoreBags()
+
+    -- Celle de la fenêtre de jet aussi. L'aperçu, lui, reste affiché si le
+    -- joueur l'avait demandé : il revient au centre, prêt à être reposé.
+    BUI.safecall(restoreLoot)
+    BUI.safecall(applyLootPreview)
 end
 
 --- Nombre de fenêtres actuellement épinglées, pour l'affichage des options.
@@ -1202,8 +1416,9 @@ function M:CountPinned()
     end
 
     -- La pile compte pour une : c'est une position, et c'est ainsi qu'on la
-    -- déplace et qu'on la remet en place.
+    -- déplace et qu'on la remet en place. La fenêtre de jet compte de même.
     if host.GetPosition(BAGS_NAME) then count = count + 1 end
+    if host.GetPosition(LOOT_NAME) then count = count + 1 end
 
     return count
 end

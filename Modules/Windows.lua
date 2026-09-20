@@ -98,6 +98,13 @@ local function makeHost(mod)
         SetScale = function(name, scale)
             scales(mod)[name] = scale
         end,
+
+        -- La fenêtre de jet de butin. Trois réponses et rien de plus : le
+        -- moteur sait la poser, il n'a pas à savoir sous quelles clés le
+        -- joueur l'a demandée.
+        PlaceLoot   = function() return mod:Get("lootMove") == true end,
+        LootLocked  = function() return mod:Get("lootLocked") == true end,
+        LootPreview = function() return mod:Get("lootPreview") == true end,
     }
 end
 
@@ -147,6 +154,15 @@ BUI:RegisterModule(MODULE, {
         -- qui le préfère.
         moveModifier = "SHIFT",
 
+        -- La fenêtre de jet de butin. Aucune position par défaut : tant que le
+        -- joueur n'a pas posé l'aperçu, la table reste vide et le cadre
+        -- appartient entièrement au client. Cocher la première case ne déplace
+        -- donc rien — c'est le glisser de l'aperçu qui décide, et c'est à
+        -- l'infobulle de le dire.
+        lootMove    = false,
+        lootPreview = false,
+        lootLocked  = false,
+
         positions = {},
         scales    = {},
     },
@@ -179,6 +195,28 @@ BUI:RegisterModule(MODULE, {
             key     = "scalable",
             text    = L["Scale windows"],
             tooltip = L["Scale windows tip"],
+        },
+
+        { type = "header", text = L["Loot roll window"] },
+        {
+            type    = "toggle",
+            key     = "lootMove",
+            text    = L["Move loot roll window"],
+            tooltip = L["Move loot roll window tip"],
+        },
+        {
+            type     = "toggle",
+            key      = "lootPreview",
+            text     = L["Loot roll preview"],
+            tooltip  = L["Loot roll preview tip"],
+            disabled = requires("lootMove"),
+        },
+        {
+            type     = "toggle",
+            key      = "lootLocked",
+            text     = L["Lock loot roll window"],
+            tooltip  = L["Lock loot roll window tip"],
+            disabled = requires("lootMove"),
         },
 
         { type = "header", text = L["Reset"] },
@@ -242,6 +280,11 @@ BUI:RegisterModule(MODULE, {
             -- Décocher pendant que le modificateur est tenu doit rendre la
             -- molette au jeu tout de suite, pas au relâchement.
             BUI.Move:OnModifierChanged()
+            return
+        end
+
+        if key == "lootMove" or key == "lootPreview" or key == "lootLocked" then
+            BUI.Move:RefreshLoot()
         end
     end,
 })

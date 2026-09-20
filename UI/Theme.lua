@@ -526,6 +526,14 @@ T.SIZE = {
     MARKER_SCALE_MIN = 0.5,
     MARKER_SCALE_MAX = 2.5,
 
+    -- Aperçu de la fenêtre de jet de butin. Ces deux nombres ne sont pas un
+    -- goût : ce sont les mesures du cadre de jet du client
+    -- (`GroupLootFrameBaseTemplate`). L'aperçu sert à choisir un emplacement, il
+    -- doit donc occuper exactement la place que la vraie fenêtre occupera — un
+    -- rectangle approché ferait choisir un coin qui déborde.
+    LOOT_PREVIEW_W = 277,
+    LOOT_PREVIEW_H = 67,
+
     -- Panneau de filtres de la recherche de groupe. Il s'ancre au bord droit de
     -- la fenêtre du client et vit à sa hauteur : sa largeur est la seule
     -- dimension qui soit à nous, celle qui loge une ligne d'option standard

@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Ajouté
+- **Choisir où apparaissent les jets de butin** (Fenêtres du jeu). La fenêtre
+  Besoin / Cupidité / Passe s'empile au-dessus des barres d'action, où elle ne
+  se voit pas toujours. Un aperçu de la taille exacte d'un jet se pose où l'on
+  veut, à froid, et les jets suivent. Une case verrouille la position une fois
+  choisie.
+
 ### Modifié
 - La page **Fenêtres** s'appelle désormais **Fenêtres du jeu** : celles du
   client, par opposition à la fenêtre d'options de l'addon.

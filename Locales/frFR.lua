@@ -818,6 +818,20 @@ BUI:RegisterLocale("frFR", {
     ["Scale windows tip"] =
         "Maintenez Ctrl et tournez la molette au-dessus d'une fenêtre pour "
         .. "l'agrandir ou la réduire. La taille est mémorisée comme la position.",
+    ["Loot roll window"]               = "Fenêtre de butin",
+    ["Loot roll"]                      = "Jet de butin",
+    ["Move loot roll window"]          = "Choisir où apparaissent les jets de butin",
+    ["Move loot roll window tip"] =
+        "La fenêtre Besoin / Cupidité / Passe se pose où vous voulez, au lieu de "
+        .. "s'empiler au-dessus des barres d'action. Rien ne bouge tant que vous "
+        .. "n'avez pas posé l'aperçu ci-dessous.",
+    ["Loot roll preview"]              = "Afficher l'aperçu",
+    ["Loot roll preview tip"] =
+        "Affiche un cadre vide, exactement de la taille d'un jet de butin. "
+        .. "Faites-le glisser où vous voulez voir les jets, puis décochez.",
+    ["Lock loot roll window"]          = "Verrouiller la position",
+    ["Lock loot roll window tip"] =
+        "L'aperçu refuse d'être déplacé. La position déjà choisie, elle, reste.",
     ["Reset"]                          = "Réinitialiser",
     ["Reset window layout"]            = "Tout remettre en place",
     ["Reset window layout tip"] =
