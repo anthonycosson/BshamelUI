@@ -8,6 +8,16 @@
   gestionnaire de panneaux appelle : tout ce qui suivait dans cet appel portait
   notre teinte. Elle passe par le script `OnShow`, qui s'exécute derrière celui
   du client au lieu de se mettre devant.
+- **Les réglages ne se perdent plus d'une session à l'autre sur Forever.** Le
+  client écrit le fichier de sauvegarde du personnage à chaque déconnexion et
+  ne l'exécute jamais au chargement : le profil actif du personnage était donc
+  oublié à chaque connexion, et tous ses réglages semblaient effacés alors
+  qu'ils étaient intacts. Ce qui appartient à un personnage — son profil, son
+  historique de chat, sa note d'inscription — est désormais rangé dans le
+  fichier du compte, sous son identifiant unique : le nom du royaume n'est pas
+  stable sur cette bêta, et une clé qui change est une clé perdue. Ce qui avait
+  déjà été enregistré à l'ancien emplacement est repris automatiquement à la
+  première connexion.
 
 ## 2.0.1 — 2026-09-20
 

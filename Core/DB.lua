@@ -6,14 +6,27 @@
 --      BshamelUIDB = {
 --          schema   = 1,
 --          profiles = { ["Default"] = { modules = { Quest = { autoAccept = true } } } },
+--          chars    = {                       -- voir DB:CharData
+--              ["Bshamel-Forever"] = {
+--                  profile = "Default",
+--                  data    = { Chat = { history = { ... } } },
+--              },
+--          },
 --          seen     = { loginHint = true },   -- voir DB:Seen
 --      }
 --
---  Forme du SavedVariables (personnage) :
---      BshamelUICharDB = {
---          profile = "Default",
---          data    = { Chat = { history = { ... } } },   -- voir DB:CharData
---      }
+--  **Rien de ce qui compte ne vit dans le SavedVariables du personnage.** Le
+--  client de *Forever* écrit ce fichier-là à chaque déconnexion et ne l'exécute
+--  jamais au chargement (constaté le 20 septembre 2026, sonde à l'appui :
+--  `BshamelUICharDB` est `nil` à `ADDON_LOADED` comme à `PLAYER_LOGIN`, alors
+--  que le fichier est sur le disque, valide, et daté de la veille). Le joueur
+--  perdait donc son profil actif — et avec lui, tous ses réglages en
+--  apparence — à chaque session.
+--
+--  Ce qui appartient à un personnage est donc rangé **dans la base de compte**,
+--  sous son nom complet. `BshamelUICharDB` reste déclaré pour une seule raison :
+--  y reprendre ce qu'un joueur y avait déjà, une fois, à sa première connexion
+--  après la mise à jour (`DB:BindCharacter`).
 --
 --  Deux invariants tenus par ce fichier :
 --    1. Les valeurs par défaut ne sont **jamais** écrites sur le disque. Elles
@@ -43,9 +56,84 @@ local initialized = false
 -- =========================================================================
 --  Accès interne
 -- =========================================================================
+--- Identifiant du personnage connecté, une fois pour la session.
+---
+--- **Il n'existe pas avant `PLAYER_LOGIN`** : `UnitGUID("player")` ne rend rien
+--- à `ADDON_LOADED`. Tout ce qui dépend du personnage accepte donc de ne pas
+--- avoir de réponse tôt, et `DB:BindCharacter` repasse dès que la réponse
+--- existe. C'est le prix à payer pour ranger le personnage dans la base de
+--- compte, et il est petit : rien ne lit un réglage avant la connexion.
+---
+--- **Le GUID, et pas « Nom-Royaume ».** Le nom du royaume n'est pas stable sur
+--- la bêta de *Forever* : le même personnage s'y est appelé `Bshamel-Forever`
+--- dans le WTF et `Bshamel Forever-Classic Beta PvP` pour l'API, le même jour.
+--- Une clé qui change est une clé perdue, et des réglages avec. Le GUID, lui,
+--- ne bouge jamais, ne se traduit pas, et survit à un renommage de royaume.
+--- Illisible, en revanche : le nom est rangé à côté, pour qui ouvre le fichier.
+---@return string|nil
+local charKey
+local function characterKey()
+    if charKey then return charKey end
+
+    local guid = UnitGUID("player")
+    if type(guid) ~= "string" or guid == "" or U.IsSecret(guid) then return nil end
+
+    charKey = guid
+    return charKey
+end
+
+--- Nom lisible du personnage, pour le seul confort de qui lit le fichier.
+---@return string|nil
+local function characterName()
+    local name = UnitName("player")
+    if type(name) ~= "string" or name == "" or U.IsSecret(name) then return nil end
+
+    local realm = GetRealmName()
+    if type(realm) ~= "string" or realm == "" or U.IsSecret(realm) then return name end
+
+    return name .. "-" .. realm
+end
+
+--- Table du personnage connecté dans la base de compte.
+---@param create boolean  créer l'entrée si elle manque
+---@return table|nil
+local function charTable(create)
+    local key = characterKey()
+    if not key or not BshamelUIDB then return nil end
+
+    local chars = BshamelUIDB.chars
+    if not chars then
+        if not create then return nil end
+        chars = {}
+        BshamelUIDB.chars = chars
+    end
+
+    if not chars[key] then
+        if not create then return nil end
+        chars[key] = {}
+    end
+    return chars[key]
+end
+
+--- Table de repli tant que le personnage n'est pas connu : ce qu'on y écrit
+--- n'est jamais sauvegardé, et rien ne le lit — mais `CharData` ne rend jamais
+--- `nil`, et aucun appelant n'a de cas particulier à écrire.
+local orphanData = {}
+
+--- Déclaration avancée : le balayage est écrit plus bas, près des paliers de
+--- migration dont il est le voisin de sens, mais `BindCharacter` l'appelle.
+local sweepCharData
+
 
 local function profileName()
-    return (BshamelUICharDB and BshamelUICharDB.profile) or DEFAULT_PROFILE
+    local entry = charTable(false)
+    return (entry and entry.profile) or DEFAULT_PROFILE
+end
+
+---@param name string
+local function setProfileName(name)
+    local entry = charTable(true)
+    if entry then entry.profile = name end
 end
 
 local function profileTable()
@@ -135,15 +223,56 @@ function DB:Initialize()
     BshamelUIDB.profiles = BshamelUIDB.profiles or {}
     BshamelUIDB.schema   = BshamelUIDB.schema   or SCHEMA_VERSION
 
-    if not BshamelUICharDB.profile then
-        BshamelUICharDB.profile = DEFAULT_PROFILE
-    end
-
     self:RunMigrations()
-    applyAllDefaults()
+
+    -- Le personnage n'a pas encore de nom ici : le profil qu'on fusionnerait
+    -- serait forcément « Default », et pour un personnage réglé sur un autre
+    -- profil ce serait un profil vide créé pour rien dans le fichier.
+    -- `BindCharacter` fusionne dès que le nom existe, avant tout module.
+    if characterKey() then applyAllDefaults() end
 
     initialized = true
 end
+--- Attache la base au personnage connecté. Appelé à `PLAYER_LOGIN`, **avant**
+--- l'activation des modules : c'est là, et seulement là, que le profil actif
+--- est enfin connaissable.
+---
+--- C'est aussi le seul endroit qui regarde encore `BshamelUICharDB` : ce qu'un
+--- joueur y avait avant la migration est repris une fois, puis plus jamais lu.
+--- La reprise ne s'écrase jamais elle-même — si l'entrée de compte existe
+--- déjà, c'est elle qui fait foi, y compris sur un client où l'ancien fichier
+--- se relit encore.
+function DB:BindCharacter()
+    local entry = charTable(true)
+    if not entry then return end
+
+    entry.name = characterName() or entry.name
+
+    -- Reprise de la clé « Nom-Royaume », qui n'a vécu que le temps d'une
+    -- version : le royaume changeant de nom, elle ne retrouvait pas toujours
+    -- son personnage. Rien à faire chez les joueurs qui n'ont jamais eu que le
+    -- GUID — la boucle ne trouve rien et ne coûte rien.
+    if entry.name and BshamelUIDB.chars[entry.name] then
+        local stray = BshamelUIDB.chars[entry.name]
+        if entry.profile == nil then entry.profile = stray.profile end
+        if entry.data    == nil then entry.data    = stray.data    end
+        BshamelUIDB.chars[entry.name] = nil
+    end
+
+    local old = BshamelUICharDB
+    if type(old) == "table" then
+        if entry.profile == nil and type(old.profile) == "string" then
+            entry.profile = old.profile
+        end
+        if entry.data == nil and type(old.data) == "table" then
+            entry.data = old.data
+        end
+    end
+
+    sweepCharData(entry.data)
+    applyAllDefaults()
+end
+
 
 --- Point d'entrée unique des migrations de schéma.
 --- Chaque palier est idempotent et fait progresser `schema` d'exactement un.
@@ -602,17 +731,23 @@ function DB:RunMigrations()
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)
 
-    -- L'historique des clés qui servait ces temps vivait **par personnage**
-    -- (`CharData`), hors de portée d'un palier : le schéma est au compte, et le
-    -- personnage connecté au moment où il monte est le seul qu'il verrait. Ce
-    -- balayage-ci passe donc à chaque connexion — idempotent, et vide dès la
-    -- première : la fonctionnalité n'a jamais rien enregistré chez les joueurs,
-    -- il n'y a au pire qu'une table vide à retirer.
-    local charData = BshamelUICharDB and BshamelUICharDB.data
-    local timer    = charData and charData.MythicTimer
+end
+
+--- Balayage des données **du personnage**, hors de portée d'un palier : le
+--- schéma est au compte, et le personnage connecté au moment où il monte est le
+--- seul qu'un palier verrait. Celui-ci passe donc à chaque connexion —
+--- idempotent, et vide dès la première.
+---@param data table|nil
+function sweepCharData(data)
+    if not data then return end
+
+    -- L'historique des clés qui servait les temps mythique+. La
+    -- fonctionnalité n'a jamais rien enregistré chez les joueurs : il n'y a au
+    -- pire qu'une table vide à retirer.
+    local timer = data.MythicTimer
     if timer then
         timer.runs = nil
-        if next(timer) == nil then charData.MythicTimer = nil end
+        if next(timer) == nil then data.MythicTimer = nil end
     end
 end
 
@@ -740,10 +875,13 @@ end
 --- à l'autre. L'historique de chat en est le premier cas.
 ---
 --- Trois différences avec un réglage, et elles justifient le chemin séparé :
---- ces données vivent dans le SavedVariables du **personnage** et non dans un
---- profil partagé ; elles ne passent pas par le mécanisme de défauts, donc rien
---- ne leur est retiré à la déconnexion ; et les écrire n'émet aucun message,
---- puisque personne n'a à s'en rafraîchir.
+--- ces données appartiennent à **un personnage** et non à un profil partagé ;
+--- elles ne passent pas par le mécanisme de défauts, donc rien ne leur est
+--- retiré à la déconnexion ; et les écrire n'émet aucun message, puisque
+--- personne n'a à s'en rafraîchir.
+---
+--- Appartenir à un personnage n'est pas vivre dans son SavedVariables : voir
+--- l'en-tête du fichier, le client de *Forever* ne relit pas celui-là.
 ---
 --- La table est rendue par référence : le module y écrit directement. C'est la
 --- seule exception à « un module n'écrit que par `Set` » (CLAUDE.md règle 4), et
@@ -752,10 +890,19 @@ end
 ---@param moduleName string
 ---@return table
 function DB:CharData(moduleName)
-    BshamelUICharDB = BshamelUICharDB or {}
-    BshamelUICharDB.data = BshamelUICharDB.data or {}
+    local entry = charTable(true)
 
-    local data = BshamelUICharDB.data
+    -- Avant la connexion, le personnage n'a pas de nom : on rend une table
+    -- jetable plutôt que rien. Aucun module ne lit si tôt, et celui qui le
+    -- ferait un jour écrirait dans le vide au lieu d'écrire chez le voisin.
+    local data
+    if entry then
+        entry.data = entry.data or {}
+        data = entry.data
+    else
+        data = orphanData
+    end
+
     if not data[moduleName] then data[moduleName] = {} end
     return data[moduleName]
 end
@@ -801,7 +948,7 @@ function DB:SetProfile(name)
     if not BshamelUIDB.profiles[name] then
         BshamelUIDB.profiles[name] = { modules = {} }
     end
-    BshamelUICharDB.profile = name
+    setProfileName(name)
     applyAllDefaults()
     BUI:SendMessage(BUI.MESSAGES.PROFILE_CHANGED, name)
 end
@@ -826,7 +973,7 @@ function DB:DeleteProfile(name)
     BshamelUIDB.profiles[name] = nil
 
     if name == profileName() then
-        BshamelUICharDB.profile = DEFAULT_PROFILE
+        setProfileName(DEFAULT_PROFILE)
         applyAllDefaults()
         BUI:SendMessage(BUI.MESSAGES.PROFILE_CHANGED, profileName())
     end
@@ -903,7 +1050,7 @@ function DB:ImportProfile(data, targetName)
         if BshamelUIDB.profiles[targetName] then return false, "exists" end
 
         BshamelUIDB.profiles[targetName] = { modules = {} }
-        BshamelUICharDB.profile = targetName
+        setProfileName(targetName)
     end
 
     -- On ne garde que ce qui a la forme d'un réglage de module ; le reste d'un

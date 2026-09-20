@@ -324,6 +324,11 @@ BUI:RegisterEventOnce("PLAYER_LOGIN", function()
     -- d'un profil de dev), la base est quand même prête.
     BUI.DB:Initialize()
 
+    -- **Avant d'allumer quoi que ce soit.** Le nom du personnage n'existe pas à
+    -- `ADDON_LOADED` : c'est ici que la base apprend quel profil ce personnage
+    -- utilise, et un module allumé avant lirait les réglages du mauvais.
+    BUI.DB:BindCharacter()
+
     started = true
     for name, mod in pairs(registry) do
         if mod:Get("enabled") then BUI:EnableModule(name) end
