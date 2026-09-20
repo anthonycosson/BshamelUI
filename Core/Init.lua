@@ -75,16 +75,53 @@ BUI.eventFrame = eventFrame
 --- event -> liste ordonnée de handlers
 local handlers = {}
 
+--- Tasse une liste de handlers : les pierres tombales (`false`) disparaissent,
+--- l'ordre des vivants est conservé. Appelée hors dispatch, jamais pendant.
+---@param list table
+local function compact(list)
+    local kept = 0
+    for i = 1, #list do
+        local fn = list[i]
+        if fn then
+            kept = kept + 1
+            list[kept] = fn
+        end
+    end
+    for i = #list, kept + 1, -1 do
+        list[i] = nil
+    end
+end
+
+--- Profondeur de dispatch : un handler peut en déclencher un autre.
+local dispatching = 0
+
+-- **Se désabonner pendant le dispatch ne doit pas faire sauter le voisin.**
+-- La liste se parcourait pendant qu'un handler pouvait s'en retirer. Le
+-- commentaire d'alors affirmait que la taille étant figée, la désinscription
+-- n'aurait d'effet qu'au dispatch suivant : c'était faux. `table.remove`
+-- décalait la liste immédiatement, la borne de boucle restait à l'ancienne
+-- taille, et le handler qui suivait celui qui venait de partir glissait à
+-- l'index qu'on venait de lire. Il n'était jamais appelé.
+--
+-- Deux `RegisterEventOnce` sur le même événement suffisaient donc à en perdre
+-- un : le premier se retirait, le second disparaissait sans un mot. C'est ce
+-- qui est arrivé au message de connexion de *Forever*, enregistré après celui
+-- du core sur `PLAYER_LOGIN`, et avant lui à celui de la 2.0.1.
+--
+-- Le retrait pose désormais une pierre tombale (`false`) que la boucle saute,
+-- et la liste n'est tassée qu'une fois le dispatch le plus extérieur terminé.
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     local list = handlers[event]
     if not list then return end
-    -- Copie d'index inversée non nécessaire : on itère sur une taille figée et
-    -- les désinscriptions faites *pendant* le dispatch ne prennent effet qu'au
-    -- dispatch suivant, ce qui évite les trous d'index.
+
+    dispatching = dispatching + 1
     for i = 1, #list do
         local fn = list[i]
         if fn then safecall(fn, event, ...) end
     end
+    dispatching = dispatching - 1
+
+    if dispatching == 0 then compact(list) end
 end)
 
 --- Abonne un handler à un événement du client.
@@ -125,15 +162,28 @@ function BUI:UnregisterEvent(event, fn)
     local list = handlers[event]
     if not list then return end
 
+    -- Pierre tombale plutôt que retrait : le dispatch peut être en cours, et
+    -- décaler la liste sous ses pieds lui ferait sauter un handler. Elle est
+    -- tassée quand le dispatch se termine (voir `compact`).
     if fn then
         for i = #list, 1, -1 do
-            if list[i] == fn then table.remove(list, i) end
+            if list[i] == fn then list[i] = false end
         end
     else
-        wipe(list)
+        for i = #list, 1, -1 do
+            list[i] = false
+        end
     end
 
-    if #list == 0 then
+    local alive = false
+    for i = 1, #list do
+        if list[i] then
+            alive = true
+            break
+        end
+    end
+
+    if not alive then
         handlers[event] = nil
         eventFrame:UnregisterEvent(event)
     end

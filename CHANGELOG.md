@@ -47,6 +47,13 @@
   Il ne paraît qu'au lancement du jeu, pas à chaque `/reload`.
 
 ### Corrigé
+- **Un abonné à un événement ne saute plus son voisin.** Quand un handler se
+  désabonnait pendant que l'événement était distribué — ce que fait tout
+  abonnement « une seule fois » —, la liste se décalait sous les pieds de la
+  boucle et le handler suivant n'était jamais appelé. Deux abonnements « une
+  seule fois » sur le même événement suffisaient donc à en perdre un,
+  silencieusement. C'est ce qui empêchait le message de connexion de *Forever*
+  de paraître, et avant lui celui de la 2.0.1.
 - **La fiche de personnage ne teinte plus l'ouverture des panneaux du client.**
   La veille sur son ouverture s'accrochait à la méthode `Show` du cadre, que le
   gestionnaire de panneaux appelle : tout ce qui suivait dans cet appel portait
