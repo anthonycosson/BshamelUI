@@ -407,6 +407,35 @@ local function applyStored(frame, entry)
     if pos then place(frame, pos.x, pos.y) end
 end
 
+--- Cadres dont la repose est déjà programmée : cadre -> vrai. Le client appelle
+--- `SetPoint` plusieurs fois par ouverture, et une repose suffit.
+local scheduled = {}
+
+--- Repose le cadre **à l'image suivante**, jamais dans l'appel du client.
+---
+--- Deux raisons, et la première suffirait. Le client réancre ses fenêtres
+--- plusieurs fois par ouverture : reposer à chaque `SetPoint` fait autant de
+--- reposes que d'ancrages, dont une seule sert — celle d'après.
+---
+--- La seconde tient à la teinte. Nos hooks s'exécutent *à l'intérieur* de
+--- l'appel qu'ils coiffent, et déplacer une fenêtre depuis là, c'est faire
+--- passer le travail du client par du code d'addon. Une image plus tard,
+--- l'exécution n'appartient qu'à nous et ne prête plus à conséquence. La
+--- fenêtre paraît une image à la place que le client lui donnait : invisible,
+--- et c'est le prix de ne pas se mêler de son ouverture.
+---@param frame table
+---@param entry table
+local function applySoon(frame, entry)
+    if not host then return end
+    if scheduled[frame] then return end
+
+    scheduled[frame] = true
+    C_Timer.After(0, function()
+        scheduled[frame] = nil
+        if host then applyStored(frame, entry) end
+    end)
+end
+
 --- Rend un cadre à l'état où on l'a trouvé.
 ---
 --- Le chemin protégé ne repose que le **premier** ancrage : l'environnement
@@ -760,7 +789,7 @@ local function hookFrame(frame, name)
     -- Le client réancre ses fenêtres à l'ouverture : c'est ici qu'on repose la
     -- nôtre, et pas seulement au démarrage.
     frame:HookScript("OnShow", function()
-        if host then applyStored(frame, entry) end
+        applySoon(frame, entry)
     end)
 
     frame:HookScript("OnHide", function()
@@ -775,10 +804,8 @@ local function hookFrame(frame, name)
         if not host then return end
         if fullscreenNow(entry, frame) then return end
 
-        local pos = host.GetPosition(name)
-        if not pos then return end
-        if protectedNow(frame) and InCombatLockdown() then return end
-        place(frame, pos.x, pos.y)
+        if not host.GetPosition(name) then return end
+        applySoon(frame, entry)
     end, function() return M:IsActive() end)
 
     -- Même raison pour l'échelle : certaines fenêtres se remettent à l'échelle
@@ -792,11 +819,8 @@ local function hookFrame(frame, name)
         local scale = host.GetScale(name)
         if not scale then return end
         if math.abs((frame:GetScale() or 1) - scale) < 0.001 then return end
-        if protectedNow(frame) and InCombatLockdown() then return end
 
-        applying = true
-        rescale(frame, scale)
-        applying = false
+        applySoon(frame, entry)
     end, function() return M:IsActive() end)
 
     if frame:IsVisible() then applyStored(frame, entry) end
