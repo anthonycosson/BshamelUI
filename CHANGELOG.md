@@ -3,72 +3,32 @@
 ## Non publié
 
 ### Ajouté
-- **Les réglages peuvent tenir dans des macros** (Correctifs de la bêta,
-  *Forever* seulement). Le client ne rend jamais son SavedVariables à un addon
-  au lancement, mais il restitue les macros : un bouton y écrit le code
-  d'export du profil actif, découpé en tranches de 240 caractères — le corps
-  d'une macro en tient 255. Une macro jouable, `BUIconfig`, les relit et remet
-  la configuration ; elle se pose sur une barre ou un raccourci.
-  **Elle n'a le plus souvent rien à faire** : quand le client démarre en ne
-  rendant rien et que les macros existent, la restauration se fait seule. Elle
-  ne se fait pas quand la base est revenue pleine — un code d'hier n'écrase pas
-  le travail d'aujourd'hui. Les macros gardent ce qu'on leur a donné : après un
-  changement de réglage, il faut réenregistrer.
-  Les macros portent le point d'interrogation des macros neuves : c'est ce qui
-  permet de poser la macro jouable sur une barre d'action.
-- **Une ligne au lancement dit quoi faire**, sur *Forever*, quand le client
-  n'a rien rendu et qu'aucune macro n'attend. En rouge, et c'est le seul
-  message de l'addon qui le soit : il annonce une perte, pas une nouveauté.
-  Elle se tait dès que les macros existent — à partir de là, il n'y a plus
-  rien à faire. La page, elle, donne la marche à suivre en quatre lignes ;
-  c'est le seul endroit de l'addon qui en ait une, parce qu'un ordre à
-  respecter ne tient pas dans une infobulle.
+- **Sauvegarder ses réglages dans des macros** (Correctifs de la bêta,
+  *Forever* seulement). La bêta ne rend pas leurs réglages aux addons au
+  démarrage du jeu, et aucun addon n'y échappe. Les macros, elle les
+  restitue : un bouton y écrit les vôtres, et l'addon les remet tout seul au
+  démarrage suivant. La page donne la marche à suivre, et une ligne rouge à la
+  connexion y renvoie tant que ce n'est pas fait. À refaire après chaque
+  changement de réglage.
 
 ### Modifié
-- **Masquer les erreurs Lua est désormais coché à l'installation.** Troisième
-  et dernière exception au principe « aucun défaut ne vaut vrai », et la plus
-  discutable : ce que la case éteint n'est pas une fonction du jeu, c'est le
-  rapport d'une panne — la fenêtre rouge signale ce qui est déjà arrivé, à
-  quelqu'un qui n'y peut rien. Les gestionnaires d'erreurs, eux, reçoivent
-  toujours tout : seule la fenêtre du client se tait, et la décocher la rend.
-- **Le module Journalisation ne s'annonce plus à la connexion.** Sa ligne
-  existe pour répondre au joueur qui vient de cocher la case ; elle partait
-  aussi quand le core rejouait l'état des modules, c'est-à-dire à chaque
-  restauration de configuration.
-- **Le message sur la sauvegarde de la bêta disait faux, il est remplacé.** La
-  2.0.1 conseillait de supprimer `BshamelUI.lua` : ça ne répare rien, et le
-  témoin CVar censé déclencher ce conseil n'est même pas écrit par ce client.
-  La mesure a été refaite avec un addon témoin de vingt lignes ne contenant
-  qu'un compteur : **la bêta n'exécute le SavedVariables d'aucun addon au
-  lancement du jeu**, le compteur reste à 1 après deux démarrages complets.
-  Aucun addon n'y échappe, et rien dans le nôtre ne peut y remédier. Le message
-  dit donc désormais ce qui est vrai, et renvoie vers le seul contournement
-  réel : ranger la configuration dans des macros, que le client restitue.
-  Il ne paraît qu'au lancement du jeu, pas à chaque `/reload`.
+- **Masquer les erreurs Lua est coché à l'installation.** Seule la fenêtre du
+  client se tait ; les gestionnaires d'erreurs reçoivent toujours tout, et
+  décocher la case la rend.
+- Le module Journalisation ne s'annonce plus à la connexion.
 
 ### Corrigé
-- **Un abonné à un événement ne saute plus son voisin.** Quand un handler se
-  désabonnait pendant que l'événement était distribué — ce que fait tout
-  abonnement « une seule fois » —, la liste se décalait sous les pieds de la
-  boucle et le handler suivant n'était jamais appelé. Deux abonnements « une
-  seule fois » sur le même événement suffisaient donc à en perdre un,
-  silencieusement. C'est ce qui empêchait le message de connexion de *Forever*
-  de paraître, et avant lui celui de la 2.0.1.
-- **La fiche de personnage ne teinte plus l'ouverture des panneaux du client.**
-  La veille sur son ouverture s'accrochait à la méthode `Show` du cadre, que le
-  gestionnaire de panneaux appelle : tout ce qui suivait dans cet appel portait
-  notre teinte. Elle passe par le script `OnShow`, qui s'exécute derrière celui
-  du client au lieu de se mettre devant.
-- **Les réglages ne se perdent plus d'une session à l'autre sur Forever.** Le
-  client écrit le fichier de sauvegarde du personnage à chaque déconnexion et
-  ne l'exécute jamais au chargement : le profil actif du personnage était donc
-  oublié à chaque connexion, et tous ses réglages semblaient effacés alors
-  qu'ils étaient intacts. Ce qui appartient à un personnage — son profil, son
-  historique de chat, sa note d'inscription — est désormais rangé dans le
-  fichier du compte, sous son identifiant unique : le nom du royaume n'est pas
-  stable sur cette bêta, et une clé qui change est une clé perdue. Ce qui avait
-  déjà été enregistré à l'ancien emplacement est repris automatiquement à la
-  première connexion.
+- **Les réglages ne se perdent plus d'une session à l'autre sur Forever.** Ce
+  qui appartient à un personnage — son profil actif, son historique de chat —
+  vivait dans un fichier que le client ne relit jamais. Il est désormais rangé
+  dans celui du compte, et ce qui y était déjà est repris automatiquement.
+- **Un traitement prévu pour la connexion pouvait ne jamais partir.** Un
+  abonné qui se désabonnait pendant la distribution d'un événement faisait
+  sauter le suivant, sans un mot.
+- **Une source d'erreur Lua en moins à l'ouverture de la fiche de personnage.**
+  Celle du correctif d'infobulles demeure : il n'en existe pas de version
+  propre, et les infobulles lisibles valent mieux qu'elle.
+- La fenêtre de recherche de groupe de *Forever* se repose plus sûrement.
 
 ## 2.0.1 — 2026-09-20
 
