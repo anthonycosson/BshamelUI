@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.1 — 2026-09-20
+
 ### Ajouté
 - **Un message explique la panne de sauvegarde de la bêta.** Quand le client
   écrit le fichier de réglages sans jamais le relire — constaté sur Forever —
