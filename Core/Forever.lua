@@ -60,8 +60,15 @@ BUI:RegisterEventOnce("PLAYER_LOGIN", function()
     local beta = BUI.Modules:Get("Beta")
     if beta and beta.HasConfigMacros and beta:HasConfigMacros() then return end
 
-    BUI:Print(ns.L["Client drops addon settings"])
-    BUI:Print(ns.L["Client drops addon settings fix"])
+    -- En rouge, et c'est le seul message de l'addon qui le soit. Il annonce une
+    -- perte, pas une nouveauté : le lire en blanc parmi les lignes de connexion
+    -- du jeu, c'est ne pas le lire. La couleur vient du thème (règle 2), pris
+    -- ici et non en tête de fichier — `Core/Forever.lua` se charge avant
+    -- `UI/Theme.lua`, et n'a de toute façon besoin de lui qu'à la connexion.
+    local T = BUI.Theme
+
+    BUI:Print(T.Colorize(T.COLOR.RED, ns.L["Client drops addon settings"]))
+    BUI:Print(T.Colorize(T.COLOR.RED, ns.L["Client drops addon settings fix"]))
 end)
 
 --- Modules affichés mais **grisés** : présents dans la navigation, jamais

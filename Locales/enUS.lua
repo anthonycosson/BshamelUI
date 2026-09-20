@@ -595,10 +595,17 @@ BUI:RegisterLocale("enUS", {
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
     ["Beta"]                           = "Beta",
-    ["Settings lost at launch"]        = "Settings lost at launch",
-    ["Settings lost at launch warning"] =
-        "This beta client never gives addons their settings back when the game starts. "
-        .. "Macros, however, it does restore -- so your settings can live in one.",
+    ["Settings lost on launch or reload"] =
+        "Settings lost on game launch or after a reload",
+    ["Settings lost warning"] =
+        "For now, the beta does not keep addon settings when the game starts. A macro "
+        .. "works around it: macros, the client does give back.",
+    ["Settings lost step 1"] = "1. Set everything the way you want it.",
+    ["Settings lost step 2"] = "2. Save it into a macro with the button below.",
+    ["Settings lost step 3"] =
+        "3. On the next launch, the addon reads that macro back and reapplies them.",
+    ["Settings lost step 4"] =
+        "4. To redo it by hand: run the BUIconfig macro, or the Restore button below.",
     ["Save config to macros"]          = "Save settings to macros",
     ["Save"]                           = "Save",
     ["Save config to macros tip"] =
@@ -622,8 +629,9 @@ BUI:RegisterLocale("enUS", {
         "This beta client does not give addons their settings back when the game starts: "
         .. "every addon, not just this one, restarts from its defaults.",
     ["Client drops addon settings fix"] =
-        "Macros, it does give back: Beta -> Settings lost at launch -> Save puts yours "
-        .. "inside them. Once that is done, they come back on their own every launch.",
+        "A macro works around it: Beta -> Settings lost on game launch or after a "
+        .. "reload -> Save. Once that is done, they come back on their own every "
+        .. "launch, and this message stops appearing.",
     ["Looting"]                        = "Looting",
     ["Fast loot"]                      = "Fast loot",
     ["Fast loot tip"] =

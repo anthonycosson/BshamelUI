@@ -314,8 +314,18 @@ BUI:RegisterModule(MODULE, {
             tooltip = L["Fix stat tooltips tip"],
         },
 
-        { type = "header", text = L["Settings lost at launch"] },
-        { type = "alert",  text = L["Settings lost at launch warning"] },
+        { type = "header", text = L["Settings lost on launch or reload"] },
+
+        -- La limite d'abord, en rouge : c'est elle qui explique pourquoi cette
+        -- page existe, et elle ne vient pas de nous. Les quatre lignes qui
+        -- suivent sont la seule marche à suivre de l'addon — ailleurs, une
+        -- option se comprend par son libellé et son infobulle. Ici, il y a un
+        -- ordre à respecter, et un ordre ne tient pas dans une infobulle.
+        { type = "alert",       text = L["Settings lost warning"] },
+        { type = "description", text = L["Settings lost step 1"] },
+        { type = "description", text = L["Settings lost step 2"] },
+        { type = "description", text = L["Settings lost step 3"] },
+        { type = "description", text = L["Settings lost step 4"] },
         {
             type    = "button",
             text    = L["Save config to macros"],

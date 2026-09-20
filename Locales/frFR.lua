@@ -583,10 +583,19 @@ BUI:RegisterLocale("frFR", {
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
     ["Beta"]                           = "Beta",
-    ["Settings lost at launch"]        = "Réglages perdus au lancement",
-    ["Settings lost at launch warning"] =
-        "Ce client de bêta ne rend jamais leurs réglages aux addons au lancement du jeu. "
-        .. "Les macros, en revanche, il les restitue — vos réglages peuvent y tenir.",
+    ["Settings lost on launch or reload"] =
+        "Réglages perdus au démarrage du jeu ou après un reload",
+    ["Settings lost warning"] =
+        "Pour l'instant, la bêta ne conserve pas les réglages des addons au démarrage "
+        .. "du jeu. Une macro permet de contourner ça : les macros, elle les restitue.",
+    ["Settings lost step 1"] = "1. Faites les réglages que vous voulez.",
+    ["Settings lost step 2"] =
+        "2. Enregistrez-les dans une macro avec le bouton ci-dessous.",
+    ["Settings lost step 3"] =
+        "3. Au démarrage suivant, l'addon relit cette macro et réapplique les réglages.",
+    ["Settings lost step 4"] =
+        "4. Pour le refaire à la main : exécutez la macro BUIconfig, ou le bouton "
+        .. "Restaurer ci-dessous.",
     ["Save config to macros"]          = "Enregistrer les réglages dans des macros",
     ["Save"]                           = "Enregistrer",
     ["Save config to macros tip"] =
@@ -610,9 +619,9 @@ BUI:RegisterLocale("frFR", {
         "Ce client de bêta ne rend pas leurs réglages aux addons au lancement du jeu : "
         .. "tous repartent de leurs défauts, pas seulement celui-ci.",
     ["Client drops addon settings fix"] =
-        "Il restitue les macros, lui : Beta -> Réglages perdus au lancement -> "
-        .. "Enregistrer met les vôtres à l'abri dedans. Une fois fait, ils reviendront "
-        .. "tout seuls à chaque lancement.",
+        "Une macro contourne ça : Beta -> Réglages perdus au démarrage du jeu ou "
+        .. "après un reload -> Enregistrer. Une fois fait, ils reviendront tout seuls "
+        .. "à chaque démarrage, et ce message ne reparaîtra plus.",
     ["Looting"]                        = "Ramassage des monstres",
     ["Fast loot"]                      = "Ramassage rapide",
     ["Fast loot tip"] =

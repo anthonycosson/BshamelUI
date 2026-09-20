@@ -17,8 +17,12 @@
   Les macros portent le point d'interrogation des macros neuves : c'est ce qui
   permet de poser la macro jouable sur une barre d'action.
 - **Une ligne au lancement dit quoi faire**, sur *Forever*, quand le client
-  n'a rien rendu et qu'aucune macro n'attend. Elle se tait dès que les macros
-  existent : à partir de là, il n'y a plus rien à faire.
+  n'a rien rendu et qu'aucune macro n'attend. En rouge, et c'est le seul
+  message de l'addon qui le soit : il annonce une perte, pas une nouveauté.
+  Elle se tait dès que les macros existent — à partir de là, il n'y a plus
+  rien à faire. La page, elle, donne la marche à suivre en quatre lignes ;
+  c'est le seul endroit de l'addon qui en ait une, parce qu'un ordre à
+  respecter ne tient pas dans une infobulle.
 
 ### Modifié
 - **Le message sur la sauvegarde de la bêta disait faux, il est remplacé.** La
