@@ -2,6 +2,11 @@
 
 ## Non publié
 
+### Modifié
+- **Le gestionnaire de temps de recharge n'est plus grisé sur *Forever*.** La
+  bêta porte le même que retail, et centrer les améliorations suivies y marche
+  comme ailleurs.
+
 ## 2.0.3 — 2026-09-20
 
 ### Ajouté

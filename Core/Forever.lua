@@ -91,11 +91,12 @@ end)
 ---
 --- Un module qui n'a pas de sens ici n'est pas listé : sa ligne du `.toc`
 --- porte `[AllowLoadGameType standard]` et il n'apparaît pas du tout.
-ns.PREVIEW = {
-    -- Le client a son gestionnaire, mais la bêta ne permet pas encore de le
-    -- mettre à l'épreuve.
-    CooldownManager = true,
-}
+--- **Vide aujourd'hui**, et c'est le bon état : un module grisé est un aveu
+--- provisoire, pas une catégorie. Le gestionnaire de temps de recharge y a
+--- figuré le temps de le vérifier ; la bêta porte le même que retail, et le
+--- module ne fait que relire la grille que le client vient de poser — il n'y
+--- avait rien de propre à retail dedans.
+ns.PREVIEW = {}
 
 --- Les emplacements qui s'enchantent sur Forever — lus par
 --- `Modules/Character.lua`, qui garde la liste de retail quand celle-ci
