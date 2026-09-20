@@ -5,8 +5,8 @@
 --  Forme du SavedVariables (compte) :
 --      BshamelUIDB = {
 --          schema   = 1,
---          seen     = { loginHint = true },   -- voir DB:Seen
 --          profiles = { ["Default"] = { modules = { Quest = { autoAccept = true } } } },
+--          seen     = { loginHint = true },   -- voir DB:Seen
 --          chars    = {                       -- voir DB:CharData
 --              ["Bshamel-Forever"] = {
 --                  profile = "Default",
@@ -52,15 +52,15 @@ local DEFAULT_PROFILE  = "Default"
 local defaultsRegistry = {}
 
 local initialized = false
+
 --- Vrai quand le client n'a rien rendu au chargement : la base était absente,
 --- et l'addon est reparti de ses défauts. Voir `DB:LoadedEmpty`.
 local loadedEmpty = false
 
-
 -- =========================================================================
 --  Accès interne
-
 -- =========================================================================
+
 --- Identifiant du personnage connecté, une fois pour la session.
 ---
 --- **Il n'existe pas avant `PLAYER_LOGIN`** : `UnitGUID("player")` ne rend rien
@@ -190,6 +190,7 @@ function DB:Initialize()
     if characterKey() then applyAllDefaults() end
 
     initialized = true
+end
 
 --- L'addon est-il reparti de zéro, faute d'avoir reçu sa base ?
 ---
@@ -209,7 +210,6 @@ function DB:LoadedEmpty()
     return loadedEmpty
 end
 
-end
 --- Attache la base au personnage connecté. Appelé à `PLAYER_LOGIN`, **avant**
 --- l'activation des modules : c'est là, et seulement là, que le profil actif
 --- est enfin connaissable.
@@ -956,6 +956,40 @@ end
 -- sont retirés, il ne voyage que ce que le joueur a réellement changé. La
 -- version de schéma part avec — c'est elle qui permet d'importer demain un
 -- code exporté aujourd'hui.
+--
+-- Le **code** — sa marque, son encodage, sa relecture — vit ici et non dans la
+-- page qui l'affiche : deux endroits le produisent désormais, la fenêtre de
+-- partage et la sauvegarde en macros, et un format écrit deux fois est un
+-- format qui divergera.
+
+--- Marque du code exporté. Le chiffre est la version du **format** —
+--- sérialisation et encodage —, pas celle des réglages : celle-ci voyage dans
+--- la charge utile (`schema`), et les migrations s'en chargent à l'import.
+local CODE_PREFIX = "BUI1:"
+
+--- Le profil actif sous forme de code, prêt à être copié ou rangé ailleurs.
+---@return string|nil
+function DB:ExportString()
+    local serialized = U.Serialize(self:ExportProfile())
+    if not serialized then return nil end
+    return CODE_PREFIX .. U.Encode(serialized)
+end
+
+--- Relit un code. `nil` s'il n'est pas des nôtres ou s'il est abîmé.
+---
+--- Les blancs sont retirés partout : un code a souvent transité par un chat,
+--- un site qui l'a replié en plusieurs lignes, ou plusieurs macros mises bout
+--- à bout.
+---@param text string
+---@return any
+function DB:ParseImport(text)
+    text = (text or ""):gsub("%s+", "")
+    if text:sub(1, #CODE_PREFIX) ~= CODE_PREFIX then return nil end
+
+    local decoded = U.Decode(text:sub(#CODE_PREFIX + 1))
+    if not decoded then return nil end
+    return U.Deserialize(decoded)
+end
 
 --- Photographie exportable du profil actif.
 ---@return table  { schema, modules }

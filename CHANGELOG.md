@@ -2,6 +2,36 @@
 
 ## Non publié
 
+### Ajouté
+- **Les réglages peuvent tenir dans des macros** (Correctifs de la bêta,
+  *Forever* seulement). Le client ne rend jamais son SavedVariables à un addon
+  au lancement, mais il restitue les macros : un bouton y écrit le code
+  d'export du profil actif, découpé en tranches de 240 caractères — le corps
+  d'une macro en tient 255. Une macro jouable, `BUIconfig`, les relit et remet
+  la configuration ; elle se pose sur une barre ou un raccourci.
+  **Elle n'a le plus souvent rien à faire** : quand le client démarre en ne
+  rendant rien et que les macros existent, la restauration se fait seule. Elle
+  ne se fait pas quand la base est revenue pleine — un code d'hier n'écrase pas
+  le travail d'aujourd'hui. Les macros gardent ce qu'on leur a donné : après un
+  changement de réglage, il faut réenregistrer.
+  Les macros portent le point d'interrogation des macros neuves : c'est ce qui
+  permet de poser la macro jouable sur une barre d'action.
+- **Une ligne au lancement dit quoi faire**, sur *Forever*, quand le client
+  n'a rien rendu et qu'aucune macro n'attend. Elle se tait dès que les macros
+  existent : à partir de là, il n'y a plus rien à faire.
+
+### Modifié
+- **Le message sur la sauvegarde de la bêta disait faux, il est remplacé.** La
+  2.0.1 conseillait de supprimer `BshamelUI.lua` : ça ne répare rien, et le
+  témoin CVar censé déclencher ce conseil n'est même pas écrit par ce client.
+  La mesure a été refaite avec un addon témoin de vingt lignes ne contenant
+  qu'un compteur : **la bêta n'exécute le SavedVariables d'aucun addon au
+  lancement du jeu**, le compteur reste à 1 après deux démarrages complets.
+  Aucun addon n'y échappe, et rien dans le nôtre ne peut y remédier. Le message
+  dit donc désormais ce qui est vrai, et renvoie vers le seul contournement
+  réel : ranger la configuration dans des macros, que le client restitue.
+  Il ne paraît qu'au lancement du jeu, pas à chaque `/reload`.
+
 ### Corrigé
 - **La fiche de personnage ne teinte plus l'ouverture des panneaux du client.**
   La veille sur son ouverture s'accrochait à la méthode `Show` du cadre, que le

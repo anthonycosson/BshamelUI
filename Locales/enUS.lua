@@ -595,11 +595,35 @@ BUI:RegisterLocale("enUS", {
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
     ["Beta"]                           = "Beta",
-    ["Saved settings not read"] =
-        "Your settings could not be read: the game writes the file but no longer loads it.",
-    ["Saved settings not read fix"] =
-        "Quit the game, then delete BshamelUI.lua and BshamelUI.lua.bak from the folder "
-        .. "WTF/Account/<account>/SavedVariables. The files the game writes next load fine.",
+    ["Settings lost at launch"]        = "Settings lost at launch",
+    ["Settings lost at launch warning"] =
+        "This beta client never gives addons their settings back when the game starts. "
+        .. "Macros, however, it does restore -- so your settings can live in one.",
+    ["Save config to macros"]          = "Save settings to macros",
+    ["Save"]                           = "Save",
+    ["Save config to macros tip"] =
+        "Writes your current settings into macros named BUIconfig. Do it again after "
+        .. "you change something: the macros keep what they were given, not what came after.",
+    ["Restore config from macros"]     = "Restore settings from macros",
+    ["Restore"]                        = "Restore",
+    ["Restore config from macros tip"] =
+        "Puts back what the macros hold. Happens on its own when the game starts and "
+        .. "the client returned nothing, so you rarely need this button.",
+    ["Config macros saved"]            = "Settings saved into %d macro(s).",
+    ["Config macros hint"] =
+        "Put the %s macro on an action bar or a keybind: it restores them on demand.",
+    ["Config macros restored"]         = "Settings restored from your macros.",
+    ["Config macros missing"]          = "No settings macro found. Save yours first.",
+    ["Config macros invalid"]          = "The settings macros are damaged or incomplete.",
+    ["Config macros combat"]           = "Macros cannot be written in combat.",
+    ["Config macros full"]             = "Your macro list is full: free a few slots and retry.",
+    ["Config macros too long"]         = "These settings are too large to fit in macros.",
+    ["Client drops addon settings"] =
+        "This beta client does not give addons their settings back when the game starts: "
+        .. "every addon, not just this one, restarts from its defaults.",
+    ["Client drops addon settings fix"] =
+        "Macros, it does give back: Beta -> Settings lost at launch -> Save puts yours "
+        .. "inside them. Once that is done, they come back on their own every launch.",
     ["Looting"]                        = "Looting",
     ["Fast loot"]                      = "Fast loot",
     ["Fast loot tip"] =

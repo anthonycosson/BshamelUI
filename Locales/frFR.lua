@@ -583,11 +583,36 @@ BUI:RegisterLocale("frFR", {
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
     ["Beta"]                           = "Beta",
-    ["Saved settings not read"] =
-        "Vos réglages n'ont pas pu être relus : le jeu écrit le fichier mais ne le charge plus.",
-    ["Saved settings not read fix"] =
-        "Quittez le jeu, puis supprimez BshamelUI.lua et BshamelUI.lua.bak dans le dossier "
-        .. "WTF/Account/<compte>/SavedVariables. Ceux que le jeu réécrira se reliront bien.",
+    ["Settings lost at launch"]        = "Réglages perdus au lancement",
+    ["Settings lost at launch warning"] =
+        "Ce client de bêta ne rend jamais leurs réglages aux addons au lancement du jeu. "
+        .. "Les macros, en revanche, il les restitue — vos réglages peuvent y tenir.",
+    ["Save config to macros"]          = "Enregistrer les réglages dans des macros",
+    ["Save"]                           = "Enregistrer",
+    ["Save config to macros tip"] =
+        "Écrit vos réglages actuels dans des macros nommées BUIconfig. À refaire après "
+        .. "chaque changement : une macro garde ce qu'on lui a donné, pas ce qui a suivi.",
+    ["Restore config from macros"]     = "Restaurer les réglages depuis les macros",
+    ["Restore"]                        = "Restaurer",
+    ["Restore config from macros tip"] =
+        "Remet ce que les macros contiennent. Se fait tout seul au lancement du jeu quand "
+        .. "le client n'a rien rendu : ce bouton ne sert donc presque jamais.",
+    ["Config macros saved"]            = "Réglages enregistrés dans %d macro(s).",
+    ["Config macros hint"] =
+        "Placez la macro %s sur une barre ou un raccourci : elle les restaure à la demande.",
+    ["Config macros restored"]         = "Réglages restaurés depuis vos macros.",
+    ["Config macros missing"]          = "Aucune macro de réglages trouvée. Enregistrez d'abord les vôtres.",
+    ["Config macros invalid"]          = "Les macros de réglages sont abîmées ou incomplètes.",
+    ["Config macros combat"]           = "Les macros ne peuvent pas être écrites en combat.",
+    ["Config macros full"]             = "Votre liste de macros est pleine : libérez quelques places et réessayez.",
+    ["Config macros too long"]         = "Ces réglages sont trop volumineux pour tenir dans des macros.",
+    ["Client drops addon settings"] =
+        "Ce client de bêta ne rend pas leurs réglages aux addons au lancement du jeu : "
+        .. "tous repartent de leurs défauts, pas seulement celui-ci.",
+    ["Client drops addon settings fix"] =
+        "Il restitue les macros, lui : Beta -> Réglages perdus au lancement -> "
+        .. "Enregistrer met les vôtres à l'abri dedans. Une fois fait, ils reviendront "
+        .. "tout seuls à chaque lancement.",
     ["Looting"]                        = "Ramassage des monstres",
     ["Fast loot"]                      = "Ramassage rapide",
     ["Fast loot tip"] =

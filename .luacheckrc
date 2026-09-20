@@ -80,7 +80,7 @@ read_globals = {
 
     -- Macro qui ouvre le menu depuis une barre d'action, et cadre survolé au
     -- moment du clic — c'est lui qui dit où poser le menu.
-    "CreateMacro", "EditMacro", "GetMacroIndexByName",
+    "CreateMacro", "EditMacro", "GetMacroIndexByName", "GetMacroBody", "DeleteMacro",
     "GetMouseFoci", "GetMouseFocus", "WorldFrame",
     -- Le client publie ses extensions dans l'ordre, sous `EXPANSION_NAME0`,
     -- `EXPANSION_NAME1`… : c'est ce qui date un tiroir sans le nommer.

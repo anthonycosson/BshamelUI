@@ -2099,6 +2099,14 @@ T.TEXTURE = {
     -- si le grimoire n'en a pas.
     MENU_TIMEWAYS     = "Interface\\Icons\\INV_Misc_PocketWatch_01",
 
+    -- Icône des macros de sauvegarde de configuration : le point
+    -- d'interrogation, celui que le jeu donne d'office à une macro neuve.
+    -- **Ce n'est pas un choix esthétique, c'est ce qui la rend posable** : une
+    -- macro dont l'icône n'est pas une icône de macro ne se glisse pas sur une
+    -- barre d'action. Le client écrit ce chemin-là mot pour mot
+    -- (`Blizzard_AddOnList/AddonList.lua`).
+    CONFIG_MACRO      = "Interface\\ICONS\\INV_Misc_QuestionMark",
+
     -- Bouton de copie posé sur le cadre de chat : l'icône de note du client.
     -- C'est déjà ce qu'il met sur « du texte qu'on lit et qu'on recopie », et
     -- elle existe depuis toujours. Une icône de presse-papier n'existe pas dans

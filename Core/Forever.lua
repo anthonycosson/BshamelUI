@@ -23,6 +23,46 @@
 -- =========================================================================
 
 local _, ns = ...
+local BUI = ns.BUI
+
+-- =========================================================================
+--  Le client ne rend pas leurs réglages aux addons
+-- =========================================================================
+-- **La bêta n'exécute jamais le SavedVariables d'un addon au lancement du
+-- jeu.** Elle l'écrit pourtant proprement à chaque déconnexion. Vérifié le
+-- 20 septembre 2026 avec un addon témoin de vingt lignes ne contenant qu'un
+-- compteur : après deux démarrages complets, le fichier sur le disque était
+-- valide et le compteur toujours à 1. Aucun addon n'y échappe — ceux qui
+-- semblent tenir réécrivent simplement leur configuration entière à chaque
+-- session, et repartent de leurs défauts sans que ça se voie.
+--
+-- Rien, dans un addon, ne peut corriger ça : les deux autres voies de
+-- persistance sont fermées aussi — le SavedVariables du personnage n'est pas
+-- relu davantage, et une CVar posée par `RegisterCVar` n'est pas écrite dans
+-- `Config.wtf`.
+--
+-- **Ce qui reste est de le dire.** Un joueur qui retrouve son addon vierge
+-- croit que l'addon perd ses réglages ; il mérite de savoir d'où ça vient, et
+-- surtout qu'il existe un contournement : ranger sa configuration dans des
+-- macros, que le client restitue (voir `Modules/Beta.lua`).
+--
+-- **Le message se tait dès que les macros existent.** À partir de là, la
+-- restauration se fait seule, et répéter « voici comment sauvegarder » à
+-- quelqu'un qui a déjà sauvegardé ne serait plus une aide, seulement du bruit.
+--
+-- Il ne paraît qu'au lancement du jeu, jamais au rechargement : ce qui est en
+-- mémoire survit à un `/reload`, donc `LoadedEmpty` y est faux. Il paraît aussi
+-- à la toute première installation, où il est simplement prématuré — il annonce
+-- ce qui va arriver au lieu de constater ce qui est arrivé, et il reste vrai.
+BUI:RegisterEventOnce("PLAYER_LOGIN", function()
+    if not BUI.DB:LoadedEmpty() then return end
+
+    local beta = BUI.Modules:Get("Beta")
+    if beta and beta.HasConfigMacros and beta:HasConfigMacros() then return end
+
+    BUI:Print(ns.L["Client drops addon settings"])
+    BUI:Print(ns.L["Client drops addon settings fix"])
+end)
 
 --- Modules affichés mais **grisés** : présents dans la navigation, jamais
 --- allumés — le traitement d'un module `preview`. Pour ce qui existe sur

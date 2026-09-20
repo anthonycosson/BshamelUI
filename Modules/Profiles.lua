@@ -32,7 +32,6 @@
 
 local _, ns = ...
 local BUI = ns.BUI
-local U    = BUI.Util
 local W    = BUI.Widgets
 local L    = ns.L
 
@@ -160,37 +159,15 @@ end
 --  Sauvegarde et partage : le code, dans les deux sens
 -- =========================================================================
 
---- Enveloppe du code exporté. Le chiffre est la version du **format** —
---- sérialisation et encodage —, pas celle des réglages : celle-ci voyage dans
---- la charge utile (`schema`), et les migrations s'en chargent à l'import.
-local PREFIX = "BUI1:"
+-- Le format du code — sa marque, son encodage, sa relecture — vit dans
+-- `Core/DB.lua` : cette page n'est plus le seul endroit qui le produit, la
+-- sauvegarde en macros s'en sert aussi.
 
 local exportWindow
 local importWindow
 
----@return string|nil
-local function exportString()
-    local serialized = U.Serialize(BUI.DB:ExportProfile())
-    if not serialized then return nil end
-    return PREFIX .. U.Encode(serialized)
-end
-
---- Relit un code collé. `nil` s'il n'est pas des nôtres ou s'il est abîmé.
---- Les blancs sont retirés partout : un code a souvent transité par un chat ou
---- un site qui l'a replié en plusieurs lignes.
----@param text string
----@return any
-local function parseImport(text)
-    text = (text or ""):gsub("%s+", "")
-    if text:sub(1, #PREFIX) ~= PREFIX then return nil end
-
-    local decoded = U.Decode(text:sub(#PREFIX + 1))
-    if not decoded then return nil end
-    return U.Deserialize(decoded)
-end
-
 local function openExport()
-    local text = exportString()
+    local text = BUI.DB:ExportString()
     if not text then
         BUI:Print(L["Export failed"])
         return
@@ -221,7 +198,7 @@ end
 
 ---@param text string
 local function submitImport(text)
-    local data = parseImport(text)
+    local data = BUI.DB:ParseImport(text)
 
     -- La validation passe **avant** les questions : demander « quel profil ? »
     -- pour répondre ensuite « le code était invalide » ferait porter la
