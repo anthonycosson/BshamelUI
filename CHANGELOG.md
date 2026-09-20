@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.2 — 2026-09-20
+
 ### Ajouté
 - **Sauvegarder ses réglages dans des macros** (Correctifs de la bêta,
   *Forever* seulement). La bêta ne rend pas leurs réglages aux addons au
