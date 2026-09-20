@@ -9,6 +9,13 @@
 - **Ressource personnelle** : une ligne rouge sous « N'afficher aucun texte »
   rappelle qu'il faut « Afficher le texte de la barre » dans le mode Édition —
   sans quoi le jeu n'écrit rien, et la case semble ne rien faire.
+- **Quatre fenêtres de plus se déplacent** : l'assistance, la charte de guilde,
+  la fenêtre de raid et le registre des rangs de guilde.
+
+### Corrigé
+- **La fenêtre des compagnons de gouffre se déplace enfin.** Elle était
+  enregistrée sous un nom d'addon qui n'existe pas, et n'a donc jamais été
+  branchée.
 
 ## 2.0.3 — 2026-09-20
 

@@ -102,6 +102,13 @@ local PRELOADED = {
     "ReadyCheckFrame",
     "StackSplitFrame",
     "LFGDungeonReadyDialog",
+
+    -- Trois fenêtres du client qui manquaient à cette liste, et que *Forever*
+    -- rend quotidiennes : l'assistance, la charte de guilde qu'on fait signer,
+    -- et la fenêtre de raid. Elles arrivent toutes les trois au démarrage.
+    "HelpFrame",
+    "PetitionFrame",
+    "RaidParentFrame",
 }
 
 --- Fenêtres chargées à la demande, par l'addon de Blizzard qui les apporte.
@@ -140,9 +147,17 @@ local ON_DEMAND = {
     ["Blizzard_WeeklyRewards"]      = { "WeeklyRewardsFrame" },
     ["Blizzard_WorldMap"]           = { "WorldMapFrame" },
 
-    ["Blizzard_ProfessionsCustomerOrders"]         = { "ProfessionsCustomerOrdersFrame" },
-    ["Blizzard_DelvesCompanionConfigurationFrame"] = { "DelvesCompanionConfigurationFrame" },
-    ["Blizzard_DelvesDifficultyPicker"]            = { "DelvesDifficultyPickerFrame" },
+    ["Blizzard_ProfessionsCustomerOrders"] = { "ProfessionsCustomerOrdersFrame" },
+    -- Le nom de l'**addon**, qui ne porte pas « Frame » — c'est le cadre qu'il
+    -- apporte qui le porte. La clé l'a longtemps porté aussi, et une clé qui
+    -- n'est le nom d'aucun addon n'est jamais appelée : la fenêtre des
+    -- compagnons de gouffre n'a jamais été branchée, sur aucun client.
+    ["Blizzard_DelvesCompanionConfiguration"] = { "DelvesCompanionConfigurationFrame" },
+    ["Blizzard_DelvesDifficultyPicker"]       = { "DelvesDifficultyPickerFrame" },
+
+    -- Le registre des rangs de guilde. Chargé à la demande, présent sur les deux
+    -- clients — et sur *Forever* c'est une fenêtre qu'on ouvre pour de bon.
+    ["Blizzard_GuildControlUI"] = { "GuildControlUI" },
 
     -- Logement (Midnight). Absents d'un client plus ancien, donc jamais résolus.
     ["Blizzard_HousingDashboard"]   = { "HousingDashboardFrame" },
