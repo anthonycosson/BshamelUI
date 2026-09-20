@@ -125,8 +125,12 @@ end
 --  Déclaration du module
 -- =========================================================================
 
+-- Le nom du module reste `Windows` : c'est une clé de base de données, et la
+-- renommer casserait les réglages de tout le monde (règle 4). Seul l'intitulé
+-- change, et il dit désormais de quelles fenêtres il s'agit — celles du client,
+-- par opposition à la fenêtre d'options de l'addon.
 BUI:RegisterModule(MODULE, {
-    title    = L["Windows"],
+    title    = L["Game windows"],
     category = "QoL",
     order    = 10,
     secure   = true,

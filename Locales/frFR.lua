@@ -801,7 +801,7 @@ BUI:RegisterLocale("frFR", {
     ["Preview forces"]                 = "Forces ennemies",
 
     -- Module Windows
-    ["Windows"]                        = "Fenêtres",
+    ["Game windows"]                   = "Fenêtres du jeu",
     ["Moving"]                         = "Déplacement",
     ["Move windows"]                   = "Permettre le déplacement des fenêtres du jeu",
     ["Move windows tip"] =

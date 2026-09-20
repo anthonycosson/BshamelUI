@@ -3,6 +3,8 @@
 ## Non publié
 
 ### Modifié
+- La page **Fenêtres** s'appelle désormais **Fenêtres du jeu** : celles du
+  client, par opposition à la fenêtre d'options de l'addon.
 - **Masquer l'effet de repos** éteint aussi la bande dorée qui l'accompagne sur
   le nom et le portrait, et non plus le seul ZZZ.
 

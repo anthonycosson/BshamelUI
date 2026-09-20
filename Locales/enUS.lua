@@ -809,7 +809,7 @@ BUI:RegisterLocale("enUS", {
     ["Preview forces"]                 = "Enemy Forces",
 
     -- Module Windows
-    ["Windows"]                        = "Windows",
+    ["Game windows"]                   = "Game windows",
     ["Moving"]                         = "Moving",
     ["Move windows"]                   = "Allow moving the game's windows",
     ["Move windows tip"] =
