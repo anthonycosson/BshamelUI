@@ -2,6 +2,10 @@
 
 ## Non publié
 
+### Modifié
+- **Masquer l'effet de repos** éteint aussi la bande dorée qui l'accompagne sur
+  le nom et le portrait, et non plus le seul ZZZ.
+
 ### Corrigé
 - **Le mode sombre n'éteint plus le ZZZ du repos** sur le cadre du joueur. Le
   petit Z animé qui dit qu'on accumule du repos sortait noir sur le portrait.

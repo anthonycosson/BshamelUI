@@ -362,7 +362,8 @@ BUI:RegisterLocale("frFR", {
     ["Decorations"]                    = "Décorations",
     ["Hide rested effect"]             = "Masquer l'effet de repos",
     ["Hide rested effect tip"] =
-        "Retire l'animation que le jeu joue sur votre portrait lorsque vous êtes reposé.",
+        "Retire l'animation que le jeu joue sur votre portrait lorsque vous êtes "
+        .. "reposé, ainsi que la bande dorée qu'elle allume sur votre nom.",
     ["Hide corner icon"]               = "Masquer l'icône de coin",
     ["Hide corner icon tip"] =
         "Retire la pastille que le jeu dessine dans le coin de votre portrait.",

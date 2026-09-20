@@ -435,7 +435,8 @@ BUI:RegisterLocale("enUS", {
     ["Decorations"]                    = "Decorations",
     ["Hide rested effect"]             = "Hide the rested effect",
     ["Hide rested effect tip"] =
-        "Removes the animation that plays over your portrait while you are rested.",
+        "Removes the animation that plays over your portrait while you are rested, "
+        .. "and the gold band it lights up on your name.",
     ["Hide corner icon"]               = "Hide the corner icon",
     ["Hide corner icon tip"] =
         "Removes the small badge the game draws in the corner of your portrait.",
