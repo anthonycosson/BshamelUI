@@ -12,11 +12,13 @@
 ### Modifié
 - La page **Fenêtres** s'appelle désormais **Fenêtres du jeu** : celles du
   client, par opposition à la fenêtre d'options de l'addon.
-- **Masquer l'effet de repos** éteint aussi la bande dorée qui l'accompagne sur
-  le nom et le portrait, et non plus le seul ZZZ.
 - **Distance maximale de la caméra** : le facteur de zoom vaut 2,0 par défaut
   au lieu de 2,9. Il se règle donc dans les deux sens au lieu de partir de la
   butée. Qui avait déjà bougé le curseur garde sa valeur.
+- **Ressource personnelle** : le texte des barres fait 12 par défaut au lieu de
+  14. Qui avait déjà bougé le curseur garde sa valeur.
+- **Masquer l'effet de repos** éteint aussi la bande dorée qui l'accompagne sur
+  le nom et le portrait, et non plus le seul ZZZ.
 
 ### Corrigé
 - **Le mode sombre n'éteint plus le ZZZ du repos** sur le cadre du joueur. Le

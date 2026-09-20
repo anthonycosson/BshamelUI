@@ -363,10 +363,15 @@ T.SIZE = {
     BAR_TEXT_PAD   = 4,
     BAR_TEXT_LEVEL = 5,
 
-    -- Corps du texte, au choix du joueur. Le défaut est celui de la police que
-    -- le client emploie sur ces barres ; les bornes suivent la hauteur d'une
+    -- Corps du texte, au choix du joueur. Les bornes suivent la hauteur d'une
     -- barre — en dessous de 8 rien ne se lit, au-delà de 24 le texte déborde.
-    BAR_TEXT_SIZE     = 14,
+    --
+    -- Le défaut valait quatorze, le corps que le client emploie lui-même sur ces
+    -- barres. Douze depuis : ces barres-là sont plus fines que celles du client,
+    -- et un chiffre à leur corps d'origine y tient toute la hauteur — il se lit
+    -- comme une étiquette collée dessus plutôt que comme une valeur écrite
+    -- dedans.
+    BAR_TEXT_SIZE     = 12,
     BAR_TEXT_SIZE_MIN = 8,
     BAR_TEXT_SIZE_MAX = 24,
 
