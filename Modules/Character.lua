@@ -1159,9 +1159,19 @@ end
 --- Guette l'ouverture d'une fiche.
 ---
 --- C'est le seul moment où ces bandeaux servent, et le seul où l'on soit sûr que
---- ses boutons existent. `U.GuardedHook` ne pose le hook qu'une fois et le rend
+--- ses boutons existent. `U.GuardedScript` ne pose le hook qu'une fois et le rend
 --- inerte quand le module s'éteint (règle 6) : appeler cette fonction deux fois
 --- sur la même fiche ne coûte rien.
+---
+--- **Le script `OnShow`, jamais la méthode `Show`.** Accrocher `Show` remplace
+--- la méthode du cadre par une fonction à nous ; le client, lui, ouvre sa fiche
+--- par `frame:Show()` depuis son gestionnaire de panneaux. Il appelle donc
+--- notre fonction, et toute la suite de cet appel — son propre `OnShow`
+--- compris — porte notre teinte, même si le corps du hook ne fait rien. Sa
+--- fiche lit alors des valeurs secrètes (les points de vie du joueur, affichés
+--- en chiffres quand la fiche s'ouvre) et lève « attempt to compare a secret
+--- number value ». `OnShow` n'a pas ce défaut : le client tient la main, et nos
+--- gestionnaires ne passent qu'après les siens.
 ---@param sheet table
 ---@param guard fun(): boolean
 local function watchSheet(sheet, guard)
@@ -1169,7 +1179,7 @@ local function watchSheet(sheet, guard)
     if not frame then return end
 
     buildSlots(sheet)
-    U.GuardedHook(frame, "Show", refresh, guard)
+    U.GuardedScript(frame, "OnShow", refresh, guard)
 end
 
 -- =========================================================================

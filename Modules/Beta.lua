@@ -52,6 +52,21 @@ local MODULE = "Beta"
 --
 -- On n'écrit que des clés **absentes** : si le client se corrige, ou si une
 -- autre langue a déjà la sienne, on ne touche à rien.
+--
+-- **Le prix, connu et accepté : une erreur Lua à l'ouverture de la fiche.**
+-- Une globale écrite par un addon est teintée pour la session, définitivement.
+-- Le client relit celle-ci à l'ouverture de la fiche — `SetStatTooltip2` est
+-- appelée pendant `RefreshRightPane`, pas au survol — et la suite de son
+-- `OnShow` hérite de la teinte. Quatre lignes plus loin, il affiche les points
+-- de vie du joueur en chiffres, qui sont des valeurs secrètes, et lève
+-- « attempt to compare a secret number value ».
+--
+-- **Il n'existe aucune version propre de ce correctif** : un addon ne peut pas
+-- écrire une globale sans la teindre, et la clé manquante ne se fournit que
+-- par une globale. Le choix est donc entre deux bugs, et il a été fait le
+-- 20 septembre 2026 : garder les infobulles lisibles, masquer l'erreur. Ne pas
+-- « réparer » ce compromis sans le rouvrir — le retirer ramène simplement
+-- l'autre erreur.
 
 --- Les cinq caractéristiques, par l'indice que le client leur donne, avec le
 --- nom anglais que portent ses chaînes.

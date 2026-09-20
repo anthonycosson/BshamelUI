@@ -2,6 +2,13 @@
 
 ## Non publié
 
+### Corrigé
+- **La fiche de personnage ne teinte plus l'ouverture des panneaux du client.**
+  La veille sur son ouverture s'accrochait à la méthode `Show` du cadre, que le
+  gestionnaire de panneaux appelle : tout ce qui suivait dans cet appel portait
+  notre teinte. Elle passe par le script `OnShow`, qui s'exécute derrière celui
+  du client au lieu de se mettre devant.
+
 ## 2.0.1 — 2026-09-20
 
 ### Ajouté
