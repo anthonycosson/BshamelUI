@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.4 — 2026-09-21
+
 ### Ajouté
 - **Graphismes**, nouvelle page (Qualité de vie). Elle tient les réglages
   graphiques que le panneau Options ne montre pas. Première case :
