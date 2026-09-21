@@ -34,7 +34,7 @@
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
 
     "Minimap", "MinimapBackdrop", "MinimapCluster",
-    "GetCursorPosition", "GetCVar", "SetCVar",
+    "GetCursorPosition", "GetCVar", "SetCVar", "GetCVarDefault",
     "IsMouseButtonDown", "GetScreenWidth", "GetScreenHeight",
 
     "C_ToyBox", "PlayerHasToy", "C_Spell", "GetSpellInfo", "GetItemCooldown",

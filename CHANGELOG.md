@@ -2,6 +2,12 @@
 
 ## Non publié
 
+### Ajouté
+- **Graphismes**, nouvelle page (Qualité de vie). Elle tient les réglages
+  graphiques que le panneau Options ne montre pas. Première case :
+  **désactiver l'effet de brouillard**, qui dégage le paysage au loin.
+  Décocher rend au jeu la valeur qu'il avait.
+
 ### Modifié
 - **Le gestionnaire de temps de recharge n'est plus grisé sur *Forever*.** La
   bêta porte le même que retail, et centrer les améliorations suivies y marche

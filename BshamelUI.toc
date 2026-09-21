@@ -143,6 +143,9 @@ Modules\Beta.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 Modules\MythicTimer.lua [AllowLoadGameType standard]
 Modules\RaidPanel.lua
 Modules\CombatLog.lua
+# Les réglages graphiques que le panneau Options ne montre pas. Rien d'autre
+# que des CVars écrites et rendues : il charge partout.
+Modules\Graphics.lua
 Modules\Annoyances.lua
 # Seul module de la catégorie « Inutile mais indispensable », et il ferme donc la
 # liste comme sa catégorie ferme la barre latérale.

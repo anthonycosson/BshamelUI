@@ -51,6 +51,13 @@ BUI:RegisterLocale("enUS", {
     -- ponctuation.
     ["Coming soon suffix"]      = " (Coming soon)",
 
+    -- Module Graphics
+    ["Graphics"]                = "Graphics",
+    ["Disable fog"]             = "Turn off the fog effect",
+    ["Disable fog tip"] =
+        "Removes the volumetric fog the game draws over distance. Shows more of the "
+        .. "landscape, and costs the game nothing to skip. Same as /console volumeFog 0.",
+
     -- Module Quest
     ["Quest"]                   = "Quest",
     ["Automation"]              = "Automation",

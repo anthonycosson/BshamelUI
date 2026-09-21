@@ -92,7 +92,7 @@ read_globals = {
     "C_MerchantFrame", "DELETE_ITEM_CONFIRM_STRING", "STATICPOPUP_NUMDIALOGS",
 
     -- Réglages du client
-    "GetCVar", "SetCVar",
+    "GetCVar", "SetCVar", "GetCVarDefault",
 
     -- Équipement du personnage. `GetItemStats` et `GetItemGem` ont migré dans
     -- `C_Item` ; les globales existent encore et servent de repli.

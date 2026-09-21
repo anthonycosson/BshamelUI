@@ -166,6 +166,14 @@ BUI:RegisterLocale("frFR", {
     ["Delete snapshot tip"]     = "Retire de la liste le relevé du personnage choisi.",
     ["Delete snapshot confirm"] = "Supprimer le relevé de « %s » ?",
 
+    -- Module Graphics
+    ["Graphics"]                = "Graphismes",
+    ["Disable fog"]             = "Désactiver l'effet de brouillard",
+    ["Disable fog tip"] =
+        "Retire le brouillard volumétrique que le jeu dessine au loin. Dégage le "
+        .. "paysage, et ne rien dessiner ne coûte rien. Équivaut à "
+        .. "/console volumeFog 0.",
+
     -- Module Quest
     ["Quest"]                   = "Quête",
     ["Automation"]              = "Automatisation",
