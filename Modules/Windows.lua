@@ -276,14 +276,6 @@ BUI:RegisterModule(MODULE, {
             return
         end
 
-        if key == "movable" then
-            -- Les bandes de saisie des barres de titre s'allument et s'éteignent
-            -- avec cette case : décocher doit rendre la barre au client tout de
-            -- suite, pas à la prochaine ouverture de la fenêtre.
-            BUI.Move:Refresh()
-            return
-        end
-
         if key == "scalable" then
             -- Décocher pendant que le modificateur est tenu doit rendre la
             -- molette au jeu tout de suite, pas au relâchement.

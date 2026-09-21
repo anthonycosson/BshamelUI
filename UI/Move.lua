@@ -102,13 +102,6 @@ local PRELOADED = {
     "ReadyCheckFrame",
     "StackSplitFrame",
     "LFGDungeonReadyDialog",
-
-    -- Trois fenêtres du client qui manquaient à cette liste, et que *Forever*
-    -- rend quotidiennes : l'assistance, la charte de guilde qu'on fait signer,
-    -- et la fenêtre de raid. Elles arrivent toutes les trois au démarrage.
-    "HelpFrame",
-    "PetitionFrame",
-    "RaidParentFrame",
 }
 
 --- Fenêtres chargées à la demande, par l'addon de Blizzard qui les apporte.
@@ -147,17 +140,9 @@ local ON_DEMAND = {
     ["Blizzard_WeeklyRewards"]      = { "WeeklyRewardsFrame" },
     ["Blizzard_WorldMap"]           = { "WorldMapFrame" },
 
-    ["Blizzard_ProfessionsCustomerOrders"] = { "ProfessionsCustomerOrdersFrame" },
-    -- Le nom de l'**addon**, qui ne porte pas « Frame » — c'est le cadre qu'il
-    -- apporte qui le porte. La clé l'a longtemps porté aussi, et une clé qui
-    -- n'est le nom d'aucun addon n'est jamais appelée : la fenêtre des
-    -- compagnons de gouffre n'a jamais été branchée, sur aucun client.
-    ["Blizzard_DelvesCompanionConfiguration"] = { "DelvesCompanionConfigurationFrame" },
-    ["Blizzard_DelvesDifficultyPicker"]       = { "DelvesDifficultyPickerFrame" },
-
-    -- Le registre des rangs de guilde. Chargé à la demande, présent sur les deux
-    -- clients — et sur *Forever* c'est une fenêtre qu'on ouvre pour de bon.
-    ["Blizzard_GuildControlUI"] = { "GuildControlUI" },
+    ["Blizzard_ProfessionsCustomerOrders"]         = { "ProfessionsCustomerOrdersFrame" },
+    ["Blizzard_DelvesCompanionConfigurationFrame"] = { "DelvesCompanionConfigurationFrame" },
+    ["Blizzard_DelvesDifficultyPicker"]            = { "DelvesDifficultyPickerFrame" },
 
     -- Logement (Midnight). Absents d'un client plus ancien, donc jamais résolus.
     ["Blizzard_HousingDashboard"]   = { "HousingDashboardFrame" },
@@ -769,29 +754,6 @@ local function hookFrame(frame, name)
 
     attachDrag(frame, frame, entry)
 
-    -- La bande de saisie de la barre de titre. C'est elle qui rend préhensible
-    -- une fenêtre dont le contenu prend toute la souris — la sonde en compte
-    -- plusieurs, du navigateur d'aide qui couvre cent pour cent de sa fenêtre
-    -- au canevas des talents qui en couvre quatre-vingt-douze (voir
-    -- `W.TitleGrip`, qui dit pourquoi une frame à nous plutôt qu'un point
-    -- d'accroche sur la leur).
-    --
-    -- **Le modificateur est demandé là aussi.** Une barre de titre ne sert à
-    -- rien d'autre, on pourrait s'en passer ; mais la case dit « déplacer avec
-    -- Maj », et deux gestes selon l'endroit où l'on clique est une règle de
-    -- plus à retenir pour un confort qu'on n'a pas demandé.
-    entry.grip = W.TitleGrip(frame, function()
-        if not (host and host.CanMove()) then return end
-        if not gestureHeld() then return end
-        startDrag(frame, entry)
-    end, function()
-        if drag.frame == frame then stopDrag() end
-    end)
-
-    if entry.grip then
-        entry.grip:SetShown(host ~= nil and host.CanMove() == true)
-    end
-
     local handles = DRAG_HANDLES[name]
     if type(handles) == "string" then
         attachDrag(_G[handles], frame, entry)
@@ -871,23 +833,6 @@ end
 ---@param name string
 local function tryHook(name)
     hookFrame(_G[name], name)
-end
-
---- Montre ou cache les bandes de saisie, selon que le déplacement est demandé.
----
---- Une bande cachée ne reçoit rien : décocher « permettre le déplacement » rend
---- la barre de titre au client à l'instant même, sans rien à défaire. C'est ce
---- qui permet à la bande d'exister en permanence (règle 7 — une frame ne se
---- détruit pas) sans jamais se faire sentir.
-local function refreshGrips()
-    local wanted = host ~= nil and host.CanMove() == true
-
-    for i = 1, #hooked do
-        local entry = state[hooked[i]]
-        if entry and entry.grip then
-            BUI.safecall(entry.grip.SetShown, entry.grip, wanted)
-        end
-    end
 end
 
 -- =========================================================================
@@ -1380,10 +1325,6 @@ function M:Refresh()
 
     -- La fenêtre de jet non plus : elle s'ancre par le bas et porte son aperçu.
     self:RefreshLoot()
-
-    -- Les bandes de saisie suivent la case « permettre le déplacement », qui a
-    -- pu changer depuis le dernier passage.
-    refreshGrips()
 end
 
 --- Rend toutes les fenêtres à leur état d'origine et range les frames de
@@ -1410,10 +1351,6 @@ function M:Stop()
     end
 
     host = nil
-
-    -- Les bandes rendent la barre de titre au client. Après le débranchement :
-    -- sans hôte, `refreshGrips` les cache toutes, et c'est ce qu'on veut.
-    refreshGrips()
 
     -- **Après** le débranchement, et l'ordre est l'inverse de celui des autres
     -- fenêtres. Rendre la pile, c'est faire redisposer le client ; tant que

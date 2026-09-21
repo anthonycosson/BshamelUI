@@ -99,8 +99,3 @@ Write-Host "  1. activer BshamelUI_Probe (cocher « Charger les AddOns périmés
 Write-Host "  2. se connecter — le résumé s'affiche tout seul, /buiprobe le redonne"
 Write-Host "  3. /reload, pour que le résultat parte dans WTF"
 Write-Host "  4. install-probe.ps1 -Client `"$Client`" -Collecter"
-Write-Host ""
-Write-Host "La sonde des fenêtres est dans le même addon, et demande un geste :"
-Write-Host "  ouvrir les fenêtres à mesurer — métiers, grimoire, talents, sacs…"
-Write-Host "  puis /buiwin pour le résumé, /buiwin tout pour la liste entière."
-Write-Host "  Une fenêtre jamais ouverte n'existe pas et ne se mesure pas."
