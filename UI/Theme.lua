@@ -531,6 +531,28 @@ T.SIZE = {
     MARKER_SCALE_MIN = 0.5,
     MARKER_SCALE_MAX = 2.5,
 
+    -- Bande de saisie posée sur la barre de titre d'une fenêtre du client
+    -- (`W.TitleGrip`). Les trois retraits sont ceux que Blizzard donne lui-même
+    -- à son `TitleContainer` : trente pixels à gauche pour dégager le portrait,
+    -- vingt-quatre à droite pour la croix de fermeture, un en haut pour le
+    -- liseré. Ils ne servent que là où la fenêtre n'a pas de `TitleContainer` à
+    -- recopier — la bande s'aligne sur le sien quand il existe.
+    GRIP_H       = 20,
+    GRIP_INSET_L = 30,
+    GRIP_INSET_R = 24,
+    GRIP_INSET_T = 1,
+
+    -- Largeur d'un bouton de barre de titre, pour les écarter en plus du
+    -- retrait ci-dessus. Repli seulement : la largeur se lit d'abord sur le
+    -- bouton, et c'est la même que celle du modèle de Blizzard.
+    GRIP_BUTTON_W = 24,
+
+    -- De combien la bande passe au-dessus de sa fenêtre. Large, parce que ce
+    -- qu'elle doit dépasser l'est aussi : le canevas des talents se pose à mille
+    -- dans sa strate. Le niveau reste **relatif** à la fenêtre, donc rien de ce
+    -- qui vit dans une strate supérieure n'est recouvert.
+    GRIP_LEVEL   = 1100,
+
     -- Aperçu de la fenêtre de jet de butin. Ces deux nombres ne sont pas un
     -- goût : ce sont les mesures du cadre de jet du client
     -- (`GroupLootFrameBaseTemplate`). L'aperçu sert à choisir un emplacement, il

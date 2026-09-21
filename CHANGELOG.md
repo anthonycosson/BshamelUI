@@ -11,6 +11,12 @@
   sans quoi le jeu n'écrit rien, et la case semble ne rien faire.
 - **Quatre fenêtres de plus se déplacent** : l'assistance, la charte de guilde,
   la fenêtre de raid et le registre des rangs de guilde.
+- **Toute fenêtre se prend désormais par sa barre de titre.** Beaucoup ne se
+  laissaient saisir que dans une bordure de quelques pixels : leur contenu
+  prend la souris et couvre tout le corps — le navigateur d'aide couvre cent
+  pour cent de sa fenêtre, le canevas des talents quatre-vingt-douze pour cent
+  de la sienne. Le modificateur reste demandé, et la bande s'arrête avant les
+  boutons de fermeture et de réduction.
 
 ### Corrigé
 - **La fenêtre des compagnons de gouffre se déplace enfin.** Elle était

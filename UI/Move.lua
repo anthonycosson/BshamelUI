@@ -769,6 +769,29 @@ local function hookFrame(frame, name)
 
     attachDrag(frame, frame, entry)
 
+    -- La bande de saisie de la barre de titre. C'est elle qui rend préhensible
+    -- une fenêtre dont le contenu prend toute la souris — la sonde en compte
+    -- plusieurs, du navigateur d'aide qui couvre cent pour cent de sa fenêtre
+    -- au canevas des talents qui en couvre quatre-vingt-douze (voir
+    -- `W.TitleGrip`, qui dit pourquoi une frame à nous plutôt qu'un point
+    -- d'accroche sur la leur).
+    --
+    -- **Le modificateur est demandé là aussi.** Une barre de titre ne sert à
+    -- rien d'autre, on pourrait s'en passer ; mais la case dit « déplacer avec
+    -- Maj », et deux gestes selon l'endroit où l'on clique est une règle de
+    -- plus à retenir pour un confort qu'on n'a pas demandé.
+    entry.grip = W.TitleGrip(frame, function()
+        if not (host and host.CanMove()) then return end
+        if not gestureHeld() then return end
+        startDrag(frame, entry)
+    end, function()
+        if drag.frame == frame then stopDrag() end
+    end)
+
+    if entry.grip then
+        entry.grip:SetShown(host ~= nil and host.CanMove() == true)
+    end
+
     local handles = DRAG_HANDLES[name]
     if type(handles) == "string" then
         attachDrag(_G[handles], frame, entry)
@@ -848,6 +871,23 @@ end
 ---@param name string
 local function tryHook(name)
     hookFrame(_G[name], name)
+end
+
+--- Montre ou cache les bandes de saisie, selon que le déplacement est demandé.
+---
+--- Une bande cachée ne reçoit rien : décocher « permettre le déplacement » rend
+--- la barre de titre au client à l'instant même, sans rien à défaire. C'est ce
+--- qui permet à la bande d'exister en permanence (règle 7 — une frame ne se
+--- détruit pas) sans jamais se faire sentir.
+local function refreshGrips()
+    local wanted = host ~= nil and host.CanMove() == true
+
+    for i = 1, #hooked do
+        local entry = state[hooked[i]]
+        if entry and entry.grip then
+            BUI.safecall(entry.grip.SetShown, entry.grip, wanted)
+        end
+    end
 end
 
 -- =========================================================================
@@ -1340,6 +1380,10 @@ function M:Refresh()
 
     -- La fenêtre de jet non plus : elle s'ancre par le bas et porte son aperçu.
     self:RefreshLoot()
+
+    -- Les bandes de saisie suivent la case « permettre le déplacement », qui a
+    -- pu changer depuis le dernier passage.
+    refreshGrips()
 end
 
 --- Rend toutes les fenêtres à leur état d'origine et range les frames de
@@ -1366,6 +1410,10 @@ function M:Stop()
     end
 
     host = nil
+
+    -- Les bandes rendent la barre de titre au client. Après le débranchement :
+    -- sans hôte, `refreshGrips` les cache toutes, et c'est ce qu'on veut.
+    refreshGrips()
 
     -- **Après** le débranchement, et l'ordre est l'inverse de celui des autres
     -- fenêtres. Rendre la pile, c'est faire redisposer le client ; tant que
