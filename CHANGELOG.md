@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.5 — 2026-09-21
+
 ### Retiré
 - **La saisie par la barre de titre**, arrivée en 2.0.4. Elle ne changeait
   rien en jeu. Le déplacement des fenêtres revient à ce qu'il était avant.
