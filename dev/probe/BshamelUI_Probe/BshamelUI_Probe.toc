@@ -2,7 +2,7 @@
 ## Notes: Development probe. Reports which client symbols Bshamel UI can rely on. Not for players.
 ## Author: Bshamel
 ## Version: 1.0.0
-## SavedVariables: BshamelUIProbeDB
+## SavedVariables: BshamelUIProbeDB, BshamelUIProbeWindowsDB
 ## X-License: All Rights Reserved
 
 # `## Interface` doit correspondre au client, sinon l'addon apparaît « périmé ».
@@ -17,3 +17,8 @@
 # Il charge en premier : `Probe.lua` ne fait que lire ce qu'il publie.
 Data.lua
 Probe.lua
+
+# La sonde des fenêtres, indépendante des deux précédentes : elle ne demande
+# rien à `Data.lua` et écrit dans ses propres SavedVariables. Elle répond à
+# « où, sur cette fenêtre, un glisser répond-il ? » — voir son en-tête.
+Windows.lua

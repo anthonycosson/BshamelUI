@@ -29,6 +29,12 @@
   enregistrée sous un nom d'addon qui n'existe pas, et n'a donc jamais été
   branchée.
 
+### Interne
+- **Sonde des fenêtres** (`/buiwin`, dans l'addon de sonde sous `dev/`). Pour
+  chaque fenêtre du client, elle mesure le pourcentage de sa surface où un
+  glisser répond, et nomme les enfants qui avalent le clic ailleurs. C'est la
+  question que la lecture de la source ne tranche pas.
+
 ## 2.0.3 — 2026-09-20
 
 ### Ajouté
