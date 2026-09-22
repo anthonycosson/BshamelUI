@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.6 — 2026-09-22
+
 ### Ajouté
 - **Suivi des temps restants**, nouvelle page (Qualité de vie). Elle tient les
   attentes que le jeu impose sans jamais dire combien elles durent, et en
