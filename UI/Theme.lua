@@ -531,6 +531,15 @@ T.SIZE = {
     MARKER_SCALE_MIN = 0.5,
     MARKER_SCALE_MAX = 2.5,
 
+    -- Bornes de l'échelle des cadres de temps restant (vol, craft). Les mêmes
+    -- que celles de la barre de marqueurs juste au-dessus, et pour les mêmes
+    -- raisons : la moitié tient dans un coin, le double se lit de loin. Elles
+    -- portent quand même leur propre nom — les deux panneaux se règlent
+    -- séparément, et emprunter la borne du voisin ferait bouger l'un le jour
+    -- où l'on retouche l'autre.
+    TIMER_SCALE_MIN = 0.5,
+    TIMER_SCALE_MAX = 2.5,
+
     -- Aperçu de la fenêtre de jet de butin. Ces deux nombres ne sont pas un
     -- goût : ce sont les mesures du cadre de jet du client
     -- (`GroupLootFrameBaseTemplate`). L'aperçu sert à choisir un emplacement, il
@@ -946,6 +955,13 @@ local FONT_CANDIDATES = {
     -- D'où des `GameFont*` et non des `NumberFont*` — voir le commentaire de
     -- `T.FONT.COUNTDOWN`.
     COUNTDOWN    = { "GameFontNormalHuge", "GameFontNormalLarge", "GameFontNormal" },
+    -- Temps restant des cadres de suivi (vol, craft). Un objet du client pris
+    -- tel quel, là où le décompte des files fabrique le sien : celui-ci
+    -- s'écrit **dans un cadre à nous**, sur un fond sombre et uni, pas
+    -- par-dessus une icône. Il n'a donc besoin ni du contour ni du corps
+    -- démesuré de l'autre — essayés, et trop gros pour un panneau de cette
+    -- taille, au point que les chiffres mordaient sa marge basse.
+    TIMER        = { "GameFontNormalHuge", "GameFontNormalLarge", "GameFontNormal" },
 
     -- Nombres posés sur l'icône d'un objet équipé (niveau d'objet, rang
     -- d'amélioration). Une police à contour, pour la même raison que le

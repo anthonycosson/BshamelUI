@@ -475,6 +475,19 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
+    -- `/bui vol` : pourquoi le temps de vol restant ne s'est pas affiché.
+    -- Quatre lectures peuvent se taire sans qu'aucune ne lève, et le symptôme
+    -- est le même pour les quatre — un cadre qui ne vient pas.
+    if arg == "vol" or arg == "flight" then
+        local mod = registry["Timers"]
+        if mod and mod._active and mod.DiagnoseFlight then
+            BUI.safecall(mod.DiagnoseFlight, mod)
+        else
+            BUI:Print(L["Flight diagnostic unavailable"])
+        end
+        return
+    end
+
     -- `/bui glow` : ce que le mode sombre a fait au cadre sous le curseur. Le
     -- moteur est hors des modules, comme celui de la minicarte : on l'appelle
     -- donc directement, sans passer par le registre.

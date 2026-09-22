@@ -5155,3 +5155,139 @@ entier**. `.pkgmeta` pointait sur `CHANGELOG.md`.
 **Ce qu'on fait** — `dev/scripts/tag-release.sh` extrait la section qu'il vient
 de dater dans `CHANGELOG-release.md`, et c'est ce fichier que `.pkgmeta`
 désigne. L'historique complet reste livré avec l'addon.
+
+---
+
+## Aucune durée de vol de griffon ou de wyverne n'est publiée
+
+**Symptôme** — impossible d'afficher un temps restant sur un vol de taxi :
+aucune fonction ne donne ni la durée totale, ni le temps déjà écoulé.
+
+**Cause** — vérifié dans le miroir FrameXML de Forever, sur les deux fenêtres
+de vol à la fois. `Blizzard_UIPanels_Game/Shared/TaxiFrame.lua` (l'ancienne
+carte) et `Blizzard_FlightMap/FM_FlightPathDataProvider.lua` (la nouvelle)
+n'exposent que le **coût** (`TaxiNodeCost`) et des **positions** normalisées
+(`C_TaxiMap.GetAllTaxiNodes`) — rien qui ressemble à un temps. Les deux
+fenêtres embarquent par le même chemin : `TakeTaxiNode(slotIndex)`, appelé
+directement par le bouton de l'ancienne carte (`TaxiFrame.xml`) et par le clic
+sur une épingle de la nouvelle (`FM_FlightPathDataProvider.lua:236`).
+
+**Ce qu'on fait** — `Modules/Timers.lua` calcule ce que le client ne
+publie pas, par deux voies qui ne se mélangent jamais dans un même vol : une
+**estimation** à l'envol (distance entre les deux points du trajet, prise sur
+`C_TaxiMap.GetAllTaxiNodes` et convertie en unités de jeu par
+`C_Map.GetMapWorldSize`, divisée par une vitesse supposée non mesurée), puis
+une **mesure** dès que ce trajet précis a déjà été volé une fois — le temps
+réel entre l'envol et l'atterrissage, retenu par paire d'identifiants de nœud
+(`AccountData`) et qui remplace l'estimation à chaque vol suivant sur le même
+trajet.
+
+L'envol et l'atterrissage se lisent sur `PLAYER_CONTROL_LOST` et
+`PLAYER_CONTROL_GAINED`, gardés par `UnitOnTaxi("player")` — c'est exactement
+le test que fait le client lui-même pour ces deux événements
+(`Blizzard_Game/Shared/EventImplementation.lua`, `HandlePlayerControlLost`).
+`TakeTaxiNode` est hooké pour capter le trajet (nœud de départ à l'état
+`Enum.FlightPathState.Current`, nœud d'arrivée au `slotIndex` reçu) pendant
+que la carte de vol est encore ouverte — c'est le seul moment où il se laisse
+lire, `PLAYER_CONTROL_LOST` arrive trop tard pour ça.
+
+Aucun addon lu pour ce module (règle 8) : la lecture s'est arrêtée au code de
+Blizzard lui-même, qui suffisait à établir qu'aucune API ne publie de durée.
+
+---
+
+## Les nœuds de vol ne sont pas sur la carte du joueur
+
+**Symptôme** — le temps de vol restant ne s'affiche **pas du tout**. Aucune
+erreur, aucun message : on embarque, et le cadre ne vient jamais. Le module
+voisin, qui compte les crafts, fonctionne parfaitement — ce qui écarte le
+cadre, le réglage et le widget d'un seul coup.
+
+**Cause** — `C_TaxiMap.GetAllTaxiNodes(uiMapID)` était appelée avec
+`C_Map.GetBestMapForUnit("player")`, c'est-à-dire la carte de la **zone** où
+se tient le joueur. Or le réseau de vol est décrit sur la carte du
+**continent**. Les deux ne sont presque jamais la même, et la fonction ne s'en
+plaint pas : elle rend une liste **vide**. Le trajet n'est donc pas lu, il n'y
+a ni estimation ni clé de mesure, et le cadre se tait exactement comme il doit
+se taire quand il n'a rien à dire. La panne se déguise en comportement normal.
+
+**Ce qu'on fait** — on demande la carte au client, par `GetTaxiMapID()`, qui
+est précisément ce qu'il emploie lui-même pour ouvrir sa carte de vol
+(`Blizzard_FlightMap.lua:87`). Elle ne répond que pendant que cette carte est
+ouverte, ce qui tombe bien : le crochet sur `TakeTaxiNode` s'exécute à cet
+instant-là. La carte du joueur reste en repli.
+
+**La leçon dépasse le vol** : une fonction qui rend une liste vide au lieu de
+`nil` ne se distingue pas d'un cas légitime, et une chaîne de lectures dont
+chaque maillon peut se taire n'a **aucun symptôme propre**. D'où `/bui vol`,
+qui relit l'embarquement étape par étape — le crochet, la carte, le nombre de
+nœuds, le trajet, la perte de contrôle — et dit lequel des maillons a manqué.
+
+---
+
+## `UnitOnTaxi` vaut encore `false` quand le vol commence (Forever)
+
+**Symptôme** — la carte de vol corrigée (entrée précédente), le trajet est bien
+lu — `/bui vol` affiche `TakeTaxiNode: 2`, `GetTaxiMapID: 1464`,
+`GetAllTaxiNodes: 22`, `trajet : 25 → 23` — et le cadre ne paraît toujours pas.
+La même ligne donne la réponse : `PLAYER_CONTROL_LOST: true — UnitOnTaxi:
+false`.
+
+**Cause** — le client teste lui-même `UnitOnTaxi("player")` sur cet événement
+(`Blizzard_Game/Shared/EventImplementation.lua`, `HandlePlayerControlLost`), ce
+qui donnait toutes les raisons de s'y fier. Sur la bêta de *Forever*, le
+drapeau **n'est pas encore posé** à cet instant : il se pose plus tard dans le
+vol. Le garde qui l'exigeait n'était donc jamais franchi, et le vol n'était
+jamais ouvert — sans la moindre erreur, puisque ne rien faire est un cas
+prévu.
+
+**Ce qu'on fait** — ce n'est plus le drapeau qui confirme le décollage, c'est
+l'**enchaînement** : un clic sur un nœud (`TakeTaxiNode`, horodaté) suivi d'une
+perte de contrôle dans les dix secondes. Rien d'autre ne produit cette suite —
+on n'est pas étourdi dans un griffon. `UnitOnTaxi` reste accepté en parallèle,
+pour un client qui poserait son drapeau à temps.
+
+**Le piège général** : reprendre un test du code de Blizzard ne garantit rien
+sur un client qui n'est pas celui pour lequel ce code a été écrit. Le test
+était juste, sa prémisse ne l'était pas.
+
+---
+
+## Le temps restant d'un lot de craft, lui, se lit entièrement
+
+**Symptôme** — même besoin que ci-dessus, réponse opposée : on cherche combien
+de temps il reste à un lot de cent objets, et cette fois le client dit tout.
+Encore faut-il savoir où, car aucune fonction ne rend le nombre tel quel.
+
+**Cause** — la réponse est en deux moitiés, dans deux endroits différents.
+
+`UnitCastingInfo("player")` rend `startTimeMs`, `endTimeMs` et surtout
+`isTradeskill` — le drapeau qui distingue un craft d'un sort ordinaire. Il est
+déclaré `NeverSecret = true` dans `UnitDocumentation.lua` : il se lit même
+quand le reste de l'appel est masqué. Cela donne l'objet en cours, jamais le
+lot.
+
+La taille du lot, elle, ne se lit qu'au lancement :
+`C_TradeSkillUI.CraftRecipe(recipeSpellID, numCasts, …)`. Les deux autres
+portes — `CraftEnchant` et `CraftSalvage` — portent `numCasts` au **même
+deuxième rang**, et le bouton « Tout créer » du client y arrive par
+`ProfessionsRecipeTransactionMixin:CraftRecipe`, qui ne fait que les appeler :
+coiffer les trois fonctions publiques suffit donc à tout couvrir.
+
+**Aucun compteur de ce qui reste n'existe.** La page des métiers du client n'en
+tient pas : elle lance `CraftRecipe` avec un nombre et n'écoute plus que
+`UNIT_SPELLCAST_INTERRUPTED` et `UNIT_SPELLCAST_FAILED` pour faire son ménage
+(`Blizzard_ProfessionsCrafting.lua`).
+
+**Ce qu'on fait** — `Modules/Timers.lua` tient le compte lui-même : la
+taille demandée est relevée au crochet, puis chaque `UNIT_SPELLCAST_START` de
+métier en retranche un — une incantation qui commence veut dire que la
+précédente est finie. Le temps affiché est la somme de ce qui reste à
+l'incantation en cours et de ce que coûteront les suivantes, leur durée étant
+celle qu'on vient de lire. Rien n'est supposé, et le décompte est donc exact
+dès le premier objet — contrairement au vol, qui partage pourtant son cadre.
+
+La fin du lot se lit sur `UPDATE_TRADESKILL_CAST_STOPPED` (charge utile
+`isScrapping`), plus les deux événements d'échec ci-dessus. Le décompte sait en
+plus s'arrêter seul quand la dernière incantation est écoulée : s'en remettre
+au seul événement laisserait un lot fantôme le jour où il manquerait.

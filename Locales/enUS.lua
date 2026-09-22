@@ -1284,6 +1284,55 @@ BUI:RegisterLocale("enUS", {
         "Set a colour change point first.",
 
     -- =====================================================================
+    --  Suivi des temps restants — Flight timer (Forever) et Craft timer
+    -- =====================================================================
+    ["Remaining times"]                = "Remaining times",
+    -- Les deux sections de la page. Elles nomment ce qu'on attend, là où les
+    -- cases en dessous nomment ce qu'on affiche.
+    ["Flight"]                         = "Flight",
+    ["Crafting"]                       = "Crafting",
+    -- Le libellé posé au-dessus du nombre, dans le cadre lui-même : un temps
+    -- doré qui flotte seul à l'écran ne dit pas ce qu'il compte.
+    ["Time remaining"]                 = "Time remaining",
+    ["Flight timer"]                   = "Flight timer",
+    ["Flight timer tip"] =
+        "Shows the time left on a gryphon or wyvern flight, in a small frame you can drag "
+        .. "anywhere. The game never publishes that duration, so the first flight on a given "
+        .. "route shows an estimate worked out from the distance; once that exact route has "
+        .. "been flown one time, the measured time replaces the estimate on every later "
+        .. "flight.",
+    ["Flight timer preview"]           = "Preview",
+    ["Flight timer preview tip"] =
+        "Shows the frame with a sample time so you can position it without waiting for a flight.",
+    ["Lock flight timer"]              = "Lock position",
+    ["Lock flight timer tip"] =
+        "Freezes the frame where it is and puts its resize handle away. Drag the frame to "
+        .. "move it, drag its bottom-right corner to resize it.",
+    ["Flight diagnostic"]              = "Last boarding:",
+    ["Flight diagnostic none"] =
+        "no boarding seen since login — the hook on TakeTaxiNode never fired.",
+    ["Flight diagnostic route"]        = "route:",
+    ["Flight diagnostic estimate"]     = "estimate:",
+    ["Flight diagnostic measured"]     = "measured:",
+    ["Flight diagnostic distance"]     = "distance:",
+    ["Flight diagnostic boarded"]      = "just boarded:",
+    ["Flight diagnostic unavailable"]  = "The Flight timer module is not running.",
+
+    ["Craft timer"]                    = "Craft timer",
+    ["Craft timer tip"] =
+        "Shows the time left on a batch of crafts, in the same frame as the flight timer. "
+        .. "Nothing is guessed here: the game publishes the start and the end of every "
+        .. "craft cast, and the batch size is known the moment you press Create All — so "
+        .. "the countdown is exact from the very first item.",
+    ["Craft timer preview"]            = "Preview",
+    ["Craft timer preview tip"] =
+        "Shows the frame with a sample time so you can position it without crafting anything.",
+    ["Lock craft timer"]               = "Lock position",
+    ["Lock craft timer tip"] =
+        "Freezes the frame where it is and puts its resize handle away. Drag the frame to "
+        .. "move it, drag its bottom-right corner to resize it.",
+
+    -- =====================================================================
     --  Inutile mais indispensable — Emotes
     -- =====================================================================
     ["Useless but essential"]          = "Useless but essential",

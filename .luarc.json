@@ -99,6 +99,8 @@
     "DoReadyCheck", "C_PartyInfo", "LE_PARTY_CATEGORY_INSTANCE",
     "CompactRaidFrameManager",
 
+    "UnitOnTaxi", "C_TaxiMap", "C_Map", "GetTaxiMapID", "UnitCastingInfo",
+
     "DebuffFrame", "BuffFrame", "C_EventUtils",
     "NUM_CONTAINER_FRAMES", "CreateFont",
 

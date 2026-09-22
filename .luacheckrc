@@ -217,6 +217,16 @@ read_globals = {
     -- le ranger, comme les autres cadres du client.
     "CompactRaidFrameManager",
 
+    -- Vol de taxi (Forever) : aucune fonction ne donne de durée (voir
+    -- `dev/docs/API_NOTES.md`), seulement l'état du joueur, la position des
+    -- nœuds et la taille de la carte qui les porte.
+    "UnitOnTaxi", "C_TaxiMap", "C_Map", "GetTaxiMapID",
+
+    -- Craft : l'incantation en cours, d'où se lisent le temps restant d'un
+    -- objet et sa durée pleine. Son drapeau `isTradeskill` est le seul moyen
+    -- de distinguer un craft d'un sort ordinaire.
+    "UnitCastingInfo",
+
     -- Rangées d'auras du joueur : on y cherche le débuff d'interdiction de Furie
     -- sanguinaire pour le masquer, par tous les chemins que le client publie.
     "DebuffFrame", "BuffFrame",
