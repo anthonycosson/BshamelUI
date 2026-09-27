@@ -18,6 +18,23 @@ En revanche, lire d'autres addons pour comprendre **quelle API** résout un
 problème est parfaitement légitime : notez la trouvaille dans
 `dev/docs/API_NOTES.md` et écrivez l'implémentation.
 
+## Outillage
+
+`check-design.sh` compile chaque fichier avec le Lua du client — **5.1**, dont
+les plafonds par fonction sont plus bas que ceux des versions récentes. Un
+`luac` moderne ne lève pas cette erreur-là : il faut celui de cette version. Le
+script annonce toujours laquelle il a employée, à lire avant de croire son
+verdict — sans `luac5.1`, il se rabat sur ce qu'il trouve, ou ne vérifie rien.
+
+- Linux : `apt install lua5.1`. macOS : `brew install lua@5.1`.
+- Windows : ni winget ni WSL ne le proposent. Prendre
+  `lua-5.1.5_Win64_bin.zip` chez [LuaBinaries][], n'en extraire que
+  `luac5.1.exe` — il est lié statiquement, les DLL de l'archive ne servent à
+  rien — et le poser dans `%USERPROFILE%\bin`, que Git Bash ajoute au `PATH`
+  même s'il faut d'abord le créer.
+
+[LuaBinaries]: https://sourceforge.net/projects/luabinaries/files/5.1.5/Tools%20Executables/
+
 ## Avant d'ouvrir une merge request
 
 1. `luacheck .` passe.
