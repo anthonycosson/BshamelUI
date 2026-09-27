@@ -194,17 +194,16 @@ end
 
 --- L'addon est-il reparti de zéro, faute d'avoir reçu sa base ?
 ---
---- Vrai à la première installation — c'est normal et sans conséquence — et vrai
---- à chaque démarrage du jeu sur la bêta de *Forever*, dont le client
---- **n'exécute jamais le SavedVariables d'un addon au lancement**. Vérifié le
---- 20 septembre 2026 avec un addon témoin de vingt lignes ne contenant qu'un
---- compteur : écrit proprement à chaque déconnexion, relu jamais, compteur
---- bloqué à 1 après deux démarrages complets. Aucun addon n'y échappe, et rien
---- dans le nôtre ne peut y remédier.
+--- Vrai à la première installation, et faux après un `/reload` d'une session
+--- déjà chargée : ce qui est en mémoire y survit.
 ---
---- Faux après un `/reload` d'une session déjà chargée : ce qui est en mémoire
---- y survit. C'est ce qui rend l'avertissement supportable — il paraît au
---- lancement du jeu, pas à chaque rechargement.
+--- **Personne ne l'appelle aujourd'hui, et c'est une bonne nouvelle.** Elle a
+--- été écrite pour la bêta de *Forever*, qui du 20 au 27 septembre 2026
+--- n'exécutait jamais le SavedVariables d'un addon au lancement : tous
+--- repartaient de leurs défauts à chaque session. Le client le fait de nouveau
+--- (voir `Core/Forever.lua`), le contournement est parti avec le bug, et il ne
+--- reste que ce constat — trois lignes, pour le jour où il faudrait de nouveau
+--- savoir si le client a rendu quelque chose.
 ---@return boolean
 function DB:LoadedEmpty()
     return loadedEmpty

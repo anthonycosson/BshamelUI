@@ -26,7 +26,6 @@
 local _, ns = ...
 local BUI = ns.BUI
 local U    = BUI.Util
-local T    = BUI.Theme
 local L    = ns.L
 
 local MODULE = "Beta"
@@ -124,120 +123,39 @@ local function restoreStatTooltips()
 end
 
 -- =========================================================================
---  La configuration, rangée dans des macros
+--  La configuration rangée dans des macros : ce qu'il en reste
 -- =========================================================================
--- **Les macros, le client les rend.** C'est tout l'intérêt : le SavedVariables
--- d'un addon n'est jamais relu au lancement sur cette bêta (voir
--- `Core/Forever.lua`), alors que les macros sont des données du client, rangées
--- dans son propre fichier et restituées comme les raccourcis ou les barres
--- d'action. Un code d'export qui dort dans une macro survit donc à ce que le
--- fichier de réglages ne survit pas.
+-- **Le client rend de nouveau leurs réglages aux addons** (constaté le
+-- 27 septembre 2026). Le contournement qui vivait ici — écrire le profil actif
+-- dans des macros, que le client restituait quand le SavedVariables ne l'était
+-- pas — n'a donc plus d'objet. Il a quitté la page, plus rien ne s'enregistre,
+-- et l'addon ne relit plus rien de lui-même à la connexion.
 --
--- **Le corps d'une macro tient 255 caractères** (`MacroFrameText`, `letters`),
--- ce qui est plus court qu'un code d'export. Il est donc coupé en tranches, une
--- par macro, numérotées dans l'ordre de relecture. Chaque tranche commence par
--- un `#` : le client y voit un commentaire, la macro ne fait rien si on la
--- joue, et la relecture n'a qu'un caractère à retirer.
+-- **Ne reste que la relecture, et pour une seule raison** : la marche à suivre
+-- demandait de poser la macro `BUIconfig` sur une barre d'action, et elle y est
+-- encore chez ceux qui l'ont fait. Cette macro appelle `RestoreConfig` par son
+-- nom. La retirer d'ici ne la retirerait pas de leur barre : ça la rendrait
+-- muette, au moment précis où quelqu'un compte dessus. Elle reste donc
+-- cliquable tant que des macros de données traînent, et la relecture disparaît
+-- avec elles.
 --
--- Une dernière macro, celle-là jouable, ne contient que l'appel qui restaure.
--- C'est elle qu'on pose sur une barre ou sur un raccourci.
+-- Rappel de ce que ces macros contiennent : un code d'export coupé en tranches
+-- de 240 caractères — le corps d'une macro en tient 255 —, une par macro,
+-- numérotées dans l'ordre de relecture, et chacune commençant par un `#` que la
+-- relecture retire.
 
 --- Nom de la macro jouable, et racine des macros de données. Seize caractères
 --- au plus par nom : `BUIconfig12` en fait onze.
 local MACRO_NAME  = "BUIconfig"
 
---- Ce que la macro jouable exécute. Le module se retrouve par son nom, qui est
---- une clé de base de données donc stable (règle 4).
-local MACRO_BODY  = '/run BshamelUI.Modules:Get("Beta"):RestoreConfig()'
-
---- Taille d'une tranche. Sous les 255 du client, avec de quoi loger le `#` et
---- de la marge pour un client qui compterait autrement.
-local CHUNK       = 240
-
---- Au-delà, on refuse plutôt que de remplir le carnet de macros du joueur.
---- Un profil n'a aucune raison d'y arriver : l'export ne transporte que ce qui
---- diffère des défauts.
+--- Nombre de tranches écrites au plus, du temps où l'on écrivait : c'est la
+--- borne de la relecture.
 local MAX_CHUNKS  = 12
 
 ---@param index integer
 ---@return string
 local function chunkName(index)
     return MACRO_NAME .. index
-end
-
----@param name string
----@return integer|nil
-local function macroIndex(name)
-    if type(GetMacroIndexByName) ~= "function" then return nil end
-    local index = GetMacroIndexByName(name)
-    if type(index) ~= "number" or index == 0 then return nil end
-    return index
-end
-
---- Retire les macros qu'on avait posées. Par **nom** et non par indice : effacer
---- une macro décale toutes celles qui la suivent, et un indice retenu d'avance
---- désignerait alors la macro d'à côté — celle du joueur.
-local function wipeMacros()
-    if type(DeleteMacro) ~= "function" then return end
-
-    for i = 1, MAX_CHUNKS do
-        while macroIndex(chunkName(i)) do
-            DeleteMacro(chunkName(i))
-        end
-    end
-end
-
---- Écrit le profil actif dans des macros de compte.
----@return boolean ok
----@return string|nil reason  `"combat"`, `"api"`, `"export"`, `"long"` ou `"full"`
----@return integer|nil count
-local function saveToMacros()
-    if InCombatLockdown() then return false, "combat" end
-    if type(CreateMacro) ~= "function" then return false, "api" end
-
-    local text = BUI.DB:ExportString()
-    if not text then return false, "export" end
-
-    local chunks = {}
-    for i = 1, #text, CHUNK do
-        chunks[#chunks + 1] = text:sub(i, i + CHUNK - 1)
-    end
-    if #chunks > MAX_CHUNKS then return false, "long" end
-
-    wipeMacros()
-
-    for i = 1, #chunks do
-        local created = CreateMacro(chunkName(i), T.TEXTURE.CONFIG_MACRO,
-                                    "#" .. chunks[i], false)
-        if not created then
-            -- Carnet plein : on ne laisse pas derrière nous une sauvegarde à
-            -- moitié écrite, qui se relirait en code tronqué.
-            wipeMacros()
-            return false, "full"
-        end
-    end
-
-    -- La macro jouable est réécrite quand elle existe déjà, au lieu d'être
-    -- laissée telle quelle : son icône et son corps sont les nôtres, et une
-    -- macro d'une version précédente porterait les anciens. Elle n'est pas
-    -- effacée pour autant — la refaire lui ferait perdre sa place sur la barre
-    -- d'action où le joueur l'a posée.
-    local runner = macroIndex(MACRO_NAME)
-    if runner and type(EditMacro) == "function" then
-        EditMacro(runner, MACRO_NAME, T.TEXTURE.CONFIG_MACRO, MACRO_BODY)
-    elseif not runner then
-        CreateMacro(MACRO_NAME, T.TEXTURE.CONFIG_MACRO, MACRO_BODY, false)
-    end
-
-    return true, nil, #chunks
-end
-
---- Le joueur a-t-il déjà rangé sa configuration ? Lu depuis
---- `Core/Forever.lua`, qui se tait quand la réponse est oui : lui dire comment
---- sauvegarder ce qu'il a déjà sauvegardé ne l'aiderait pas.
----@return boolean
-local function hasMacros()
-    return macroIndex(chunkName(1)) ~= nil
 end
 
 --- Recompose le code rangé dans les macros.
@@ -269,24 +187,6 @@ local function applyAll(mod)
     end
 end
 
---- Le bouton « enregistrer », et ce qu'il répond.
-local function onSave()
-    local ok, reason, count = saveToMacros()
-
-    if ok then
-        BUI:Print(BUI:Lf("Config macros saved", count))
-        BUI:Print(BUI:Lf("Config macros hint", MACRO_NAME))
-    elseif reason == "combat" then
-        BUI:Print(L["Config macros combat"])
-    elseif reason == "long" then
-        BUI:Print(L["Config macros too long"])
-    elseif reason == "full" then
-        BUI:Print(L["Config macros full"])
-    else
-        BUI:Print(L["Export failed"])
-    end
-end
-
 -- =========================================================================
 --  Déclaration du module
 -- =========================================================================
@@ -313,48 +213,15 @@ BUI:RegisterModule(MODULE, {
             text    = L["Fix stat tooltips"],
             tooltip = L["Fix stat tooltips tip"],
         },
-
-        { type = "header", text = L["Settings lost on launch or reload"] },
-
-        -- La limite d'abord, en rouge : c'est elle qui explique pourquoi cette
-        -- page existe, et elle ne vient pas de nous. Les quatre lignes qui
-        -- suivent sont la seule marche à suivre de l'addon — ailleurs, une
-        -- option se comprend par son libellé et son infobulle. Ici, il y a un
-        -- ordre à respecter, et un ordre ne tient pas dans une infobulle.
-        { type = "alert",       text = L["Settings lost warning"] },
-        { type = "note",        text = L["Settings lost step 1"] },
-        { type = "note",        text = L["Settings lost step 2"] },
-        { type = "note",        text = L["Settings lost step 3"] },
-        { type = "note",        text = L["Settings lost step 4"] },
-        {
-            type    = "button",
-            text    = L["Save config to macros"],
-            label   = L["Save"],
-            tooltip = L["Save config to macros tip"],
-            onClick = onSave,
-        },
-        {
-            type    = "button",
-            text    = L["Restore config from macros"],
-            label   = L["Restore"],
-            tooltip = L["Restore config from macros tip"],
-            onClick = function()
-                BUI.Modules:Get(MODULE):RestoreConfig()
-            end,
-        },
     },
 
-    --- Y a-t-il une configuration rangée dans des macros ? Lu par
-    --- `Core/Forever.lua` pour savoir s'il a quelque chose à conseiller.
-    ---@return boolean
-    HasConfigMacros = function()
-        return hasMacros()
-    end,
-
-    --- Relit les macros et remet la configuration qu'elles portent.
+    --- Relit les macros `BUIconfig` et remet la configuration qu'elles portent.
     ---
-    --- Publique parce que la macro jouable l'appelle par son nom — c'est le
-    --- seul point d'entrée que le joueur déclenche depuis une barre d'action.
+    --- **Sans entrée dans la page**, et c'est voulu : le client rend de nouveau
+    --- leurs réglages aux addons, il n'y a donc plus rien à contourner. Cette
+    --- méthode reste publique pour la seule macro jouable que des joueurs ont
+    --- posée sur une barre d'action — elle l'appelle par son nom, qui est une
+    --- clé de base de données donc stable (règle 4).
     ---@param silent? boolean  ne rien dire quand il n'y a simplement rien à lire
     RestoreConfig = function(self, silent)
         local text = readMacros()
@@ -380,20 +247,6 @@ BUI:RegisterModule(MODULE, {
         -- sert qu'au cas où la fiche s'ouvre avant nous (module différé hors
         -- combat, rechargement à chaud).
         self:RegisterEvent("PLAYER_ENTERING_WORLD", function() applyAll(self) end)
-
-        -- **Restauration automatique, sans case à cocher.** Une case ne peut pas
-        -- commander ça : elle vivrait dans la base, c'est-à-dire dans ce que le
-        -- client vient précisément de ne pas rendre — elle serait donc toujours
-        -- décochée au moment où elle aurait à décider. Ce qui autorise la
-        -- restauration, c'est **l'existence des macros**, et elle ne tient pas
-        -- du défaut : personne ne les a sinon le joueur, en cliquant.
-        --
-        -- Deux conditions, et la seconde compte autant que la première : la base
-        -- doit être revenue **vide**. Restaurer par-dessus des réglages qui sont
-        -- bien là écraserait le travail de la session avec un code d'hier.
-        if BUI.DB:LoadedEmpty() then
-            C_Timer.After(1, function() self:RestoreConfig(true) end)
-        end
     end,
 
     OnDisable = restoreStatTooltips,

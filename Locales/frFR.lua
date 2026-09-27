@@ -595,47 +595,9 @@ BUI:RegisterLocale("frFR", {
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
     ["Beta"]                           = "Beta",
-    ["Settings lost on launch or reload"] =
-        "Réglages perdus au démarrage du jeu ou après un reload",
-    ["Settings lost warning"] =
-        "Pour l'instant, la bêta ne conserve pas les réglages des addons au démarrage "
-        .. "du jeu. Une macro permet de contourner ça : les macros, elle les restitue.",
-    ["Settings lost step 1"] = "1. Faites les réglages que vous voulez.",
-    ["Settings lost step 2"] =
-        "2. Enregistrez-les dans une macro avec le bouton ci-dessous.",
-    ["Settings lost step 3"] =
-        "3. Au démarrage suivant, l'addon relit cette macro et réapplique les réglages.",
-    ["Settings lost step 4"] =
-        "4. Posez la macro BUIconfig sur une barre d'action : si les réglages ne "
-        .. "reviennent pas tout seuls, un clic dessus les remet — le bouton Restaurer "
-        .. "ci-dessous fait la même chose.",
-    ["Save config to macros"]          = "Enregistrer les réglages dans des macros",
-    ["Save"]                           = "Enregistrer",
-    ["Save config to macros tip"] =
-        "Écrit vos réglages actuels dans des macros nommées BUIconfig. À refaire après "
-        .. "chaque changement : une macro garde ce qu'on lui a donné, pas ce qui a suivi.",
-    ["Restore config from macros"]     = "Restaurer les réglages depuis les macros",
-    ["Restore"]                        = "Restaurer",
-    ["Restore config from macros tip"] =
-        "Remet ce que les macros contiennent. Se fait tout seul au lancement du jeu quand "
-        .. "le client n'a rien rendu : ce bouton ne sert donc presque jamais.",
-    ["Config macros saved"]            = "Réglages enregistrés dans %d macro(s).",
-    ["Config macros hint"] =
-        "Posez maintenant la macro %s sur une barre d'action : si les réglages ne "
-        .. "reviennent pas tout seuls au prochain démarrage, un clic dessus les remet.",
     ["Config macros restored"]         = "Réglages restaurés depuis vos macros.",
-    ["Config macros missing"]          = "Aucune macro de réglages trouvée. Enregistrez d'abord les vôtres.",
+    ["Config macros missing"]          = "Aucune macro de réglages trouvée.",
     ["Config macros invalid"]          = "Les macros de réglages sont abîmées ou incomplètes.",
-    ["Config macros combat"]           = "Les macros ne peuvent pas être écrites en combat.",
-    ["Config macros full"]             = "Votre liste de macros est pleine : libérez quelques places et réessayez.",
-    ["Config macros too long"]         = "Ces réglages sont trop volumineux pour tenir dans des macros.",
-    ["Client drops addon settings"] =
-        "Ce client de bêta ne rend pas leurs réglages aux addons au lancement du jeu : "
-        .. "tous repartent de leurs défauts, pas seulement celui-ci.",
-    ["Client drops addon settings fix"] =
-        "Une macro contourne ça : Beta -> Réglages perdus au démarrage du jeu ou "
-        .. "après un reload -> Enregistrer. Une fois fait, ils reviendront tout seuls "
-        .. "à chaque démarrage, et ce message ne reparaîtra plus.",
     ["Looting"]                        = "Ramassage des monstres",
     ["Fast loot"]                      = "Ramassage rapide",
     ["Fast loot tip"] =
