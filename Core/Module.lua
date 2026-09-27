@@ -273,6 +273,96 @@ function Modules:GetAll()
 end
 
 -- =========================================================================
+--  Mode édition
+-- =========================================================================
+-- **Un interrupteur pour tout poser d'un coup.** Chaque cadre que l'addon pose
+-- à même l'écran a son aperçu et son verrou ; les allumer un par un demande
+-- d'ouvrir sept pages pour cocher dix-huit cases, puis de refaire le tour en
+-- sens inverse. Le mode édition coche les aperçus, ouvre les verrous, et l'écran
+-- montre d'un coup tout ce qu'il y a à placer.
+--
+-- **Il ne devine rien.** C'est le descripteur d'option qui se déclare :
+-- `edit = "preview"` ou `edit = "lock"` (voir `UI/Config/PageBuilder.lua`).
+-- Reconnaître une case à son nom aurait marché — jusqu'à `lootPreview` et
+-- `battleResPreview`, qui ne commencent pas par « preview », et jusqu'au jour
+-- où un réglage se serait appelé ainsi sans en être un. Une case oubliée ne
+-- s'allume pas, ce qui se voit ; une case emportée par erreur décide à la
+-- place du joueur, ce qui ne se voit pas.
+--
+-- **La sortie ne se contente pas de défaire.** Les aperçus s'éteignent, quoi
+-- qu'ils aient valu avant : un aperçu est un état qu'on tient allumé le temps
+-- de regarder, pas un réglage qu'on garde. Les verrous, eux, sont un vrai
+-- choix, et ils sont rendus tels qu'ils étaient. C'est ce qui fait qu'un
+-- `/reload` en plein mode édition se rattrape d'un aller-retour sur le bouton :
+-- l'état retenu est perdu, la sortie nettoie quand même.
+
+local editMode = false
+
+--- nom de module -> clé -> valeur d'avant. Les verrous seuls : eux seuls se
+--- rendent.
+local lockedBefore = {}
+
+--- Parcourt les options qu'un module a marquées pour le mode édition.
+---@param mod table
+---@param fn fun(descriptor: table)
+local function eachEditOption(mod, fn)
+    local options = mod.options
+    if type(options) ~= "table" then return end
+
+    for i = 1, #options do
+        local descriptor = options[i]
+        if type(descriptor) == "table" and descriptor.edit and descriptor.key then
+            fn(descriptor)
+        end
+    end
+end
+
+---@return boolean
+function BUI:IsEditMode()
+    return editMode
+end
+
+--- Allume ou éteint le mode édition.
+---
+--- Tout passe par `mod:Set`, donc par le chemin ordinaire d'un clic : chaque
+--- module reçoit son `OnSettingChanged`, la page ouverte se rafraîchit, et il
+--- n'y a rien de particulier à prévoir nulle part.
+---@param on boolean
+function BUI:SetEditMode(on)
+    on = on and true or false
+    if editMode == on then return end
+    editMode = on
+
+    for name, mod in pairs(registry) do
+        eachEditOption(mod, function(descriptor)
+            local key = descriptor.key
+
+            if descriptor.edit == "preview" then
+                mod:Set(key, on)
+                return
+            end
+
+            if on then
+                local memory = lockedBefore[name] or {}
+                lockedBefore[name] = memory
+                memory[key] = mod:Get(key) and true or false
+                mod:Set(key, false)
+            else
+                local memory = lockedBefore[name]
+                if memory and memory[key] ~= nil then mod:Set(key, memory[key]) end
+            end
+        end)
+    end
+
+    if not on then wipe(lockedBefore) end
+end
+
+--- Bascule, pour le bouton qui n'a qu'un état à inverser.
+function BUI:ToggleEditMode()
+    self:SetEditMode(not editMode)
+end
+
+-- =========================================================================
 --  Activation / désactivation
 -- =========================================================================
 

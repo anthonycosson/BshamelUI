@@ -24,6 +24,47 @@ function W.Button(parent, label, onClick, width)
     return button
 end
 
+--- Le même bouton, teinté de rouge.
+---
+--- **Le bouton du client, pas un bouton à nous.** Sa forme, son relief, son
+--- creux au clic et sa surbrillance restent ceux de l'interface ; on ne pose
+--- qu'un voile par-dessus, assez transparent pour qu'on voie encore le
+--- bouton dessous. Redessiner un bouton rouge en entier aurait donné une pièce
+--- rapportée là où l'on voulait exactement le contraire — un bouton du jeu
+--- qui se signale.
+---
+--- **Le libellé passe au-dessus du voile, et il faut le dire aux deux.** Le
+--- voile monte au plus haut de la couche `ARTWORK`, ce qui le met par-dessus
+--- toutes les textures du template ; le libellé est renvoyé au plus haut de la
+--- couche `OVERLAY`, qui est au-dessus. Se fier à l'ordre par défaut ne
+--- suffisait pas : le rouge passait sur le doré, et un bouton qu'on ne lit
+--- plus n'est plus un bouton.
+---@param parent table
+---@param label string
+---@param onClick fun()
+---@param width? number
+---@return table
+function W.DangerButton(parent, label, onClick, width)
+    local button = W.Button(parent, label, onClick, width)
+
+    local tint = button:CreateTexture(nil, "ARTWORK", nil, 7)
+    tint:SetTexture(T.TEXTURE.SOLID)
+    tint:SetVertexColor(T.COLOR.RED:GetRGB())
+    tint:SetAlpha(T.ALPHA.DANGER_TINT)
+
+    -- Le voile s'arrête avant le bord : le relief du template est dessiné sur
+    -- ses deux derniers pixels, et le recouvrir aplatirait le bouton.
+    tint:SetPoint("TOPLEFT", button, "TOPLEFT", T.SIZE.DANGER_INSET, -T.SIZE.DANGER_INSET)
+    tint:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT",
+        -T.SIZE.DANGER_INSET, T.SIZE.DANGER_INSET)
+
+    local caption = button.GetFontString and button:GetFontString()
+    if caption then caption:SetDrawLayer("OVERLAY", 7) end
+
+    button.Tint = tint
+    return button
+end
+
 --- Bouton de navigation de la barre latérale.
 --- Pas de template : une entrée de liste a besoin d'un fond de survol et d'un
 --- fond de sélection, ce que les templates de bouton du client ne donnent pas

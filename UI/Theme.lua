@@ -496,6 +496,12 @@ T.SIZE = {
     -- d'options : ces trois-là portent donc leur propre préfixe.
     TOOL_PAD       = 8,
 
+    -- Retrait du voile rouge d'un bouton qui se signale (`W.DangerButton`). Le
+    -- relief du template du client est dessiné sur ses deux derniers pixels :
+    -- un voile qui irait jusqu'au bord les recouvrirait, et le bouton
+    -- paraîtrait plat.
+    DANGER_INSET   = 2,
+
     -- Suivi des résurrections de combat. La taille est un réglage : l'icône vit
     -- au milieu de l'écran d'un combat de raid, et ce qu'il faut voir d'un coup
     -- d'œil n'a pas la même taille pour tout le monde. Les bornes tiennent les
@@ -539,6 +545,28 @@ T.SIZE = {
     -- où l'on retouche l'autre.
     TIMER_SCALE_MIN = 0.5,
     TIMER_SCALE_MAX = 2.5,
+
+    -- Rangée d'icônes cliquables posée à même l'écran (`W.IconBadge`). Le
+    -- double d'une icône de menu du client, et c'est voulu : ce cadre n'est
+    -- pas dans une liste qu'on parcourt, il est **seul au milieu du jeu** et
+    -- doit se voir sans qu'on le cherche. À la taille d'un bouton d'action, il
+    -- passait pour une pièce de l'interface qu'on a déjà lue.
+    --
+    -- C'est la taille **de départ**, pas une limite : la poignée du coin la
+    -- ramène à un bouton d'action ou la double encore (voir les bornes
+    -- ci-dessous).
+    --
+    -- L'écart, lui, est celui qui sépare deux boutons d'action : assez pour
+    -- qu'on ne clique pas l'un pour l'autre, et il n'a pas de raison de
+    -- grandir avec l'icône — ce qu'on vise est plus gros, pas plus loin.
+    BADGE_ICON = 56,
+    BADGE_GAP  = 4,
+
+    -- Bornes de son échelle. Les mêmes valeurs et la même raison que
+    -- ci-dessus, sous leur propre nom pour la même raison encore : ce cadre
+    -- ne se règle pas avec les autres.
+    BADGE_SCALE_MIN = 0.5,
+    BADGE_SCALE_MAX = 2.5,
 
     -- Aperçu de la fenêtre de jet de butin. Ces deux nombres ne sont pas un
     -- goût : ce sont les mesures du cadre de jet du client
@@ -856,6 +884,12 @@ T.TIMING = {
     -- Cadence des panneaux de raid. Ils affichent des secondes : les rafraîchir
     -- à chaque image serait payer soixante fois le même texte (règle 7).
     TRACKER       = 0.2,    -- décomptes posés sur une icône de suivi
+
+    -- Regroupement des relectures du suivi de minicarte. `SPELLS_CHANGED`
+    -- arrive en rafale à la connexion et à chaque sort appris ; relire la
+    -- liste des suivis trois fois pour un seul état en ferait deux de trop
+    -- (règle 7).
+    TRACKING_SETTLE = 0.2,
 
     -- Cadence du chrono d'aperçu des paliers de clé. Une seconde, parce que
     -- c'est la vitesse à laquelle un chrono court : l'aperçu doit se lire comme
@@ -1343,6 +1377,12 @@ T.ALPHA = {
     CONTROL_OFF    = 0.50,  -- contrôle grisé
     GRIP           = 0.70,  -- poignée de redimensionnement au repos
     GRIP_HOVER     = 1.00,
+
+    -- Voile rouge d'un bouton qui se signale (`W.DangerButton`). Assez franc
+    -- pour qu'on lise « rouge » du coin de l'œil, assez clair pour qu'on voie
+    -- encore le bouton du client dessous — c'est la moitié de l'effet, l'autre
+    -- étant qu'il garde sa forme et son relief.
+    DANGER_TINT    = 0.45,
 
     -- Pièces posées sur les cadres du client — bouton de copie du chat,
     -- rangement du panneau de filtres —, au repos. Plus discrètes que nos
@@ -2101,6 +2141,13 @@ T.TEXTURE = {
     -- voit immédiatement, et se voit mal.
     MINIMAP_BORDER    = "Interface\\Minimap\\MiniMap-TrackingBorder",
     MINIMAP_HIGHLIGHT = "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight",
+
+    -- Surbrillance d'une icône carrée cliquable. Celle que le jeu pose sur ses
+    -- propres boutons de sort et d'objet, à la même forme et au même rayon :
+    -- une icône qui s'allume comme les autres dit qu'elle se clique sans avoir
+    -- à l'écrire. Ronde, celle de la minicarte juste au-dessus déborderait
+    -- dans les coins.
+    ICON_HIGHLIGHT    = "Interface\\Buttons\\ButtonHilight-Square",
 
     -- Logo de l'addon, également déclaré comme icône du compartiment d'addons
     -- dans le `.toc`. Son disque alpha est **cuit dans la texture** : le trou de

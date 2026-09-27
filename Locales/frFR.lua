@@ -25,6 +25,11 @@ BUI:RegisterLocale("frFR", {
     ["Search settings"]         = "Rechercher un réglage…",
     ["No results"]              = "Aucun réglage ne correspond à cette recherche.",
     ["More results hint"]       = "D'autres réglages correspondent : précisez la recherche pour les voir.",
+    ["Edit mode"]               = "Mode édition",
+    ["Leave edit mode"]         = "Quitter le mode édition",
+    ["Edit mode tip"] =
+        "Active d'un coup tous les aperçus de cadre et déverrouille toutes les "
+        .. "positions. En sortir remet tout comme avant.",
     ["Yes"]                     = "Oui",
     ["Cancel"]                  = "Annuler",
     ["Open Bshamel UI"]         = "Ouvrir Bshamel UI",
@@ -801,10 +806,12 @@ BUI:RegisterLocale("frFR", {
     ["Loot roll preview"]              = "Afficher l'aperçu",
     ["Loot roll preview tip"] =
         "Affiche un cadre vide, exactement de la taille d'un jet de butin. "
-        .. "Faites-le glisser où vous voulez voir les jets, puis décochez.",
+        .. "Faites-le glisser où vous voulez voir les jets, tirez son coin bas-droit "
+        .. "pour les redimensionner, puis décochez.",
     ["Lock loot roll window"]          = "Verrouiller la position",
     ["Lock loot roll window tip"] =
-        "L'aperçu refuse d'être déplacé. La position déjà choisie, elle, reste.",
+        "L'aperçu refuse d'être déplacé et range sa poignée. La position et la "
+        .. "taille déjà choisies, elles, restent.",
     ["Reset"]                          = "Réinitialiser",
     ["Reset window layout"]            = "Tout remettre en place",
     ["Reset window layout tip"] =
@@ -1280,11 +1287,42 @@ BUI:RegisterLocale("frFR", {
         "Choisissez d'abord un palier.",
 
     -- =====================================================================
+    --  Métiers (Forever) — l'avis de suivi de minicarte manquant
+    -- =====================================================================
+    ["Professions"]                    = "Métiers",
+    ["Gathering"]                      = "Récolte",
+    ["Missing tracking"]               = "Prévenir quand un suivi de récolte est éteint",
+    ["Missing tracking tip"] =
+        "Affiche un petit cadre portant l'icône de chaque suivi de récolte que vous avez "
+        .. "et qui n'est pas coché dans le menu de la minicarte — une icône, ou deux. "
+        .. "Cliquer une icône la coche : rien n'est coché à votre place, le cadre dit ce "
+        .. "qui est éteint et vous décidez.",
+    ["Missing tracking preview"]       = "Aperçu",
+    ["Missing tracking preview tip"] =
+        "Affiche le cadre quel que soit l'état des suivis, pour le placer tout de suite. "
+        .. "Toujours muet, en revanche, sur un métier que vous n'avez pas.",
+    ["Lock missing tracking"]          = "Verrouiller la position",
+    ["Lock missing tracking tip"] =
+        "Fige le cadre où il est et range sa poignée. Faites-le glisser pour le "
+        .. "déplacer, tirez son coin bas-droit pour le redimensionner.",
+    -- Mot pour mot ce que le menu de suivi de la minicarte affiche : c'est là
+    -- qu'il faudra aller si l'on préfère cocher soi-même, et un titre qui
+    -- nommerait autrement ce qu'on cherche ferait chercher.
+    ["Herb tracking off"]              = "Recherche de plantes désactivée",
+    ["Mineral tracking off"]           = "Recherche de minerais désactivée",
+    ["Turn tracking on tip"] =
+        "Cliquez sur cette icône pour cocher le suivi dans le menu de la minicarte, "
+        .. "sans avoir à l'ouvrir.",
+
+    -- =====================================================================
     --  Suivi des temps restants — Flight timer (Forever) et Craft timer
     -- =====================================================================
     ["Remaining times"]                = "Suivi des temps restants",
     ["Flight"]                         = "Vol",
-    ["Crafting"]                       = "Métiers",
+    -- « Fabrication », et non « Métiers » : la page des métiers existe
+    -- maintenant pour elle-même, et deux intitulés identiques dans la barre
+    -- latérale et dans une page feraient chercher deux fois.
+    ["Crafting"]                       = "Fabrication",
     ["Time remaining"]                 = "Temps restant",
     ["Flight timer"]                   = "Temps de vol restant",
     ["Flight timer tip"] =

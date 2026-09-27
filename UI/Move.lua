@@ -1141,29 +1141,52 @@ end
 
 --- Position demandée pour le **premier jet**, ou `nil` quand l'emplacement
 --- reste celui du client.
----@return table|nil
-local function lootPosition()
-    if not host then return nil end
-    if host.PlaceLoot() ~= true then return nil end
-    return host.GetPosition(LOOT_NAME)
+---@return table|nil pos
+---@return number|nil scale
+local function lootWanted()
+    if not host then return nil, nil end
+    if host.PlaceLoot() ~= true then return nil, nil end
+    return host.GetPosition(LOOT_NAME), host.GetScale(LOOT_NAME)
 end
 
---- Pose le conteneur pour que le premier jet tombe sur la position rangée.
+--- Pose le conteneur pour que le premier jet tombe sur la position rangée, à
+--- la taille rangée.
+---
+--- **Les deux sont indépendants.** Un joueur peut tirer le coin de l'aperçu
+--- sans l'avoir déplacé : il y a alors une échelle et pas de position, et le
+--- cadre doit quand même changer de taille là où le client l'a mis.
 local function applyLoot()
     local frame = lootContainer()
     if not frame then return end
 
-    local pos = lootPosition()
-    if not pos then return end
+    local pos, scale = lootWanted()
+    if not (pos or scale) then return end
 
     captureOrigin(frame, lootEntry)
 
-    -- Posé ici et non au branchement : tant que le joueur n'a rien demandé, le
-    -- cadre reste entièrement au client.
+    -- **L'échelle avant la position**, comme pour les fenêtres (voir
+    -- `applyStored`) : un décalage d'ancrage s'exprime dans l'échelle du cadre
+    -- ancré, et le poser d'abord le ferait glisser d'autant.
+    if scale then rescale(frame, scale) end
+    if not pos then return end
+
+    -- Posé ici et non au branchement : tant que le joueur n'a pas déplacé quoi
+    -- que ce soit, l'emplacement reste entièrement au client.
     frame.ignoreFramePositionManager = true
 
     local slot = tonumber(frame.reservedSize) or LOOT_SLOT
-    anchor(frame, "BOTTOM", UIParent, "CENTER", pos.x, pos.y - slot / 2)
+
+    -- **Et la conversion, qui n'est pas celle des fenêtres.** Ce qui est rangé
+    -- ici vient de l'aperçu, qui est un `W.Panel` : il écrit en unités de
+    -- `UIParent`, pas dans les siennes. On applique donc le même facteur que
+    -- `W.Panel:ApplyPosition`, faute de quoi le conteneur agrandi irait deux
+    -- fois moins loin que l'aperçu qu'on vient de poser.
+    --
+    -- La hauteur réservée, elle, appartient au conteneur : elle est déjà dans
+    -- la bonne échelle et ne se convertit pas.
+    local factor = UIParent:GetEffectiveScale() / frame:GetEffectiveScale()
+    anchor(frame, "BOTTOM", UIParent, "CENTER",
+        pos.x * factor, pos.y * factor - slot / 2)
 end
 
 --- Repose à l'image suivante, jamais dans l'appel du client. Mêmes deux raisons
@@ -1190,7 +1213,8 @@ local function hookLoot()
 
     U.GuardedHook(frame, "SetPoint", function()
         if applying then return end
-        if not lootPosition() then return end
+        local pos = lootWanted()
+        if not pos then return end
         applyLootSoon()
     end, function() return M:IsActive() end)
 end
@@ -1234,6 +1258,27 @@ local function lootPreview()
             host.SetPosition(LOOT_NAME, x, y)
             BUI.safecall(applyLoot)
         end,
+
+        -- **La poignée d'échelle retaille la vraie fenêtre, pas l'aperçu.**
+        -- Les deux portent la même échelle, prise au même endroit : c'est ce
+        -- qui garde l'aperçu honnête — il occupe la place que la fenêtre
+        -- occupera, quelle que soit la taille qu'on lui donne.
+        --
+        -- Les mêmes bornes que la molette des fenêtres du client, et pour la
+        -- même raison : une fenêtre de jet n'a pas à se régler autrement que
+        -- les autres.
+        minScale = SCALE_MIN,
+        maxScale = SCALE_MAX,
+
+        getScale = function()
+            return (host and host.GetScale(LOOT_NAME)) or 1
+        end,
+
+        setScale = function(scale)
+            if not host then return end
+            host.SetScale(LOOT_NAME, scale)
+            BUI.safecall(applyLoot)
+        end,
     })
 
     return lootPanel
@@ -1253,7 +1298,8 @@ local function applyLootPreview()
     local panel = lootPreview()
     if not panel then return end
 
-    panel:ApplyPosition()
+    -- L'échelle d'abord, la position en découle (voir `W.Panel:ApplyScale`).
+    panel:ApplyScale()
     panel:ApplyLock()
     panel:Show()
 end
@@ -1263,7 +1309,8 @@ end
 function M:RefreshLoot()
     hookLoot()
 
-    if lootPosition() then
+    local pos, scale = lootWanted()
+    if pos or scale then
         BUI.safecall(applyLoot)
     else
         BUI.safecall(restoreLoot)
@@ -1382,6 +1429,7 @@ function M:ResetAll()
         end
         host.SetPosition(BAGS_NAME, nil, nil)
         host.SetPosition(LOOT_NAME, nil, nil)
+        host.SetScale(LOOT_NAME, nil)
     end
 
     for i = 1, #hooked do

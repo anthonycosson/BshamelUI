@@ -33,7 +33,7 @@
     "C_AddOns", "C_Timer", "C_Texture", "C_XMLUtil", "C_QuestLog", "C_GossipInfo",
     "C_CVar", "C_AuctionHouse", "C_CurrencyInfo", "C_NamePlate", "Enum",
 
-    "Minimap", "MinimapBackdrop", "MinimapCluster",
+    "Minimap", "MinimapBackdrop", "MinimapCluster", "C_Minimap",
     "GetCursorPosition", "GetCVar", "SetCVar", "GetCVarDefault",
     "IsMouseButtonDown", "GetScreenWidth", "GetScreenHeight",
 

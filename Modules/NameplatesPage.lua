@@ -1352,6 +1352,7 @@ local function pageOptions()
         {
             type     = "toggle",
             key      = "previewCast",
+            edit     = "preview",
             text     = L["Preview cast bar"],
             tooltip  = L["Preview cast bar tip"],
             indent   = true,
@@ -1380,6 +1381,7 @@ local function pageOptions()
         {
             type     = "toggle",
             key      = "previewMarker",
+            edit     = "preview",
             text     = L["Preview marker"],
             tooltip  = L["Preview marker tip"],
             indent   = true,

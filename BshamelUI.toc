@@ -83,6 +83,10 @@ UI\Widgets\MarkerBar.lua
 # Le cadre de la catégorie « Suivi des temps restants » : un nombre doré, rien
 # d'autre. Deux modules s'en servent, c'est ce qui les garde identiques.
 UI\Widgets\TimerBar.lua
+# Une rangée d'icônes cliquables posée à même l'écran. Ne dépend que du thème
+# et du socle de panneau ; un seul module s'en sert pour l'instant, et il est
+# rangé ici parce que c'est une pièce de la fabrique, pas une pièce de sa page.
+UI\Widgets\IconBadge.lua
 UI\Widgets\ResourceBar.lua
 # Les paliers d'une clé ne sont pas un panneau : ils se posent sur le bloc de
 # chrono du client. Ce fichier ne dépend donc pas de `Panel.lua`, il est rangé
@@ -130,6 +134,10 @@ Modules\Nameplates.lua [AllowLoadGameType standard]
 Modules\CooldownManager.lua
 Modules\Windows.lua
 Modules\Chat.lua
+# L'avis de suivi de métier manquant. Demandé pour Forever, et rien d'autre
+# que cette ligne ne l'y garde : le mécanisme est la liste des suivis de
+# minicarte, que retail publie de la même façon.
+Modules\Professions.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 Modules\Bags.lua
 Modules\AuctionHouse.lua [AllowLoadGameType standard]
 Modules\Quest.lua

@@ -44,6 +44,15 @@
 --      hidden   = function() return true|false end   -- retire la ligne du flux
 --      get / set                                     -- si le réglage ne vient
 --                                                    -- pas de `key`
+--      edit     = "preview" | "lock"                 -- la case est un aperçu
+--                                                    -- de cadre, ou son verrou
+--                                                    -- de position : le mode
+--                                                    -- édition les bascule
+--                                                    -- d'un coup (voir
+--                                                    -- `BUI:SetEditMode`). Une
+--                                                    -- case qui ne pose pas un
+--                                                    -- cadre à l'écran ne la
+--                                                    -- porte pas.
 --
 --  Les pages sont créées une fois puis réutilisées : une frame World of Warcraft
 --  ne se détruit pas, la recréer à chaque changement de page fuirait.

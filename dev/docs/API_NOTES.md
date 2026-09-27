@@ -5291,3 +5291,70 @@ La fin du lot se lit sur `UPDATE_TRADESKILL_CAST_STOPPED` (charge utile
 `isScrapping`), plus les deux événements d'échec ci-dessus. Le décompte sait en
 plus s'arrêter seul quand la dernière incantation est écoulée : s'en remettre
 au seul événement laisserait un lot fantôme le jour où il manquerait.
+
+## Le suivi de plantes et de minerai se lit par son sort, et il en a deux par métier
+
+**Symptôme** — on veut savoir si « Recherche de plantes » est cochée dans le
+menu de suivi de la minicarte. Rien ne répond à la question posée ainsi : il
+n'existe ni `IsTrackingHerbs` ni drapeau nommé, là où le client publie bien
+`C_Minimap.IsTrackingBattlePets` ou `IsTrackingHiddenQuests`.
+
+**Cause** — ces deux-là sont des **filtres** du client, avec leur entrée dans
+`Enum.MinimapTrackingFilter`. Les suivis de métier, eux, sont des **sorts** :
+ils n'existent dans la liste que parce que le joueur les connaît, et ils n'ont
+donc pas d'identité stable ailleurs que dans leur `spellID`.
+
+**Ce qu'on fait** — on parcourt la liste et on compare :
+
+```lua
+for index = 1, C_Minimap.GetNumTrackingTypes() do
+    local info = C_Minimap.GetTrackingInfo(index)   -- { name, texture, active, type, subType, spellID }
+    if info and info.spellID == 2383 then return info.active end
+end
+```
+
+Le sort **absent de la liste** est la réponse à une autre question, et c'est la
+bonne : le joueur n'a pas le métier, il n'y a rien à lui dire.
+
+**Deux identifiants par métier, et c'est le client qui les donne.** Sa table
+`TRACKING_SPELL_OVERRIDE_ATLAS` (`Blizzard_Minimap/Mainline/Minimap.lua`,
+branche `forever` du miroir) les nomme un par un :
+
+| Métier | Rang 1 | Rang 2 |
+|---|---|---|
+| Herboristerie | 2383 | 8387 |
+| Minage | 2580 | 8388 |
+| Pêche | 43308 | — |
+
+Ne chercher que le rang 1 fait disparaître l'avis au moment précis où le joueur
+monte son métier — c'est-à-dire là où il en a le plus besoin.
+
+**Le suivi de Forever est multi-sélection**, contrairement au vanilla d'origine :
+le client charge le menu de la branche `mainline` (`[Family]\Minimap.lua`), dont
+les entrées se cochent indépendamment (`C_Minimap.SetTracking(index, bool)`).
+Plantes **et** minerai peuvent donc être allumés en même temps, ce qui est ce
+qui rend deux avertissements distincts utiles plutôt que redondants.
+
+Le changement s'annonce par `MINIMAP_UPDATE_TRACKING`. La liste elle-même bouge
+avec `SPELLS_CHANGED` — un métier appris y ajoute une ligne.
+
+**Cocher se fait par l'indice, et l'indice ne se retient pas.**
+`C_Minimap.SetTracking(index, true)` n'est pas protégée : c'est l'appel que le
+menu du client fait lui-même depuis le clic d'une de ses lignes
+(`MinimapUtil.SetTrackingFilterByFilterIndex`). Elle s'appelle donc depuis un
+bouton ordinaire. L'indice, en revanche, est celui de la passe en cours : un
+sort appris ou oublié décale la liste, et un indice gardé d'une passe sur
+l'autre finirait par cocher le suivi d'à côté. On relit avant de cocher.
+
+Un suivi de sort n'est pas allumé à l'instant du clic : le client le dit
+lui-même en tête de son fichier — « some tracking states require spell casts to
+complete before the state is recognized as active ». C'est
+`MINIMAP_UPDATE_TRACKING` qui dira quand, et il suffit de l'attendre.
+
+**La vignette se prend au client** : `trackingInfo.texture` est un identifiant
+de fichier, c'est celle que son menu affiche pour cette ligne — donc celle que
+le joueur cherchera des yeux. Rien à embarquer, rien qui se périme. Le client
+lui préfère un atlas pour ces sorts-là (`professions_tracking_herb`,
+`professions_tracking_ore`) ; c'est de la finition, pas de l'information.
+
+Lu par `Modules/Professions.lua`.

@@ -26,6 +26,12 @@ BUI:RegisterLocale("enUS", {
     ["Search settings"]         = "Search settings…",
     ["No results"]              = "No setting matches this search.",
     ["More results hint"]       = "More settings match: refine the search to see them.",
+    -- Bascule du mode édition (UI/Config/ConfigFrame.lua), sous la recherche.
+    ["Edit mode"]               = "Edit mode",
+    ["Leave edit mode"]         = "Leave edit mode",
+    ["Edit mode tip"] =
+        "Turns on every frame preview and unlocks every position at once. Leaving it puts "
+        .. "everything back as it was.",
     ["Yes"]                     = "Yes",
     ["Cancel"]                  = "Cancel",
     ["Open Bshamel UI"]         = "Open Bshamel UI",
@@ -810,10 +816,12 @@ BUI:RegisterLocale("enUS", {
     ["Loot roll preview"]              = "Show the preview",
     ["Loot roll preview tip"] =
         "Shows an empty frame the exact size of a loot roll. Drag it where you want "
-        .. "rolls to appear, then untick this.",
+        .. "rolls to appear, drag its bottom-right corner to resize them, then untick "
+        .. "this.",
     ["Lock loot roll window"]          = "Lock the position",
     ["Lock loot roll window tip"] =
-        "The preview refuses to be dragged. The position it already holds stays.",
+        "The preview refuses to be dragged and puts its resize handle away. The "
+        .. "position and the size it already holds stay.",
     ["Reset"]                          = "Reset",
     ["Reset window layout"]            = "Reset every window",
     ["Reset window layout tip"] =
@@ -1248,6 +1256,32 @@ BUI:RegisterLocale("enUS", {
         "How many points before the squares start to shine.",
     ["Resource threshold colour needs threshold"] =
         "Set a colour change point first.",
+
+    -- =====================================================================
+    --  Métiers (Forever) — l'avis de suivi de minicarte manquant
+    -- =====================================================================
+    ["Professions"]                    = "Professions",
+    ["Gathering"]                      = "Gathering",
+    ["Missing tracking"]               = "Warn when a gathering tracking is off",
+    ["Missing tracking tip"] =
+        "Shows a small frame with the icon of every gathering tracking you have and have "
+        .. "not ticked in the minimap menu — one icon, or two. Clicking an icon ticks it "
+        .. "back on: nothing is ticked for you, the frame says what is off and you "
+        .. "decide.",
+    ["Missing tracking preview"]       = "Preview",
+    ["Missing tracking preview tip"] =
+        "Shows the frame whatever the trackings are doing, so you can position it now. "
+        .. "Still silent about a profession you do not have.",
+    ["Lock missing tracking"]          = "Lock position",
+    ["Lock missing tracking tip"] =
+        "Freezes the frame where it is and puts its resize handle away. Drag the frame to "
+        .. "move it, drag its bottom-right corner to resize it.",
+    -- Le cadre n'écrit rien : ces deux-là titrent l'infobulle d'une icône, et
+    -- c'est le seul endroit où le suivi manquant se nomme.
+    ["Herb tracking off"]              = "Herb tracking is off",
+    ["Mineral tracking off"]           = "Mineral tracking is off",
+    ["Turn tracking on tip"] =
+        "Click this icon to tick the tracking in the minimap menu, without opening it.",
 
     -- =====================================================================
     --  Suivi des temps restants — Flight timer (Forever) et Craft timer

@@ -64,6 +64,9 @@ read_globals = {
     -- minicarte sont cités parce qu'on teste leur présence : le client a déplacé
     -- les siens d'une extension à l'autre.
     "Minimap", "MinimapBackdrop", "MinimapCluster",
+    -- Liste des suivis de la minicarte : c'est elle qui dit si la recherche
+    -- de plantes ou de minerai est allumée (voir `Modules/Professions.lua`).
+    "C_Minimap",
     "GetCursorPosition", "IsMouseButtonDown",
     "GetScreenWidth", "GetScreenHeight",
 

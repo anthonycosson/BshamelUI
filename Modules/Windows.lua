@@ -207,6 +207,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lootPreview",
+            edit     = "preview",
             text     = L["Loot roll preview"],
             tooltip  = L["Loot roll preview tip"],
             disabled = requires("lootMove"),
@@ -214,6 +215,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lootLocked",
+            edit     = "lock",
             text     = L["Lock loot roll window"],
             tooltip  = L["Lock loot roll window tip"],
             disabled = requires("lootMove"),

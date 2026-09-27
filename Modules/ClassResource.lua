@@ -445,6 +445,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "preview",
+            edit     = "preview",
             text     = L["Resource preview"],
             tooltip  = L["Resource preview tip"],
             disabled = requires("show"),
@@ -452,6 +453,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "locked",
+            edit     = "lock",
             text     = L["Lock resource bar"],
             tooltip  = L["Lock resource bar tip"],
             disabled = requires("show"),

@@ -188,6 +188,7 @@ BUI:RegisterModule(MODULE, {
         {
             type    = "toggle",
             key     = "previewMode",
+            edit    = "preview",
             text    = L["Timer preview"],
             tooltip = L["Timer preview tip"],
         },

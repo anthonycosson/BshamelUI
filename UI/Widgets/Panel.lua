@@ -61,7 +61,23 @@ function W.Panel(opts)
     -- rangée, et une bande vide au-dessus n'aurait fait que les allonger.
     local chrome = opts.chrome or "panel"
 
-    if chrome ~= "none" then W.PanelChrome(panel) end
+    if chrome ~= "none" then
+        W.PanelChrome(panel)
+
+        -- **Le contour se prend à la souris, comme le reste du panneau.**
+        -- L'habillage est dessiné *en dehors* du cadre (voir `W.PanelChrome`),
+        -- donc en dehors de ce que le cadre reçoit : un panneau dont le contenu
+        -- occupe toute la surface — une rangée d'icônes cliquables, par
+        -- exemple — ne laissait plus un pixel pour le saisir, et se retrouvait
+        -- cloué à l'écran alors qu'il est fait pour être posé.
+        --
+        -- Des retraits **négatifs** agrandissent la zone sensible : elle
+        -- rejoint le bord visible au lieu de s'arrêter au bord logique. On ne
+        -- le fait que pour un panneau habillé — sans habillage il n'y a pas de
+        -- contour, et l'agrandir ferait prendre des clics à côté de rien.
+        local reach = T.SIZE.PANEL_CHROME_BLEED + T.SIZE.PANEL_BORDER_OUTSET
+        panel:SetHitRectInsets(-reach, -reach, -reach, -reach)
+    end
 
     if opts.title then
         local title = panel:CreateFontString(nil, "ARTWORK", T.FONT.SECTION)

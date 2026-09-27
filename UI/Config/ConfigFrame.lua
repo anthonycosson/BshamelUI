@@ -42,6 +42,7 @@ local currentModule    --- nom du module affiché
 local currentPage      --- page affichée, celle du module ci-dessus
 local scaleMenu        --- menu d'échelle, dans la barre de titre
 local searchBox        --- zone de recherche, en tête de la colonne
+local editButton       --- bascule du mode édition, sous la recherche
 
 -- =========================================================================
 --  Échelle du contenu
@@ -284,11 +285,25 @@ local function buildFrame()
     searchBox:SetPoint("TOPRIGHT", sidebarPanel, "TOPRIGHT",
         -S.PANEL_PAD, -S.PANEL_PAD)
 
+    -- ----- mode édition -----
+    -- Sous la recherche et au-dessus de la liste : c'est un geste qui porte sur
+    -- **toutes** les pages, il n'appartient donc à aucune. Rouge, parce qu'il
+    -- ne se range pas tout seul — ce qu'il allume reste à l'écran tant qu'on
+    -- n'a pas recliqué, fenêtre fermée comprise, et un bouton qui laisse
+    -- quelque chose derrière lui doit se voir.
+    editButton = W.DangerButton(body, L["Edit mode"], function()
+        BUI:ToggleEditMode()
+        Config:RefreshEditButton()
+    end)
+    editButton:SetPoint("TOPLEFT", searchBox, "BOTTOMLEFT", 0, -S.PANEL_PAD)
+    editButton:SetPoint("TOPRIGHT", searchBox, "BOTTOMRIGHT", 0, -S.PANEL_PAD)
+    W.Tooltip(editButton, L["Edit mode"], L["Edit mode tip"])
+
     -- Colonne sans ascenseur : la liste des modules est courte, une barre y
     -- serait un rappel permanent d'un défilement qui n'a presque jamais lieu.
     -- La molette continue de fonctionner, elle, ce qui suffit si elle déborde.
     local sidebarScroll, sidebarContent = W.ScrollPane(body, true)
-    sidebarScroll:SetPoint("TOPLEFT", searchBox, "BOTTOMLEFT",
+    sidebarScroll:SetPoint("TOPLEFT", editButton, "BOTTOMLEFT",
         -S.LABEL_INDENT, -S.PANEL_PAD)
     sidebarScroll:SetPoint("BOTTOMLEFT", sidebarPanel, "BOTTOMLEFT", S.PANEL_PAD, S.PANEL_PAD)
     sidebarScroll:SetWidth(S.SIDEBAR_W)
@@ -480,6 +495,17 @@ end
 --  Ouverture / fermeture
 -- =========================================================================
 
+--- Repose le libellé du bouton de mode édition sur l'état courant.
+---
+--- Appelé au clic **et** à l'ouverture : le mode édition survit à la fermeture
+--- de la fenêtre, et c'est tout son intérêt — on ferme pour aller déplacer ce
+--- qu'on vient d'allumer. Un bouton qui rouvrirait en disant « Mode édition »
+--- ferait ressortir du mode à qui croirait y entrer.
+function Config:RefreshEditButton()
+    if not editButton then return end
+    editButton:SetText(BUI:IsEditMode() and L["Leave edit mode"] or L["Edit mode"])
+end
+
 function Config:Show()
     if not frame then buildFrame() end
 
@@ -490,6 +516,7 @@ function Config:Show()
     BUI.DB:MarkSeen(BUI.DB.HINT_LOGIN)
 
     frame:Show()
+    self:RefreshEditButton()
     BUI.Sidebar:RefreshStates()
 
     local target = currentModule or BUI.Sidebar:FirstModuleName()

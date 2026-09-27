@@ -619,6 +619,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "battleResPreview",
+            edit     = "preview",
             text     = L["Battle res preview"],
             tooltip  = L["Battle res preview tip"],
             disabled = requires("battleResTracker"),
@@ -626,6 +627,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lockBattleRes",
+            edit     = "lock",
             text     = L["Lock battle res"],
             tooltip  = L["Lock battle res tip"],
             disabled = requires("battleResTracker"),
@@ -658,6 +660,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lustPreview",
+            edit     = "preview",
             text     = L["Lust preview"],
             tooltip  = L["Lust preview tip"],
             disabled = requires("lustTracker"),
@@ -665,6 +668,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lockLust",
+            edit     = "lock",
             text     = L["Lock lust"],
             tooltip  = L["Lock lust tip"],
             disabled = requires("lustTracker"),

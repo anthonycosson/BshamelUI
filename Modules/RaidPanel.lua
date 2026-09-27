@@ -235,6 +235,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lockMarkers",
+            edit     = "lock",
             text     = L["Lock group tools"],
             tooltip  = L["Lock group tools tip"],
             disabled = requires("worldMarkers"),

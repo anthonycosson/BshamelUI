@@ -496,6 +496,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "previewFlightBar",
+            edit     = "preview",
             text     = L["Flight timer preview"],
             tooltip  = L["Flight timer preview tip"],
             disabled = requires("showFlightBar"),
@@ -503,6 +504,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lockFlightBar",
+            edit     = "lock",
             text     = L["Lock flight timer"],
             tooltip  = L["Lock flight timer tip"],
             disabled = requires("showFlightBar"),
@@ -518,6 +520,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "previewCraftBar",
+            edit     = "preview",
             text     = L["Craft timer preview"],
             tooltip  = L["Craft timer preview tip"],
             disabled = requires("showCraftBar"),
@@ -525,6 +528,7 @@ BUI:RegisterModule(MODULE, {
         {
             type     = "toggle",
             key      = "lockCraftBar",
+            edit     = "lock",
             text     = L["Lock craft timer"],
             tooltip  = L["Lock craft timer tip"],
             disabled = requires("showCraftBar"),
