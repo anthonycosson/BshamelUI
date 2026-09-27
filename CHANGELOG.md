@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.9 — 2026-09-27
+
 ### Ajouté
 - **Métiers**, nouvelle page (Qualité de vie, sous Chat), sur *Forever*. Une
   seule case : prévenir quand un suivi de récolte est éteint. Un petit cadre
