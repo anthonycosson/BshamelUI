@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.8 — 2026-09-27
+
 ### Retiré
 - **La sauvegarde des réglages dans des macros**, sur *Forever*. La bêta rend
   de nouveau leur SavedVariables aux addons : les réglages reviennent tout
