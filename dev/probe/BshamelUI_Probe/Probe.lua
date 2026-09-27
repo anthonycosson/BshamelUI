@@ -266,8 +266,8 @@ local function report(arg)
         reportGroup("UI/Theme.lua")
     end
 
-    say("détail complet : /buiprobe tout · manquants d'un fichier : /buiprobe quest")
-    say("puis |cffffffff/reload|r, et lire BshamelUIProbeDB dans WTF.")
+    say("tout : |cffffffff/buiprobe tout|r · un fichier : |cffffffff/buiprobe quest|r"
+        .. " · relevé complet dans WTF après |cffffffff/reload|r.")
 end
 
 -- -------------------------------------------------------------------------
@@ -276,11 +276,14 @@ end
 -- `PLAYER_LOGIN` et pas `ADDON_LOADED` : les CVars et les templates du client ne
 -- répondent juste que sur un monde monté.
 
+-- La passe se fait toute seule, sans rien dire : le relevé part dans WTF au
+-- `/reload` que quelque chose ait été imprimé ou non, et une sonde qui parle à
+-- chaque connexion se fait ignorer avant de se faire lire. Le rapport se
+-- demande : `/buiprobe`.
 probeFrame:RegisterEvent("PLAYER_LOGIN")
 probeFrame:SetScript("OnEvent", function(self)
     self:UnregisterEvent("PLAYER_LOGIN")
     run()
-    report(nil)
 end)
 
 _G.SLASH_BSHAMELUIPROBE1 = "/buiprobe"

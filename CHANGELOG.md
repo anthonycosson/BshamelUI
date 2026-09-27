@@ -2,6 +2,11 @@
 
 ## Non publié
 
+### Interne
+- La sonde de compatibilité ne déverse plus son rapport à la connexion : elle
+  fait sa passe en silence et écrit dans WTF comme avant, `/buiprobe` donne le
+  détail quand on le demande.
+
 ## 2.0.6 — 2026-09-22
 
 ### Ajouté

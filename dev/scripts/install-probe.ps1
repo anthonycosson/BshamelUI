@@ -96,6 +96,6 @@ Write-Host "Sonde posée dans $dest ($n lignes de demandes)." -ForegroundColor G
 Write-Host ""
 Write-Host "Ensuite, en jeu :"
 Write-Host "  1. activer BshamelUI_Probe (cocher « Charger les AddOns périmés » si besoin)"
-Write-Host "  2. se connecter — le résumé s'affiche tout seul, /buiprobe le redonne"
+Write-Host "  2. se connecter — la sonde travaille sans rien dire ; /buiprobe donne le rapport"
 Write-Host "  3. /reload, pour que le résultat parte dans WTF"
 Write-Host "  4. install-probe.ps1 -Client `"$Client`" -Collecter"
