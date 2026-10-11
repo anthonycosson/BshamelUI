@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.10 — 2026-10-11
+
 ### Ajouté
 - **Files d'attente**, nouvelle page (Qualité de vie), sur les deux clients.
   Elle ne porte qu'un réglage, le minuteur posé sur la fenêtre qui annonce une
