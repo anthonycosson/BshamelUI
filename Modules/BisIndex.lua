@@ -821,9 +821,17 @@ local function classPermits(itemID)
     local cached = classAllowed[itemID]
     if cached ~= nil then return cached end
 
+    -- Sans motif — le client ne publie pas la ligne « Classes : … » — on
+    -- n'exclut rien : la retenue de partout ailleurs, et la sortie tôt garde
+    -- `pattern` sûrement une chaîne pour la suite.
     local pattern = readClassesPattern()
+    if not pattern then
+        classAllowed[itemID] = true
+        return true
+    end
+
     local data
-    if pattern and C_TooltipInfo and C_TooltipInfo.GetItemByID then
+    if C_TooltipInfo and C_TooltipInfo.GetItemByID then
         data = C_TooltipInfo.GetItemByID(itemID)
     end
 

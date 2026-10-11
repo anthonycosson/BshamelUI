@@ -61,6 +61,7 @@
     "CharacterFrame", "InspectFrame", "PlayerSpellsFrame",
     "GetInventorySlotInfo", "GetInventoryItemLink",
     "GetItemStats", "GetItemGem", "GetItemIcon", "GetAverageItemLevel",
+    "GetItemInfo", "ITEM_CLASSES_ALLOWED", "ChatEdit_InsertLink",
     "C_Container", "ContainerFrameCombinedBags", "BankFrame", "GetDetailedItemLevelInfo",
     "ToggleBackpack", "ToggleBag", "ToggleAllBags", "OpenAllBags",
 
@@ -111,7 +112,8 @@
     "C_UnitAuras", "GetSpellCharges", "GetWeaponEnchantInfo",
 
     "C_SkillInfo", "C_TradeSkillUI", "GetProfessions", "GetProfessionInfo",
-    "LOCALIZED_CLASS_NAMES_MALE", "PlayerFrame", "IsResting",
+    "LOCALIZED_CLASS_NAMES_MALE", "LOCALIZED_CLASS_NAMES_FEMALE",
+    "PlayerFrame", "IsResting",
     "GetNumLootItems", "LootSlot",
 
     "C_MythicPlus", "NUM_BAG_SLOTS", "GetCursorInfo", "ClearCursor",
