@@ -30,7 +30,6 @@ local _, ns = ...
 local BUI = ns.BUI
 local T    = BUI.Theme
 local W    = BUI.Widgets
-local L    = ns.L
 
 ---@class BUI.GroupFilterRowDesc
 ---@field type string            "header" | "toggle" | "range" | "list"
@@ -64,91 +63,9 @@ local L    = ns.L
 ---@field onSearch fun()      relance la recherche du client
 ---@field footerToggle BUI.GroupFilterFooterToggle  la ligne commune à tous les contextes, posée au pied
 
---- Case de saisie d'une borne : un nombre entier, ou rien du tout.
----
---- **Vide veut dire « pas de borne »**, et c'est ce qui la distingue d'une
---- glissière : une glissière a toujours une valeur, donc filtre toujours, alors
---- que la plupart de ces bornes doivent ne rien faire tant qu'on n'a rien
---- demandé. La valeur ne part que lorsqu'on quitte la case — écrire à chaque
---- frappe filtrerait sur « 1 » pendant qu'on tape « 12 ».
----@param row table
----@param hint string  « Min » ou « Max », posé en filigrane dans la case vide
----@param getValue fun(): number|nil
----@param setValue fun(value: number|nil)
----@return table
-local function boundBox(row, hint, getValue, setValue)
-    local box = CreateFrame("EditBox", nil, row, T.Template("EDITBOX"))
-    box:SetSize(T.SIZE.SLIDER_VALUE_W, T.SIZE.SLIDER_VALUE_H)
-    box:SetAutoFocus(false)
-    box:SetJustifyH("CENTER")
-    box:SetNumeric(true)
-
-    -- Le corps du nombre de la glissière, pour la même raison qu'elle : le
-    -- template du client pose la police du chat, qui détonne sur un panneau.
-    local font = _G[T.FONT.LABEL_SMALL]
-    if font then box:SetFontObject(font) end
-
-    -- Le filigrane qui dit ce que la case attend. Une case vide sans lui se
-    -- lit comme une case cassée : rien n'annonce qu'on y écrit un minimum ou
-    -- un maximum. Gris comme un contrôle éteint — c'est une invite, pas une
-    -- valeur — et caché dès qu'on écrit ou qu'on entre dans la case.
-    local ghost = box:CreateFontString(nil, "ARTWORK", T.FONT.LABEL_SMALL)
-    ghost:SetPoint("CENTER")
-    ghost:SetText(hint)
-    ghost:SetTextColor(T.COLOR.DISABLED:GetRGB())
-
-    local function display()
-        local value = getValue()
-        box:SetText(value and tostring(value) or "")
-        box:SetCursorPosition(0)
-        ghost:SetShown(value == nil)
-    end
-
-    box:HookScript("OnEditFocusGained", function() ghost:Hide() end)
-    box:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
-    box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    box:SetScript("OnEditFocusLost", function(self)
-        local text = self:GetText()
-        setValue(text ~= "" and tonumber(text) or nil)
-        display()
-    end)
-
-    box.Refresh = display
-    return box
-end
-
---- Ligne « libellé + deux bornes » : au moins tant, au plus tant.
----@param parent table
----@param desc BUI.GroupFilterRowDesc
----@return table row
-local function rangeRow(parent, desc)
-    local row = W.Row(parent, desc.text, desc.indent)
-
-    -- Les deux cases vivent dans un conteneur : c'est lui que la ligne place à
-    -- l'abscisse des contrôles, comme elle le ferait d'une glissière.
-    local holder = W.Container(row)
-    holder:SetSize(
-        T.SIZE.SLIDER_VALUE_W * 2 + T.SIZE.SLIDER_VALUE_GAP,
-        T.SIZE.SLIDER_VALUE_H)
-
-    local minBox = boundBox(row, L["Min"], desc.getMin, desc.setMin)
-    minBox:SetPoint("LEFT", holder, "LEFT")
-
-    local maxBox = boundBox(row, L["Max"], desc.getMax, desc.setMax)
-    maxBox:SetPoint("RIGHT", holder, "RIGHT")
-
-    W.PlaceControl(row, holder)
-    row:EnableMouse(true)
-    W.Tooltip(row, desc.text, desc.tooltip)
-
-    function row:Refresh()
-        minBox:Refresh()
-        maxBox:Refresh()
-    end
-
-    row:Refresh()
-    return row
-end
+--- Les bornes d'une ligne vivent dans `W.BoundBox` / `W.RangeRow` depuis que la
+--- recherche de la liste BIS a voulu les mêmes cases : la pièce est partie dans
+--- la fabrique, le panneau ne fait plus que s'en servir.
 
 --- Ligne à cocher **reliable** : ses `get`/`set` et son libellé se remplacent
 --- sans reconstruire la frame. C'est ce qui permet à la liste des instances de
@@ -367,7 +284,7 @@ function W.GroupFilterPanel(opts)
                 page.rows[#page.rows + 1] = row
 
             elseif desc.type == "range" then
-                local row = rangeRow(page, desc)
+                local row = W.RangeRow(page, desc)
                 place(row, S.ROW_H)
                 row:Arrange()
                 page.rows[#page.rows + 1] = row

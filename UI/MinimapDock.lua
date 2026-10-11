@@ -247,6 +247,11 @@ end
 local button, tray
 local buttonWanted, trayWanted = false, false
 
+--- Le geste d'un module posé sur notre bouton : ctrl + clic gauche. Un seul,
+--- et c'est voulu — le jour où un deuxième module en voudrait un, il faudra
+--- choisir entre les deux, et ce choix ne peut pas se prendre ici.
+local modifierClick
+
 ---@return boolean
 local function trayLive()
     return trayWanted and buttonWanted
@@ -289,6 +294,16 @@ local function applyButton()
             -- du tiroir — une fois construit, il ne se détruit pas, et un tiroir
             -- éteint doit rendre son clic à la fenêtre d'options.
             onClick = function(mouseButton)
+                -- Ctrl + clic gauche appartient au module qui l'a demandé, et
+                -- passe donc avant tout le reste. Sans module pour le prendre,
+                -- la touche ne change rien : le clic reste le clic ordinaire,
+                -- ce qui vaut mieux qu'un geste qui ne fait rien.
+                if mouseButton ~= "RightButton" and modifierClick
+                   and IsControlKeyDown() then
+                    modifierClick()
+                    return
+                end
+
                 -- Le tiroir s'ouvre même vide : il dit alors qu'il n'y a rien à
                 -- ranger, ce qui est une réponse. Refuser de s'ouvrir ne se
                 -- distinguerait pas d'un bouton cassé.
@@ -329,6 +344,17 @@ function Dock:SetButton(shown, readAngle, writeAngle)
     -- rendre les boutons empruntés plutôt que de les laisser rangés dans un
     -- tiroir que plus rien ne déplie.
     applyTray()
+end
+
+--- Pose (ou retire) le geste ctrl + clic gauche sur le bouton de l'addon.
+---
+--- `nil` le retire, et c'est ce qui le rend révocable : un module éteint doit
+--- être indétectable (règle 6), y compris dans les gestes qu'il avait ajoutés.
+--- L'infobulle du bouton n'en parle pas — c'est au module qui le prend de
+--- l'annoncer sur sa page, parce que lui seul sait ce que le geste ouvre.
+---@param fn fun()|nil
+function Dock:SetModifierClick(fn)
+    modifierClick = fn
 end
 
 --- Les boutons des autres addons sont-ils rangés ?

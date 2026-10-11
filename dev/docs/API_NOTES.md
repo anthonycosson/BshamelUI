@@ -5358,3 +5358,61 @@ lui préfère un atlas pour ces sorts-là (`professions_tracking_herb`,
 `professions_tracking_ore`) ; c'est de la finition, pas de l'information.
 
 Lu par `Modules/Professions.lua`.
+
+---
+
+## Chercher parmi tous les objets du jeu
+
+**Il n'y a aucune API de recherche d'objets.** `GetItemInfo` répond sur un
+identifiant qu'on lui donne ; rien ne répond sur un critère. Il n'y a donc pas
+de question à poser au client, il y a une liste à se constituer, et elle se
+constitue en deux passes de coûts très différents.
+
+**`C_Item.GetItemInfoInstant(id)` est local et gratuit.** Elle lit la table
+d'objets livrée avec le client et rend l'emplacement, la classe, la
+sous-classe et l'icône de **n'importe quel** identifiant valide, sans requête
+serveur et sans que l'objet ait jamais été vu. Balayer une plage de deux cent
+cinquante mille identifiants ne coûte donc que du temps processeur, et par
+morceaux il est invisible. C'est ce qui remplace la borne haute qu'on ne connaît
+pas : on ne sait pas jusqu'où montent les identifiants de *Forever*, on balaie
+large et ce qui n'existe pas ne rend rien.
+
+**Le reste arrive du serveur.** Nom, qualité, niveau d'objet, niveau requis et
+stats (`C_Item.GetItemStats`) ne sont dans aucune table locale : il faut
+`C_Item.RequestLoadItemDataByID(id)` et attendre `GET_ITEM_INFO_RECEIVED`, qui
+porte un second argument de succès — faux pour un identifiant que le serveur ne
+reconnaît pas. **C'est la passe qu'il faut étrangler** : une salve de requêtes
+d'objets fait décrocher le client. Par paquets de vingt-cinq à chaque dixième de
+seconde, quelques milliers d'objets demandent quelques minutes, et le résultat
+se garde.
+
+**L'événement est émis pour n'importe quel objet interrogé dans l'interface**,
+donc en rafale et le plus souvent sans rapport avec ce qu'on attend : le
+gestionnaire commence par une lecture de table, pas par un calcul.
+
+**Le Journal des aventures n'existe pas sur *Forever*.**
+`Blizzard_EncounterJournal.toc` porte `## AllowLoadGameType: standard, classic`
+— pas `camelot`. Il n'y a donc aucun chemin vers « quel boss lâche cet
+objet », et de toute façon son API n'a jamais couvert que le butin de boss :
+ni le trash, ni le monde ouvert, ni le PvP, ni les métiers. La provenance d'un
+objet n'est pas accessible, point. Ce qui est accessible est l'objet lui-même,
+et il suffit à filtrer par emplacement, niveau, stats et type d'armure.
+
+**Les effets « à l'équipement » de vanilla ne sont pas des stats.**
+« Augmente votre chance de toucher de 1 % » est un sort attaché à l'objet :
+`GetItemStats` n'en rend rien, et aucun filtre de stats ne le verra. Seule
+l'infobulle le dit.
+
+**La restriction de classe se lit dans l'infobulle.** Aucun champ ne la porte ;
+la ligne « Classes : … » de `C_TooltipInfo.GetItemByID` est le seul chemin, et
+son format est publié (`ITEM_CLASSES_ALLOWED`), ce qui permet d'en faire un
+motif juste dans toutes les langues. Les noms de classes à comparer sont dans
+`LOCALIZED_CLASS_NAMES_MALE` **et** `LOCALIZED_CLASS_NAMES_FEMALE` — le client
+écrit l'un ou l'autre.
+
+**La maîtrise d'arme et d'armure se demande au client**, pas à une table de ce
+que chaque classe porte : les maîtrises sont des sorts passifs
+(`IsPlayerSpell(750)` pour les plaques, `9077` le cuir, `201` les épées à une
+main…), et un sort que le client ne connaît pas ne doit rien filtrer.
+
+Lu par `Modules/BisIndex.lua`.

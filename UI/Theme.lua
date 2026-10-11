@@ -601,6 +601,33 @@ T.SIZE = {
     GF_STOW_BUTTON    = 16,
     GF_STOW_GAP       = 4,
 
+    -- Fenêtre de la liste BIS. Elle vit seule, hors de la fenêtre d'options :
+    -- dix-sept lignes et trois colonnes de choix ne tiennent pas dans une page.
+    --
+    -- La largeur est celle de son contenu, pas un rond : intitulé
+    -- d'emplacement, puis trois cases d'objet. La hauteur loge les dix-sept
+    -- lignes sans ascenseur — une liste d'équipement se lit d'un coup d'œil, et
+    -- la faire défiler reviendrait à cacher la moitié de ce qu'on compare.
+    BIS_WINDOW_W      = 800,
+    BIS_WINDOW_H      = 660,
+    -- Colonne des intitulés d'emplacement. « Main gauche » est le plus long.
+    BIS_SLOT_LABEL_W  = 120,
+    -- Une case d'objet : l'icône, puis le nom. Trois par ligne.
+    BIS_CELL_W        = 200,
+    BIS_CELL_H        = 26,
+    BIS_CELL_GAP      = 6,
+    BIS_ICON          = 20,
+    -- Colonne des filtres de la recherche. Elle loge un libellé et son contrôle,
+    -- comme une ligne d'option, et défile : vingt-six stats ne tiennent pas dans
+    -- la hauteur d'une fenêtre.
+    BIS_FILTER_W      = 260,
+    -- Plafond de résultats affichés. Les frames ne se détruisent pas (règle 7) :
+    -- la liste réutilise ses lignes et n'en bâtit jamais plus. Cent résultats
+    -- triés par niveau d'objet contiennent toujours celui qu'on cherche ; au-delà,
+    -- on affine le filtre, on ne fait pas défiler.
+    BIS_RESULT_MAX    = 100,
+    BIS_RESULT_H      = 24,
+
     -- Rangée de ressource de classe : points de combo, puissance sacrée, chi,
     -- fragments d'âme, runes, cumuls d'Arme-tempête.
     --
@@ -842,6 +869,19 @@ T.TIMING = {
                             -- L'événement qui la déclenche est émis pour
                             -- n'importe quel objet interrogé dans l'interface,
                             -- donc en rafale et sans rapport avec la fiche
+
+    -- Battement de l'indexation des objets (`Modules/BisIndex.lua`). Il sert
+    -- deux passes qui ne coûtent pas la même chose : le balayage de la table
+    -- d'objets du client, qui est local et pourrait aller dix fois plus vite,
+    -- et les demandes de fiches au serveur, qui font décrocher le client dès
+    -- qu'on les enchaîne. C'est la seconde qui fixe la valeur — la première ne
+    -- perd que deux secondes à l'adopter aussi.
+    BIS_TICK      = 0.1,
+
+    -- Cadence à laquelle l'indexation dit où elle en est. Le battement est dix
+    -- fois plus rapide : un nombre qui change deux fois par seconde se lit
+    -- comme un travail en cours, dix fois par seconde comme un scintillement.
+    BIS_ANNOUNCE  = 0.5,
 
     CDM_SETTLE    = 0.15,   -- second passage sur le gestionnaire de temps de
                             -- recharge. Une amélioration qui tombe s'efface en
@@ -2148,6 +2188,12 @@ T.TEXTURE = {
     -- à l'écrire. Ronde, celle de la minicarte juste au-dessus déborderait
     -- dans les coins.
     ICON_HIGHLIGHT    = "Interface\\Buttons\\ButtonHilight-Square",
+
+    -- L'icône de ce qu'on n'a pas encore choisi, et de ce dont le client ne
+    -- publie pas l'illustration. Celle du client lui-même pour un objet
+    -- inconnu : un carré vide se lirait comme un défaut d'affichage, un point
+    -- d'interrogation se lit comme une question.
+    QUESTION_MARK     = "Interface\\Icons\\INV_Misc_QuestionMark",
 
     -- Logo de l'addon, également déclaré comme icône du compartiment d'addons
     -- dans le `.toc`. Son disque alpha est **cuit dans la texture** : le trou de

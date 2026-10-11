@@ -553,6 +553,27 @@ SlashCmdList["BSHAMELUI"] = function(msg)
         return
     end
 
+    -- `/bui bis` : pourquoi la liste BIS ne trouve rien. L'index ne se voit pas
+    -- depuis le jeu — ni ce que le client lui donne, ni ce qu'il en garde — et
+    -- trois pannes très différentes y donnent la même liste vide. Le module
+    -- n'existe que sur *Forever* : ailleurs, la sonde dit simplement qu'elle
+    -- n'a rien à sonder.
+    --
+    -- **Celle-ci ne demande pas que le module tourne**, contrairement aux
+    -- autres : il est en avant-première, donc il ne s'allume jamais, et une
+    -- sonde qui exigerait qu'il tourne ne répondrait justement pas à la
+    -- question qui le tient grisé. Rien de ce qu'elle lit n'a besoin de lui —
+    -- elle interroge le client, et regarde ce que l'index en a retenu.
+    if arg == "bis" then
+        local mod = registry["BisList"]
+        if mod and mod.DiagnoseIndex then
+            BUI.safecall(mod.DiagnoseIndex, mod)
+        else
+            BUI:Print(L["BIS diagnostic unavailable"])
+        end
+        return
+    end
+
     -- `/bui cadres` : pourquoi la barre de la cible ou du focus n'a pas la
     -- couleur de sa classe. Trois causes qui donnent la même barre verte.
     if arg == "cadres" or arg == "frames" then

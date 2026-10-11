@@ -258,6 +258,19 @@ read_globals = {
     "C_SkillInfo", "C_TradeSkillUI", "GetProfessions", "GetProfessionInfo",
     "LOCALIZED_CLASS_NAMES_MALE",
 
+    -- Index des objets de la liste BIS (Forever). `GetItemInfo` est la globale
+    -- qui sert de repli à `C_Item.GetItemInfo`, comme partout ailleurs.
+    -- `ITEM_CLASSES_ALLOWED` est le format de la ligne « Classes : … » d'une
+    -- infobulle : on le lit pour en faire un motif, plutôt que d'écrire le
+    -- nôtre dans chaque langue. Le nom **féminin** de la classe du joueur est
+    -- la moitié qui manquait pour reconnaître cette ligne : le client écrit
+    -- l'un ou l'autre. (`IsPlayerSpell`, qui répond sur les sorts de maîtrise
+    -- d'arme et d'armure, est déjà cité plus haut.)
+    "GetItemInfo", "ITEM_CLASSES_ALLOWED", "LOCALIZED_CLASS_NAMES_FEMALE",
+    -- Maj + clic sur une case de la liste BIS : le lien part dans la zone de
+    -- saisie du chat, s'il y en a une d'ouverte.
+    "ChatEdit_InsertLink",
+
     -- Ramassage rapide
     "GetNumLootItems", "LootSlot",
 

@@ -282,6 +282,9 @@ BUI:RegisterLocale("enUS", {
     ["Compact game menu tip"]          = "Scales down the menu opened with Escape, which the client draws very large.",
     ["Game menu scale"]                = "Menu size",
     ["Game menu scale tip"]            = "Size of the Escape menu, as a percentage of the client's own.",
+    -- Module Queue (`Modules/Queue.lua`), chargé sur les deux clients. Ces clés
+    -- ont vécu sous « Général » puis « Recherche de groupe » : elles sont restées
+    -- ici, là où le fichier les avait rangées.
     ["Queues"]                         = "Queues",
     ["Queue popup timer"]              = "Show a timer on queue popups",
     ["Queue popup timer tip"] =
@@ -973,6 +976,7 @@ BUI:RegisterLocale("enUS", {
     ["Name diagnostic"]                = "Name diagnostic:",
     ["Sheet diagnostic"]               = "Character sheet diagnostic:",
     ["Sheet diagnostic unavailable"]   = "The Character sheet module is not running.",
+    ["BIS diagnostic unavailable"]     = "The BIS list module is not running.",
     ["No enchantable slot"]            = "No enchantable slot carries an item.",
 
     ["Auras paused"]                   = "Paused while size and offsets get fixed.",
@@ -1368,4 +1372,122 @@ BUI:RegisterLocale("enUS", {
     ["Emote watch"]                    = "Emote watch:",
     ["Emote seen"]                     = "emote:",
     ["Emote module unavailable"]       = "The Emotes module is not running.",
+
+    -- Module BisList (Forever) : la page, la fenêtre, la recherche.
+    ["BIS list"]                       = "BIS list",
+    ["Enable the BIS list"]            = "Keep a BIS list",
+    ["Enable the BIS list tip"] =
+        "Ctrl + left-click on the minimap button opens it. Ticking this also builds the "
+        .. "item index the search needs.",
+    ["Open the BIS list"]              = "Open the BIS list",
+    ["Open"]                           = "Open",
+    ["Open the BIS list tip"] =
+        "One line per slot, three picks each. Ctrl + left-click on the minimap button "
+        .. "opens it too.",
+    -- Ligne rouge et non infobulle : la surprise arrive en jeu, pas au survol.
+    ["BIS index filling"] =
+        "The item index fills over a few minutes: a search made right away may miss items.",
+    ["Item index"]                     = "Item index",
+    ["Rebuild the index"]              = "Rebuild the item index",
+    ["Rebuild"]                        = "Rebuild",
+    ["Rebuild the index tip"] =
+        "Throws the index away and looks at every item again. Only useful if you think it "
+        .. "has gone stale.",
+    ["Rebuild the index confirm"]      = "Rebuild the item index from scratch?",
+
+    ["BIS rank"]                       = "BIS %d",
+    ["Choose an item"]                 = "Choose…",
+    ["Empty pick"]                     = "Nothing picked",
+    ["Empty pick tip"]                 = "Left-click to search for an item.",
+    ["Unknown item"]                   = "Item %d",
+    ["Index ready"]                    = "%d items indexed.",
+    -- Écrit dans le chat, une seule fois, et seulement quand la passe a
+    -- vraiment travaillé : c'est le seul « c'est prêt » qu'on reçoive sans
+    -- avoir la fenêtre sous les yeux.
+    ["Index done"]                     = "Item index ready: %d items.",
+    -- `/bui bis` : la sonde de l'index. Les noms de champs qu'elle écrit sont
+    -- ceux de l'API et ne se traduisent pas ; seules ces deux lignes-là sont
+    -- des phrases.
+    ["BIS diagnostic"]                 = "BIS index diagnostic:",
+    ["Nothing equipped"]               = "This character is wearing nothing to compare against.",
+    ["No"]                             = "No",
+    ["Still indexing suffix"]          = " — the index is still filling",
+    ["Index sweeping"]                 = "Reading the client item table: %d / %d.",
+    ["Index loading"]                  = "Loading item data: %d / %d.",
+    ["Index idle"]                     = "The item index has not been built yet.",
+
+    ["Back to list"]                   = "Back to the list",
+    ["Slot"]                           = "Slot",
+    ["Any slot"]                       = "Any slot",
+    ["Slot filter tip"]                = "Only items that go in this slot.",
+    ["Armor type"]                     = "Armor type",
+    ["Any armor type"]                 = "Any armor type",
+    ["Armor type tip"]                 = "Cloth, leather, mail, plate or shield.",
+    ["Required level at most"]         = "Required level at most",
+    ["Required level at most tip"] =
+        "Hides items you could not wear before that level. Leave empty for no limit.",
+    ["Item level"]                     = "Item level",
+    ["Item level filter tip"] =
+        "At least the left number, at most the right one. Leave a box empty for no limit.",
+    ["Equippable only"]                = "This character can wear it",
+    ["Equippable only tip"] =
+        "Drops what your class cannot use: wrong armour, wrong weapon, class-locked items.",
+    ["Name contains"]                  = "Name contains",
+    ["Name contains hint"]             = "Part of a name…",
+    ["Wanted stats"]                   = "Wanted stats",
+    ["No item matches"]                = "No item matches these filters.",
+    ["Indexing in progress"]           = "The index is still filling.",
+    ["Results count"]                  = "%d items",
+    ["Results capped"]                 = "Best %d of %d items",
+    ["Item row levels"]                = "ilvl %d · lvl %d",
+
+    -- Intitulés des dix-sept lignes. Les nôtres et non ceux du client : deux
+    -- portent un numéro, que le client n'écrit nulle part.
+    ["Head"]                           = "Head",
+    ["Neck"]                           = "Neck",
+    ["Shoulder"]                       = "Shoulder",
+    ["Back"]                           = "Back",
+    ["Chest"]                          = "Chest",
+    ["Wrist"]                          = "Wrist",
+    ["Hands"]                          = "Hands",
+    ["Waist"]                          = "Waist",
+    ["Legs"]                           = "Legs",
+    ["Feet"]                           = "Feet",
+    ["Ring 1"]                         = "Ring 1",
+    ["Ring 2"]                         = "Ring 2",
+    ["Trinket 1"]                      = "Trinket 1",
+    ["Trinket 2"]                      = "Trinket 2",
+    ["Main hand"]                      = "Main hand",
+    ["Off hand"]                       = "Off hand",
+    ["Ranged"]                         = "Ranged",
+
+    -- Replis des intitulés de stats : le client les publie sous ces noms-là
+    -- (`ITEM_MOD_STRENGTH_SHORT`…), et c'est lui qu'on lit en premier. Ces
+    -- clés ne servent que le jour où il ne les publierait plus.
+    ["Strength"]                       = "Strength",
+    ["Agility"]                        = "Agility",
+    ["Stamina"]                        = "Stamina",
+    ["Intellect"]                      = "Intellect",
+    ["Spirit"]                         = "Spirit",
+    ["Armor"]                          = "Armor",
+    ["Attack power"]                   = "Attack power",
+    ["Ranged attack power"]            = "Ranged attack power",
+    ["Spell power"]                    = "Spell power",
+    ["Spell penetration"]              = "Spell penetration",
+    ["Critical strike"]                = "Critical strike",
+    ["Hit"]                            = "Hit",
+    ["Haste"]                          = "Haste",
+    ["Mana per 5 sec"]                 = "Mana per 5 sec",
+    ["Health per 5 sec"]               = "Health per 5 sec",
+    ["Defense"]                        = "Defense",
+    ["Dodge"]                          = "Dodge",
+    ["Parry"]                          = "Parry",
+    ["Block"]                          = "Block",
+    ["Block value"]                    = "Block value",
+    ["Holy resistance"]                = "Holy resistance",
+    ["Fire resistance"]                = "Fire resistance",
+    ["Nature resistance"]              = "Nature resistance",
+    ["Frost resistance"]               = "Frost resistance",
+    ["Shadow resistance"]              = "Shadow resistance",
+    ["Arcane resistance"]              = "Arcane resistance",
 })

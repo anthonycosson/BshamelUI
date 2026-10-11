@@ -56,6 +56,10 @@ UI\Widgets\ColorSwatch.lua
 # Elle ne dépend que du thème : rangée ici, près des autres pièces de la fabrique.
 UI\Widgets\PlatePreview.lua
 UI\Widgets\Dropdown.lua
+# Les bornes d'un filtre — un nombre, ou rien. Nées dans le panneau de la
+# recherche de groupe, sorties le jour où la recherche de la liste BIS a voulu
+# les mêmes cases. Avant les deux, qui s'en servent.
+UI\Widgets\NumberBox.lua
 UI\Widgets\ScrollList.lua
 UI\Widgets\MinimapButton.lua
 UI\Widgets\Tray.lua
@@ -93,6 +97,12 @@ UI\Widgets\ResourceBar.lua
 # ici pour rester à côté des pièces de la même page.
 UI\Widgets\KeyThresholds.lua
 UI\Widgets\GroupFilterPanel.lua
+# La liste BIS : sa fenêtre assemble la recherche, qui charge donc d'abord.
+# Chargées sur les deux clients comme tout `UI/` — c'est le `.toc` du module qui
+# choisit le client, jamais un `if` (CLAUDE.md §1) ; une pièce que personne
+# n'instancie ne coûte rien.
+UI\Widgets\BisSearch.lua
+UI\Widgets\BisWindow.lua
 # La fenêtre de copie assemble une fenêtre et une zone défilante : elle vient
 # après les deux.
 UI\Widgets\CopyWindow.lua
@@ -149,6 +159,10 @@ Modules\RaidCooldowns.lua [AllowLoadGameType standard]
 # moteur agit.
 Modules\BuffTrackerData.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 Modules\BuffTracker.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
+# La liste BIS. L'index des objets sait, le module décide : l'index charge
+# d'abord, le module le récupère dans `ns` au moment où il s'écrit.
+Modules\BisIndex.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
+Modules\BisList.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 # Les bugs de la bêta de Forever, rattrapés en attendant que Blizzard corrige.
 Modules\Beta.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 # Suivi des temps restants : le vol et le craft, sur une seule page. Elle
@@ -168,4 +182,6 @@ Modules\Emotes.lua [AllowLoadGameType standard]
 # `Modules/Upcoming.lua` a disparu : un module annoncé n'est plus une déclaration
 # sans code, c'est son propre fichier avec `preview = true` en tête. Le core
 # refuse alors de l'allumer, et sa page s'affiche grisée. Retirer cette ligne est
-# le seul geste qui la livre — plus aucun module n'en porte aujourd'hui.
+# le seul geste qui la livre — `BisList` est le seul à en porter aujourd'hui, le
+# temps de vérifier en jeu que le client publie bien sa table d'objets
+# (`/bui bis`, qui reste utilisable module grisé).

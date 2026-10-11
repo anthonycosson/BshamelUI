@@ -285,6 +285,7 @@ BUI:RegisterLocale("frFR", {
         "Rapetisse le menu ouvert par Échap, que le client dessine très grand.",
     ["Game menu scale"]                = "Taille du menu",
     ["Game menu scale tip"]            = "Taille du menu Échap, en pourcentage de celle du client.",
+    -- Module Queue (`Modules/Queue.lua`), chargé sur les deux clients.
     ["Queues"]                         = "Files d'attente",
     ["Queue popup timer"]              = "Afficher un minuteur sur les fenêtres de file",
     ["Queue popup timer tip"] =
@@ -982,6 +983,7 @@ BUI:RegisterLocale("frFR", {
     ["Name diagnostic"]                = "Diagnostic des noms :",
     ["Sheet diagnostic"]               = "Diagnostic de la fiche :",
     ["Sheet diagnostic unavailable"]   = "Le module Fiche de personnage ne tourne pas.",
+    ["BIS diagnostic unavailable"]     = "Le module Liste BIS ne tourne pas.",
     ["No enchantable slot"]            = "Aucun emplacement enchantable ne porte d'objet.",
 
     ["Auras paused"]                   = "En pause, le temps de régler la taille et les décalages.",
@@ -1401,4 +1403,114 @@ BUI:RegisterLocale("frFR", {
     ["Emote watch"]                    = "Veille des emotes :",
     ["Emote seen"]                     = "emote :",
     ["Emote module unavailable"]       = "Le module Emotes ne tourne pas.",
+
+    -- Module BisList (Forever)
+    ["BIS list"]                       = "Liste BIS",
+    ["Enable the BIS list"]            = "Tenir une liste BIS",
+    ["Enable the BIS list tip"] =
+        "Ctrl + clic gauche sur le bouton de la minicarte l'ouvre. Cocher cette case bâtit "
+        .. "aussi l'index des objets dont la recherche a besoin.",
+    ["Open the BIS list"]              = "Ouvrir la liste BIS",
+    ["Open"]                           = "Ouvrir",
+    ["Open the BIS list tip"] =
+        "Une ligne par emplacement, trois choix chacune. Ctrl + clic gauche sur le bouton "
+        .. "de la minicarte l'ouvre aussi.",
+    ["BIS index filling"] =
+        "L'index des objets se remplit en quelques minutes : une recherche faite tout de "
+        .. "suite peut ne pas tout trouver.",
+    ["Item index"]                     = "Index des objets",
+    ["Rebuild the index"]              = "Reconstruire l'index des objets",
+    ["Rebuild"]                        = "Reconstruire",
+    ["Rebuild the index tip"] =
+        "Jette l'index et repasse sur tous les objets. Utile seulement si vous le croyez "
+        .. "périmé.",
+    ["Rebuild the index confirm"]      = "Reconstruire l'index des objets de zéro ?",
+
+    ["BIS rank"]                       = "BIS %d",
+    ["Choose an item"]                 = "Choisir…",
+    ["Empty pick"]                     = "Rien de choisi",
+    ["Empty pick tip"]                 = "Clic gauche pour chercher un objet.",
+    ["Unknown item"]                   = "Objet %d",
+    ["Index ready"]                    = "%d objets indexés.",
+    ["Index done"]                     = "Index des objets prêt : %d objets.",
+    ["BIS diagnostic"]                 = "Diagnostic de l'index BIS :",
+    ["Nothing equipped"]               = "Ce personnage ne porte rien à quoi se comparer.",
+    ["No"]                             = "Non",
+    ["Still indexing suffix"]          = " — l'index se remplit encore",
+    ["Index sweeping"]                 = "Lecture de la table d'objets du client : %d / %d.",
+    ["Index loading"]                  = "Chargement des fiches d'objets : %d / %d.",
+    ["Index idle"]                     = "L'index des objets n'a pas encore été bâti.",
+
+    ["Back to list"]                   = "Retour à la liste",
+    ["Slot"]                           = "Emplacement",
+    ["Any slot"]                       = "Tous les emplacements",
+    ["Slot filter tip"]                = "Seulement les objets qui vont à cet emplacement.",
+    ["Armor type"]                     = "Type d'armure",
+    ["Any armor type"]                 = "Tous les types",
+    ["Armor type tip"]                 = "Tissu, cuir, mailles, plaques ou bouclier.",
+    ["Required level at most"]         = "Niveau requis au plus",
+    ["Required level at most tip"] =
+        "Masque les objets qu'on ne pourrait pas porter avant ce niveau. Vide = sans limite.",
+    ["Item level"]                     = "Niveau d'objet",
+    ["Item level filter tip"] =
+        "Au moins le nombre de gauche, au plus celui de droite. Une case vide ne borne rien.",
+    ["Equippable only"]                = "Ce personnage peut le porter",
+    ["Equippable only tip"] =
+        "Écarte ce que la classe ne sait pas utiliser : mauvaise armure, mauvaise arme, "
+        .. "objet réservé.",
+    ["Name contains"]                  = "Le nom contient",
+    ["Name contains hint"]             = "Une partie du nom…",
+    ["Wanted stats"]                   = "Stats voulues",
+    ["No item matches"]                = "Aucun objet ne correspond à ces filtres.",
+    ["Indexing in progress"]           = "L'index est encore en train de se remplir.",
+    ["Results count"]                  = "%d objets",
+    ["Results capped"]                 = "Les %d meilleurs sur %d objets",
+    ["Item row levels"]                = "ilvl %d · niv %d",
+
+    ["Head"]                           = "Tête",
+    ["Neck"]                           = "Cou",
+    ["Shoulder"]                       = "Épaules",
+    ["Back"]                           = "Dos",
+    ["Chest"]                          = "Torse",
+    ["Wrist"]                          = "Poignets",
+    ["Hands"]                          = "Mains",
+    ["Waist"]                          = "Taille",
+    ["Legs"]                           = "Jambes",
+    ["Feet"]                           = "Pieds",
+    ["Ring 1"]                         = "Anneau 1",
+    ["Ring 2"]                         = "Anneau 2",
+    ["Trinket 1"]                      = "Bijou 1",
+    ["Trinket 2"]                      = "Bijou 2",
+    ["Main hand"]                      = "Main droite",
+    ["Off hand"]                       = "Main gauche",
+    ["Ranged"]                         = "Distance",
+
+    -- Replis des intitulés de stats : le client les publie, et c'est lui qu'on
+    -- lit en premier. Ces clés ne servent que s'il cessait de le faire.
+    ["Strength"]                       = "Force",
+    ["Agility"]                        = "Agilité",
+    ["Stamina"]                        = "Endurance",
+    ["Intellect"]                      = "Intelligence",
+    ["Spirit"]                         = "Esprit",
+    ["Armor"]                          = "Armure",
+    ["Attack power"]                   = "Puissance d'attaque",
+    ["Ranged attack power"]            = "Puissance d'attaque à distance",
+    ["Spell power"]                    = "Puissance des sorts",
+    ["Spell penetration"]              = "Pénétration des sorts",
+    ["Critical strike"]                = "Critique",
+    ["Hit"]                            = "Toucher",
+    ["Haste"]                          = "Hâte",
+    ["Mana per 5 sec"]                 = "Mana par 5 secondes",
+    ["Health per 5 sec"]               = "Vie par 5 secondes",
+    ["Defense"]                        = "Défense",
+    ["Dodge"]                          = "Esquive",
+    ["Parry"]                          = "Parade",
+    ["Block"]                          = "Blocage",
+    ["Block value"]                    = "Valeur de blocage",
+    ["Holy resistance"]                = "Résistance au Sacré",
+    ["Fire resistance"]                = "Résistance au Feu",
+    ["Nature resistance"]              = "Résistance à la Nature",
+    ["Frost resistance"]               = "Résistance au Givre",
+    ["Shadow resistance"]              = "Résistance à l'Ombre",
+    ["Arcane resistance"]              = "Résistance aux Arcanes",
 })
