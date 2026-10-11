@@ -153,6 +153,10 @@ Modules\AuctionHouse.lua [AllowLoadGameType standard]
 Modules\Quest.lua
 Modules\Keystones.lua [AllowLoadGameType standard]
 Modules\GroupFinder.lua [AllowLoadGameType standard]
+# Le minuteur des fenêtres de file, sorti de la ligne du dessus : il surveille
+# une fenêtre de champ de bataille que *Forever* a, alors que la recherche de
+# groupe elle-même n'y est pas. Chargé partout, donc sans directive.
+Modules\Queue.lua
 Modules\Teleports.lua [AllowLoadGameType standard]
 Modules\RaidCooldowns.lua [AllowLoadGameType standard]
 # Sur Forever, le suivi des buffs prend sa place : la page décrit, puis le

@@ -45,7 +45,7 @@ local U   = BUI.Util
 local DB = {}
 BUI.DB = DB
 
-local SCHEMA_VERSION   = 18
+local SCHEMA_VERSION   = 19
 local DEFAULT_PROFILE  = "Default"
 
 --- moduleName -> table de défauts (référence, pas une copie)
@@ -702,6 +702,34 @@ function DB:RunMigrations()
             if timer then timer.splits = nil end
         end
         from = 18
+    end
+
+    -- Palier 19 — le minuteur des fenêtres de file quitte « Recherche de
+    -- groupe » pour sa propre page, « Files d'attente ». Troisième adresse du
+    -- même réglage, et la dernière : les deux premières étaient des pages qui
+    -- ne chargent pas sur *Forever*, où les fenêtres qu'il surveille existent
+    -- pourtant (voir `Modules/Queue.lua`).
+    --
+    -- Même précaution qu'au palier 7, dont celui-ci est la suite : « Recherche
+    -- de groupe » éteinte tenait le minuteur éteint, et on ne le rallume pas en
+    -- le déplaçant sur une page qui, elle, est allumée.
+    if from < 19 then
+        for _, profile in pairs(BshamelUIDB.profiles) do
+            local modules = profile.modules
+            local finder  = modules and modules.GroupFinder
+
+            if finder and finder.queueTimer ~= nil then
+                local moved = modules.Queue or {}
+
+                if moved.queueTimer == nil then
+                    moved.queueTimer = finder.enabled ~= false and finder.queueTimer or false
+                end
+                finder.queueTimer = nil
+
+                if next(moved) then modules.Queue = moved end
+            end
+        end
+        from = 19
     end
 
     BshamelUIDB.schema = math.max(from, SCHEMA_VERSION)

@@ -3,6 +3,14 @@
 ## Non publié
 
 ### Ajouté
+- **Files d'attente**, nouvelle page (Qualité de vie), sur les deux clients.
+  Elle ne porte qu'un réglage, le minuteur posé sur la fenêtre qui annonce une
+  instance ou un champ de bataille — celle qui se referme toute seule sans
+  jamais dire quand.
+- Le minuteur existait déjà, mais il vivait dans *Recherche de groupe*, qui ne
+  charge pas sur *Forever* : il y était donc **introuvable**, alors que la
+  fenêtre de champ de bataille, elle, y existe. Il est maintenant partout, et
+  votre réglage suit tout seul.
 - **Liste BIS**, nouvelle page (Outils), sur *Forever* — **annoncée, grisée**.
   Elle est écrite en entier, elle ne s'allume pas : l'index des objets dont sa
   recherche se nourrit repose sur une capacité du client qui reste à vérifier,
