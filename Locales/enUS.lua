@@ -1280,6 +1280,10 @@ BUI:RegisterLocale("enUS", {
     ["Lock missing tracking tip"] =
         "Freezes the frame where it is and puts its resize handle away. Drag the frame to "
         .. "move it, drag its bottom-right corner to resize it.",
+    ["Hide missing tracking in battlegrounds"] = "Hide in battlegrounds",
+    ["Hide missing tracking in battlegrounds tip"] =
+        "No node counts in a battleground: the frame stays hidden there, and comes back "
+        .. "when you leave. The preview still shows it.",
     -- Le cadre n'écrit rien : ces deux-là titrent l'infobulle d'une icône, et
     -- c'est le seul endroit où le suivi manquant se nomme.
     ["Herb tracking off"]              = "Herb tracking is off",

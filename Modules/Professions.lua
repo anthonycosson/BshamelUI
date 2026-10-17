@@ -107,6 +107,20 @@ local function trackingState(spells)
     return false, false
 end
 
+--- Le type d'instance que le client donne à un champ de bataille.
+local BATTLEGROUND_INSTANCE = "pvp"
+
+--- Sommes-nous dans un champ de bataille ? Aucun nœud n'y compte : un suivi
+--- éteint là-dedans n'est pas un oubli à signaler.
+---
+--- Le type arrive du client : il se teste après `U.IsSecret`, jamais avant.
+---@return boolean
+local function inBattleground()
+    local _, instanceType = IsInInstance()
+    if U.IsSecret(instanceType) then return false end
+    return instanceType == BATTLEGROUND_INSTANCE
+end
+
 -- =========================================================================
 --  Le cadre
 -- =========================================================================
@@ -125,7 +139,9 @@ local badge
 ---@param job table
 ---@return boolean
 local function jobShown(mod, job)
+    -- L'aperçu passe devant : il sert à placer le cadre, où que l'on soit.
     if mod:Get("preview") then return true end
+    if mod:Get("hideInBattleground") and inBattleground() then return false end
 
     local known, active = trackingState(TRACKING_SPELLS[job.key])
     return known and not active
@@ -233,6 +249,7 @@ BUI:RegisterModule(MODULE, {
         showBadge = false,
         preview   = false,
         lockBadge = false,
+        hideInBattleground = false,
         -- Position du cadre, en décalage de centre à centre, et son échelle.
         -- Réglages sans contrôle dans la page : ils se changent en faisant
         -- glisser le cadre, ou en tirant son coin.
@@ -265,6 +282,13 @@ BUI:RegisterModule(MODULE, {
             tooltip  = L["Lock missing tracking tip"],
             disabled = requires("showBadge"),
         },
+        {
+            type     = "toggle",
+            key      = "hideInBattleground",
+            text     = L["Hide missing tracking in battlegrounds"],
+            tooltip  = L["Hide missing tracking in battlegrounds tip"],
+            disabled = requires("showBadge"),
+        },
     },
 
     OnEnable = function(self)
@@ -279,7 +303,8 @@ BUI:RegisterModule(MODULE, {
         self:RegisterEvent("SPELLS_CHANGED", queueRefresh)
 
         -- La liste n'est pas remplie avant l'entrée en jeu, et un rechargement
-        -- à chaud passe par là lui aussi.
+        -- à chaud passe par là lui aussi. C'est aussi l'entrée et la sortie
+        -- d'un champ de bataille.
         self:RegisterEvent("PLAYER_ENTERING_WORLD", queueRefresh)
 
     end,

@@ -1307,6 +1307,10 @@ BUI:RegisterLocale("frFR", {
     ["Lock missing tracking tip"] =
         "Fige le cadre où il est et range sa poignée. Faites-le glisser pour le "
         .. "déplacer, tirez son coin bas-droit pour le redimensionner.",
+    ["Hide missing tracking in battlegrounds"] = "Masquer en champ de bataille",
+    ["Hide missing tracking in battlegrounds tip"] =
+        "Aucun nœud ne compte en champ de bataille : le cadre y reste caché, et revient "
+        .. "à la sortie. L'aperçu, lui, l'affiche quand même.",
     -- Mot pour mot ce que le menu de suivi de la minicarte affiche : c'est là
     -- qu'il faudra aller si l'on préfère cocher soi-même, et un titre qui
     -- nommerait autrement ce qu'on cherche ferait chercher.
