@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.11 — 2026-10-17
+
 ### Ajouté
 - **Métiers** (*Forever*) : une case **Masquer en champ de bataille**. Le
   cadre qui signale un suivi de récolte éteint s'y tait — aucun nœud n'y
