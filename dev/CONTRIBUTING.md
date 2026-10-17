@@ -35,7 +35,7 @@ verdict — sans `luac5.1`, il se rabat sur ce qu'il trouve, ou ne vérifie rien
 
 [LuaBinaries]: https://sourceforge.net/projects/luabinaries/files/5.1.5/Tools%20Executables/
 
-## Avant d'ouvrir une merge request
+## Avant d'ouvrir une pull request
 
 1. `luacheck .` passe.
 2. `bash dev/scripts/check-design.sh` passe.
