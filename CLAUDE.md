@@ -209,6 +209,8 @@ C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI
 Une seconde jonction, identique, part de
 `_classic_beta_\Interface\AddOns\BshamelUI` (bêta de Forever).
 
+Installation sur un nouvel ordinateur : `dev/docs/SETUP.md`.
+
 Éditer le dépôt, `/reload` en jeu, c'est tout.
 
 **Règle de rangement :** tout ce qui ne part pas chez le joueur vit sous

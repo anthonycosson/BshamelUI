@@ -17,6 +17,9 @@ un seul addon, un seul dossier, zéro dépendance.
 
 ## 1. Où vit le code
 
+> Nouvel ordinateur ? Le pas-à-pas complet — clone, jonction, outils de
+> vérification — est dans [dev/docs/SETUP.md](dev/docs/SETUP.md).
+
 Le dépôt **est** le dossier d'addon. Il n'y a pas de copie, pas de build à
 lancer pour tester : le jeu lit directement les fichiers du dépôt, grâce à une
 jonction NTFS posée une fois pour toutes.
@@ -208,6 +211,7 @@ utilise le `GITHUB_TOKEN` fourni automatiquement par Actions : rien à configure
 
 | Je veux… | Fichier |
 |---|---|
+| Installer le dépôt sur un nouvel ordinateur | [dev/docs/SETUP.md](dev/docs/SETUP.md) |
 | Comprendre l'architecture du code | [dev/docs/ARCHITECTURE.md](dev/docs/ARCHITECTURE.md) |
 | Ajouter une option ou un widget | [dev/docs/DESIGN.md](dev/docs/DESIGN.md) |
 | Savoir pourquoi un truc bizarre est écrit ainsi | [dev/docs/API_NOTES.md](dev/docs/API_NOTES.md) |

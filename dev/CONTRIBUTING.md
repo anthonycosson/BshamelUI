@@ -20,6 +20,9 @@ problème est parfaitement légitime : notez la trouvaille dans
 
 ## Outillage
 
+L'installation complète d'un poste de développement est décrite dans
+[docs/SETUP.md](docs/SETUP.md). Ce qui suit en reprend le point délicat.
+
 `check-design.sh` compile chaque fichier avec le Lua du client — **5.1**, dont
 les plafonds par fonction sont plus bas que ceux des versions récentes. Un
 `luac` moderne ne lève pas cette erreur-là : il faut celui de cette version. Le
