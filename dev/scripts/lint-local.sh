@@ -11,8 +11,8 @@
 #    4. garde-fous de design            — les règles de CLAUDE.md
 #
 #  luacheck n'est pas utilisé en local : il dépend de luafilesystem, qui exige
-#  un compilateur C sous Windows. Il tourne dans la CI, où l'image Alpine en a
-#  un. lua-language-server couvre le même besoin sans compilation — sauf
+#  un compilateur C sous Windows. Il tourne dans la CI GitHub Actions, où le
+#  runner Ubuntu en a un. lua-language-server couvre le même besoin sans compilation — sauf
 #  `max_line_length`, d'où la passe 3. Sans elle, une ligne trop longue passe
 #  ici et fait échouer la CI : un avertissement luacheck y est fatal.
 #
@@ -22,14 +22,19 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
-LUAC="${LUAC:-$LOCALAPPDATA/Programs/Lua/bin/luac.exe}"
-LLS="${LLS:-$LOCALAPPDATA/Microsoft/WinGet/Packages/LuaLS.lua-language-server_Microsoft.Winget.Source_8wekyb3d8bbwe/bin/lua-language-server.exe}"
+LUAC="${LUAC:-${LOCALAPPDATA:-}/Programs/Lua/bin/luac.exe}"
+LLS="${LLS:-${LOCALAPPDATA:-}/Microsoft/WinGet/Packages/LuaLS.lua-language-server_Microsoft.Winget.Source_8wekyb3d8bbwe/bin/lua-language-server.exe}"
 
 FAILED=0
 
 echo "== syntaxe =="
-if [[ -x "$LUAC" ]] || command -v luac >/dev/null 2>&1; then
-    [[ -x "$LUAC" ]] || LUAC=$(command -v luac)
+# Même ordre de recherche que check-design.sh : le Lua du client est 5.1, et un
+# luac plus récent laisse passer des erreurs que le jeu, lui, lève.
+if [[ ! -x "$LUAC" ]]; then
+    LUAC=$(command -v luac5.1 || command -v luac-5.1 || command -v luac || true)
+fi
+if [[ -n "$LUAC" && -x "$LUAC" ]]; then
+    echo "  (compilateur : $LUAC)"
     while read -r file; do
         if ! out=$("$LUAC" -p "$file" 2>&1); then
             echo "  ✗ $file"

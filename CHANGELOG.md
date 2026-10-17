@@ -11,6 +11,10 @@
 - Le dépôt quitte GitLab pour GitHub : la pipeline passe sur GitHub Actions
   (`.github/workflows/ci.yml`), avec les mêmes jobs `lint` et `release`. Chaque
   version crée en plus une release GitHub avec le zip attaché.
+- Nouveau guide `dev/docs/SETUP.md` : installer le dépôt sur un nouvel
+  ordinateur, du clone au premier `/reload`. `lint-local.sh` cherche
+  désormais `luac5.1` en priorité, comme `check-design.sh`, et fonctionne
+  aussi hors Windows.
 
 ## 2.0.10 — 2026-10-11
 
