@@ -29,17 +29,21 @@ Cette partie est donc manuelle et se fait une fois pour toutes.
    C'est cette ligne, et elle seule, qui dit au packager où envoyer le fichier.
 6. Générer un jeton sur <https://authors.curseforge.com/account/api-tokens>.
 
-## Une seule fois : configurer GitLab
+## Une seule fois : configurer GitHub
 
-Dans **Settings → CI/CD → Variables** :
+Dans **Settings → Secrets and variables → Actions → New repository secret** :
 
-| Variable | Valeur | Options |
-|---|---|---|
-| `CF_API_KEY` | le jeton CurseForge | *Masked* **et** *Protected* |
+| Secret | Valeur |
+|---|---|
+| `CF_API_KEY` | le jeton CurseForge |
 
-Dans **Settings → Repository → Protected tags**, protéger le motif `v*`.
-C'est ce qui garantit que le jeton n'est jamais exposé à une pipeline de
-branche ou de merge request.
+Le workflow `.github/workflows/ci.yml` ne passe ce secret qu'au job `release`,
+qui ne tourne que sur un tag `vX.Y.Z`. Le `GITHUB_TOKEN` utilisé pour créer la
+release GitHub est fourni automatiquement.
+
+Facultatif : **Settings → Rules → Rulesets → New tag ruleset**, cible `v*`,
+règles *Restrict deletions* et *Block force pushes* — l'équivalent des tags
+protégés de l'ancien GitLab.
 
 ## À chaque version
 
@@ -65,8 +69,8 @@ Ou en une fois, si tu n'as pas besoin de relire l'aperçu :
 bash dev/scripts/tag-release.sh 0.2.0 --push
 ```
 
-La pipeline `release` prend le relais : elle construit le zip et l'envoie sur
-le projet 1631877.
+Le job `release` du workflow GitHub Actions prend le relais : il construit le
+zip, l'envoie sur le projet 1631877 et crée la release GitHub du tag.
 
 Il n'y a **jamais** de numéro de version à modifier à la main : le `.toc`
 contient `@project-version@`, que le packager remplace par le tag.
@@ -80,7 +84,7 @@ bash dev/packager/release.sh -d -o -r "$PWD/dev/build"
 `-d` désactive tout envoi, `-o` garde le dossier décompressé à côté du zip.
 Vérifier dans ce dossier que :
 
-- `CLAUDE.md`, `docs/`, `scripts/`, `.gitlab-ci.yml` **ne sont pas** présents
+- `CLAUDE.md`, `docs/`, `scripts/`, `.github/` **ne sont pas** présents
   (règle `ignore` de `.pkgmeta`) ;
 - `## Version:` a bien été substitué ;
 - `license.txt` est présent.

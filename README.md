@@ -3,7 +3,7 @@
 Suite d'améliorations d'interface pour World of Warcraft *retail*, faite maison :
 un seul addon, un seul dossier, zéro dépendance.
 
-- **Dépôt** — <https://gitlab.anthocsn.com/anthony/bshamelui>
+- **Dépôt** — <https://github.com/anthonycosson/BshamelUI> (privé)
 - **CurseForge** — projet `1631877`
 - **Jeu** — retail, `Interface: 120007` minimum
 
@@ -83,14 +83,15 @@ BshamelUI/
 │
 ├── CLAUDE.md            NON PUBLIÉ — règles du dépôt
 ├── README.md            NON PUBLIÉ — ce fichier
-└── .pkgmeta, .gitlab-ci.yml, .luacheckrc, .luarc.json, .editorconfig,
+├── .github/workflows/  NON PUBLIÉ — pipeline CI/CD
+└── .pkgmeta, .luacheckrc, .luarc.json, .editorconfig,
     .gitignore, .gitattributes
                          NON PUBLIÉ — configuration des outils
 ```
 
 **Pourquoi `CLAUDE.md`, `README.md` et les fichiers en `.` restent à la racine :**
 leurs outils les cherchent là et nulle part ailleurs. `.pkgmeta` doit être à la
-racine du dépôt pour que le packager le trouve, `.gitlab-ci.yml` pour que GitLab
+racine du dépôt pour que le packager le trouve, `.github/` pour que GitHub
 le lise, `.luarc.json` pour que l'analyseur Lua l'applique. Ils commencent tous
 par un point, donc l'explorateur Windows les masque : la racine reste lisible.
 
@@ -118,7 +119,7 @@ compression. Rien ne sort de la machine.
         ↓
   git commit && git push
         ↓
-  GitLab lance le job « lint »       ← ~12 s
+  GitHub Actions lance le job « lint »  ← ~30 s
 ```
 
 Le job `lint` tourne à **chaque** push, sur une branche comme sur un tag. Il
@@ -142,7 +143,7 @@ Une seule commande déclenche toute la chaîne :
 bash dev/scripts/tag-release.sh 0.2.0 --push
 ```
 
-Voici ce qu'elle enchaîne, et ce qui se passe ensuite côté GitLab :
+Voici ce qu'elle enchaîne, et ce qui se passe ensuite côté GitHub :
 
 ```
   dev/scripts/tag-release.sh 0.2.0
@@ -155,7 +156,7 @@ Voici ce qu'elle enchaîne, et ce qui se passe ensuite côté GitLab :
         └─ pousse (uniquement avec --push)
                 │
                 ↓
-  GitLab : pipeline sur le tag v0.2.0
+  GitHub Actions : workflow CI sur le tag v0.2.0
         │
         ├─ job « lint »      ← les mêmes vérifications, sur le code taggé
         │
@@ -168,7 +169,8 @@ Voici ce qu'elle enchaîne, et ce qui se passe ensuite côté GitLab :
               │     └─ crée BshamelUI-v0.2.0.zip
               │
               ├─ envoie le zip à CurseForge (projet 1631877) via son API
-              └─ conserve le zip en artefact GitLab pendant 30 jours
+              ├─ crée la release GitHub v0.2.0 avec le zip attaché
+              └─ conserve aussi le zip en artefact du workflow pendant 30 jours
                     │
                     ↓
               modération CurseForge (quelques minutes à 3 jours ouvrés)
@@ -191,18 +193,16 @@ conscient.
 
 Un seul secret est en jeu : le jeton de l'API CurseForge.
 
-Il vit dans **GitLab → Settings → CI/CD → Variables**, sous le nom `CF_API_KEY`,
-avec deux cases cochées qui doivent l'être **ensemble** :
+Il vit dans **GitHub → Settings → Secrets and variables → Actions**, comme
+*repository secret* nommé `CF_API_KEY`. GitHub le masque automatiquement dans
+les logs.
 
-- **Masquée** — le jeton n'apparaît jamais dans les logs de job.
-- **Protégée** — le jeton n'est exposé qu'aux branches et tags *protégés*.
+Le workflow ne l'expose qu'au job `release`, qui ne tourne que sur un tag
+`vX.Y.Z` — jamais sur une branche, jamais sur une pull request. Les secrets ne
+sont de toute façon jamais transmis aux pull requests venant d'un fork.
 
-Le motif de tags `v*` est protégé dans **Settings → Repository → Protected
-tags**. C'est ce qui fait le lien : sans cette protection, le job `release` ne
-verrait pas `CF_API_KEY` et publierait dans le vide.
-
-Le jeton n'est écrit nulle part dans le dépôt, et le job qui l'utilise ne tourne
-que sur un tag — jamais sur une branche, jamais sur une merge request.
+Le jeton n'est écrit nulle part dans le dépôt. La création de la release GitHub
+utilise le `GITHUB_TOKEN` fourni automatiquement par Actions : rien à configurer.
 
 ## 6. Où se trouve quoi
 

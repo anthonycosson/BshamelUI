@@ -2,6 +2,11 @@
 
 ## Non publié
 
+### Interne
+- Le dépôt quitte GitLab pour GitHub : la pipeline passe sur GitHub Actions
+  (`.github/workflows/ci.yml`), avec les mêmes jobs `lint` et `release`. Chaque
+  version crée en plus une release GitHub avec le zip attaché.
+
 ## 2.0.10 — 2026-10-11
 
 ### Ajouté

@@ -1,17 +1,17 @@
 ﻿---
 name: buidev
-description: Enregistre le travail en cours de l'addon Bshamel UI sur GitLab, sans rien publier sur CurseForge. À utiliser quand l'utilisateur dit "/buidev", "pousse sur gitlab", "sauvegarde le travail", "commit et push", "enregistre ce que j'ai fait", ou quand il vient de terminer une modification de BshamelUI et veut la mettre à l'abri sans faire de version. Couvre les vérifications locales, le CHANGELOG, le commit et le push sur main. Ne crée jamais de tag et ne publie jamais — pour publier une version, c'est le skill buiprod.
+description: Enregistre le travail en cours de l'addon Bshamel UI sur GitHub, sans rien publier sur CurseForge. À utiliser quand l'utilisateur dit "/buidev", "pousse sur github", "sauvegarde le travail", "commit et push", "enregistre ce que j'ai fait", ou quand il vient de terminer une modification de BshamelUI et veut la mettre à l'abri sans faire de version. Couvre les vérifications locales, le CHANGELOG, le commit et le push sur main. Ne crée jamais de tag et ne publie jamais — pour publier une version, c'est le skill buiprod.
 ---
 
-# Bshamel UI — enregistrer le travail sur GitLab
+# Bshamel UI — enregistrer le travail sur GitHub
 
-Objectif : mettre le travail en cours à l'abri sur GitLab, avec la CI au vert.
+Objectif : mettre le travail en cours à l'abri sur GitHub, avec la CI au vert.
 **Rien ne part sur CurseForge.**
 
 | | |
 |---|---|
 | Dépôt local | `C:\Users\Cosso\Documents\Claude\BshamelUI` |
-| Remote | `https://gitlab.anthocsn.com/anthony/bshamelui.git` (HTTPS, jeton en cache GCM) |
+| Remote | `https://github.com/anthonycosson/BshamelUI.git` (HTTPS, identifiants GitHub en cache GCM) |
 | Branche | `main` |
 
 ## La règle qui ne bouge pas
@@ -85,16 +85,16 @@ de l'utilisateur, et rien n'est publié.
 
 ### 6. Vérifier la pipeline
 
-La pipeline `lint` démarre automatiquement et dure une douzaine de secondes.
-Aller voir le résultat sur
-`https://gitlab.anthocsn.com/anthony/bshamelui/-/pipelines`.
+Le workflow `CI` (job `lint`) démarre automatiquement et dure une
+trentaine de secondes. Aller voir le résultat sur `https://github.com/anthonycosson/BshamelUI/actions`, ou avec
+`gh run list --repo anthonycosson/BshamelUI --limit 3` si `gh` est installé.
 
 - **Verte** → le dire et s'arrêter là.
 - **Rouge** → lire le log du job, diagnostiquer, corriger, recommencer. Ne pas
   laisser l'utilisateur avec une CI rouge sans explication.
-- **Bloquée en attente** → aucun runner disponible. Le runner `#2` est partagé
-  avec le projet `wow-guides` ; vérifier qu'il est toujours rattaché à BshamelUI
-  dans l'administration GitLab.
+- **Bloquée en attente** — rare sur les runners hébergés par GitHub ; vérifier
+  <https://www.githubstatus.com> et que les Actions sont activées dans
+  **Settings → Actions**.
 
 ## Ce que la CI ne fait pas
 

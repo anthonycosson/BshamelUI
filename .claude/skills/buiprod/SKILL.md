@@ -1,6 +1,6 @@
 ﻿---
 name: buiprod
-description: Publie une nouvelle version de l'addon Bshamel UI sur CurseForge, via un tag GitLab. À utiliser quand l'utilisateur dit "/buiprod", "publie", "envoie sur curseforge", "mets en prod", "sors une version", "fais une release", ou nomme un numéro de version à sortir. Couvre le choix du numéro de version, les vérifications, la création du tag, la confirmation avant publication, puis le suivi de la pipeline et du job release jusqu'à l'envoi effectif. Publication publique et irréversible — exige une confirmation explicite de l'utilisateur avant de pousser le tag.
+description: Publie une nouvelle version de l'addon Bshamel UI sur CurseForge, via un tag poussé sur GitHub. À utiliser quand l'utilisateur dit "/buiprod", "publie", "envoie sur curseforge", "mets en prod", "sors une version", "fais une release", ou nomme un numéro de version à sortir. Couvre le choix du numéro de version, les vérifications, la création du tag, la confirmation avant publication, puis le suivi de la pipeline et du job release jusqu'à l'envoi effectif. Publication publique et irréversible — exige une confirmation explicite de l'utilisateur avant de pousser le tag.
 ---
 
 # Bshamel UI — publier une version sur CurseForge
@@ -12,7 +12,7 @@ les joueurs.
 |---|---|
 | Dépôt local | `C:\Users\Cosso\Documents\Claude\BshamelUI` |
 | Projet CurseForge | `1631877` |
-| Déclencheur réel | l'arrivée d'un tag `vX.Y.Z` sur GitLab |
+| Déclencheur réel | l'arrivée d'un tag `vX.Y.Z` sur GitHub |
 
 ## La règle qui ne bouge pas
 
@@ -94,8 +94,8 @@ cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && git push origin HEAD && git pu
 
 ### 7. Suivre la pipeline jusqu'au bout
 
-Sur `https://gitlab.anthocsn.com/anthony/bshamelui/-/pipelines`, la pipeline du
-tag contient **deux** jobs : `lint` puis `release`.
+Sur `https://github.com/anthonycosson/BshamelUI/actions`, le workflow `CI` du tag contient **deux** jobs : `lint`
+puis `release`. Avec `gh` : `gh run watch --repo anthonycosson/BshamelUI`.
 
 Ne pas s'arrêter à « pipeline verte ». Ouvrir le log du job `release` et
 chercher la ligne :
@@ -112,14 +112,15 @@ Sans cette ligne, **rien n'est parti**, même si le zip a été construit.
 - La ligne d'envoi et son résultat.
 - Le fichier passe en modération CurseForge : quelques minutes à trois jours
   ouvrés, 8 h – 15 h CET.
-- Le zip reste disponible en artefact GitLab pendant 30 jours.
+- Le zip est attaché à la release GitHub du tag (`https://github.com/anthonycosson/BshamelUI/releases`) et reste
+  aussi en artefact du workflow pendant 30 jours.
 
 ## En cas d'échec du job release
 
-**Ne pas retaguer le même numéro.** Le motif `v*` est protégé sur GitLab : la
-suppression d'un tag est refusée (`pre-receive hook declined`). Corriger le
-problème, puis publier le numéro suivant. Le tag mort reste, c'est sans
-conséquence.
+**Ne pas retaguer le même numéro.** Si un ruleset protège `v*` sur GitHub, la
+suppression d'un tag est refusée ; et même sans, CurseForge a peut-être déjà
+reçu le fichier. Corriger le problème, puis publier le numéro suivant. Le tag
+mort reste, c'est sans conséquence.
 
 Pièges déjà rencontrés, tous consignés dans `dev/docs/API_NOTES.md` :
 
@@ -127,10 +128,12 @@ Pièges déjà rencontrés, tous consignés dans `dev/docs/API_NOTES.md` :
   zip puis saute l'envoi avec un simple avertissement, et la pipeline ressemble
   à un succès partiel. `jq` est installé dans le `before_script` et
   `jq --version` rend son absence bruyante.
-- **Job bloqué en attente** — aucun runner rattaché au projet.
-- **Zip construit mais aucun envoi** — vérifier que `CF_API_KEY` existe, qu'elle
-  est *masquée* **et** *protégée*, et que le motif de tags `v*` est protégé. Les
-  deux réglages n'ont de sens qu'ensemble : sans la protection du tag, la
-  variable n'est pas exposée au job.
+- **Job bloqué en attente** — Actions désactivées sur le dépôt, ou incident
+  GitHub.
+- **Zip construit mais aucun envoi** (avertissement « CF_API_KEY absent ») —
+  vérifier que le secret `CF_API_KEY` existe dans **Settings → Secrets and
+  variables → Actions**, avec exactement ce nom.
+- **Release GitHub non créée** — le job `release` doit avoir la permission
+  `contents: write` (déclarée dans `.github/workflows/ci.yml`).
 
 Après diagnostic, ajouter le nouveau piège à `dev/docs/API_NOTES.md`.

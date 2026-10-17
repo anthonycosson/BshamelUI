@@ -23,7 +23,7 @@ ignore:
   - .editorconfig
   - .gitattributes
   - .gitignore
-  - .gitlab-ci.yml
+  - .github
   - .luacheckrc
   - .luarc.json
   - CLAUDE.md

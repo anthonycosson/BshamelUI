@@ -90,7 +90,7 @@ contre le grep.
 
 ## Publication
 
-Tant que la bêta dure, le travail Forever reste sur GitLab.
+Tant que la bêta dure, le travail Forever reste sur GitHub, sans publication.
 
 **Avant la prochaine `/buiprod`**, le packager doit connaître Forever : notre
 copie de `dev/packager/release.sh` classe toute interface inconnue en

@@ -1,0 +1,89 @@
+# =========================================================================
+#  Bshamel UI — pipeline GitHub Actions
+#
+#  Deux jobs :
+#    lint     — à chaque push et à chaque pull request
+#    release  — uniquement sur un tag `vX.Y.Z`, après un lint vert
+#
+#  Le packager BigWigs (`dev/packager/release.sh`) détecte $GITHUB_ACTIONS : en
+#  plus de l'envoi CurseForge, il crée la release GitHub du tag et y attache le
+#  zip (grâce à GITHUB_OAUTH), ce qui remplace l'ancien artefact GitLab de 30 j.
+# =========================================================================
+
+name: CI
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # -----------------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer luacheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.1 liblua5.1-0-dev luarocks
+          sudo luarocks --lua-version=5.1 install luacheck
+
+      - name: luacheck
+        run: luacheck .
+
+      - name: Garde-fous de design
+        run: bash dev/scripts/check-design.sh
+
+  # -----------------------------------------------------------------------
+  release:
+    needs: lint
+    # Uniquement sur un tag de version : le jeton CurseForge n'est jamais
+    # exposé à une branche ni à une pull request.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # création de la release GitHub et envoi du zip
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Le packager déduit la version et le changelog de l'historique git :
+          # un clone superficiel le priverait des tags.
+          fetch-depth: 0
+
+      - name: Vérifier le format du tag
+        run: |
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]] \
+            || { echo "Tag $GITHUB_REF_NAME hors format vX.Y.Z — rien à publier."; exit 1; }
+
+      # `jq` est indispensable : sans lui le packager construit le zip puis
+      # **saute silencieusement l'envoi** avec un simple avertissement.
+      - name: Outils du packager
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq zip unzip
+          jq --version
+
+      - name: Packager et publier
+        run: |
+          if [ -z "${CF_API_KEY:-}" ]; then
+            echo "::warning::CF_API_KEY absent — packaging à blanc, aucun envoi."
+            bash dev/packager/release.sh -d -o -r "$PWD/dev/build"
+          else
+            bash dev/packager/release.sh -r "$PWD/dev/build"
+          fi
+
+      - name: Conserver le zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: BshamelUI-${{ github.ref_name }}
+          path: dev/build/*.zip
+          retention-days: 30

@@ -1,7 +1,7 @@
 ﻿# Bshamel UI — règles du dépôt
 
 Addon World of Warcraft **retail et *Forever***, un seul dossier, zéro dépendance.
-Licence *all rights reserved*. Distribution : CurseForge via GitLab CI.
+Licence *all rights reserved*. Distribution : CurseForge via GitHub Actions.
 
 Ce fichier n'est pas un guide de style : c'est la liste des règles dont la
 violation doit faire échouer une relecture. Le job `lint` de la CI en vérifie
@@ -214,7 +214,7 @@ Une seconde jonction, identique, part de
 **Règle de rangement :** tout ce qui ne part pas chez le joueur vit sous
 `dev/` — documentation, scripts, packager, sorties de build. Les seules
 exceptions sont les fichiers de configuration que leurs outils exigent à la
-racine (`.pkgmeta`, `.gitlab-ci.yml`, `.luacheckrc`, `.luarc.json`,
+racine (`.pkgmeta`, `.github/`, `.luacheckrc`, `.luarc.json`,
 `CLAUDE.md`, `README.md`…). Ajouter un fichier de développement ailleurs que
 sous `dev/` oblige à l'ajouter aussi dans la liste `ignore` de `.pkgmeta`,
 sous peine de le livrer aux joueurs.
