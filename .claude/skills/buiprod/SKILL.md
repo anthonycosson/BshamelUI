@@ -10,7 +10,7 @@ les joueurs.
 
 | | |
 |---|---|
-| Dépôt local | `C:\Users\Cosso\Documents\Claude\BshamelUI` |
+| Dépôt local | `%USERPROFILE%\Documents\Claude\BshamelUI` |
 | Projet CurseForge | `1631877` |
 | Déclencheur réel | l'arrivée d'un tag `vX.Y.Z` sur GitHub |
 
@@ -40,7 +40,7 @@ confirme malgré tout vouloir publier, poursuivre : c'est sa décision.
 ### 2. Vérifier l'état de départ
 
 ```bash
-cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && git status --short && git log --oneline -3 && git log --oneline -1 origin/main
+cd ~/Documents/Claude/BshamelUI && git status --short && git log --oneline -3 && git log --oneline -1 origin/main
 ```
 
 Exigences :
@@ -69,7 +69,7 @@ publié` est vide, il n'y a rien à publier : le signaler.
 ### 4. Préparer, sans publier
 
 ```bash
-cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && bash dev/scripts/tag-release.sh 0.2.0
+cd ~/Documents/Claude/BshamelUI && bash dev/scripts/tag-release.sh 0.2.0
 ```
 
 **Sans `--push`.** Le script vérifie l'arbre, lance le lint complet, date la
@@ -89,7 +89,7 @@ explicitement l'autorisation de publier**.
 Uniquement après un oui clair :
 
 ```bash
-cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && git push origin HEAD && git push origin v0.2.0
+cd ~/Documents/Claude/BshamelUI && git push origin HEAD && git push origin v0.2.0
 ```
 
 ### 7. Suivre la pipeline jusqu'au bout

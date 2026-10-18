@@ -3,7 +3,7 @@
 ## Licence des contributions
 
 Bshamel UI est publié **tous droits réservés**. En proposant une modification,
-vous cédez au détenteur du copyright (Cosso) les droits patrimoniaux sur votre
+vous cédez au détenteur du copyright (Bshamel) les droits patrimoniaux sur votre
 contribution, afin qu'elle puisse être distribuée sous la licence du projet.
 
 Ne proposez que du code dont vous êtes l'auteur. Le code issu d'un autre addon

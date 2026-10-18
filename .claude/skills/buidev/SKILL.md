@@ -10,7 +10,7 @@ Objectif : mettre le travail en cours à l'abri sur GitHub, avec la CI au vert.
 
 | | |
 |---|---|
-| Dépôt local | `C:\Users\Cosso\Documents\Claude\BshamelUI` |
+| Dépôt local | `%USERPROFILE%\Documents\Claude\BshamelUI` |
 | Remote | `https://github.com/anthonycosson/BshamelUI.git` (HTTPS, identifiants GitHub en cache GCM) |
 | Branche | `main` |
 
@@ -25,7 +25,7 @@ skill `buiprod`, pas celui-ci — le lui dire et basculer.
 ### 1. Regarder ce qui a changé
 
 ```bash
-cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && git status --short && git diff --stat
+cd ~/Documents/Claude/BshamelUI && git status --short && git diff --stat
 ```
 
 Résumer en une phrase ce que la modification fait. Si le diff contient des
@@ -35,7 +35,7 @@ un commit = un sujet.
 ### 2. Vérifier
 
 ```bash
-cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && bash dev/scripts/lint-local.sh
+cd ~/Documents/Claude/BshamelUI && bash dev/scripts/lint-local.sh
 ```
 
 Trois passes : syntaxe (`luac`), diagnostics (`lua-language-server`), garde-fous
@@ -77,7 +77,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 ### 5. Pousser
 
 ```bash
-cd "C:/Users/Cosso/Documents/Claude/BshamelUI" && git push origin main
+cd ~/Documents/Claude/BshamelUI && git push origin main
 ```
 
 Ne pas demander confirmation : c'est réversible, ça reste sur l'infrastructure

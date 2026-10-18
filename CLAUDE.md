@@ -203,7 +203,7 @@ Le dépôt est monté dans le jeu par une jonction NTFS :
 
 ```
 C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI
-  -> C:\Users\Cosso\Documents\Claude\BshamelUI
+  -> %USERPROFILE%\Documents\Claude\BshamelUI
 ```
 
 Une seconde jonction, identique, part de
