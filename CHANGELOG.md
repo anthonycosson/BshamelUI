@@ -2,6 +2,8 @@
 
 ## Non publié
 
+## 2.0.12 — 2026-10-29
+
 ### Retiré
 - **Correctifs de la bêta** (*Forever*) : la page et sa catégorie disparaissent
   avec la bêta. Blizzard a corrigé les infobulles de caractéristiques de la
