@@ -600,22 +600,11 @@ BUI:RegisterLocale("frFR", {
         .. "buff, en blanc quand il manque.",
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
-    ["Beta"]                           = "Beta",
-    ["Config macros restored"]         = "Réglages restaurés depuis vos macros.",
-    ["Config macros missing"]          = "Aucune macro de réglages trouvée.",
-    ["Config macros invalid"]          = "Les macros de réglages sont abîmées ou incomplètes.",
     ["Looting"]                        = "Ramassage des monstres",
     ["Fast loot"]                      = "Ramassage rapide",
     ["Fast loot tip"] =
         "Prend tout dès l'ouverture d'un cadavre : la fenêtre de butin n'apparaît plus. "
         .. "Seulement quand le butin automatique est déjà actif, ou sa touche maintenue.",
-    ["Beta fixes"]                     = "Correctifs de la bêta",
-    ["Client bugs"]                    = "Bugs du client",
-    ["Fix stat tooltips"]              = "Corriger les infobulles de caractéristiques",
-    ["Fix stat tooltips tip"] =
-        "La bêta cherche ses infobulles de caractéristiques sous leur nom traduit, qui "
-        .. "n'existe qu'en anglais : ouvrir la fiche de personnage lève une erreur Lua. Ce "
-        .. "correctif pose les clés manquantes. Décocher redonne le bug.",
     ["Buff giver"]                     = "%s (%s)",
     ["Benefit mark"]                   = "Armure, caractéristiques et résistances",
     ["Benefit kings"]                  = "Toutes les caractéristiques (%)",

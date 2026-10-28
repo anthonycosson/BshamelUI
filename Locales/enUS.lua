@@ -614,25 +614,11 @@ BUI:RegisterLocale("enUS", {
         .. "it is missing.",
     ["Buff panel title"]               = "Buffs",
     ["Buff separator"]                 = " / ",
-    ["Beta"]                           = "Beta",
-    -- Ce que la macro `BUIconfig` répond quand on la joue. Le reste de cette
-    -- marche à suivre est parti avec le bug qu'elle contournait : le client
-    -- rend de nouveau leurs réglages aux addons.
-    ["Config macros restored"]         = "Settings restored from your macros.",
-    ["Config macros missing"]          = "No settings macro found.",
-    ["Config macros invalid"]          = "The settings macros are damaged or incomplete.",
     ["Looting"]                        = "Looting",
     ["Fast loot"]                      = "Fast loot",
     ["Fast loot tip"] =
         "Takes everything the moment a corpse is opened, so the loot window never appears. "
         .. "Only when auto-loot is already on, or its modifier key is held.",
-    ["Beta fixes"]                     = "Beta fixes",
-    ["Client bugs"]                    = "Client bugs",
-    ["Fix stat tooltips"]              = "Fix character stat tooltips",
-    ["Fix stat tooltips tip"] =
-        "The beta looks up its stat tooltips by their translated name, which only exists in "
-        .. "English: opening the character sheet throws a Lua error. This adds the missing "
-        .. "keys. Unticking it brings the bug back.",
     ["Buff giver"]                     = "%s (%s)",
     ["Benefit mark"]                   = "Armor, stats and resistances",
     ["Benefit kings"]                  = "All stats (%)",

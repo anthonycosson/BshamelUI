@@ -93,8 +93,8 @@ report "Aucun global non préfixé" "$hits"
 #
 # La marque `@default-on` lève l'interdiction sur une ligne. Deux motifs
 # seulement l'accordent à ce jour : le bouton de minicarte, qui ne change rien
-# au jeu mais dit que l'addon existe, et les correctifs de bêta, qui réparent
-# un bug du client (voir CLAUDE.md §4). Elle ne s'accorde pas en passant — `grep -rn '@default-on' Modules/`
+# au jeu mais dit que l'addon existe, et le masquage des erreurs Lua, qui tait
+# le rapport d'une panne (voir CLAUDE.md §4). Elle ne s'accorde pas en passant — `grep -rn '@default-on' Modules/`
 # doit tenir sur une main, et chaque ligne doit porter au-dessus d'elle le motif
 # qui la justifie. Sans la marque, la règle s'applique de nouveau : on ne
 # contourne pas ce contrôle par distraction, seulement par décision écrite.

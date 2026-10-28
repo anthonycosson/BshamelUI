@@ -79,7 +79,7 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   ne fait rien seul, parce que sa liste est vide. C'est au libellé de le dire,
   pas au défaut de le rattraper.
 
-  **Trois exceptions existent**, et elles se ressemblent moins qu'il n'y paraît.
+  **Deux exceptions existent**, et elles se ressemblent moins qu'il n'y paraît.
 
   La première : le bouton de minicarte
   (`Modules/General.lua`), marqué `@default-on`. La règle protège une promesse
@@ -88,16 +88,7 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   l'addon est là et par où l'ouvrir. Livré éteint, il ne restait aucune porte
   visible, et un addon sans porte n'est pas discret, il est absent.
 
-  La seconde : les correctifs de bêta (`Modules/Beta.lua`, *Forever*
-  seulement). Ils ne font rien d'autre que réparer un bug du client — la fiche
-  de personnage lève une erreur Lua à chaque survol sur tout client non
-  anglais. La promesse protège ce que le jeu **fait**, pas ce qu'il **rate** :
-  un plantage n'est pas un état qu'on préserve. Chaque case reste là, et la
-  décocher redonne le bug à qui veut le constater. Ces correctifs sont
-  provisoires par construction — le jour où Blizzard corrige, la ligne
-  disparaît.
-
-  La troisième : masquer les erreurs Lua (`Modules/Annoyances.lua`). C'est la
+  La seconde : masquer les erreurs Lua (`Modules/Annoyances.lua`). C'est la
   plus discutable — elle ne montre pas l'addon et ne répare pas le client, elle
   éteint quelque chose. Ce qu'elle éteint n'est pas une fonction du jeu, c'est
   le **rapport d'une panne** : la fenêtre rouge ne fait rien arriver, elle
@@ -107,8 +98,10 @@ SavedVariables : `BshamelUIDB` (compte) et `BshamelUICharDB` (personnage).
   reçoit tout.
 
   La marque se pose donc sur ce qui **montre** l'addon, sur ce qui **répare le
-  client**, ou sur ce qui **tait le symptôme** d'une panne — jamais sur ce qui
-  **agit** à la place du joueur. Une case qui sauterait les cinématiques ou
+  client** — un plantage n'est pas un état qu'on préserve ; les correctifs de
+  la bêta de *Forever* l'ont porté jusqu'à ce que Blizzard corrige —, ou sur ce
+  qui **tait le symptôme** d'une panne — jamais sur ce qui **agit** à la place
+  du joueur. Une case qui sauterait les cinématiques ou
   parlerait à sa place ne l'aura pas. Toute nouvelle ligne `@default-on`
   demande le même examen, écrit au-dessus d'elle.
 
@@ -207,7 +200,7 @@ C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\BshamelUI
 ```
 
 Une seconde jonction, identique, part de
-`_classic_beta_\Interface\AddOns\BshamelUI` (bêta de Forever).
+`_forever_\Interface\AddOns\BshamelUI` (*Forever*).
 
 Installation sur un nouvel ordinateur : `dev/docs/SETUP.md`.
 

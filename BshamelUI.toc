@@ -167,8 +167,6 @@ Modules\BuffTracker.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standar
 # d'abord, le module le récupère dans `ns` au moment où il s'écrit.
 Modules\BisIndex.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 Modules\BisList.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
-# Les bugs de la bêta de Forever, rattrapés en attendant que Blizzard corrige.
-Modules\Beta.lua [AllowLoadGameType camelot] [ExcludeLoadGameType standard]
 # Suivi des temps restants : le vol et le craft, sur une seule page. Elle
 # charge partout — rien n'y dépend du client, tout dépend de ce qu'il publie.
 Modules\Timers.lua

@@ -24,27 +24,6 @@
 
 local _, ns = ...
 
--- =========================================================================
---  Le client rend de nouveau leurs réglages aux addons
--- =========================================================================
--- **Constaté le 27 septembre 2026** : le SavedVariables de compte est relu au
--- lancement du jeu, et les réglages reviennent d'eux-mêmes. La bêta ne l'a pas
--- toujours fait — du 20 au 27 septembre 2026, elle écrivait proprement le
--- fichier à la déconnexion et ne l'exécutait jamais au démarrage, ce qui
--- ramenait tous les addons à leurs défauts à chaque session.
---
--- Ce qui vivait ici est donc parti : l'avertissement rouge à la connexion, et
--- la marche à suivre qui l'accompagnait dans `Modules/Beta.lua` (ranger sa
--- configuration dans des macros, que le client restituait). Un correctif de
--- bêta est provisoire par construction — le jour où le client répare, la ligne
--- disparaît, elle ne se met pas en veille. Il en reste exactement une chose :
--- `Beta:RestoreConfig`, sans entrée dans la page, pour la macro que des joueurs
--- ont posée sur une barre d'action.
---
--- **Ce qui n'a pas été revérifié** : le SavedVariables du **personnage**, que
--- l'addon n'utilise plus depuis sa migration vers la base de compte, et une
--- CVar posée par `RegisterCVar`, qui n'était pas écrite dans `Config.wtf`.
-
 --- Modules affichés mais **grisés** : présents dans la navigation, jamais
 --- allumés — le traitement d'un module `preview`. Pour ce qui existe sur
 --- Forever mais n'y a pas encore été vérifié.

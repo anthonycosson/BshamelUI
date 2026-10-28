@@ -65,8 +65,8 @@ Git Bash doit alors lui aussi avoir été lancé en administrateur.
 Adapter le premier chemin si WoW est installé ailleurs. Le dossier `AddOns`
 doit exister : lancer le jeu une fois suffit à le créer.
 
-**Bêta de *Forever*** (facultatif) : poser une seconde jonction identique, en
-remplaçant `_retail_` par `_classic_beta_`.
+***Forever*** (facultatif) : poser une seconde jonction identique, en
+remplaçant `_retail_` par `_forever_`.
 
 Vérifier :
 

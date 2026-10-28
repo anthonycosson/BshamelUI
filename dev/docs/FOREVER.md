@@ -2,7 +2,7 @@
 
 *World of Warcraft: Forever* — le « Classic+ » annoncé le 12 septembre 2026,
 bêta le 17 septembre, sortie le 4 novembre — est un **client séparé**
-(`_classic_beta_`, produit `wow_classic_beta`), plafonné au niveau 60.
+(`_forever_`, produit `wowf` ; `_classic_beta_` du temps de la bêta), plafonné au niveau 60.
 
 Cette note dit ce qui est décidé, ce qui ne l'est pas, et où chercher.
 
@@ -52,7 +52,7 @@ mécanisme de Blizzard lui-même, et celui d'Auctionator.
 quels** — le tri de leurs options, un module à la fois, vient ensuite.
 
 L'inverse existe aussi : `BuffTracker` (et ses données, `BuffTrackerData`),
-`Professions`, `Beta`, et la liste BIS (`BisIndex` + `BisList`) ne chargent que
+`Professions` et la liste BIS (`BisIndex` + `BisList`) ne chargent que
 sur Forever, `[AllowLoadGameType camelot] [ExcludeLoadGameType standard]`. **Les deux directives sont nécessaires** : le client retail ne
 connaît pas `camelot` et charge une ligne qui n'a que la première — constaté
 en jeu le 19 septembre 2026, où le suivi des buffs apparaissait sur retail et
@@ -131,8 +131,8 @@ bash dev/scripts/make-probe.sh --calibrer "<chemin rendu à l'étape 2>"
 ```
 
 ```powershell
-# 4. Poser sur la bêta Forever, et lire le verdict
-powershell -File dev/scripts/install-probe.ps1 -Client "C:\Program Files (x86)\World of Warcraft\_classic_beta_" -Interface 16001
+# 4. Poser sur Forever, et lire le verdict
+powershell -File dev/scripts/install-probe.ps1 -Client "C:\Program Files (x86)\World of Warcraft\_forever_" -Interface 16001
 ```
 
 En jeu : le résumé s'affiche à la connexion, `/buiprobe` le redonne,
@@ -159,7 +159,7 @@ Non étalonnée, la sonde le dit en toutes lettres et ses scores sont trop bas.
 Une seconde jonction, sur le modèle de celle de retail :
 
 ```
-C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns\BshamelUI
+C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns\BshamelUI
   -> %USERPROFILE%\Documents\Claude\BshamelUI
 ```
 
